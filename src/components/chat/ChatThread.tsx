@@ -28,6 +28,7 @@ import { TetrisGame } from '../tetris/TetrisGame';
 import { MessageInputPanel } from './MessageInputPanel';
 import { Message, MessageType } from '../../types/message';
 import { ThemeElement } from '../../types/theme';
+import { GitControls } from '../git/GitControls';
 
 interface ChatThreadProps {
   theme: string;
@@ -35,8 +36,8 @@ interface ChatThreadProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
   isLoading: boolean;
-  serverStatus: 'active' | 'stopped' | 'thinking';
-  onServerStatusChange: (status: 'active' | 'stopped' | 'thinking') => void;
+  serverStatus: 'active' | 'stopped' | 'thinking' | 'connecting';
+  onServerStatusChange: (status: 'active' | 'stopped' | 'thinking' | 'connecting') => void;
   onCanvasToggle: (messageIndex: number) => void;
 }
 
@@ -102,10 +103,24 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleGitPush = () => {
+    // Implement git push
+    console.log('Git push clicked');
+  };
+
+  const handleGitPull = () => {
+    // Implement git pull
+    console.log('Git pull clicked');
+  };
+
+  const handleCreatePR = () => {
+    // Implement create PR
+    console.log('Create PR clicked');
+  };
+
   return (
-    <div className="flex flex-col h-full items-center">
-      <div className="w-full max-w-2xl flex flex-col h-full group">
-        {/* Chat Messages Area - Fixed height container */}
+    <div className="flex flex-col h-full w-full items-center">
+      <div className="w-full max-w-[760px] flex flex-col h-full group">
         <div className="flex-1 min-h-0 relative">
           <div className="absolute inset-0 overflow-y-auto
             [&::-webkit-scrollbar]:w-2
@@ -123,8 +138,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
             group-hover:scrollbar-color:rgb(87 83 78 / 0.3) transparent
             transition-[scrollbar-color]
             duration-300
-            ease-in-out"
-          >
+            ease-in-out">
             {/* Top Gradient */}
             <div className={`sticky top-0 left-0 right-0 h-16 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-b from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-b from-stone-100 to-transparent' : 'bg-gradient-to-b from-[rgb(235,225,210)] to-transparent'}`}></div>
 
@@ -271,6 +285,15 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
             onSendMessage={onSendMessage}
             serverStatus={serverStatus}
             onServerStatusChange={onServerStatusChange}
+          />
+          <GitControls
+            theme={theme}
+            getThemeClasses={getThemeClasses}
+            projectName="my-project"
+            branchName="main"
+            onPush={handleGitPush}
+            onPull={handleGitPull}
+            onCreatePR={handleCreatePR}
           />
         </div>
       </div>

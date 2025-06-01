@@ -26,7 +26,9 @@ export type ThemeElement =
   | 'hover-icon-color'
   | 'hover-resizer-bg'
   | 'stop-button-bg-subtle'
-  | 'button-hover';
+  | 'stop-button-text'
+  | 'button-hover'
+  | 'scrollbar';
 
 export type ThemeClasses = {
   [key in ThemeElement]: string;
