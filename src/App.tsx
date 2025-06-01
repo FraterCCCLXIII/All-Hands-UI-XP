@@ -6,9 +6,10 @@ import { StatusIndicator } from './components/common/StatusIndicator';
 import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message, MessageType } from './types/message';
-import { Theme, ThemeElement, ThemeClasses } from './types/theme';
+import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
+import { LoadingScreen } from './screens';
 
-const themeClasses: ThemeClasses = {
+const themeClasses: ThemeClassMap = {
   dark: {
     text: 'text-stone-200',
     bg: 'bg-stone-900',
@@ -95,11 +96,10 @@ const themeClasses: ThemeClasses = {
   },
 };
 
-export const App: React.FC = () => {
+function App() {
   const [theme, setTheme] = useState<Theme>('dark');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
   const [selectedMessageIndex, setSelectedMessageIndex] = useState<number | null>(null);
@@ -107,15 +107,23 @@ export const App: React.FC = () => {
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
 
-  useEffect(() => {
+  const getThemeClasses = useCallback((element: ThemeElement): string => {
+    return themeClasses[theme][element] || '';
+  }, [theme]);
+
+  const handleLoadingComplete = useCallback(() => {
     setTimeout(() => {
-      setInitialLoading(false);
-    }, 1000);
+      setIsLoading(false);
+    }, 500);
   }, []);
 
-  const getThemeClasses = useCallback((element: ThemeElement) => {
-    return themeClasses[theme][element];
-  }, [theme]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // Show loading screen for 2 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSendMessage = useCallback((message: string) => {
     const userMessage: Message = {
@@ -193,67 +201,59 @@ export const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen ${getThemeClasses('bg')} ${getThemeClasses('text')}`}>
-      <div className="flex h-screen">
-        {/* Left Navigation - now extends full height */}
-        <LeftNav
-          theme={theme}
-          getThemeClasses={getThemeClasses}
-          onNavItemClick={handleNavItemClick}
-          activeItem={activeNavItem}
-        />
-
-        {/* Right side content area */}
-        <div className="flex-1 flex flex-col">
-          {/* Top Bar */}
-          <TopBar
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <LoadingScreen
+            key="loading"
             theme={theme}
             getThemeClasses={getThemeClasses}
-            projectTitle={projectTitle}
-            onProjectTitleChange={setProjectTitle}
-            serverStatus={serverStatus}
-            onServerStatusChange={setServerStatus}
-            onGitAction={handleGitAction}
-            onShare={handleShare}
-            onRun={handleRun}
-            isRunning={isRunning}
+            isLoading={isLoading}
+            onLoadingComplete={handleLoadingComplete}
           />
-
-          {/* Main Content Area */}
-          <div className="flex-1 flex">
-            {/* Chat Thread */}
+        ) : (
+          <motion.div
+            key="app"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex h-screen"
+          >
+            <LeftNav
+              theme={theme}
+              getThemeClasses={getThemeClasses}
+              onNavItemClick={handleNavItemClick}
+              activeItem={activeNavItem}
+            />
             <div className="flex-1 flex flex-col">
+              <TopBar
+                theme={theme}
+                getThemeClasses={getThemeClasses}
+                projectTitle={projectTitle}
+                onProjectTitleChange={setProjectTitle}
+                serverStatus={serverStatus}
+                onServerStatusChange={setServerStatus}
+                onGitAction={handleGitAction}
+                onShare={handleShare}
+                onRun={handleRun}
+                isRunning={isRunning}
+              />
               <ChatThread
                 theme={theme}
                 getThemeClasses={getThemeClasses}
                 messages={messages}
                 onSendMessage={handleSendMessage}
-                isLoading={initialLoading}
+                isLoading={false}
                 serverStatus={serverStatus}
                 onServerStatusChange={setServerStatus}
                 onCanvasToggle={handleCanvasToggle}
               />
             </div>
-
-            {/* Canvas */}
-            <AnimatePresence>
-              {canvasVisible && selectedMessageIndex !== null && (
-                <Canvas
-                  theme={theme}
-                  getThemeClasses={getThemeClasses}
-                  isVisible={canvasVisible}
-                  onClose={() => setCanvasVisible(false)}
-                  onToggleMaximize={() => {}}
-                  isMaximized={false}
-                  content={{
-                    type: 'code',
-                    text: messages[selectedMessageIndex]?.text || '',
-                  }}
-                />
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
-}; 
+}
+
+export default App; 

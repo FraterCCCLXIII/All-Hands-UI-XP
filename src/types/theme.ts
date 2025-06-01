@@ -28,8 +28,10 @@ export type ThemeElement =
   | 'stop-button-bg-subtle'
   | 'button-hover';
 
-export interface ThemeClasses {
-  [key: string]: {
-    [key in ThemeElement]: string;
-  };
-} 
+export type ThemeClasses = {
+  [key in ThemeElement]: string;
+};
+
+export type ThemeClassMap = {
+  [key in Theme]: ThemeClasses;
+}; 

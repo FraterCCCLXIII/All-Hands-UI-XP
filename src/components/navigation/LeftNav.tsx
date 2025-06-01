@@ -55,15 +55,15 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 
   return (
     <motion.nav
-      className={`h-full flex flex-col items-start border-r ${getThemeClasses('border')} ${getThemeClasses('bg')}`}
+      className={`h-full ${getThemeClasses('bg')} flex flex-col items-start py-2`}
       initial={{ width: 64 }}
-      animate={{ width: isExpanded ? 200 : 64 }}
+      animate={{ width: isExpanded ? 240 : 64 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       onHoverStart={() => setIsExpanded(true)}
       onHoverEnd={() => setIsExpanded(false)}
     >
       {/* Logo - Fixed position */}
-      <div className="w-16 h-16 mt-4 mb-8 flex items-center justify-center">
+      <div className="w-16 h-16 mt-2 mb-4 flex items-center justify-start px-4">
         <Logo className="w-8 h-8" />
       </div>
 
@@ -107,7 +107,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       </div>
 
       {/* Version Info - Fixed position */}
-      <div className="w-16 h-8 mb-4 flex items-center justify-center">
+      <div className="w-16 h-8 mb-4 flex items-center justify-start px-4">
         <Info className={`w-4 h-4 ${getThemeClasses('icon-color')}`} />
         <AnimatePresence>
           {isExpanded && (
