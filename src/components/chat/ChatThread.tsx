@@ -104,190 +104,175 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
 
   return (
     <div className="flex flex-col h-full items-center">
-      <div className="w-full max-w-2xl flex flex-col h-full">
-        {/* Message Thread Area */}
-        <div className="relative flex-grow overflow-hidden">
-          <AnimatePresence mode="wait">
-            {isLoading ? (
-              <motion.div
-                key="loading-spinner"
-                initial={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-solid border-transparent border-t-white"></div>
-                  <p className="mt-4 text-white">Loading messages...</p>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="loaded-messages"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="relative absolute inset-0 overflow-y-scroll space-y-4 px-4 pt-4 pb-4
-                  [&::-webkit-scrollbar]:w-2
-                  [&::-webkit-scrollbar-track]:bg-transparent
-                  [&::-webkit-scrollbar-thumb]:bg-stone-600/30
-                  [&::-webkit-scrollbar-thumb]:rounded-full
-                  [&::-webkit-scrollbar-thumb]:hover:bg-stone-600/50
-                  [&::-webkit-scrollbar-thumb]:transition-colors
-                  [&::-webkit-scrollbar-thumb]:duration-200
-                  [&::-webkit-scrollbar]:hover:w-2.5
-                  [&::-webkit-scrollbar]:transition-all
-                  [&::-webkit-scrollbar]:duration-200
-                  scrollbar-gutter:stable
-                  scrollbar-width:thin
-                  scrollbar-color:rgb(87 83 78 / 0.3) transparent"
-              >
-                {/* Top Gradient - now contained within the scrollable area */}
-                <div className={`sticky top-0 left-0 right-0 h-16 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-b from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-b from-stone-100 to-transparent' : 'bg-gradient-to-b from-[rgb(235,225,210)] to-transparent'}`}></div>
+      <div className="w-full max-w-2xl flex flex-col h-full group">
+        {/* Chat Messages Area - Fixed height container */}
+        <div className="flex-1 min-h-0 relative">
+          <div className="absolute inset-0 overflow-y-auto
+            [&::-webkit-scrollbar]:w-2
+            [&::-webkit-scrollbar-track]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:bg-transparent
+            [&::-webkit-scrollbar-thumb]:rounded-full
+            [&::-webkit-scrollbar-thumb]:transition-[background-color]
+            [&::-webkit-scrollbar-thumb]:duration-300
+            [&::-webkit-scrollbar-thumb]:ease-in-out
+            group-hover:[&::-webkit-scrollbar-thumb]:bg-stone-600/30
+            group-hover:[&::-webkit-scrollbar-thumb]:hover:bg-stone-600/50
+            scrollbar-gutter:stable
+            scrollbar-width:thin
+            scrollbar-color:transparent transparent
+            group-hover:scrollbar-color:rgb(87 83 78 / 0.3) transparent
+            transition-[scrollbar-color]
+            duration-300
+            ease-in-out"
+          >
+            {/* Top Gradient */}
+            <div className={`sticky top-0 left-0 right-0 h-16 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-b from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-b from-stone-100 to-transparent' : 'bg-gradient-to-b from-[rgb(235,225,210)] to-transparent'}`}></div>
 
-                {/* Messages */}
-                {messages.map((msg: Message, index: number) => {
-                  const IconComponent = messageTypeIcons[msg.type];
-                  const iconColorClass = messageTypeColors[msg.type]?.text;
-                  const borderColorClass = messageTypeColors[msg.type]?.border;
-                  const bgColorSubtleClass = messageTypeColors[msg.type]?.bg_subtle;
+            {/* Messages Container */}
+            <div className="px-4 pt-4 pb-4 space-y-4">
+              {messages.map((msg: Message, index: number) => {
+                const IconComponent = messageTypeIcons[msg.type];
+                const iconColorClass = messageTypeColors[msg.type]?.text;
+                const borderColorClass = messageTypeColors[msg.type]?.border;
+                const bgColorSubtleClass = messageTypeColors[msg.type]?.bg_subtle;
 
-                  const isUserMessage = msg.role === 'user';
-                  const isActionRequired = msg.status === 'action_required';
-                  const isInProgress = msg.status === 'in_progress';
-                  const isSuccess = msg.status === 'success';
-                  const isFail = msg.status === 'fail';
-                  const isPillMessage = msg.type === 'code' || msg.type === 'microagent_ready' || msg.type === 'build';
-                  const canOpenCanvas = canvasChangingMessageTypes.includes(msg.type);
+                const isUserMessage = msg.role === 'user';
+                const isActionRequired = msg.status === 'action_required';
+                const isInProgress = msg.status === 'in_progress';
+                const isSuccess = msg.status === 'success';
+                const isFail = msg.status === 'fail';
+                const isPillMessage = msg.type === 'code' || msg.type === 'microagent_ready' || msg.type === 'build';
+                const canOpenCanvas = canvasChangingMessageTypes.includes(msg.type);
 
-                  let CompletionIcon = null;
-                  let completionIconColorClass = '';
-                  if (isSuccess) {
-                    CompletionIcon = CheckCircle;
-                    completionIconColorClass = messageTypeColors.success.text;
-                  } else if (isFail) {
-                    CompletionIcon = CircleX;
-                    completionIconColorClass = messageTypeColors.fail.text;
-                  }
+                let CompletionIcon = null;
+                let completionIconColorClass = '';
+                if (isSuccess) {
+                  CompletionIcon = CheckCircle;
+                  completionIconColorClass = messageTypeColors.success.text;
+                } else if (isFail) {
+                  CompletionIcon = CircleX;
+                  completionIconColorClass = messageTypeColors.fail.text;
+                }
 
-                  return (
+                return (
+                  <div
+                    key={index}
+                    className={`flex flex-col ${isUserMessage ? 'items-end' : 'items-start'}`}
+                    onMouseEnter={() => setHoveredMessageIndex(index)}
+                    onMouseLeave={() => setHoveredMessageIndex(null)}
+                  >
+                    {/* Message Header (for AI messages only) */}
+                    {!isUserMessage && msg.headerText && (
+                      <div className={`flex items-start space-x-1 mb-1 ${getThemeClasses('text')} opacity-75 text-xs`}>
+                        {IconComponent && (
+                          <IconComponent className={`w-3 h-3 ${iconColorClass}`} />
+                        )}
+                        <span>{msg.headerText}</span>
+                      </div>
+                    )}
+
                     <div
-                      key={index}
-                      className={`flex flex-col ${isUserMessage ? 'items-end' : 'items-start'}`}
-                      onMouseEnter={() => setHoveredMessageIndex(index)}
-                      onMouseLeave={() => setHoveredMessageIndex(null)}
+                      className={`max-w-[80%] p-3 relative rounded-xl break-words
+                        ${isUserMessage ? getThemeClasses('user-message-bg') : getThemeClasses('ai-message-bg')}
+                        ${isUserMessage ? getThemeClasses('user-message-text') : getThemeClasses('text')}
+                        ${borderColorClass ? `border ${borderColorClass}` : ''}
+                        ${isPillMessage ? `${bgColorSubtleClass} border-opacity-50` : ''}
+                        text-sm font-light cursor-pointer
+                        ${canOpenCanvas ? 'hover:opacity-90' : ''}
+                      `}
+                      onClick={() => canOpenCanvas && onCanvasToggle(index)}
                     >
-                      {/* Message Header (for AI messages only) */}
-                      {!isUserMessage && msg.headerText && (
-                        <div className={`flex items-start space-x-1 mb-1 ${getThemeClasses('text')} opacity-75 text-xs`}>
-                          {IconComponent && (
-                            <IconComponent className={`w-3 h-3 ${iconColorClass}`} />
-                          )}
-                          <span>{msg.headerText}</span>
-                        </div>
-                      )}
+                      <div className="flex items-start space-x-2">
+                        {msg.type === 'code' ? (
+                          <pre className={`w-full overflow-auto rounded-md p-2 whitespace-pre-wrap ${theme === 'dark' ? 'bg-stone-800 text-stone-200' : theme === 'light' ? 'bg-stone-200 text-stone-800' : 'bg-[rgb(215,205,190)] text-[rgb(100,80,60)]'}`}>
+                            <code>{msg.text}</code>
+                          </pre>
+                        ) : msg.type === 'tetris_game' ? (
+                          <TetrisGame theme={theme} getThemeClasses={getThemeClasses} />
+                        ) : (
+                          <span className={isUserMessage ? '' : 'font-normal'}>
+                            {msg.text}
+                          </span>
+                        )}
 
-                      <div
-                        className={`max-w-[80%] p-3 relative rounded-xl break-words
-                          ${isUserMessage ? getThemeClasses('user-message-bg') : getThemeClasses('ai-message-bg')}
-                          ${isUserMessage ? getThemeClasses('user-message-text') : getThemeClasses('text')}
-                          ${borderColorClass ? `border ${borderColorClass}` : ''}
-                          ${isPillMessage ? `${bgColorSubtleClass} border-opacity-50` : ''}
-                          text-sm font-light cursor-pointer
-                          ${canOpenCanvas ? 'hover:opacity-90' : ''}
-                        `}
-                        onClick={() => canOpenCanvas && onCanvasToggle(index)}
-                      >
-                        <div className="flex items-start space-x-2">
-                          {msg.type === 'code' ? (
-                            <pre className={`w-full overflow-auto rounded-md p-2 whitespace-pre-wrap ${theme === 'dark' ? 'bg-stone-800 text-stone-200' : theme === 'light' ? 'bg-stone-200 text-stone-800' : 'bg-[rgb(215,205,190)] text-[rgb(100,80,60)]'}`}>
-                              <code>{msg.text}</code>
-                            </pre>
-                          ) : msg.type === 'tetris_game' ? (
-                            <TetrisGame theme={theme} getThemeClasses={getThemeClasses} />
-                          ) : (
-                            <span className={isUserMessage ? '' : 'font-normal'}>
-                              {msg.text}
-                            </span>
-                          )}
-
-                          {isInProgress && (
-                            <Spinner className="w-4 h-4 flex-shrink-0" />
-                          )}
-                          {CompletionIcon && !isInProgress && (
-                            <CompletionIcon className={`w-4 h-4 flex-shrink-0 ${completionIconColorClass}`} />
-                          )}
-                          {canOpenCanvas && (
-                            <ChevronRight className={`w-4 h-4 flex-shrink-0 self-center ${iconColorClass}`} />
-                          )}
-                        </div>
-
-                        {isActionRequired && msg.actions && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {msg.actions.map((action: { label: string; action: string }, actionIdx: number) => (
-                              <motion.button
-                                key={actionIdx}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className={`px-2 py-1 rounded-md text-xs border ${borderColorClass} ${iconColorClass} hover:opacity-80`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  console.log(`Action: ${action.action}`);
-                                }}
-                              >
-                                {action.label}
-                              </motion.button>
-                            ))}
-                          </div>
+                        {isInProgress && (
+                          <Spinner className="w-4 h-4 flex-shrink-0" />
+                        )}
+                        {CompletionIcon && !isInProgress && (
+                          <CompletionIcon className={`w-4 h-4 flex-shrink-0 ${completionIconColorClass}`} />
+                        )}
+                        {canOpenCanvas && (
+                          <ChevronRight className={`w-4 h-4 flex-shrink-0 self-center ${iconColorClass}`} />
                         )}
                       </div>
 
-                      {/* Message Actions (Like/Unlike, Copy) */}
-                      {msg.role === 'ai' && (
-                        <div className="h-6 mt-2 relative w-full">
-                          <AnimatePresence>
-                            {hoveredMessageIndex === index && (
-                              <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="absolute top-0 left-0 flex space-x-2 text-xs opacity-75"
-                              >
-                                <motion.button className={`flex items-center ${getThemeClasses('button-text')} hover:text-white`}>
-                                  <ThumbsUp className="w-3 h-3" />
-                                </motion.button>
-                                <motion.button className={`flex items-center ${getThemeClasses('button-text')} hover:text-white`}>
-                                  <ThumbsDown className="w-3 h-3" />
-                                </motion.button>
-                                <motion.button className={`flex items-center ${getThemeClasses('button-text')} hover:text-white`}>
-                                  <Copy className="w-3 h-3" />
-                                </motion.button>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+                      {isActionRequired && msg.actions && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {msg.actions.map((action: { label: string; action: string }, actionIdx: number) => (
+                            <motion.button
+                              key={actionIdx}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className={`px-2 py-1 rounded-md text-xs border ${borderColorClass} ${iconColorClass} hover:opacity-80`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`Action: ${action.action}`);
+                              }}
+                            >
+                              {action.label}
+                            </motion.button>
+                          ))}
                         </div>
                       )}
                     </div>
-                  );
-                })}
 
-                {/* Bottom Gradient - now contained within the scrollable area */}
-                <div className={`sticky bottom-0 left-0 right-0 h-8 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-t from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-t from-stone-100 to-transparent' : 'bg-gradient-to-t from-[rgb(235,225,210)] to-transparent'}`}></div>
-                <div ref={messagesEndRef} />
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    {/* Message Actions (Like/Unlike, Copy) */}
+                    {msg.role === 'ai' && (
+                      <div className="h-6 mt-2 relative w-full">
+                        <AnimatePresence>
+                          {hoveredMessageIndex === index && (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute top-0 left-0 flex space-x-2 text-xs opacity-75"
+                            >
+                              <motion.button className={`flex items-center ${getThemeClasses('button-text')} hover:text-white`}>
+                                <ThumbsUp className="w-3 h-3" />
+                              </motion.button>
+                              <motion.button className={`flex items-center ${getThemeClasses('button-text')} hover:text-white`}>
+                                <ThumbsDown className="w-3 h-3" />
+                              </motion.button>
+                              <motion.button className={`flex items-center ${getThemeClasses('button-text')} hover:text-white`}>
+                                <Copy className="w-3 h-3" />
+                              </motion.button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Gradient */}
+            <div className={`sticky bottom-0 left-0 right-0 h-8 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-t from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-t from-stone-100 to-transparent' : 'bg-gradient-to-t from-[rgb(235,225,210)] to-transparent'}`}></div>
+            <div ref={messagesEndRef} />
+          </div>
         </div>
 
-        {/* Message Input Panel */}
-        <MessageInputPanel
-          theme={theme}
-          getThemeClasses={getThemeClasses}
-          onSendMessage={onSendMessage}
-          serverStatus={serverStatus}
-          onServerStatusChange={onServerStatusChange}
-        />
+        {/* Message Input Panel - Fixed at bottom */}
+        <div className="flex-shrink-0">
+          <MessageInputPanel
+            theme={theme}
+            getThemeClasses={getThemeClasses}
+            onSendMessage={onSendMessage}
+            serverStatus={serverStatus}
+            onServerStatusChange={onServerStatusChange}
+          />
+        </div>
       </div>
     </div>
   );

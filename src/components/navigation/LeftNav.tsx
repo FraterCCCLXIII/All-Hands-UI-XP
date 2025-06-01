@@ -13,7 +13,8 @@ import {
   Bot,
   User,
   LucideIcon,
-  Info
+  Info,
+  Plus
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../../types/theme';
 import { Logo } from '../common/Logo';
@@ -33,6 +34,7 @@ interface LeftNavProps {
 }
 
 const navItems: NavItem[] = [
+  { icon: Plus, label: 'New Project', action: 'new-project' },
   { icon: Code2, label: 'Code', action: 'code' },
   { icon: MessageSquare, label: 'Git', action: 'git' },
   { icon: Package, label: 'Dependencies', action: 'dependencies' },
@@ -72,20 +74,29 @@ export const LeftNav: React.FC<LeftNavProps> = ({
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeItem === item.action;
+          const isNewProject = item.action === 'new-project';
           
           return (
             <motion.button
               key={item.action}
               onClick={() => onNavItemClick(item.action)}
               className={`w-full mb-2 flex items-center rounded-lg transition-colors ${
-                isActive 
-                  ? `${getThemeClasses('active-button-bg')} ${getThemeClasses('active-button-text')}`
-                  : `${getThemeClasses('text')} hover:${getThemeClasses('button-hover')}`
+                isNewProject 
+                  ? `${getThemeClasses('pill-button-bg')} ${getThemeClasses('pill-button-text')} hover:opacity-90`
+                  : isActive 
+                    ? `${getThemeClasses('active-button-bg')} ${getThemeClasses('active-button-text')}`
+                    : `${getThemeClasses('text')} hover:${getThemeClasses('button-hover')}`
               } p-2`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? getThemeClasses('active-button-text') : getThemeClasses('icon-color')}`} />
+              <Icon className={`w-5 h-5 flex-shrink-0 ${
+                isNewProject 
+                  ? getThemeClasses('pill-button-text')
+                  : isActive 
+                    ? getThemeClasses('active-button-text') 
+                    : getThemeClasses('icon-color')
+              }`} />
               <AnimatePresence>
                 {isExpanded && (
                   <motion.span
@@ -94,7 +105,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ duration: 0.2 }}
                     className={`ml-3 text-sm font-medium whitespace-nowrap ${
-                      isActive ? getThemeClasses('active-button-text') : getThemeClasses('text')
+                      isNewProject
+                        ? getThemeClasses('pill-button-text')
+                        : isActive 
+                          ? getThemeClasses('active-button-text') 
+                          : getThemeClasses('text')
                     }`}
                   >
                     {item.label}
