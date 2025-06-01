@@ -1,83 +1,107 @@
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
 import { CanvasHeader } from './CanvasHeader';
-import { CanvasContent } from './CanvasContent';
-import { CanvasErrorModal } from './CanvasErrorModal';
-import { CanvasResizer } from './CanvasResizer';
-import { ThemeElement } from '../../types/theme';
+import { TerminalDrawer } from './TerminalDrawer';
 import { MessageType } from '../../types/message';
+import { ThemeElement } from '../../types/theme';
 
-// Separate interfaces for different responsibilities
-interface CanvasBaseProps {
+interface CanvasLayoutProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
-  isVisible: boolean;
-  onClose: () => void;
+  children: React.ReactNode;
 }
 
-interface CanvasLayoutProps extends CanvasBaseProps {
-  isMaximized: boolean;
-  onToggleMaximize: () => void;
-  messageColumnWidth: number;
-  onResize: (newWidth: number) => void;
-  minWidth: number;
-  maxWidth: number;
-}
-
-interface CanvasContentProps extends CanvasBaseProps {
+interface CanvasContentProps {
+  theme: string;
+  getThemeClasses: (element: ThemeElement) => string;
   content: {
     type: MessageType;
     text: string;
     headerText?: string;
-  } | null;
+  };
 }
 
-interface CanvasErrorProps extends CanvasBaseProps {
-  showError: boolean;
-  onErrorClose: () => void;
-  onShowConsole: () => void;
+interface CanvasErrorProps {
+  theme: string;
+  getThemeClasses: (element: ThemeElement) => string;
+  error: string;
 }
 
-// Main Canvas component that composes other components
-export const Canvas: React.FC<CanvasLayoutProps & CanvasContentProps & CanvasErrorProps> = ({
-  theme,
-  getThemeClasses,
-  isVisible,
-  onClose,
-  isMaximized,
-  onToggleMaximize,
-  content,
-  messageColumnWidth,
-  onResize,
-  minWidth,
-  maxWidth,
-  showError,
-  onErrorClose,
-  onShowConsole,
-}) => {
+export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasErrorProps> = (props) => {
+  const [currentView, setCurrentView] = useState<'changes' | 'code' | 'terminal' | 'browser' | 'preview'>('changes');
+  const [isTerminalVisible, setIsTerminalVisible] = useState(false);
+  const [terminalHeight, setTerminalHeight] = useState(200);
+
+  const handleTerminalResize = (newHeight: number) => {
+    setTerminalHeight(newHeight);
+  };
+
+  const handleTerminalMinimize = () => {
+    setTerminalHeight(32); // Collapse to just show header
+  };
+
+  const handleTerminalClose = () => {
+    setIsTerminalVisible(false);
+  };
+
+  const handleViewChange = (view: 'changes' | 'code' | 'terminal' | 'browser' | 'preview') => {
+    if (view === 'terminal') {
+      setIsTerminalVisible(!isTerminalVisible);
+    } else {
+      setCurrentView(view);
+    }
+  };
+
+  const renderContent = () => {
+    if ('content' in props && props.content) {
+      return (
+        <div className={`p-4 ${props.getThemeClasses('text')}`}>
+          {props.content.headerText && (
+            <h2 className={`text-lg font-semibold mb-4 ${props.getThemeClasses('text')}`}>
+              {props.content.headerText}
+            </h2>
+          )}
+          <div className="whitespace-pre-wrap">{props.content.text}</div>
+        </div>
+      );
+    }
+    
+    if ('error' in props) {
+      return (
+        <div className={`p-4 text-red-500 ${props.getThemeClasses('text')}`}>
+          {props.error}
+        </div>
+      );
+    }
+    
+    if ('children' in props) {
+      return props.children;
+    }
+    
+    return null;
+  };
+
   return (
-    <div className={`h-full flex flex-col rounded-lg ${getThemeClasses('canvas-bg')} ${getThemeClasses('border')} border shadow-lg overflow-hidden`}>
+    <div className={`flex flex-col h-full border rounded-lg ${props.getThemeClasses('border')}`}>
       <CanvasHeader
-        theme={theme}
-        getThemeClasses={getThemeClasses}
-        onClose={onClose}
-        onMaximize={onToggleMaximize}
-        isMaximized={isMaximized}
-        headerText={content?.headerText}
+        theme={props.theme}
+        getThemeClasses={props.getThemeClasses}
+        currentView={currentView}
+        isTerminalVisible={isTerminalVisible}
+        onViewChange={handleViewChange}
       />
-      <div className="flex-1 overflow-y-auto">
-        <CanvasContent
-          theme={theme}
-          getThemeClasses={getThemeClasses}
-          content={content}
-        />
+      
+      <div className="flex-1 overflow-auto">
+        {renderContent()}
       </div>
-      <CanvasErrorModal
-        theme={theme}
-        getThemeClasses={getThemeClasses}
-        showError={showError}
-        onErrorClose={onErrorClose}
-        onShowConsole={onShowConsole}
+
+      <TerminalDrawer
+        theme={props.theme}
+        getThemeClasses={props.getThemeClasses}
+        isVisible={isTerminalVisible}
+        height={terminalHeight}
+        onResize={handleTerminalResize}
+        onMinimize={handleTerminalMinimize}
+        onClose={handleTerminalClose}
       />
     </div>
   );
