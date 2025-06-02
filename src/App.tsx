@@ -7,7 +7,6 @@ import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
 import { LoadingScreen } from './screens';
-import { Gripper } from './components/common/Gripper';
 import SharePreview from './components/common/SharePreview';
 
 const themeClasses: ThemeClassMap = {
@@ -109,7 +108,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
-  const [selectedMessageIndex] = useState<number | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
