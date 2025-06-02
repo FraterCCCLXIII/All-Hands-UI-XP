@@ -24,6 +24,7 @@ import Credits from '../common/Credits';
 import CurrentProjects from './CurrentProjects';
 import UserSettings from '../common/UserSettings';
 import InviteTeam from '../common/InviteTeam';
+import HomeInfo from '../common/HomeInfo';
 
 interface NavItem {
   icon: LucideIcon;
@@ -82,6 +83,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   const collapseTimeout = useRef<NodeJS.Timeout | null>(null);
   const [userSettingsOpen, setUserSettingsOpen] = useState(false);
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false);
+  const [showHomeInfo, setShowHomeInfo] = useState(false);
 
   const handleMouseLeave = () => {
     if (isExpanded) {
@@ -129,8 +131,24 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       )}
 
       {/* Logo - Fixed position */}
-      <div className="w-16 h-16 mt-2 mb-4 flex items-center justify-start px-4">
-        <Logo className="w-8 h-8" />
+      <div className="w-16 h-16 mt-2 mb-4 flex items-center justify-start px-4 relative"
+        onMouseEnter={() => setShowHomeInfo(true)}
+        onMouseLeave={() => setShowHomeInfo(false)}
+      >
+        <Logo className="w-8 h-8 cursor-pointer" />
+        <AnimatePresence>
+          {showHomeInfo && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.18 }}
+              className="absolute left-1/2 top-full z-[200] -translate-x-1/2 mt-2"
+            >
+              <HomeInfo />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Navigation Items */}

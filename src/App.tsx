@@ -10,6 +10,7 @@ import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
 import { LoadingScreen } from './screens';
 import { Gripper } from './components/common/Gripper';
 import { CanvasResizer } from './components/canvas/CanvasResizer';
+import SharePreview from './components/common/SharePreview';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -121,6 +122,7 @@ function App() {
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
   const minCanvasWidth = 30; // Minimum 30% width
   const maxCanvasWidth = 70; // Maximum 70% width
+  const [showSharePreview, setShowSharePreview] = useState(false);
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -183,8 +185,7 @@ function App() {
   }, []);
 
   const handleShare = useCallback(() => {
-    // Implement share functionality
-    console.log('Share clicked');
+    setShowSharePreview(true);
   }, []);
 
   const handleRun = useCallback(() => {
@@ -309,6 +310,12 @@ function App() {
                   )}
                 </div>
               </div>
+              {showSharePreview && (
+                <SharePreview
+                  shareUrl={window.location.href}
+                  onClose={() => setShowSharePreview(false)}
+                />
+              )}
             </div>
           </motion.div>
         )}
