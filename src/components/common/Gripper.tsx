@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { ThemeElement } from '../../types/theme';
 
 interface GripperProps {
-  theme: string;
   getThemeClasses: (element: ThemeElement) => string;
-  onResize: (width: number) => void;
+  onResize: (percentage: number) => void;
   initialWidth: number;
   minWidth: number;
   maxWidth: number;
 }
 
 export const Gripper: React.FC<GripperProps> = ({
-  theme,
   getThemeClasses,
   onResize,
   initialWidth,

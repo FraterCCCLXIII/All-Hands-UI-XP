@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Send, 
   ThumbsUp, 
   ThumbsDown, 
   Copy, 
@@ -30,14 +29,14 @@ import { Message, MessageType } from '../../types/message';
 import { ThemeElement } from '../../types/theme';
 import { GitControls } from '../git/GitControls';
 import ProjectLoading from '../common/ProjectLoading';
+import { ServerStatus } from '../common/ServerStatus';
 
 interface ChatThreadProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   messages: Message[];
-  onSendMessage: (message: string) => void;
-  isLoading: boolean;
   serverStatus: 'active' | 'stopped' | 'thinking' | 'connecting';
+  onSendMessage: (message: string) => void;
   onServerStatusChange: (status: 'active' | 'stopped' | 'thinking' | 'connecting') => void;
   onCanvasToggle: (messageIndex: number) => void;
 }
@@ -88,16 +87,12 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
   theme,
   getThemeClasses,
   messages,
-  onSendMessage,
-  isLoading,
   serverStatus,
+  onSendMessage,
   onServerStatusChange,
   onCanvasToggle,
 }) => {
   const [hoveredMessageIndex, setHoveredMessageIndex] = useState<number | null>(null);
-  const [showServerControlDropdown, setShowServerControlDropdown] = useState(false);
-  const serverControlDropdownRef = useRef<HTMLDivElement>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
 
   // Auto-scroll to bottom when new messages arrive
@@ -308,14 +303,12 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
             {/* Message Input Panel - Fixed at bottom */}
             <div className="flex-shrink-0">
               <MessageInputPanel
-                theme={theme}
                 getThemeClasses={getThemeClasses}
                 onSendMessage={onSendMessage}
                 serverStatus={serverStatus}
                 onServerStatusChange={onServerStatusChange}
               />
               <GitControls
-                theme={theme}
                 getThemeClasses={getThemeClasses}
                 projectName="my-project"
                 branchName="main"

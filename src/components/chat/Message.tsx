@@ -2,28 +2,22 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ThemeElement } from '../../types/theme';
 import { MessageType } from '../../types/message';
+import { Theme } from '../../types/theme';
 
 interface MessageProps {
-  role: 'user' | 'ai';
-  content: string;
-  type: MessageType;
-  status: 'completed' | 'in_progress' | 'action_required' | 'success' | 'fail';
-  headerText?: string;
-  actions?: Array<{ label: string; action: string }>;
-  theme: string;
+  theme: Theme;
   getThemeClasses: (element: ThemeElement) => string;
+  message: {
+    role: 'user' | 'ai';
+    text: string;
+    headerText?: string;
+    actions?: { label: string; action: string }[];
+  };
+  onAction?: (action: string) => void;
 }
 
-export const Message: React.FC<MessageProps> = ({
-  role,
-  content,
-  type,
-  status,
-  headerText,
-  actions,
-  theme,
-  getThemeClasses,
-}) => {
+export const Message: React.FC<MessageProps> = ({ getThemeClasses, message, onAction }) => {
+  const { role, text, headerText, actions } = message;
   const isUser = role === 'user';
 
   return (
@@ -43,7 +37,7 @@ export const Message: React.FC<MessageProps> = ({
       >
         <div className="flex items-start space-x-2">
           <span className={isUser ? '' : 'font-normal'}>
-            {content}
+            {text}
           </span>
         </div>
         {actions && (
@@ -57,6 +51,7 @@ export const Message: React.FC<MessageProps> = ({
                 onClick={(e) => {
                   e.stopPropagation();
                   console.log(`Action: ${action.action}`);
+                  onAction && onAction(action.action);
                 }}
               >
                 {action.label}

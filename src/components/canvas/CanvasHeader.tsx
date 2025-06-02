@@ -3,11 +3,11 @@ import { Code, Terminal, GitFork, Globe, Monitor } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 
 interface CanvasHeaderProps {
-  theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   currentView: 'changes' | 'code' | 'terminal' | 'browser' | 'preview';
   isTerminalVisible: boolean;
   onViewChange: (view: 'changes' | 'code' | 'terminal' | 'browser' | 'preview') => void;
+  onClose: () => void;
 }
 
 const navItems = [
@@ -19,11 +19,11 @@ const navItems = [
 ] as const;
 
 export const CanvasHeader: React.FC<CanvasHeaderProps> = ({
-  theme,
   getThemeClasses,
   currentView,
   isTerminalVisible,
   onViewChange,
+  onClose,
 }) => {
   return (
     <div className={`flex items-center border-b ${getThemeClasses('border')} py-2`}>

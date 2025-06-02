@@ -4,7 +4,6 @@ import { X, AlertCircle } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 
 interface CanvasErrorModalProps {
-  theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   showError: boolean;
   onErrorClose: () => void;
@@ -12,7 +11,6 @@ interface CanvasErrorModalProps {
 }
 
 export const CanvasErrorModal: React.FC<CanvasErrorModalProps> = ({
-  theme,
   getThemeClasses,
   showError,
   onErrorClose,

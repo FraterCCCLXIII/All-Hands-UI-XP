@@ -1,15 +1,13 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
 import { Canvas } from './components/canvas/Canvas';
-import { StatusIndicator } from './components/common/StatusIndicator';
 import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
-import { Message, MessageType } from './types/message';
+import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
 import { LoadingScreen } from './screens';
 import { Gripper } from './components/common/Gripper';
-import { CanvasResizer } from './components/canvas/CanvasResizer';
 import SharePreview from './components/common/SharePreview';
 
 const themeClasses: ThemeClassMap = {
@@ -106,12 +104,12 @@ const themeClasses: ThemeClassMap = {
 };
 
 function App() {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme] = useState<Theme>('dark');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
-  const [selectedMessageIndex, setSelectedMessageIndex] = useState<number | null>(null);
+  const [selectedMessageIndex] = useState<number | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
@@ -270,7 +268,6 @@ function App() {
                       theme={theme}
                       getThemeClasses={getThemeClasses}
                       messages={messages}
-                      isProcessing={false}
                       serverStatus={serverStatus}
                       projectName={projectTitle}
                       branchName="main"
@@ -289,7 +286,6 @@ function App() {
                     {canvasVisible && (
                       <div className="absolute right-0 top-0 bottom-0 z-10">
                         <Gripper
-                          theme={theme}
                           getThemeClasses={getThemeClasses}
                           onResize={handleCanvasResize}
                           initialWidth={canvasWidth}

@@ -4,7 +4,6 @@ import { Minimize2, X } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 
 interface TerminalDrawerProps {
-  theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   isVisible: boolean;
   height: number;
@@ -14,7 +13,6 @@ interface TerminalDrawerProps {
 }
 
 export const TerminalDrawer: React.FC<TerminalDrawerProps> = ({
-  theme,
   getThemeClasses,
   isVisible,
   height,

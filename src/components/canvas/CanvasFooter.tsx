@@ -7,14 +7,12 @@ interface CanvasFooterProps {
   getThemeClasses: (element: ThemeElement) => string;
   isConsoleVisible: boolean;
   consoleHeight: number;
-  onConsoleResize: (newHeight: number) => void;
 }
 
 export const CanvasFooter: React.FC<CanvasFooterProps> = ({
   getThemeClasses,
   isConsoleVisible,
   consoleHeight,
-  onConsoleResize,
 }) => {
   return (
     <div className={`p-2 border-t ${getThemeClasses('border')} flex justify-between items-center`}>

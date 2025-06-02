@@ -5,7 +5,6 @@ import { ThemeElement } from '../../types/theme';
 import { ServerStatus } from '../common/ServerStatus';
 
 interface MessageInputPanelProps {
-  theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   onSendMessage: (message: string) => void;
   serverStatus: 'active' | 'stopped' | 'thinking' | 'connecting';
@@ -13,7 +12,6 @@ interface MessageInputPanelProps {
 }
 
 export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
-  theme,
   getThemeClasses,
   onSendMessage,
   serverStatus,

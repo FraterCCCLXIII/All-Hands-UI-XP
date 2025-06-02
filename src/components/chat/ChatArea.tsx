@@ -10,7 +10,6 @@ interface ChatAreaProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   messages: MessageType[];
-  isProcessing: boolean;
   serverStatus: 'active' | 'stopped' | 'thinking' | 'connecting';
   projectName: string;
   branchName: string;
@@ -30,7 +29,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   theme,
   getThemeClasses,
   messages,
-  isProcessing,
   serverStatus,
   projectName,
   branchName,
@@ -100,14 +98,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       </div>
       <div>
         <MessageInputPanel
-          theme={theme}
           getThemeClasses={getThemeClasses}
           onSendMessage={onSendMessage}
           serverStatus={serverStatus}
           onServerStatusChange={onServerStatusChange}
         />
         <GitControls
-          theme={theme}
           getThemeClasses={getThemeClasses}
           projectName={projectName}
           branchName={branchName}
