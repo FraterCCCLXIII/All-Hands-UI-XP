@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Github, GitBranch, ChevronDown } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 import { WavingHand } from '../common/WavingHand';
-import { SuggestedTasks } from './SuggestedTasks';
+import SuggestedTasks from './SuggestedTasks';
 
 interface WelcomeScreenProps {
   theme: string;
@@ -50,7 +50,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 flex ${getThemeClasses('text')}`}>
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-hidden w-screen h-screen max-w-full max-h-full">
       {/* Main content container */}
       <div className="flex-1 flex justify-center">
         <div className="w-full max-w-[760px] flex flex-col h-full">
@@ -196,10 +196,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </div>
 
       {/* Right column with suggested tasks - fixed to viewport */}
-      <div className="fixed right-0 top-0 bottom-0 flex items-start">
-        <div className="w-80 mt-4 mr-4 mb-4 h-[calc(100vh-3rem)]">
-          <SuggestedTasks theme={theme} getThemeClasses={getThemeClasses} />
-        </div>
+      <div className="fixed right-0 top-4 h-[calc(100vh-3rem)] w-80 mt-4 mr-4 mb-4 max-h-[calc(100vh-3rem)] overflow-hidden">
+        <SuggestedTasks theme={theme} getThemeClasses={getThemeClasses} />
       </div>
     </div>
   );

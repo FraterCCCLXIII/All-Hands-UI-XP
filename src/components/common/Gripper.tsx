@@ -26,11 +26,11 @@ export const Gripper: React.FC<GripperProps> = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
 
-      const container = document.querySelector('.flex-1.flex.justify-center');
+      const container = document.querySelector('.flex-1.flex');
       if (!container) return;
 
       const containerRect = container.getBoundingClientRect();
-      const deltaX = startX - e.clientX;
+      const deltaX = e.clientX - startX;
       const deltaPercentage = (deltaX / containerRect.width) * 100;
       const newWidth = Math.min(Math.max(startWidth + deltaPercentage, minWidth), maxWidth);
       
@@ -61,7 +61,7 @@ export const Gripper: React.FC<GripperProps> = ({
 
   return (
     <div
-      className={`absolute left-0 top-0 bottom-0 w-1 cursor-col-resize ${getThemeClasses('hover-resizer-bg')} transition-colors duration-150`}
+      className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize ${getThemeClasses('hover-resizer-bg')} transition-colors duration-150`}
       onMouseDown={handleMouseDown}
     />
   );

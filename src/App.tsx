@@ -115,15 +115,9 @@ function App() {
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
+  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
   
   // Canvas resizing state
-  const minMessageColumnWidth = 250;
-  const maxMessageColumnWidth = 760;
-  const [messageColumnWidth, setMessageColumnWidth] = useState(minMessageColumnWidth);
-  
-  // Canvas error modal state
-  const [showCanvasErrorModal, setShowCanvasErrorModal] = useState(false);
-
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
   const minCanvasWidth = 30; // Minimum 30% width
   const maxCanvasWidth = 70; // Maximum 70% width
@@ -219,32 +213,31 @@ function App() {
   }, []);
 
   return (
-    <div className={`min-h-screen ${getThemeClasses('bg')} ${getThemeClasses('text')}`}>
-      <AnimatePresence mode="wait">
+    <div className={`h-screen flex flex-col ${getThemeClasses('bg')} ${getThemeClasses('text')}`}>
+      <AnimatePresence>
         {isLoading ? (
-          <LoadingScreen
-            key="loading"
-            theme={theme}
-            getThemeClasses={getThemeClasses}
-            isLoading={isLoading}
-            onLoadingComplete={handleLoadingComplete}
-          />
+          <LoadingScreen theme={theme} getThemeClasses={getThemeClasses} onLoadingComplete={handleLoadingComplete} />
         ) : (
           <motion.div
-            key="app"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex h-screen"
+            className="flex-1 flex relative overflow-hidden"
           >
             <LeftNav
               theme={theme}
               getThemeClasses={getThemeClasses}
+              isExpanded={isLeftNavExpanded}
+              onExpandChange={setIsLeftNavExpanded}
               onNavItemClick={handleNavItemClick}
-              activeItem={activeNavItem}
+              activeNavItem={activeNavItem}
             />
-            <div className="flex-1 flex flex-col">
+            <div 
+              className={`flex-1 flex flex-col transition-all duration-200 ${
+                isLeftNavExpanded ? 'ml-[17rem]' : 'ml-20'
+              }`}
+              style={{ minWidth: 0 }}
+            >
               {!isWelcomeScreenActive && (
                 <TopBar
                   theme={theme}
@@ -261,111 +254,59 @@ function App() {
                 />
               )}
               <div className="flex-1 flex">
-                <div className="flex w-full relative">
-                  <motion.div 
-                    className="flex-1 flex justify-center"
-                    style={{ 
-                      transform: canvasVisible ? `translateX(-${canvasWidth / 2}%)` : 'translateX(0)',
-                      width: '100%',
-                    }}
-                    animate={{ 
-                      transform: canvasVisible ? `translateX(-${canvasWidth / 2}%)` : 'translateX(0)',
-                    }}
-                    transition={{ 
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30
+                <div className="flex w-full h-full">
+                  {/* Chat Area Column */}
+                  <div
+                    className={`h-full transition-all duration-400 ease-out${!canvasVisible ? ' flex justify-center' : ''}`}
+                    style={{
+                      width: canvasVisible ? `calc(${100 - canvasWidth}% - 0.5rem)` : '100%',
+                      minWidth: 0,
+                      marginRight: canvasVisible ? '1rem' : 0,
+                      ...(canvasVisible ? {} : { maxWidth: '760px' }),
                     }}
                   >
-                    <motion.div 
-                      className="w-full flex flex-col h-full group relative"
-                      style={{ 
-                        maxWidth: canvasVisible ? `calc(760px - ${canvasWidth * 3.8}px)` : '760px',
-                      }}
-                      animate={{ 
-                        maxWidth: canvasVisible ? `calc(760px - ${canvasWidth * 3.8}px)` : '760px',
-                      }}
-                      transition={{ 
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 30
+                    <ChatArea
+                      theme={theme}
+                      getThemeClasses={getThemeClasses}
+                      messages={messages}
+                      isProcessing={false}
+                      serverStatus={serverStatus}
+                      projectName={projectTitle}
+                      branchName="main"
+                      userName="User"
+                      onSendMessage={handleSendMessage}
+                      onServerStatusChange={setServerStatus}
+                      onPush={handlePush}
+                      onPull={handlePull}
+                      onCreatePR={handleCreatePR}
+                      onRepoSelect={handleRepoSelect}
+                      onBranchSelect={handleBranchSelect}
+                      onCreateNewRepo={handleCreateNewRepo}
+                      onWelcomeScreenChange={setIsWelcomeScreenActive}
+                    />
+                  </div>
+                  {/* Canvas Column */}
+                  {canvasVisible && (
+                    <div
+                      className="h-full transition-all duration-400 ease-out flex flex-col mr-4"
+                      style={{
+                        width: `calc(${canvasWidth}% - 0.5rem)`,
+                        minWidth: 0,
                       }}
                     >
-                      <ChatArea
-                        theme={theme}
-                        getThemeClasses={getThemeClasses}
-                        messages={messages}
-                        isProcessing={false}
-                        serverStatus={serverStatus}
-                        projectName={projectTitle}
-                        branchName="main"
-                        userName="User"
-                        onSendMessage={handleSendMessage}
-                        onServerStatusChange={setServerStatus}
-                        onPush={handlePush}
-                        onPull={handlePull}
-                        onCreatePR={handleCreatePR}
-                        onRepoSelect={handleRepoSelect}
-                        onBranchSelect={handleBranchSelect}
-                        onCreateNewRepo={handleCreateNewRepo}
-                        onWelcomeScreenChange={setIsWelcomeScreenActive}
-                      />
-                      {canvasVisible && (
-                        <div className="absolute right-0 top-0 bottom-0">
-                          <CanvasResizer
-                            getThemeClasses={getThemeClasses}
-                            currentWidth={messageColumnWidth}
-                            onResize={setMessageColumnWidth}
-                            minWidth={minMessageColumnWidth}
-                            maxWidth={maxMessageColumnWidth}
-                          />
-                        </div>
-                      )}
-                    </motion.div>
-                  </motion.div>
-                  <AnimatePresence>
-                    {canvasVisible && (
-                      <motion.div 
-                        className="fixed right-4 top-[80px] bottom-4"
-                        style={{ width: `calc(${canvasWidth}% - 1rem)` }}
-                        initial={{ x: '100%', opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: '100%', opacity: 0 }}
-                        transition={{ 
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 30
-                        }}
-                      >
-                        <div className="relative h-full">
-                          <Gripper
-                            theme={theme}
-                            getThemeClasses={getThemeClasses}
-                            onResize={setCanvasWidth}
-                            initialWidth={canvasWidth}
-                            minWidth={minCanvasWidth}
-                            maxWidth={maxCanvasWidth}
-                          />
-                          <Canvas
-                            theme={theme}
-                            getThemeClasses={getThemeClasses}
-                            isVisible={canvasVisible}
-                            onClose={() => setCanvasVisible(false)}
-                            isMaximized={false}
-                            onToggleMaximize={() => {}}
-                            content={selectedMessageIndex !== null ? messages[selectedMessageIndex] : null}
-                            messageColumnWidth={messageColumnWidth}
-                            onResize={setMessageColumnWidth}
-                            minWidth={minMessageColumnWidth}
-                            maxWidth={maxMessageColumnWidth}
-                            showError={showCanvasErrorModal}
-                            onErrorClose={() => setShowCanvasErrorModal(false)}
-                            onShowConsole={() => {}}
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      <div className="flex-1 flex flex-col pb-4">
+                        <Canvas
+                          theme={theme}
+                          getThemeClasses={getThemeClasses}
+                          content={selectedMessageIndex !== null ? messages[selectedMessageIndex] : { type: 'user', text: '', headerText: 'Canvas' }}
+                          onResize={handleCanvasResize}
+                          initialWidth={canvasWidth}
+                          minWidth={minCanvasWidth}
+                          maxWidth={maxCanvasWidth}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

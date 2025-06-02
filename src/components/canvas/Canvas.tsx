@@ -3,6 +3,7 @@ import { CanvasHeader } from './CanvasHeader';
 import { TerminalDrawer } from './TerminalDrawer';
 import { MessageType } from '../../types/message';
 import { ThemeElement } from '../../types/theme';
+import { Gripper } from '../common/Gripper';
 
 interface CanvasLayoutProps {
   theme: string;
@@ -18,6 +19,10 @@ interface CanvasContentProps {
     text: string;
     headerText?: string;
   };
+  onResize?: (width: number) => void;
+  initialWidth?: number;
+  minWidth?: number;
+  maxWidth?: number;
 }
 
 interface CanvasErrorProps {
@@ -81,7 +86,7 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasErr
   };
 
   return (
-    <div className={`flex flex-col h-full border rounded-lg ${props.getThemeClasses('border')}`}>
+    <div className={`flex flex-col h-full border rounded-lg ${props.getThemeClasses('border')}`} style={{ position: 'relative' }}>
       <CanvasHeader
         theme={props.theme}
         getThemeClasses={props.getThemeClasses}
@@ -90,8 +95,18 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasErr
         onViewChange={handleViewChange}
       />
       
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-auto relative">
         {renderContent()}
+        {'onResize' in props && props.onResize && (
+          <Gripper
+            theme={props.theme}
+            getThemeClasses={props.getThemeClasses}
+            onResize={props.onResize}
+            initialWidth={props.initialWidth ?? 50}
+            minWidth={props.minWidth ?? 30}
+            maxWidth={props.maxWidth ?? 70}
+          />
+        )}
       </div>
 
       <TerminalDrawer
