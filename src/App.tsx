@@ -8,6 +8,7 @@ import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
 import { LoadingScreen } from './screens';
 import SharePreview from './components/common/SharePreview';
+import { Gripper } from './components/common/Gripper';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -113,7 +114,6 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
-  
   // Canvas resizing state
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
   const minCanvasWidth = 30; // Minimum 30% width
@@ -306,7 +306,7 @@ function App() {
                         <Canvas
                           theme={theme}
                           getThemeClasses={getThemeClasses}
-                          content={selectedMessageIndex !== null ? messages[selectedMessageIndex] : { type: 'user', text: '', headerText: 'Canvas' }}
+                          content={{ type: 'user', text: '', headerText: 'Canvas' }}
                           onResize={handleCanvasResize}
                           initialWidth={canvasWidth}
                           minWidth={minCanvasWidth}
