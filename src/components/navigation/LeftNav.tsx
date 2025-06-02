@@ -84,6 +84,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   const [userSettingsOpen, setUserSettingsOpen] = useState(false);
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false);
   const [showHomeInfo, setShowHomeInfo] = useState(false);
+  const [logoHovered, setLogoHovered] = useState(false);
 
   const handleMouseLeave = () => {
     if (isExpanded) {
@@ -131,11 +132,20 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       )}
 
       {/* Logo - Fixed position */}
-      <div className="w-16 h-16 mt-2 mb-4 flex items-center justify-start px-4 relative"
+      <div className="w-16 mt-2 mb-4 flex items-center justify-start px-4 relative"
         onMouseEnter={() => setShowHomeInfo(true)}
         onMouseLeave={() => setShowHomeInfo(false)}
       >
-        <Logo className="w-8 h-8 cursor-pointer" />
+        <motion.div
+          onMouseEnter={() => setLogoHovered(true)}
+          onMouseLeave={() => setLogoHovered(false)}
+          animate={logoHovered ? { y: [0, -12, 0, -6, 0] } : { y: 0 }}
+          transition={logoHovered ? { duration: 0.5, times: [0, 0.3, 0.6, 0.8, 1], ease: 'easeOut' } : {}}
+          onAnimationComplete={() => setLogoHovered(false)}
+          style={{ display: 'inline-block' }}
+        >
+          <Logo className="w-8 h-8 cursor-pointer" hovered={showHomeInfo} />
+        </motion.div>
         <AnimatePresence>
           {showHomeInfo && (
             <motion.div
@@ -163,15 +173,15 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               key={item.action}
               onClick={() => onNavItemClick(item.action)}
               layout
-              className={`${isNewProject && isExpanded ? 'w-full' : ''} mb-2 flex items-center rounded-lg transition-colors whitespace-nowrap ${
-                isNewProject 
-                  ? `${getThemeClasses('pill-button-bg')} ${getThemeClasses('pill-button-text')} hover:opacity-90`
-                  : isActive 
+              className={`${isNewProject && isExpanded ? 'w-full' : ''} mb-2 flex items-center rounded-lg transition-colors whitespace-nowrap p-2 ${
+                isNewProject
+                  ? `${getThemeClasses('pill-button-text')} hover:${getThemeClasses('pill-button-bg')} hover:opacity-90`
+                  : isActive
                     ? `${getThemeClasses('active-button-bg')} ${getThemeClasses('active-button-text')}`
                     : `${getThemeClasses('text')} hover:${getThemeClasses('button-hover')}`
-              } p-2`}
-              transition={{ duration: 0.2 }}
-              whileHover={{ scale: 1.02 }}
+              }`}
+              transition={{ duration: 0.18 }}
+              whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.98 }}
             >
               <Icon className={`w-5 h-5 flex-shrink-0 ${
@@ -184,11 +194,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               <AnimatePresence>
                 {isExpanded && (
                   <motion.span
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className={`ml-3 text-sm font-medium whitespace-nowrap ${
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.14 }}
+                    className={`ml-3 text-sm font-medium whitespace-nowrap overflow-hidden ${
                       isNewProject
                         ? getThemeClasses('pill-button-text')
                         : isActive 
