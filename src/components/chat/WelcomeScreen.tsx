@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Github, GitBranch, ChevronDown } from 'lucide-react';
+import { Github, GitBranch, ChevronDown, Plus } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 import { WavingHand } from '../common/WavingHand';
 import SuggestedTasks from './SuggestedTasks';
@@ -83,16 +83,18 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <h3 className="text-xl font-normal mb-6">Start a New Project or Continue</h3>
                 
                 <div className="flex flex-col md:flex-row justify-center items-center md:space-x-8 space-y-6 md:space-y-0">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="relative" ref={repoDropdownRef}>
+                  <div className="flex flex-col items-center space-y-4 w-full max-w-md">
+                    <div className="relative w-full" ref={repoDropdownRef}>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`flex items-center space-x-2 px-4 py-2 rounded-md text-base ${getThemeClasses('button-bg')} ${getThemeClasses('button-text')} hover:opacity-90`}
+                        className={`flex w-full items-center justify-between px-4 py-2 rounded-md text-base ${getThemeClasses('button-bg')} ${getThemeClasses('button-text')} hover:opacity-90`}
                         onClick={() => setShowRepoDropdown(!showRepoDropdown)}
                       >
-                        <Github className="w-5 h-5" />
-                        <span>Select Repo</span>
+                        <div className="flex items-center space-x-2">
+                           <Github className="w-5 h-5" />
+                           <span>Select Repo</span>
+                        </div>
                         <ChevronDown className="w-4 h-4" />
                       </motion.button>
                       <AnimatePresence>
@@ -102,7 +104,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.2 }}
-                            className={`absolute bottom-full left-0 mb-2 w-48 rounded-md shadow-lg ${getThemeClasses('panel-bg')} border ${getThemeClasses('border')} z-20`}
+                            className={`absolute top-full left-0 right-0 mt-2 rounded-md shadow-lg ${getThemeClasses('panel-bg')} border ${getThemeClasses('border')} z-20`}
                           >
                             <div className="py-1">
                               <button
@@ -131,15 +133,17 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       </AnimatePresence>
                     </div>
 
-                    <div className="relative" ref={branchDropdownRef}>
+                    <div className="relative w-full" ref={branchDropdownRef}>
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className={`flex items-center space-x-2 px-4 py-2 rounded-md text-base ${getThemeClasses('button-bg')} ${getThemeClasses('button-text')} hover:opacity-90`}
+                        className={`flex w-full items-center justify-between px-4 py-2 rounded-md text-base ${getThemeClasses('button-bg')} ${getThemeClasses('button-text')} hover:opacity-90`}
                         onClick={() => setShowBranchDropdown(!showBranchDropdown)}
                       >
-                        <GitBranch className="w-5 h-5" />
-                        <span>Select Branch</span>
+                        <div className="flex items-center space-x-2">
+                           <GitBranch className="w-5 h-5" />
+                           <span>Select Branch</span>
+                        </div>
                         <ChevronDown className="w-4 h-4" />
                       </motion.button>
                       <AnimatePresence>
@@ -149,7 +153,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.2 }}
-                            className={`absolute bottom-full left-0 mb-2 w-48 rounded-md shadow-lg ${getThemeClasses('panel-bg')} border ${getThemeClasses('border')} z-20`}
+                            className={`absolute top-full left-0 right-0 mt-2 rounded-md shadow-lg ${getThemeClasses('panel-bg')} border ${getThemeClasses('border')} z-20`}
                           >
                             <div className="py-1">
                               <button
@@ -175,21 +179,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         )}
                       </AnimatePresence>
                     </div>
-                  </div>
-
-                  <div className="flex flex-col items-center justify-center">
-                    <span className={`text-base ${getThemeClasses('status-text')} mb-4`}>OR</span>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`px-6 py-3 rounded-md text-base border ${getThemeClasses('border')} ${getThemeClasses('text')} hover:bg-white hover:text-stone-900 transition-colors`}
-                      onClick={handleCreateNewRepo}
+                    <button
+                      className="text-xs text-stone-400 hover:text-stone-500 transition-colors flex items-center gap-1"
+                      onClick={onCreateNewRepo}
                     >
-                      New Repo
-                    </motion.button>
+                      <Plus className="w-3 h-3" />
+                      Add Repository
+                    </button>
                   </div>
                 </div>
               </motion.div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-6 max-w-lg mx-auto px-6 py-3 rounded-md text-base border border-stone-700 text-stone-200 hover:bg-white hover:text-stone-900 transition-colors"
+                onClick={handleCreateNewRepo}
+              >
+                New Project
+              </motion.button>
             </div>
           </div>
         </div>
