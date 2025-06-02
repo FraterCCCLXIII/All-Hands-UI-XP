@@ -88,7 +88,6 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasErr
   return (
     <div className={`flex flex-col h-full border rounded-lg ${props.getThemeClasses('border')}`} style={{ position: 'relative' }}>
       <CanvasHeader
-        theme={props.theme}
         getThemeClasses={props.getThemeClasses}
         currentView={currentView}
         isTerminalVisible={isTerminalVisible}
@@ -99,7 +98,6 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasErr
         {renderContent()}
         {'onResize' in props && props.onResize && (
           <Gripper
-            theme={props.theme}
             getThemeClasses={props.getThemeClasses}
             onResize={props.onResize}
             initialWidth={props.initialWidth ?? 50}
@@ -110,7 +108,6 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasErr
       </div>
 
       <TerminalDrawer
-        theme={props.theme}
         getThemeClasses={props.getThemeClasses}
         isVisible={isTerminalVisible}
         height={terminalHeight}

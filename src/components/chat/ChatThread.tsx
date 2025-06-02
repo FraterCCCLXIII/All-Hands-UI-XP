@@ -29,7 +29,6 @@ import { Message, MessageType } from '../../types/message';
 import { ThemeElement } from '../../types/theme';
 import { GitControls } from '../git/GitControls';
 import ProjectLoading from '../common/ProjectLoading';
-import { ServerStatus } from '../common/ServerStatus';
 
 interface ChatThreadProps {
   theme: string;
@@ -94,6 +93,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
 }) => {
   const [hoveredMessageIndex, setHoveredMessageIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -309,6 +309,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                 onServerStatusChange={onServerStatusChange}
               />
               <GitControls
+                theme={theme}
                 getThemeClasses={getThemeClasses}
                 projectName="my-project"
                 branchName="main"

@@ -14,7 +14,6 @@ export const WavingHand: React.FC<WavingHandProps> = ({ className = '', color })
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     className={className}
-    style={color ? { color } : {}}
     style={{ transformOrigin: '70% 70%', ...(color ? { color } : {}) }}
     initial={{ scale: 0.7 }}
     animate={{ scale: [0.7, 1.1, 1], rotate: [0, 14, -8, 14, -4, 10, 0, 0] }}

@@ -14,7 +14,6 @@ interface GitControlsProps {
 }
 
 export const GitControls: React.FC<GitControlsProps> = ({
-  theme,
   getThemeClasses,
   projectName,
   branchName,

@@ -3,11 +3,11 @@ import { Message } from './Message';
 import { MessageInputPanel } from './MessageInputPanel';
 import { GitControls } from '../git/GitControls';
 import { WelcomeScreen } from './WelcomeScreen';
-import { ThemeElement } from '../../types/theme';
+import { ThemeElement, Theme } from '../../types/theme';
 import { Message as MessageType } from '../../types/message';
 
 interface ChatAreaProps {
-  theme: string;
+  theme: Theme;
   getThemeClasses: (element: ThemeElement) => string;
   messages: MessageType[];
   serverStatus: 'active' | 'stopped' | 'thinking' | 'connecting';
@@ -84,12 +84,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         {messages.map((message, index) => (
           <Message
             key={index}
-            role={message.role}
-            content={message.text}
-            type={message.type}
-            status={message.status}
-            headerText={message.headerText}
-            actions={message.actions}
+            message={{
+              role: message.role,
+              text: message.text,
+              headerText: message.headerText,
+              actions: message.actions
+            }}
             theme={theme}
             getThemeClasses={getThemeClasses}
           />
@@ -104,6 +104,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           onServerStatusChange={onServerStatusChange}
         />
         <GitControls
+          theme={theme}
           getThemeClasses={getThemeClasses}
           projectName={projectName}
           branchName={branchName}
