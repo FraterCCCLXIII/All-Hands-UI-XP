@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Share2,
   PlayCircle,
@@ -23,7 +23,6 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
-  theme,
   getThemeClasses,
   projectTitle,
   onProjectTitleChange,

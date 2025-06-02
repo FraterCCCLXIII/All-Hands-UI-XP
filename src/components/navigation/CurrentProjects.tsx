@@ -18,7 +18,7 @@ const MAX_EXPANDED = 20;
 
 const customScrollbar = `scrollbar-thin scrollbar-thumb-stone-500 scrollbar-track-transparent rounded scrollbar-thumb-rounded-full`;
 
-const CurrentProjects: React.FC<CurrentProjectsProps> = ({ theme, getThemeClasses, projects }) => {
+const CurrentProjects: React.FC<CurrentProjectsProps> = ({ projects }) => {
   const [expanded, setExpanded] = useState(false);
   const visibleProjects = expanded ? projects.slice(0, MAX_EXPANDED) : projects.slice(0, MAX_VISIBLE);
   const hasMore = projects.length > MAX_VISIBLE;

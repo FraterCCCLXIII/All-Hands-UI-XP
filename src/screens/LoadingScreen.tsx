@@ -11,7 +11,6 @@ interface LoadingScreenProps {
 }
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({
-  theme,
   getThemeClasses,
   isLoading = true,
   onLoadingComplete,

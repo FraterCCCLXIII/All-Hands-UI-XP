@@ -1,19 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Code2, 
-  MessageSquare, 
-  Settings, 
-  Gamepad2,
   FileText,
-  Package,
-  Shield,
-  TestTube,
-  Zap,
-  Bot,
   User,
   LucideIcon,
-  Info,
   Plus,
   LifeBuoy,
   Users

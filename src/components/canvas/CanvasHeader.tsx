@@ -7,7 +7,6 @@ interface CanvasHeaderProps {
   currentView: 'changes' | 'code' | 'terminal' | 'browser' | 'preview';
   isTerminalVisible: boolean;
   onViewChange: (view: 'changes' | 'code' | 'terminal' | 'browser' | 'preview') => void;
-  onClose: () => void;
 }
 
 const navItems = [
@@ -23,7 +22,6 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({
   currentView,
   isTerminalVisible,
   onViewChange,
-  onClose,
 }) => {
   return (
     <div className={`flex items-center border-b ${getThemeClasses('border')} py-2`}>

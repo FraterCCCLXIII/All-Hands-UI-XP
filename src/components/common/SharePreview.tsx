@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, X, Slack, Github, Mail, Facebook, MessageCircle, Share2 } from 'lucide-react';
+import { Copy, X, Slack, Github, Mail, Facebook, MessageCircle } from 'lucide-react';
 
 interface SharePreviewProps {
   shareUrl: string;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Smartphone, Users, Key, LogOut, GitBranch, Settings, Shield, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ThemeElement } from '../../types/theme';
 
 interface UserSettingsProps {
   theme: string;
@@ -10,7 +11,7 @@ interface UserSettingsProps {
 
 type Panel = 'none' | 'git' | 'application' | 'credits' | 'secrets' | 'apikeys' | 'organizations' | 'appkeys';
 
-const UserSettings: React.FC<UserSettingsProps> = ({ theme, getThemeClasses, onClose }) => {
+const UserSettings: React.FC<UserSettingsProps> = ({ getThemeClasses, onClose }) => {
   const [openPanel, setOpenPanel] = useState<Panel>('none');
 
   // Example organizations

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeElement } from '../../types/theme';
-import { Power, RefreshCw, AlertCircle, MoreVertical, Server, XCircle } from 'lucide-react';
+import { Power, RefreshCw, AlertCircle, Server, XCircle } from 'lucide-react';
 
 // Comprehensive server state taxonomy
 export type ServerStatusType = 

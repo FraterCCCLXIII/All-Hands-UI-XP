@@ -1,8 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ThemeElement } from '../../types/theme';
-import { MessageType } from '../../types/message';
-import { Theme } from '../../types/theme';
+import { ThemeElement, Theme } from '../../types/theme';
 
 interface MessageProps {
   theme: Theme;
