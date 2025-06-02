@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserSettingsProps {
   theme: string;
-  getThemeClasses: (element: string) => string;
+  getThemeClasses: (element: ThemeElement) => string;
   onClose: () => void;
 }
 

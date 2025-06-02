@@ -258,7 +258,7 @@ function App() {
                 <div className="flex w-full h-full">
                   {/* Chat Area Column */}
                   <div
-                    className={`h-full transition-all duration-400 ease-out${!canvasVisible ? ' flex justify-center mx-auto' : ''}`}
+                    className={`h-full transition-all duration-400 ease-out relative${!canvasVisible ? ' flex justify-center mx-auto' : ''}`}
                     style={{
                       width: canvasVisible ? `calc(${100 - canvasWidth}% - 0.5rem)` : '100%',
                       minWidth: 0,
@@ -285,6 +285,19 @@ function App() {
                       onCreateNewRepo={handleCreateNewRepo}
                       onWelcomeScreenChange={setIsWelcomeScreenActive}
                     />
+                    {/* Gripper for resizing columns */}
+                    {canvasVisible && (
+                      <div className="absolute right-0 top-0 bottom-0 z-10">
+                        <Gripper
+                          theme={theme}
+                          getThemeClasses={getThemeClasses}
+                          onResize={handleCanvasResize}
+                          initialWidth={canvasWidth}
+                          minWidth={minCanvasWidth}
+                          maxWidth={maxCanvasWidth}
+                        />
+                      </div>
+                    )}
                   </div>
                   {/* Canvas Column */}
                   {canvasVisible && (

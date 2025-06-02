@@ -80,7 +80,6 @@ export const LeftNav: React.FC<LeftNavProps> = ({
     { id: '12', name: 'Project Mu' },
   ];
 
-  const collapseTimeout = useRef<NodeJS.Timeout | null>(null);
   const [userSettingsOpen, setUserSettingsOpen] = useState(false);
   const [inviteTeamOpen, setInviteTeamOpen] = useState(false);
   const [showHomeInfo, setShowHomeInfo] = useState(false);
@@ -88,20 +87,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 
   const handleMouseLeave = () => {
     if (isExpanded) {
-      const timer = setTimeout(() => {
-        onExpandChange(false);
-      }, 500);
-      collapseTimeout.current = timer;
+      onExpandChange(false);
     }
   };
 
   const handleMouseEnter = () => {
     if (!isExpanded) {
       onExpandChange(true);
-    }
-    if (collapseTimeout.current) {
-      clearTimeout(collapseTimeout.current);
-      collapseTimeout.current = null;
     }
   };
 
@@ -301,4 +293,4 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       </div>
     </motion.div>
   );
-}; 
+};
