@@ -258,11 +258,11 @@ function App() {
                 <div className="flex w-full h-full">
                   {/* Chat Area Column */}
                   <div
-                    className={`h-full transition-all duration-400 ease-out${!canvasVisible ? ' flex justify-center' : ''}`}
+                    className={`h-full transition-all duration-400 ease-out${!canvasVisible ? ' flex justify-center mx-auto' : ''}`}
                     style={{
                       width: canvasVisible ? `calc(${100 - canvasWidth}% - 0.5rem)` : '100%',
                       minWidth: 0,
-                      marginRight: canvasVisible ? '1rem' : 0,
+                      ...(canvasVisible ? { marginRight: '1rem' } : {}),
                       ...(canvasVisible ? {} : { maxWidth: '760px' }),
                     }}
                   >

@@ -34,7 +34,7 @@ interface NavItem {
 }
 
 interface LeftNavProps {
-  theme: string;
+  theme: Theme;
   getThemeClasses: (element: ThemeElement) => string;
   isExpanded: boolean;
   onExpandChange: (expanded: boolean) => void;
@@ -272,9 +272,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.2 }}
-                  className={`ml-3 text-sm font-medium whitespace-nowrap ${getThemeClasses('text')}`}
+                  className={`ml-3 flex flex-col items-start ${getThemeClasses('text')}`}
                 >
-                  User Profile
+                  <span className="text-sm font-medium leading-tight">Username</span>
+                  <span className="text-[10px] text-stone-400 mt-0.5 leading-none">Settings</span>
                 </motion.span>
               )}
             </AnimatePresence>

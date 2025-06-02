@@ -22,60 +22,65 @@ export const CanvasErrorModal: React.FC<CanvasErrorModalProps> = ({
     <AnimatePresence>
       {showError && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.3 }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-lg shadow-xl w-80 text-center z-50"
-          style={{ 
-            backgroundColor: theme === 'dark' ? '#292524' : theme === 'light' ? '#f5f5f4' : 'rgb(235,225,210)',
-            border: `1px solid ${theme === 'dark' ? '#57534e' : theme === 'light' ? '#a8a29e' : 'rgb(180,160,140)'}`
-          }}
+          key="canvas-error-modal"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
         >
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className={`absolute top-2 right-2 p-1 rounded-full ${getThemeClasses('button-bg')} hover:opacity-90 focus:outline-none`}
-            onClick={onErrorClose}
+          <motion.div
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="w-full max-w-lg bg-stone-900 border border-stone-700 rounded-xl shadow-xl"
           >
-            <X className={`w-5 h-5 ${getThemeClasses('icon-color')}`} />
-          </motion.button>
-          
-          <div className="flex flex-col items-center justify-center space-y-3">
-            <AlertCircle className="w-8 h-8 text-red-500" />
-            <h3 className={`text-lg font-semibold ${getThemeClasses('text')}`}>
-              Something went wrong
-            </h3>
-            <p className={`text-sm ${getThemeClasses('text')} opacity-80`}>
-              There was a problem when running your code.
-            </p>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className={`absolute top-2 right-2 p-1 rounded-full ${getThemeClasses('button-bg')} hover:opacity-90 focus:outline-none`}
+              onClick={onErrorClose}
+            >
+              <X className={`w-5 h-5 ${getThemeClasses('icon-color')}`} />
+            </motion.button>
             
-            <div className="flex space-x-2 mt-4">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-2 py-1 rounded-md text-xs border border-red-500 text-red-500 hover:opacity-80"
-                onClick={() => {
-                  console.log('Fix error clicked');
-                  onErrorClose();
-                }}
-              >
-                Fix error
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-2 py-1 rounded-md text-xs border ${getThemeClasses('button-bg')} ${getThemeClasses('button-text')} hover:opacity-80`}
-                onClick={() => {
-                  console.log('Show console clicked');
-                  onErrorClose();
-                  onShowConsole();
-                }}
-              >
-                Show console
-              </motion.button>
+            <div className="flex flex-col items-center justify-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+              <h3 className={`text-lg font-semibold ${getThemeClasses('text')}`}>
+                Something went wrong
+              </h3>
+              <p className={`text-sm ${getThemeClasses('text')} opacity-80`}>
+                There was a problem when running your code.
+              </p>
+              
+              <div className="flex space-x-2 mt-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-2 py-1 rounded-md text-xs border border-red-500 text-red-500 hover:opacity-80"
+                  onClick={() => {
+                    console.log('Fix error clicked');
+                    onErrorClose();
+                  }}
+                >
+                  Fix error
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-2 py-1 rounded-md text-xs border ${getThemeClasses('button-bg')} ${getThemeClasses('button-text')} hover:opacity-80`}
+                  onClick={() => {
+                    console.log('Show console clicked');
+                    onErrorClose();
+                    onShowConsole();
+                  }}
+                >
+                  Show console
+                </motion.button>
+              </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

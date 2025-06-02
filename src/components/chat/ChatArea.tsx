@@ -66,7 +66,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (showWelcomeScreen) {
     return (
-      <div className={`flex flex-col h-full ${getThemeClasses('bg')}`}>
+      <div className={`flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
         <WelcomeScreen
           theme={theme}
           getThemeClasses={getThemeClasses}
@@ -81,8 +81,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full ${getThemeClasses('bg')}`}>
-      <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${getThemeClasses('scrollbar')}`}>
+    <div className={`flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
+      <div className={`flex-1 overflow-y-auto space-y-4 ${getThemeClasses('scrollbar')}`}>
         {messages.map((message, index) => (
           <Message
             key={index}

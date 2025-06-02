@@ -45,7 +45,7 @@ export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
     <div className="mb-4">
       <div className="bg-stone-800 rounded-lg shadow-lg">
         {/* Message Input */}
-        <div className="p-4 border-b border-stone-700">
+        <div className="py-4 px-2 border-b border-stone-700">
           <div className="relative flex items-center">
             <motion.button
               className={`p-2 rounded-full flex items-center justify-center hover:bg-stone-700 focus:outline-none mr-2 transition-colors duration-150`}
@@ -79,7 +79,7 @@ export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
         </div>
 
         {/* Server Status */}
-        <div className={`p-2 flex items-center justify-between text-xs border-stone-700`}>
+        <div className={`py-2 px-2 flex items-center justify-between text-xs border-stone-700`}>
           <ServerStatus
             status={isConnecting ? 'connecting' : serverStatus}
             getThemeClasses={getThemeClasses}

@@ -27,7 +27,7 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({
 }) => {
   return (
     <div className={`flex items-center border-b ${getThemeClasses('border')} py-2`}>
-      <div className="flex items-center space-x-1 px-4">
+      <div className="flex items-center space-x-1 px-4 flex-nowrap whitespace-nowrap">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.id === currentView || (item.id === 'terminal' && isTerminalVisible);
@@ -44,7 +44,7 @@ export const CanvasHeader: React.FC<CanvasHeaderProps> = ({
               title={item.label}
             >
               <Icon className="w-4 h-4 mr-2" />
-              {item.label}
+              <span className="whitespace-nowrap">{item.label}</span>
             </button>
           );
         })}

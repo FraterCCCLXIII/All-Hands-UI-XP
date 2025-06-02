@@ -59,13 +59,20 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
       {isVisible && (
         <motion.div
           key="invite-team-modal"
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
           transition={{ duration: 0.22, ease: 'easeOut' }}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50"
         >
-          <div className="bg-stone-900 border border-stone-700 rounded-xl shadow-xl p-8 w-full max-w-lg relative" ref={modalRef}>
+          <motion.div 
+            initial={{ scale: 0.95 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="bg-stone-900 border border-stone-700 rounded-xl shadow-xl p-8 w-full max-w-lg relative" 
+            ref={modalRef}
+          >
             <button onClick={handleClose} className="absolute top-2 right-2 p-1 rounded-full hover:bg-stone-700 focus:outline-none">
               <span className="sr-only">Close</span>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -117,7 +124,7 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
             >
               Send Invites
             </button>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
