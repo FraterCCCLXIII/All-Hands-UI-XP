@@ -6,14 +6,14 @@ import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
-import { LoadingScreen } from './screens';
+import { DashboardScreen, LoadingScreen, SkillsScreen } from './screens';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
 
 const themeClasses: ThemeClassMap = {
   dark: {
     text: 'text-stone-200',
-    bg: 'bg-stone-900',
+    bg: 'bg-sidebar',
     border: 'border-stone-700',
     'input-bg': 'bg-stone-800',
     'placeholder-text': 'placeholder-stone-500',
@@ -40,10 +40,12 @@ const themeClasses: ThemeClassMap = {
     'stop-button-text': 'text-stone-200',
     'button-hover': 'hover:bg-stone-600',
     'scrollbar': 'scrollbar-thin scrollbar-thumb-stone-700 scrollbar-track-stone-800',
+    'success-text': 'text-emerald-400',
+    'error-text': 'text-rose-400',
   },
   light: {
     text: 'text-stone-800',
-    bg: 'bg-stone-100',
+    bg: 'bg-sidebar',
     border: 'border-stone-300',
     'input-bg': 'bg-white',
     'placeholder-text': 'placeholder-stone-400',
@@ -70,10 +72,12 @@ const themeClasses: ThemeClassMap = {
     'stop-button-text': 'text-stone-800',
     'button-hover': 'hover:bg-stone-300',
     'scrollbar': 'scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-stone-100',
+    'success-text': 'text-emerald-600',
+    'error-text': 'text-rose-600',
   },
   sepia: {
     text: 'text-[rgb(100,80,60)]',
-    bg: 'bg-[rgb(235,225,210)]',
+    bg: 'bg-sidebar',
     border: 'border-[rgb(215,205,190)]',
     'input-bg': 'bg-[rgb(245,235,220)]',
     'placeholder-text': 'placeholder-[rgb(180,160,140)]',
@@ -100,6 +104,8 @@ const themeClasses: ThemeClassMap = {
     'stop-button-text': 'text-[rgb(100,80,60)]',
     'button-hover': 'hover:bg-[rgb(215,205,190)]',
     'scrollbar': 'scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100',
+    'success-text': 'text-[rgb(120,180,120)]',
+    'error-text': 'text-[rgb(180,120,120)]',
   },
 };
 
@@ -119,6 +125,9 @@ function App() {
   const minCanvasWidth = 30; // Minimum 30% width
   const maxCanvasWidth = 70; // Maximum 70% width
   const [showSharePreview, setShowSharePreview] = useState(false);
+  const isDashboardView = activeNavItem === 'dashboard';
+  const isSkillsView = activeNavItem === 'skills';
+  const showChatView = !isDashboardView && !isSkillsView;
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -176,7 +185,7 @@ function App() {
         type: 'tetris_game',
         status: 'completed',
       };
-      setMessages(prev => [...prev, tetrisMessage]);
+      setMessages((prev) => [...prev, tetrisMessage]);
     }
   }, []);
 
@@ -230,12 +239,10 @@ function App() {
               activeNavItem={activeNavItem}
             />
             <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${
-                isLeftNavExpanded ? 'ml-[17rem]' : 'ml-20'
-              }`}
+              className="flex-1 flex flex-col transition-all duration-200 ml-16 border-l border-sidebar-border"
               style={{ minWidth: 0 }}
             >
-              {!isWelcomeScreenActive && (
+              {showChatView && !isWelcomeScreenActive && (
                 <TopBar
                   theme={theme}
                   getThemeClasses={getThemeClasses}
@@ -251,73 +258,75 @@ function App() {
                 />
               )}
               <div className="flex-1 flex">
-                <div className="flex w-full h-full">
-                  {/* Chat Area Column */}
-                  <div
-                    className={`h-full transition-all duration-400 ease-out relative${!canvasVisible ? ' flex justify-center mx-auto' : ''}`}
-                    style={{
-                      width: canvasVisible ? `calc(${100 - canvasWidth}% - 0.5rem)` : '100%',
-                      minWidth: 0,
-                      ...(canvasVisible ? { marginRight: '1rem' } : {}),
-                      ...(canvasVisible ? {} : { maxWidth: '760px' }),
-                    }}
-                  >
-                    <ChatArea
-                      theme={theme}
-                      getThemeClasses={getThemeClasses}
-                      messages={messages}
-                      serverStatus={serverStatus}
-                      projectName={projectTitle}
-                      branchName="main"
-                      userName="User"
-                      onSendMessage={handleSendMessage}
-                      onServerStatusChange={setServerStatus}
-                      onPush={handlePush}
-                      onPull={handlePull}
-                      onCreatePR={handleCreatePR}
-                      onRepoSelect={handleRepoSelect}
-                      onBranchSelect={handleBranchSelect}
-                      onCreateNewRepo={handleCreateNewRepo}
-                      onWelcomeScreenChange={setIsWelcomeScreenActive}
-                    />
-                    {/* Gripper for resizing columns */}
+                {isDashboardView && <DashboardScreen />}
+                {isSkillsView && <SkillsScreen />}
+                {showChatView && (
+                  <div className="flex w-full h-full">
+                    {/* Chat Area Column */}
+                    <div
+                      className={`h-full transition-all duration-400 ease-out relative${!canvasVisible ? ' flex justify-center mx-auto' : ''}`}
+                      style={{
+                        width: canvasVisible ? `calc(${100 - canvasWidth}% - 0.5rem)` : '100%',
+                        minWidth: 0,
+                        ...(canvasVisible ? { marginRight: '1rem' } : {}),
+                        ...(canvasVisible ? {} : { maxWidth: '760px' }),
+                      }}
+                    >
+                      <ChatArea
+                        theme={theme}
+                        getThemeClasses={getThemeClasses}
+                        messages={messages}
+                        serverStatus={serverStatus}
+                        projectName={projectTitle}
+                        branchName="main"
+                        userName="User"
+                        onSendMessage={handleSendMessage}
+                        onServerStatusChange={setServerStatus}
+                        onPush={handlePush}
+                        onPull={handlePull}
+                        onCreatePR={handleCreatePR}
+                        onRepoSelect={handleRepoSelect}
+                        onBranchSelect={handleBranchSelect}
+                        onCreateNewRepo={handleCreateNewRepo}
+                        onWelcomeScreenChange={setIsWelcomeScreenActive}
+                      />
+                      {canvasVisible && (
+                        <div className="absolute right-0 top-0 bottom-0 z-10">
+                          <Gripper
+                            getThemeClasses={getThemeClasses}
+                            onResize={handleCanvasResize}
+                            initialWidth={canvasWidth}
+                            minWidth={minCanvasWidth}
+                            maxWidth={maxCanvasWidth}
+                          />
+                        </div>
+                      )}
+                    </div>
                     {canvasVisible && (
-                      <div className="absolute right-0 top-0 bottom-0 z-10">
-                        <Gripper
-                          getThemeClasses={getThemeClasses}
-                          onResize={handleCanvasResize}
-                          initialWidth={canvasWidth}
-                          minWidth={minCanvasWidth}
-                          maxWidth={maxCanvasWidth}
-                        />
+                      <div
+                        className="h-full transition-all duration-400 ease-out flex flex-col mr-4"
+                        style={{
+                          width: `calc(${canvasWidth}% - 0.5rem)`,
+                          minWidth: 0,
+                        }}
+                      >
+                        <div className="flex-1 flex flex-col pb-4">
+                          <Canvas
+                            theme={theme}
+                            getThemeClasses={getThemeClasses}
+                            content={{ type: 'user', text: '', headerText: 'Canvas' }}
+                            onResize={handleCanvasResize}
+                            initialWidth={canvasWidth}
+                            minWidth={minCanvasWidth}
+                            maxWidth={maxCanvasWidth}
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
-                  {/* Canvas Column */}
-                  {canvasVisible && (
-                    <div
-                      className="h-full transition-all duration-400 ease-out flex flex-col mr-4"
-                      style={{
-                        width: `calc(${canvasWidth}% - 0.5rem)`,
-                        minWidth: 0,
-                      }}
-                    >
-                      <div className="flex-1 flex flex-col pb-4">
-                        <Canvas
-                          theme={theme}
-                          getThemeClasses={getThemeClasses}
-                          content={{ type: 'user', text: '', headerText: 'Canvas' }}
-                          onResize={handleCanvasResize}
-                          initialWidth={canvasWidth}
-                          minWidth={minCanvasWidth}
-                          maxWidth={maxCanvasWidth}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
-              {showSharePreview && (
+              {showChatView && showSharePreview && (
                 <SharePreview
                   shareUrl={window.location.href}
                   onClose={() => setShowSharePreview(false)}

@@ -1,39 +1,16 @@
-import React from 'react';
 import { Bot, LayoutDashboard, List, Plus } from 'lucide-react';
-import { Theme, ThemeElement } from '../../types/theme';
 
-interface LeftNavProps {
-  theme: Theme;
-  getThemeClasses: (element: ThemeElement) => string;
-  isExpanded: boolean;
-  onExpandChange: (expanded: boolean) => void;
-  onNavItemClick: (action: string) => void;
-  activeNavItem: string;
-}
-
-const navItems = [
-  { icon: Plus, label: 'Create repository', action: 'new-project' },
-  { icon: List, label: 'List view', action: 'code' },
-  { icon: Bot, label: 'Robot assistant', action: 'skills' },
-  { icon: LayoutDashboard, label: 'Dashboard view', action: 'dashboard' },
-];
-
-export const LeftNav: React.FC<LeftNavProps> = ({ onNavItemClick, activeNavItem }) => {
+export function Sidebar() {
   return (
-    <aside className="fixed left-0 top-0 z-50 h-screen w-16 flex bg-sidebar pointer-events-auto">
+    <aside className="sticky top-0 h-screen flex-shrink-0 flex bg-sidebar">
       <div className="flex h-full flex-col w-16 px-2 py-4 text-sidebar-foreground">
         <div className="flex justify-center mb-3">
-          <button
-            type="button"
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
-            onClick={() => onNavItemClick('dashboard')}
-            aria-label="Hyperdrive dashboard"
-          >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center">
             <svg
               className="w-7 h-7 text-sidebar-foreground"
               viewBox="0 0 133.88 91.13"
               role="img"
-              aria-hidden="true"
+              aria-label="Hyperdrive logo"
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
@@ -57,27 +34,21 @@ export const LeftNav: React.FC<LeftNavProps> = ({ onNavItemClick, activeNavItem 
                 d="M5.12,56.65c0-3.35-.9-13.3-1.19-16.58-.19-2.22.07-3.44.43-4.06.26-.46.67-.78,1.66-.84.71-.05,1.49.16,2.07.68.54.49,1.15,1.48,1.15,3.47v.11s.89,15.12.89,15.12c.03.54.29,1.05.72,1.39.42.34.97.49,1.51.4l9.29-1.47,10.02-1.33c.93-.12,1.63-.89,1.67-1.82l.55-11.95v-.1c.25-4.76.48-9.1.48-10.44,0-3.75.63-5.33,1.19-5.99.44-.53,1.08-.76,2.44-.76.49,0,.83.1,1.09.25.25.15.54.41.82.94.59,1.12,1.02,3.22.86,6.88-.21,4.76-.53,8.31-.85,11.51-.32,3.2-.63,6.1-.81,9.47-.27,5.28-.25,8.92-.03,11.39.11,1.23.27,2.23.48,3.02.2.75.51,1.51,1.04,2.07.65.69,1.56,1.02,2.52.79.76-.18,1.29-.66,1.58-.97.61-.64,1.04-1.46,1.21-1.89.98-2.47,4.01-8.22,8.12-11.46,1.2-.95,2.07-1.22,2.62-1.26.52-.04.89.11,1.19.35.33.26.57.63.69.99.04.13.06.22.07.27-1.11,1.88-5.53,8.77-7.61,15.76-1.55,5.21-5.29,10.52-8.09,12.8-2.71,2.2-7.57,3.57-13.05,3.84-5.43.27-11.01-.57-14.95-2.33-7.6-3.41-9.15-10.91-9.84-14.16-.54-2.52-.55-5.22-.4-7.72.07-1.25.18-2.41.27-3.49.09-1.04.17-2.05.17-2.88ZM23.29,24.28c0-1.17.31-2.21.83-2.91.47-.63,1.16-1.07,2.26-1.07.91,0,1.52.11,1.95.29.39.16.71.42,1,.9.68,1.1,1.18,3.3,1.18,7.69l-.48,10.39c-.18,3.47-.37,7.22-.49,10.35l-6.25.83v-26.47ZM19.43,51.31l-5.58.88-.76-12.93v-9.97c0-1.37.56-2.21,1.22-2.74.74-.6,1.59-.81,2-.81.74,0,1.5.11,2.05.5.42.3,1.07,1.01,1.07,3.05v22.01ZM9.24,32c-1.15-.58-2.39-.76-3.48-.69-1.97.13-3.7.96-4.75,2.77-.95,1.65-1.15,3.83-.93,6.31.3,3.43,1.18,13.11,1.18,16.25,0,.63-.07,1.47-.16,2.54-.09,1.05-.21,2.28-.28,3.6-.15,2.63-.16,5.72.48,8.75.67,3.15,2.49,12.6,12.04,16.88,4.64,2.08,10.87,2.95,16.72,2.66,5.79-.28,11.64-1.73,15.29-4.7,3.44-2.8,7.59-8.79,9.35-14.69,1.99-6.67,6.29-13.24,7.36-15.11.63-1.1.43-2.4.14-3.27-.33-.98-.98-2-1.94-2.77-1-.79-2.32-1.29-3.88-1.18-1.53.12-3.11.81-4.72,2.08-4.14,3.27-7.18,8.43-8.67,11.59-.02-.15-.03-.3-.05-.46.19-2.21.23-5.65.04-10.86.17-3.26.47-6.05.79-9.29.32-3.24.65-6.87.87-11.72.17-3.88-.23-6.82-1.31-8.86-.56-1.06-1.32-1.9-2.28-2.46-.96-.56-2.01-.78-3.04-.78-1.53,0-3.43.22-4.95,1.66-.13-.29-.28-.56-.44-.81-.7-1.13-1.63-1.93-2.77-2.42-1.1-.47-2.28-.6-3.46-.6-2.36,0-4.19,1.04-5.36,2.63-.76,1.03-1.22,2.23-1.44,3.46-1.25-.57,2.51-.64,3.27-.64,1.31,0,3.02.53,4.43,1.68,1.49,1.21,2.64,3.11,2.64,5.74v2.71Z"
               />
             </svg>
-          </button>
+          </div>
         </div>
         <div className="flex flex-1 flex-col items-center gap-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeNavItem === item.action;
-            return (
-              <button
-                key={item.action}
-                type="button"
-                aria-label={item.label}
-                aria-pressed={isActive}
-                onClick={() => onNavItemClick(item.action)}
-                className={`p-2 rounded-md transition-colors ${
-                  isActive ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-              </button>
-            );
-          })}
+          <button type="button" aria-label="Create repository" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
+            <Plus className="w-5 h-5" />
+          </button>
+          <button type="button" aria-label="List view" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
+            <List className="w-5 h-5" />
+          </button>
+          <button type="button" aria-label="Robot assistant" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
+            <Bot className="w-5 h-5" />
+          </button>
+          <button type="button" aria-label="Dashboard view" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
+            <LayoutDashboard className="w-5 h-5" />
+          </button>
         </div>
         <div className="mt-auto px-2">
           <div className="w-8 h-8 rounded-full bg-sidebar-accent overflow-hidden">
@@ -91,4 +62,4 @@ export const LeftNav: React.FC<LeftNavProps> = ({ onNavItemClick, activeNavItem 
       </div>
     </aside>
   );
-};
+}

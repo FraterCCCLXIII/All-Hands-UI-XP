@@ -54,7 +54,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       {/* Main content container */}
       <div className="flex-1 flex justify-center">
         <div className="w-full max-w-[760px] flex flex-col h-full">
-          <div className="flex flex-col h-full bg-stone-900">
+          <div className="flex flex-col h-full">
             <div className="flex-1 flex flex-col items-center justify-center p-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

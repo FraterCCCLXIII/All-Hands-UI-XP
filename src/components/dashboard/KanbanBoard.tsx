@@ -1,0 +1,328 @@
+import { useCallback, useMemo, useState } from 'react';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { KanbanColumn as KanbanColumnType, PRCard, AgentMessage, Conversation } from '../../types/pr';
+import { KanbanColumn } from './KanbanColumn';
+import { AgentPanel } from './AgentPanel';
+import { availablePullRequests, initialColumns } from '../../data/mockData';
+import { Button } from '../ui/button';
+import { Plus } from 'lucide-react';
+
+interface KanbanBoardProps {
+  activeRepo: string;
+}
+
+export function KanbanBoard({ activeRepo }: KanbanBoardProps) {
+  const [columns, setColumns] = useState<KanbanColumnType[]>(initialColumns);
+  const [selectedCard, setSelectedCard] = useState<PRCard | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isAddPrOpen, setIsAddPrOpen] = useState(false);
+  const isFiltered = activeRepo !== 'all';
+  const visibleColumns = useMemo(() => {
+    if (!isFiltered) return columns;
+    return columns.map((column) => ({
+      ...column,
+      cards: column.cards.filter((card) => card.repo === activeRepo),
+    }));
+  }, [columns, activeRepo, isFiltered]);
+  const existingIds = useMemo(() => new Set(columns.flatMap((column) => column.cards.map((card) => card.id))), [columns]);
+  const selectablePullRequests = useMemo(() => {
+    const repoMatches = activeRepo === 'all'
+      ? availablePullRequests
+      : availablePullRequests.filter((pr) => pr.repo === activeRepo);
+    return repoMatches.filter((pr) => !existingIds.has(pr.id));
+  }, [activeRepo, existingIds]);
+
+  const handleDragEnd = useCallback((result: DropResult) => {
+    if (isFiltered) return;
+    const { destination, source } = result;
+
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
+      return;
+    }
+
+    if (result.type === 'COLUMN') {
+      setColumns((prev) => {
+        const newColumns = [...prev];
+        const [moved] = newColumns.splice(source.index, 1);
+        newColumns.splice(destination.index, 0, moved);
+        return newColumns;
+      });
+      return;
+    }
+
+    setColumns((prev) => {
+      const newColumns = [...prev];
+
+      const sourceColIndex = newColumns.findIndex((col) => col.id === source.droppableId);
+      const destColIndex = newColumns.findIndex((col) => col.id === destination.droppableId);
+
+      const card = newColumns[sourceColIndex].cards[source.index];
+
+      newColumns[sourceColIndex] = {
+        ...newColumns[sourceColIndex],
+        cards: newColumns[sourceColIndex].cards.filter((_, i) => i !== source.index),
+      };
+
+      const destCards = [...newColumns[destColIndex].cards];
+      destCards.splice(destination.index, 0, card);
+      newColumns[destColIndex] = {
+        ...newColumns[destColIndex],
+        cards: destCards,
+      };
+
+      return newColumns;
+    });
+  }, [isFiltered]);
+
+  const handleCardClick = useCallback(
+    (cardId: string) => {
+      const card = columns.flatMap((col) => col.cards).find((c) => c.id === cardId);
+      if (card) {
+        setSelectedCard(card);
+        setIsPanelOpen(true);
+      }
+    },
+    [columns]
+  );
+
+  const handleClosePanel = useCallback(() => {
+    setIsPanelOpen(false);
+  }, []);
+
+  const handleAddColumn = useCallback(() => {
+    const newColumn: KanbanColumnType = {
+      id: `column-${Date.now()}`,
+      title: 'New Column',
+      cards: [],
+    };
+    setColumns((prev) => [...prev, newColumn]);
+  }, []);
+  const handleAddPr = useCallback(
+    (card: PRCard) => {
+      setColumns((prev) => {
+        if (prev.length === 0) return prev;
+        if (prev[0].cards.some((existing) => existing.id === card.id)) return prev;
+        const updatedFirst = {
+          ...prev[0],
+          cards: [card, ...prev[0].cards],
+        };
+        return [updatedFirst, ...prev.slice(1)];
+      });
+      setIsAddPrOpen(false);
+    },
+    []
+  );
+
+  const handleRenameColumn = useCallback((columnId: string, title: string) => {
+    setColumns((prev) => prev.map((column) => (column.id === columnId ? { ...column, title } : column)));
+  }, []);
+
+  const handleDeleteColumn = useCallback((columnId: string) => {
+    setColumns((prev) => {
+      if (prev.length <= 1) return prev;
+
+      const deletedColumn = prev.find((column) => column.id === columnId);
+      const remainingColumns = prev.filter((column) => column.id !== columnId);
+      if (!deletedColumn) return prev;
+
+      const targetColumnId = remainingColumns[0].id;
+
+      return remainingColumns.map((column) => {
+        if (column.id === targetColumnId) {
+          return {
+            ...column,
+            cards: [...column.cards, ...deletedColumn.cards],
+          };
+        }
+        return column;
+      });
+    });
+  }, []);
+
+  const handleCreateConversation = useCallback((cardId: string, skillId?: string, skillName?: string) => {
+    const conversationId = `conv-${Date.now()}`;
+    const timestamp = new Date().toISOString();
+
+    setColumns((prev) => {
+      return prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((card) => {
+          if (card.id === cardId) {
+            const sequence = (card.conversations?.length ?? 0) + 1;
+            const name = skillName ? `${skillName} ${sequence}` : `Conversation ${sequence}`;
+            const newConversation: Conversation = {
+              id: conversationId,
+              name,
+              skillId,
+              activity: 'Initializing...',
+              messages: [],
+              createdAt: timestamp,
+              updatedAt: timestamp,
+            };
+
+            const updatedCard = {
+              ...card,
+              conversations: [...(card.conversations ?? []), newConversation],
+            };
+
+            setSelectedCard(updatedCard);
+            return updatedCard;
+          }
+          return card;
+        }),
+      }));
+    });
+
+    return conversationId;
+  }, []);
+
+  const handleSendMessage = useCallback((cardId: string, conversationId: string, content: string) => {
+    const newUserMessage: AgentMessage = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content,
+      timestamp: new Date().toISOString(),
+    };
+
+    setColumns((prev) => {
+      return prev.map((col) => ({
+        ...col,
+        cards: col.cards.map((card) => {
+          if (card.id === cardId) {
+            const targetConversation = card.conversations?.find((conv) => conv.id === conversationId);
+            const updatedCard = {
+              ...card,
+              conversations: (card.conversations ?? []).map((conversation) => {
+                if (conversation.id !== conversationId) return conversation;
+                return {
+                  ...conversation,
+                  messages: [...conversation.messages, newUserMessage],
+                  activity: 'Processing request...',
+                  updatedAt: new Date().toISOString(),
+                };
+              }),
+            };
+
+            setTimeout(() => {
+              const agentResponse: AgentMessage = {
+                id: `msg-${Date.now() + 1}`,
+                role: 'agent',
+                content: `I'm analyzing your request: "${content}". Let me check the codebase and provide insights...`,
+                timestamp: new Date().toISOString(),
+                skillId: targetConversation?.skillId,
+              };
+
+              setColumns((prevCols) =>
+                prevCols.map((c) => ({
+                  ...c,
+                  cards: c.cards.map((crd) => {
+                    if (crd.id === cardId) {
+                      const updated = {
+                        ...crd,
+                        conversations: (crd.conversations ?? []).map((conversation) => {
+                          if (conversation.id !== conversationId) return conversation;
+                          return {
+                            ...conversation,
+                            messages: [...conversation.messages, agentResponse],
+                            activity: 'Analyzing codebase...',
+                            updatedAt: new Date().toISOString(),
+                          };
+                        }),
+                      };
+                      setSelectedCard(updated);
+                      return updated;
+                    }
+                    return crd;
+                  }),
+                }))
+              );
+            }, 1500);
+
+            setSelectedCard(updatedCard);
+            return updatedCard;
+          }
+          return card;
+        }),
+      }));
+    });
+  }, []);
+
+  return (
+    <>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="flex items-center justify-end px-4 pb-3 gap-2">
+          <div className="relative">
+            <Button
+              variant="outline"
+              onClick={() => setIsAddPrOpen((prev) => !prev)}
+              aria-label="Add PR"
+            >
+              Add PR
+            </Button>
+            {isAddPrOpen && (
+              <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border bg-popover shadow-lg z-20">
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Select PR
+                </div>
+                <div className="max-h-72 overflow-y-auto">
+                  {selectablePullRequests.length === 0 ? (
+                    <div className="px-3 py-3 text-sm text-muted-foreground">No PRs available.</div>
+                  ) : (
+                    selectablePullRequests.map((pr) => (
+                      <button
+                        key={pr.id}
+                        type="button"
+                        onClick={() => handleAddPr(pr)}
+                        className="w-full text-left px-3 py-2 hover:bg-accent transition-colors"
+                      >
+                        <div className="text-sm text-foreground truncate">{pr.title}</div>
+                        <div className="text-xs text-muted-foreground font-mono truncate">
+                          {pr.repo} #{pr.number}
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <Button size="icon" variant="outline" onClick={handleAddColumn} aria-label="Add column">
+            <Plus className="w-4 h-4" />
+          </Button>
+        </div>
+        <Droppable droppableId="board" direction="horizontal" type="COLUMN">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-4 overflow-x-auto pb-4 px-4 hide-scrollbar">
+              {visibleColumns.map((column, index) => (
+                <Draggable key={column.id} draggableId={column.id} index={index}>
+                  {(provided) => (
+                    <div ref={provided.innerRef} {...provided.draggableProps}>
+                      <KanbanColumn
+                        column={column}
+                        onCardClick={handleCardClick}
+                        onRenameColumn={handleRenameColumn}
+                        onDeleteColumn={handleDeleteColumn}
+                        dragHandleProps={provided.dragHandleProps}
+                        isDragDisabled={isFiltered}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
+
+      <AgentPanel
+        card={selectedCard}
+        isOpen={isPanelOpen}
+        onClose={handleClosePanel}
+        onCreateConversation={handleCreateConversation}
+        onSendMessage={handleSendMessage}
+      />
+    </>
+  );
+}
