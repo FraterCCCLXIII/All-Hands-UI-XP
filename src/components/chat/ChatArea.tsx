@@ -6,7 +6,7 @@ import { WelcomeScreen } from './WelcomeScreen';
 import { DrawerTabs, DrawerTab } from './DrawerTabs';
 import { TaskList, Task } from './TaskList';
 import { ChangesView, FileChange } from './ChangesView';
-import { ChatWindowTabs, ChatWindowTabId } from './ChatWindowTabs';
+import { ChatWindowTabId } from './ChatWindowTabs';
 import { ThemeElement } from '../../types/theme';
 import { Message as MessageType } from '../../types/message';
 
@@ -27,6 +27,8 @@ interface ChatAreaProps {
   onBranchSelect: (branch: string) => void;
   onCreateNewRepo: () => void;
   onWelcomeScreenChange?: (isActive: boolean) => void;
+  activeChatWindowTab: ChatWindowTabId;
+  onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -46,12 +48,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onBranchSelect,
   onCreateNewRepo,
   onWelcomeScreenChange,
+  activeChatWindowTab,
+  onChatWindowTabChange,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
   const [drawerActiveTab, setDrawerActiveTab] = useState<DrawerTab['id']>('tasks');
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
-  const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: 'analyze_css_modules',
@@ -182,11 +185,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   return (
     <div className={`flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
       <div className="flex items-center justify-end px-2 pt-2">
-        <ChatWindowTabs
-          activeTab={activeChatWindowTab}
-          onTabChange={setActiveChatWindowTab}
-          getThemeClasses={getThemeClasses}
-        />
+        <span className="sr-only">Chat window tabs (now in the top bar)</span>
       </div>
       <div className={`flex-1 overflow-y-auto space-y-4 ${getThemeClasses('scrollbar')}`}>
         {messages.map((message, index) => (

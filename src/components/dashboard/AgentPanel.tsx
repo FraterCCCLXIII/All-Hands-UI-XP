@@ -1,14 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { PRCard } from '../../types/pr';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
-import { Badge } from '../ui/badge';
-import { Bot, GitBranch, GitPullRequest, Minus, Plus, Send } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '../../lib/utils';
-import { availableSkills } from '../../data/mockData';
-import { AgentAvatarIcon } from './AgentAvatarIcon';
+import { Ellipsis, ExternalLink, GitBranch, GitPullRequest, Minus, Pause, Plus } from 'lucide-react';
 
 interface AgentPanelProps {
   card: PRCard | null;
@@ -18,39 +12,29 @@ interface AgentPanelProps {
   onSendMessage: (cardId: string, conversationId: string, message: string) => void;
 }
 
+const formatTimeAgo = (dateString?: string) => {
+  if (!dateString) return 'Just now';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
 export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSendMessage }: AgentPanelProps) {
-  const [message, setMessage] = useState('');
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!card) return;
-    setSelectedConversationId(card.conversations?.[0]?.id ?? null);
-    setSelectedSkillId(null);
-  }, [card?.id]);
-
   const conversations = card?.conversations ?? [];
-  const selectedConversation = useMemo(() => {
-    if (!selectedConversationId) return conversations[0] ?? null;
-    return conversations.find((conv) => conv.id === selectedConversationId) ?? conversations[0] ?? null;
-  }, [conversations, selectedConversationId]);
-
-  const selectedSkill = useMemo(
-    () => availableSkills.find((skill) => skill.id === selectedSkillId),
-    [selectedSkillId]
+  const activeConversations = useMemo(
+    () => conversations.filter((conversation) => Boolean(conversation.activity)),
+    [conversations]
   );
-
-  const handleSend = () => {
-    if (!message.trim() || !card || !selectedConversation) return;
-    onSendMessage(card.id, selectedConversation.id, message);
-    setMessage('');
-  };
 
   const handleCreateConversation = () => {
     if (!card) return;
-    const newConversationId = onCreateConversation(card.id, selectedSkill?.id, selectedSkill?.name);
-    setSelectedConversationId(newConversationId);
-    setSelectedSkillId(null);
+    onCreateConversation(card.id);
   };
 
   if (!card) return null;
@@ -91,146 +75,80 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
           <div className="flex items-center justify-between mb-3">
             <div>
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Start a Conversation</h3>
-              <p className="text-[11px] text-muted-foreground mt-1">Pick a skill (optional) and add a new thread.</p>
+              <p className="text-[11px] text-muted-foreground mt-1">Add a new thread for this PR.</p>
             </div>
             <Button size="sm" variant="outline" className="bg-background" onClick={handleCreateConversation}>
               Add New
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setSelectedSkillId(null)}
-              className={cn(
-                'flex items-center gap-2 p-2 rounded border border-border bg-card',
-                'hover:border-muted-foreground/50 transition-all duration-200',
-                selectedSkillId === null && 'border-foreground/20 bg-background shadow-sm'
-              )}
-              type="button"
-            >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium">—</span>
-              <div className="text-left">
-                <p className="text-sm font-medium">No skill</p>
-                <p className="text-[10px] text-muted-foreground">Start blank</p>
-              </div>
-            </button>
-            {availableSkills.map((skill) => (
-              <button
-                key={skill.id}
-                onClick={() => setSelectedSkillId(skill.id)}
-                className={cn(
-                  'flex items-center gap-2 p-2 rounded border border-border bg-card',
-                  'hover:border-muted-foreground/50 transition-all duration-200',
-                  selectedSkillId === skill.id && 'border-foreground/20 bg-background shadow-sm'
-                )}
-                type="button"
-              >
-                <AgentAvatarIcon icon={skill.icon} className="w-4 h-4 text-foreground" />
-                <div className="text-left">
-                  <p className="text-sm font-medium">{skill.name}</p>
-                  <p className="text-[10px] text-muted-foreground">{skill.description}</p>
-                </div>
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {conversations.length > 0 && (
-            <div className="border-b border-border px-4 py-3">
-              <div className="flex items-center gap-2 overflow-x-auto">
-                {conversations.map((conversation) => {
-                  const skill = availableSkills.find((s) => s.id === conversation.skillId);
-                  return (
-                    <button
-                      key={conversation.id}
-                      onClick={() => setSelectedConversationId(conversation.id)}
-                      className={cn(
-                        'flex items-center gap-2 rounded-full border px-3 py-1 text-xs',
-                        'transition-colors',
-                        selectedConversation?.id === conversation.id
-                          ? 'border-foreground/20 bg-background text-foreground shadow-sm'
-                          : 'border-border text-muted-foreground hover:border-muted-foreground/50'
-                      )}
-                      type="button"
-                    >
-                      <span className="font-medium">{conversation.name}</span>
-                      <Badge
-                        variant="secondary"
-                        className={cn('text-[10px]', skill ? 'bg-muted' : 'bg-muted/50 text-muted-foreground')}
-                      >
-                        {skill?.name ?? 'No skill'}
-                      </Badge>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="p-4 space-y-3">
-            <AnimatePresence>
-              {selectedConversation?.messages.map((msg) => (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className={cn(
-                    'p-3 rounded-lg text-sm',
-                    msg.role === 'user' ? 'bg-muted ml-8' : 'bg-agent/10 border border-agent/20 mr-8'
-                  )}
-                >
-                  {msg.role === 'agent' && (
-                    <div className="flex items-center gap-2 mb-2 text-xs text-agent">
-                      <Bot className="w-3 h-3" />
-                      <span className="font-medium">
-                        {availableSkills.find((skill) => skill.id === msg.skillId)?.name || 'Agent'}
-                      </span>
-                    </div>
-                  )}
-                  <p className="text-foreground leading-relaxed">{msg.content}</p>
-                  <p className="text-[10px] text-muted-foreground mt-2">
-                    {new Date(msg.timestamp).toLocaleTimeString()}
-                  </p>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            {conversations.length === 0 && (
+          <div className="p-4 space-y-4">
+            {activeConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-12">
-                <Bot className="w-12 h-12 text-muted-foreground/50 mb-3" />
-                <p className="text-sm text-muted-foreground">No conversations yet</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Add a new conversation with or without a skill.</p>
+                <p className="text-sm text-muted-foreground">No active conversations</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Start a new thread to see activity here.</p>
                 <Button variant="outline" size="sm" className="mt-4" onClick={handleCreateConversation}>
                   Add New
                 </Button>
               </div>
+            ) : (
+              activeConversations.map((conversation) => (
+                <div
+                  key={conversation.id}
+                  className="bg-card border border-border rounded-lg p-4 hover:border-white/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 bg-primary" />
+                      <div>
+                        <h4 className="font-medium text-foreground">{conversation.name}</h4>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <span className="gradient-flow">{conversation.activity}</span>
+                        </p>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                          <span>{formatTimeAgo(conversation.updatedAt)}</span>
+                          <span>•</span>
+                          <div className="flex items-center gap-1">
+                            <span className="uppercase tracking-wide text-[10px] text-muted-foreground">
+                              Agent Status
+                            </span>
+                            <button
+                              type="button"
+                              className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:border-foreground hover:text-foreground"
+                              aria-label="Pause agent"
+                            >
+                              <Pause className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="p-1 hover:bg-secondary rounded transition-colors text-muted-foreground hover:text-foreground"
+                        aria-label="Open conversation"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-1 hover:bg-muted/80 rounded transition-colors text-muted-foreground hover:text-foreground"
+                        aria-label="Conversation options"
+                      >
+                        <Ellipsis className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="border-t border-border pt-2 mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
+                    <span className="text-xs">Up to date</span>
+                  </div>
+                </div>
+              ))
             )}
           </div>
-        </div>
-
-        <div className="p-4 border-t border-border">
-          <div className="flex gap-2">
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Message this conversation..."
-              className="flex-1 bg-muted border-border focus:border-primary"
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!message.trim() || !selectedConversation}
-              size="icon"
-              variant="outline"
-              className="bg-background hover:bg-muted"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-          {!selectedConversation && (
-            <p className="text-[10px] text-muted-foreground mt-2">Add a conversation before sending a message.</p>
-          )}
         </div>
       </SheetContent>
     </Sheet>
