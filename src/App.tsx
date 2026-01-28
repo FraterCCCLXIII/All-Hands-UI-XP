@@ -1,14 +1,18 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
+import { ConversationDrawer } from './components/chat/ConversationDrawer';
 import { Canvas } from './components/canvas/Canvas';
 import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
 import { DashboardScreen, LoadingScreen, SkillsScreen } from './screens';
+import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
+import { conversationSummaries } from './data/conversations';
+import { ChatWindowTabId } from './components/chat/ChatWindowTabs';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -17,8 +21,8 @@ const themeClasses: ThemeClassMap = {
     border: 'border-stone-700',
     'input-bg': 'bg-stone-800',
     'placeholder-text': 'placeholder-stone-500',
-    'button-bg': 'bg-stone-700',
-    'button-text': 'text-stone-200',
+    'button-bg': 'bg-white',
+    'button-text': 'text-black',
     'user-message-bg': 'bg-stone-700',
     'user-message-text': 'text-stone-200',
     'ai-message-bg': 'bg-stone-800',
@@ -109,6 +113,16 @@ const themeClasses: ThemeClassMap = {
   },
 };
 
+const actionSlugs: Record<string, string> = {
+  code: 'chat',
+  dashboard: 'dashboard',
+  skills: 'skills',
+  conversations: 'conversations',
+  settings: 'settings',
+};
+
+const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
+
 function App() {
   const [theme] = useState<Theme>('dark');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -120,6 +134,9 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
+  const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
+  const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
+  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('code');
   // Canvas resizing state
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
   const minCanvasWidth = 30; // Minimum 30% width
@@ -127,7 +144,8 @@ function App() {
   const [showSharePreview, setShowSharePreview] = useState(false);
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
-  const showChatView = !isDashboardView && !isSkillsView;
+  const isSettingsView = activeNavItem === 'settings';
+  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView;
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -176,9 +194,30 @@ function App() {
     setCanvasVisible(prev => !prev);
   }, []);
 
-  const handleNavItemClick = useCallback((action: string) => {
-    setActiveNavItem(action);
-    if (action === 'tetris') {
+  const handleConversationDrawerChange = useCallback(
+    (open: boolean) => {
+      setIsConversationDrawerOpen(open);
+      window.location.hash = open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+    },
+    [lastNonDrawerNavItem]
+  );
+
+  const handleNavItemClick = useCallback(
+    (action: string) => {
+      if (action === 'conversations') {
+        setIsConversationDrawerOpen((prev) => {
+          const next = !prev;
+          window.location.hash = next ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+          return next;
+        });
+        return;
+      }
+
+      setActiveNavItem(action);
+      setLastNonDrawerNavItem(action);
+      setIsConversationDrawerOpen(false);
+      window.location.hash = actionSlugs[action] ?? actionSlugs.code;
+      if (action === 'tetris') {
       const tetrisMessage: Message = {
         role: 'ai',
         text: 'Starting Tetris game...',
@@ -218,6 +257,25 @@ function App() {
     setCanvasWidth(Math.min(Math.max(percentage, minCanvasWidth), maxCanvasWidth));
   }, []);
 
+  useEffect(() => {
+    const syncFromHash = () => {
+      const hash = window.location.hash.replace(/^#\/?/, '');
+      const action = slugToAction[hash] ?? 'code';
+      if (action === 'conversations') {
+        setIsConversationDrawerOpen(true);
+      } else {
+        setActiveNavItem(action);
+        setLastNonDrawerNavItem(action);
+        setIsConversationDrawerOpen(false);
+      }
+    };
+
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, []);
+
+
   return (
     <div className={`h-screen flex flex-col ${getThemeClasses('bg')} ${getThemeClasses('text')}`}>
       <AnimatePresence>
@@ -237,13 +295,14 @@ function App() {
               onExpandChange={setIsLeftNavExpanded}
               onNavItemClick={handleNavItemClick}
               activeNavItem={activeNavItem}
+              isConversationDrawerOpen={isConversationDrawerOpen}
             />
             <div 
               className="flex-1 flex flex-col transition-all duration-200 ml-16 border-l border-sidebar-border"
               style={{ minWidth: 0 }}
             >
               {showChatView && !isWelcomeScreenActive && (
-                <TopBar
+                    <TopBar
                   theme={theme}
                   getThemeClasses={getThemeClasses}
                   projectTitle={projectTitle}
@@ -255,11 +314,14 @@ function App() {
                   isRunning={isRunning}
                   isCanvasVisible={canvasVisible}
                   onCanvasToggle={handleCanvasToggle}
+                      activeChatWindowTab={activeChatWindowTab}
+                      onChatWindowTabChange={setActiveChatWindowTab}
                 />
               )}
               <div className="flex-1 flex">
                 {isDashboardView && <DashboardScreen />}
                 {isSkillsView && <SkillsScreen />}
+                {isSettingsView && <SettingsScreen />}
                 {showChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
@@ -272,7 +334,7 @@ function App() {
                         ...(canvasVisible ? {} : { maxWidth: '760px' }),
                       }}
                     >
-                      <ChatArea
+                    <ChatArea
                         theme={theme}
                         getThemeClasses={getThemeClasses}
                         messages={messages}
@@ -289,6 +351,8 @@ function App() {
                         onBranchSelect={handleBranchSelect}
                         onCreateNewRepo={handleCreateNewRepo}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
+                      activeChatWindowTab={activeChatWindowTab}
+                      onChatWindowTabChange={setActiveChatWindowTab}
                       />
                       {canvasVisible && (
                         <div className="absolute right-0 top-0 bottom-0 z-10">
@@ -323,6 +387,11 @@ function App() {
                         </div>
                       </div>
                     )}
+                    <ConversationDrawer
+                      open={isConversationDrawerOpen}
+                      onOpenChange={handleConversationDrawerChange}
+                      conversations={conversationSummaries}
+                    />
                   </div>
                 )}
               </div>
