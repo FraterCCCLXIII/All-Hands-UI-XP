@@ -25,7 +25,7 @@ const formatTimeAgo = (dateString?: string) => {
   return `${diffDays}d ago`;
 };
 
-export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSendMessage }: AgentPanelProps) {
+export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSendMessage: _onSendMessage }: AgentPanelProps) {
   const conversations = card?.conversations ?? [];
   const activeConversations = useMemo(
     () => conversations.filter((conversation) => Boolean(conversation.activity)),

@@ -48,8 +48,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onBranchSelect,
   onCreateNewRepo,
   onWelcomeScreenChange,
-  activeChatWindowTab,
-  onChatWindowTabChange,
+  activeChatWindowTab: _activeChatWindowTab,
+  onChatWindowTabChange: _onChatWindowTabChange,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);

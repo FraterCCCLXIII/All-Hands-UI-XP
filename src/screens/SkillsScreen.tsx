@@ -5,7 +5,6 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { AgentAvatarIcon } from '../components/dashboard/AgentAvatarIcon';
 import { AgentPanel } from '../components/dashboard/AgentPanel';
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 
 const baseSkillCard: PRCard = {
   id: 'skill-sandbox',

@@ -21,7 +21,7 @@ export function DashboardScreen() {
   }, []);
   const [selectedInsightRepo, setSelectedInsightRepo] = useState<string | null>(insightsRepositories[0]?.id ?? null);
   const [reviewFilter, setReviewFilter] = useState<'open' | 'closed'>('open');
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const createSectionKey = useCallback((name: string) => name.replace(/[^\w-]/g, '-').toLowerCase(), []);
   const scrollToSection = useCallback(
