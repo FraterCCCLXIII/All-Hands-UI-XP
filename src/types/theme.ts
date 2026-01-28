@@ -28,7 +28,9 @@ export type ThemeElement =
   | 'stop-button-bg-subtle'
   | 'stop-button-text'
   | 'button-hover'
-  | 'scrollbar';
+  | 'scrollbar'
+  | 'success-text'
+  | 'error-text';
 
 export type ThemeClasses = {
   [key in ThemeElement]: string;

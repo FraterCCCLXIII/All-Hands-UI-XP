@@ -7,6 +7,7 @@ import {
   PanelRightOpen
 } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
+import { ChatWindowTabs, ChatWindowTabId } from '../chat/ChatWindowTabs';
 
 interface TopBarProps {
   theme: string;
@@ -20,6 +21,8 @@ interface TopBarProps {
   isRunning: boolean;
   isCanvasVisible: boolean;
   onCanvasToggle: () => void;
+  activeChatWindowTab: ChatWindowTabId;
+  onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -33,6 +36,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   isRunning,
   isCanvasVisible,
   onCanvasToggle,
+  activeChatWindowTab,
+  onChatWindowTabChange,
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +100,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* Right side: Share, Run, and Canvas Toggle buttons */}
       <div className="flex items-center space-x-3">
+        <div className="hidden md:flex items-center mr-2">
+          <ChatWindowTabs
+            activeTab={activeChatWindowTab}
+            onTabChange={onChatWindowTabChange}
+            getThemeClasses={getThemeClasses}
+          />
+        </div>
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
