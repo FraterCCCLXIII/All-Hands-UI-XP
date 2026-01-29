@@ -3,13 +3,13 @@ import { Search, XCircle } from 'lucide-react';
 import { Input } from './input';
 import { cn } from '../../lib/utils';
 
-export interface SearchInputProps
-  extends Omit<React.ComponentProps<typeof Input>, 'type' | 'size'> {
+type InputProps = React.ComponentProps<typeof Input>;
+export type SearchInputProps = Omit<InputProps, 'type' | 'size'> & {
   value: string;
   onValueChange: (value: string) => void;
   /** Size: sm (h-9), default (h-10), lg (h-11) */
   size?: 'sm' | 'default' | 'lg';
-}
+};
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   (
