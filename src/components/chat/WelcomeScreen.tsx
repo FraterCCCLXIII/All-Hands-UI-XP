@@ -123,7 +123,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </a>
           </div>
           <div className="h-[80px] flex items-center">
-            <h1 className="text-[32px] text-foreground font-bold leading-5">Let&apos;s Start Building!</h1>
+            <h1 className="text-[32px] text-foreground font-bold leading-5 tracking-[-1px]">Let&apos;s Start Building!</h1>
           </div>
         </header>
 
@@ -333,6 +333,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         key={conversation.id}
                         type="button"
                         onClick={() => {
+                          window.location.hash = '#/chat-active';
                           if (conversation.repo !== 'No Repository') {
                             onRepoSelect(conversation.repo);
                             if (conversation.branch) onBranchSelect(conversation.branch);

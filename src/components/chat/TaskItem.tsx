@@ -25,7 +25,7 @@ export const TaskItem: React.FC<TaskItemProps> = ({
       onClick={() => onToggle?.(id)}
       className={[
         'group flex w-full items-start gap-3 p-3 rounded-lg transition-all duration-200 text-left',
-        getThemeClasses('button-hover'),
+        getThemeClasses('task-item-bg'),
         completed ? 'opacity-60' : '',
       ].join(' ')}
     >

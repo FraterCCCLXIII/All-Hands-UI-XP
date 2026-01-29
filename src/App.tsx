@@ -7,7 +7,7 @@ import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
-import { DashboardScreen, LoadingScreen, SkillsScreen, LoginScreen } from './screens';
+import { DashboardScreen, LoadingScreen, SkillsScreen, LoginScreen, ActiveChatScreen } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
@@ -43,6 +43,7 @@ const themeClasses: ThemeClassMap = {
     'stop-button-bg-subtle': 'bg-stone-700',
     'stop-button-text': 'text-stone-200',
     'button-hover': 'hover:bg-stone-600',
+    'task-item-bg': 'bg-stone-600',
     'scrollbar': 'scrollbar-thin scrollbar-thumb-stone-700 scrollbar-track-stone-800',
     'success-text': 'text-emerald-400',
     'error-text': 'text-rose-400',
@@ -75,6 +76,7 @@ const themeClasses: ThemeClassMap = {
     'stop-button-bg-subtle': 'bg-stone-300',
     'stop-button-text': 'text-stone-800',
     'button-hover': 'hover:bg-stone-300',
+    'task-item-bg': 'bg-stone-300',
     'scrollbar': 'scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-stone-100',
     'success-text': 'text-emerald-600',
     'error-text': 'text-rose-600',
@@ -107,6 +109,7 @@ const themeClasses: ThemeClassMap = {
     'stop-button-bg-subtle': 'bg-[rgb(200,190,175)]',
     'stop-button-text': 'text-[rgb(100,80,60)]',
     'button-hover': 'hover:bg-[rgb(215,205,190)]',
+    'task-item-bg': 'bg-[rgb(215,205,190)]',
     'scrollbar': 'scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100',
     'success-text': 'text-[rgb(120,180,120)]',
     'error-text': 'text-[rgb(180,120,120)]',
@@ -129,6 +132,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
+  const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
   const [projectTitle, setProjectTitle] = useState('My Project');
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
@@ -144,6 +148,7 @@ function App() {
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<string | null>(null);
+  const [isActiveChatView, setIsActiveChatView] = useState(false);
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
@@ -196,6 +201,41 @@ function App() {
     setCanvasVisible(prev => !prev);
   }, []);
 
+  const handleShare = useCallback(() => {
+    setCanvasContentType('share');
+    setCanvasVisible(true);
+    setShowSharePreview(true);
+  }, []);
+
+  const handleChatWindowTabChange = useCallback((tabId: ChatWindowTabId) => {
+    setActiveChatWindowTab(tabId);
+    setCanvasContentType(tabId);
+    setCanvasVisible(true);
+  }, []);
+
+  const handleRun = useCallback(() => {
+    setIsRunning(prev => !prev);
+    setCanvasContentType('run');
+    setCanvasVisible(true);
+    if (!isRunning) {
+      const runMessage: Message = {
+        role: 'ai',
+        text: 'Starting the application...',
+        type: 'build',
+        status: 'in_progress',
+      };
+      setMessages(prev => [...prev, runMessage]);
+    } else {
+      const stopMessage: Message = {
+        role: 'ai',
+        text: 'Stopping the application...',
+        type: 'build',
+        status: 'completed',
+      };
+      setMessages(prev => [...prev, stopMessage]);
+    }
+  }, [isRunning]);
+
   const handleConversationDrawerChange = useCallback(
     (open: boolean) => {
       setIsConversationDrawerOpen(open);
@@ -238,30 +278,6 @@ function App() {
     }
   }, []);
 
-  const handleShare = useCallback(() => {
-    setShowSharePreview(true);
-  }, []);
-
-  const handleRun = useCallback(() => {
-    setIsRunning(prev => !prev);
-    if (!isRunning) {
-      const runMessage: Message = {
-        role: 'ai',
-        text: 'Starting the application...',
-        type: 'build',
-        status: 'in_progress',
-      };
-      setMessages(prev => [...prev, runMessage]);
-    } else {
-      const stopMessage: Message = {
-        role: 'ai',
-        text: 'Stopping the application...',
-        type: 'build',
-        status: 'completed',
-      };
-      setMessages(prev => [...prev, stopMessage]);
-    }
-  }, [isRunning]);
 
   const handleCanvasResize = useCallback((percentage: number) => {
     setCanvasWidth(Math.min(Math.max(percentage, minCanvasWidth), maxCanvasWidth));
@@ -272,9 +288,19 @@ function App() {
       const hash = window.location.hash.replace(/^#\/?/, '');
       if (hash === 'new-user-experience') {
         setActiveFlowPrototype('new-user-experience');
+        setIsActiveChatView(false);
         return;
       }
       setActiveFlowPrototype(null);
+      if (hash === 'chat-active') {
+        setIsActiveChatView(true);
+        setActiveNavItem('code');
+        setLastNonDrawerNavItem('code');
+        setIsConversationDrawerOpen(false);
+        setSettingsTab(null);
+        return;
+      }
+      setIsActiveChatView(false);
       if (hash === 'settings' || hash.startsWith('settings/')) {
         setActiveNavItem('settings');
         setLastNonDrawerNavItem('settings');
@@ -336,7 +362,7 @@ function App() {
               />
               ) : (
                 <>
-              {showChatView && !isWelcomeScreenActive && (
+              {showChatView && !isWelcomeScreenActive && !isActiveChatView && (
                     <TopBar
                   theme={theme}
                   getThemeClasses={getThemeClasses}
@@ -349,11 +375,16 @@ function App() {
                   isRunning={isRunning}
                   isCanvasVisible={canvasVisible}
                   onCanvasToggle={handleCanvasToggle}
-                      activeChatWindowTab={activeChatWindowTab}
-                      onChatWindowTabChange={setActiveChatWindowTab}
+                  activeChatWindowTab={activeChatWindowTab}
+                  onChatWindowTabChange={handleChatWindowTabChange}
                 />
               )}
               <div className="flex-1 flex">
+                {isActiveChatView && (
+                  <div className="flex-1 flex min-w-0">
+                    <ActiveChatScreen theme={theme} getThemeClasses={getThemeClasses} />
+                  </div>
+                )}
                 {isDashboardView && <DashboardScreen />}
                 {isSkillsView && <SkillsScreen />}
                 {isSettingsView && (
@@ -364,7 +395,7 @@ function App() {
                     }}
                   />
                 )}
-                {showChatView && (
+                {showChatView && !isActiveChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
                     <div
@@ -394,7 +425,7 @@ function App() {
                         onCreateNewRepo={handleCreateNewRepo}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                       activeChatWindowTab={activeChatWindowTab}
-                      onChatWindowTabChange={setActiveChatWindowTab}
+                      onChatWindowTabChange={handleChatWindowTabChange}
                       />
                       {canvasVisible && (
                         <div className="absolute right-0 top-0 bottom-0 z-10">
@@ -420,7 +451,7 @@ function App() {
                           <Canvas
                             theme={theme}
                             getThemeClasses={getThemeClasses}
-                            content={{ type: 'user', text: '', headerText: 'Canvas' }}
+                            contentType={canvasContentType}
                             onResize={handleCanvasResize}
                             initialWidth={canvasWidth}
                             minWidth={minCanvasWidth}

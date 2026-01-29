@@ -138,6 +138,67 @@ input[type="search"]::-webkit-search-results-decoration {
   background: hsl(var(--muted-foreground) / 0.7);
 }
 
+/* Custom scrollbar for chat/outlet areas */
+.custom-scrollbar,
+.custom-scrollbar-always {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar,
+.custom-scrollbar-always::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar-always::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.custom-scrollbar-always::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar-always::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* Scrollbar visible only on hover (e.g. chat thread) */
+.scrollbar-on-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scrollbar-on-hover:hover {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+}
+
+.scrollbar-on-hover::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-on-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-on-hover::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
 /* Kanban: hide dnd placeholder so it doesn’t show as a visible pattern/shape */
 [data-rfd-placeholder-context-id] {
   background: transparent !important;

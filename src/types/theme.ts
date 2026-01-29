@@ -28,6 +28,7 @@ export type ThemeElement =
   | 'stop-button-bg-subtle'
   | 'stop-button-text'
   | 'button-hover'
+  | 'task-item-bg'
   | 'scrollbar'
   | 'success-text'
   | 'error-text';

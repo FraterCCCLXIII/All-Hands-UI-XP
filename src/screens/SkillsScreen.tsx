@@ -407,7 +407,7 @@ export function SkillsScreen() {
                   </div>
                   <div className="mt-6 w-full">
                     <div
-                      className="flex flex-wrap gap-2 rounded-lg border border-border bg-muted/20 p-2"
+                      className="flex flex-wrap gap-2 rounded-lg p-2"
                       role="tablist"
                       aria-label="Category"
                     >
