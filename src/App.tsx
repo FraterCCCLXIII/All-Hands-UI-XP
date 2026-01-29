@@ -143,6 +143,7 @@ function App() {
   const maxCanvasWidth = 70; // Maximum 70% width
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
+  const [settingsTab, setSettingsTab] = useState<string | null>(null);
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
@@ -218,7 +219,7 @@ function App() {
       setActiveNavItem(action);
       setLastNonDrawerNavItem(action);
       setIsConversationDrawerOpen(false);
-      window.location.hash = actionSlugs[action] ?? actionSlugs.code;
+      window.location.hash = action === 'settings' ? '#/settings' : (actionSlugs[action] ?? actionSlugs.code);
       if (action === 'tetris') {
       const tetrisMessage: Message = {
         role: 'ai',
@@ -274,6 +275,14 @@ function App() {
         return;
       }
       setActiveFlowPrototype(null);
+      if (hash === 'settings' || hash.startsWith('settings/')) {
+        setActiveNavItem('settings');
+        setLastNonDrawerNavItem('settings');
+        setIsConversationDrawerOpen(false);
+        setSettingsTab(hash === 'settings' ? null : hash.split('/')[1] ?? null);
+        return;
+      }
+      setSettingsTab(null);
       const action = slugToAction[hash] ?? 'code';
       if (action === 'conversations') {
         setIsConversationDrawerOpen(true);
@@ -347,7 +356,14 @@ function App() {
               <div className="flex-1 flex">
                 {isDashboardView && <DashboardScreen />}
                 {isSkillsView && <SkillsScreen />}
-                {isSettingsView && <SettingsScreen />}
+                {isSettingsView && (
+                  <SettingsScreen
+                    initialTab={settingsTab ?? undefined}
+                    onTabChange={(tab) => {
+                      window.location.hash = `#/settings/${tab}`;
+                    }}
+                  />
+                )}
                 {showChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}

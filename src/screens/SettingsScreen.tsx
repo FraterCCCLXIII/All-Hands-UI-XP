@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Settings as SettingsIcon, User, Cloud, Key, Shield, CreditCard, Cpu, Puzzle, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings as SettingsIcon, User, Cloud, Key, Shield, CreditCard, Cpu, Puzzle, CheckCircle, ChevronDown } from 'lucide-react';
+import { Spinner } from '../components/common/Spinner';
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
@@ -12,8 +13,15 @@ const settingsTabs = [
   { id: 'mcp', label: 'MCP', icon: Cloud },
 ];
 
-export const SettingsScreen: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('api-keys');
+export interface SettingsScreenProps {
+  /** Initial tab from route (e.g. llm for #/settings/llm) */
+  initialTab?: string;
+  /** Called when user switches tab so the URL can be updated */
+  onTabChange?: (tab: string) => void;
+}
+
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({ initialTab, onTabChange }) => {
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'api-keys');
   const [gitUsername, setGitUsername] = useState('openhands');
   const [gitEmail, setGitEmail] = useState('openhands@all-hands.dev');
   const [userEmail, setUserEmail] = useState('panentheum@gmail.com');
@@ -22,8 +30,23 @@ export const SettingsScreen: React.FC = () => {
   const [enableProactive, setEnableProactive] = useState(true);
   const [enableSolvability, setEnableSolvability] = useState(true);
   const [advancedLLM, setAdvancedLLM] = useState(true);
+  const [llmProvider, setLlmProvider] = useState('');
+  const [llmApiKey, setLlmApiKey] = useState('');
+  const [llmApiKeyApproved, setLlmApiKeyApproved] = useState(false);
+  const [openaiConnecting, setOpenaiConnecting] = useState(false);
   const [enableCondenser, setEnableCondenser] = useState(true);
   const [enableConfirmation, setEnableConfirmation] = useState(false);
+
+  useEffect(() => {
+    if (initialTab && settingsTabs.some((t) => t.id === initialTab)) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
+
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId);
+    onTabChange?.(tabId);
+  };
 
   return (
     <div className="flex flex-1 overflow-hidden gap-10 p-8">
@@ -38,7 +61,7 @@ export const SettingsScreen: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
                   activeTab === tab.id
                     ? 'bg-muted/60'
@@ -200,8 +223,8 @@ export const SettingsScreen: React.FC = () => {
                       checked={enableAnalytics}
                       onChange={(e) => setEnableAnalytics(e.target.checked)}
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${enableAnalytics ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableAnalytics ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
+                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableAnalytics ? 'bg-white' : 'bg-muted border border-border'}`}>
+                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableAnalytics ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
                     </div>
                     <span className="text-sm text-foreground">Send anonymous usage data</span>
                   </label>
@@ -213,8 +236,8 @@ export const SettingsScreen: React.FC = () => {
                       checked={enableSound}
                       onChange={(e) => setEnableSound(e.target.checked)}
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${enableSound ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableSound ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
+                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableSound ? 'bg-white' : 'bg-muted border border-border'}`}>
+                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableSound ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
                     </div>
                     <span className="text-sm text-foreground">Sound Notifications</span>
                   </label>
@@ -226,8 +249,8 @@ export const SettingsScreen: React.FC = () => {
                       checked={enableProactive}
                       onChange={(e) => setEnableProactive(e.target.checked)}
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${enableProactive ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableProactive ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
+                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableProactive ? 'bg-white' : 'bg-muted border border-border'}`}>
+                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableProactive ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
                     </div>
                     <span className="text-sm text-foreground">Suggest Tasks on GitHub</span>
                   </label>
@@ -239,8 +262,8 @@ export const SettingsScreen: React.FC = () => {
                       checked={enableSolvability}
                       onChange={(e) => setEnableSolvability(e.target.checked)}
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${enableSolvability ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableSolvability ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
+                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableSolvability ? 'bg-white' : 'bg-muted border border-border'}`}>
+                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableSolvability ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
                     </div>
                     <span className="text-sm text-foreground">Enable Solvability Analysis</span>
                   </label>
@@ -296,97 +319,209 @@ export const SettingsScreen: React.FC = () => {
                       type="checkbox"
                       checked={advancedLLM}
                       onChange={(e) => setAdvancedLLM(e.target.checked)}
+                      data-testid="advanced-settings-switch"
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${advancedLLM ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${advancedLLM ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
+                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${advancedLLM ? 'bg-white' : 'bg-muted border border-border'}`}>
+                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${advancedLLM ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
                     </div>
                     <span className="text-sm text-foreground">Advanced</span>
                   </label>
 
-                  <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                    <span className="text-sm text-foreground">Custom Model</span>
-                    <input
-                      placeholder="openhands/claude-opus-4-5-20251101"
-                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
-                      type="text"
-                      defaultValue="litellm_proxy/prod/claude-opus-4-5-20251101"
-                    />
-                  </label>
+                  {!advancedLLM ? (
+                    <>
+                      <div className="flex flex-col gap-6 w-full max-w-[680px]">
+                        <fieldset className="flex flex-col gap-2.5 w-full">
+                          <label className="text-sm text-foreground">LLM Provider</label>
+                          <div className="relative w-full">
+                            <select
+                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                              data-testid="llm-provider-input"
+                              aria-label="LLM Provider"
+                              value={llmProvider}
+                              onChange={(e) => {
+                                setLlmProvider(e.target.value);
+                                setLlmApiKey('');
+                                setLlmApiKeyApproved(false);
+                              }}
+                            >
+                              <option value="">Select a provider</option>
+                              <option value="openai">OpenAI</option>
+                              <option value="anthropic">Anthropic</option>
+                              <option value="litellm">LiteLLM</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" aria-hidden />
+                          </div>
+                        </fieldset>
+                        <fieldset className="flex flex-col gap-2.5 w-full">
+                          <label className="text-sm text-foreground">LLM Model</label>
+                          <div className="relative w-full">
+                            <select
+                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                              data-testid="llm-model-input"
+                              aria-label="LLM Model"
+                              defaultValue=""
+                            >
+                              <option value="">Select a model</option>
+                              <option value="claude-opus">Claude Opus</option>
+                              <option value="gpt-4o">GPT-4o</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" aria-hidden />
+                          </div>
+                        </fieldset>
+                      </div>
+                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                        <span className="text-sm text-foreground">API Key</span>
+                        <div className="relative w-full">
+                          <input
+                            placeholder=""
+                            value={llmApiKeyApproved ? '•'.repeat(llmApiKey.length) : llmApiKey}
+                            onChange={(e) => setLlmApiKey(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (llmApiKeyApproved) {
+                                setLlmApiKeyApproved(false);
+                                setLlmApiKey(e.key.length === 1 ? e.key : '');
+                                e.preventDefault();
+                              } else if (e.key === 'Enter' && llmApiKey.length > 0) {
+                                setLlmApiKeyApproved(true);
+                                e.preventDefault();
+                              }
+                            }}
+                            className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                            type="text"
+                            data-testid="llm-api-key-input"
+                          />
+                          {llmApiKeyApproved && llmApiKey.length > 0 && (
+                            <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none" aria-hidden />
+                          )}
+                        </div>
+                      </label>
+                      <p className="text-xs text-muted-foreground" data-testid="llm-api-key-help-anchor">
+                        Don't know your API key?{' '}
+                        <a
+                          href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
+                          rel="noreferrer noopener"
+                          target="_blank"
+                          className="underline underline-offset-2 text-white hover:text-gray-300"
+                        >
+                          Click here for instructions
+                        </a>
+                      </p>
+                      {llmProvider === 'openai' && (
+                        <div className="flex flex-col gap-4 w-full max-w-[680px]">
+                          <div className="flex items-center gap-3 w-full">
+                            <span className="flex-1 h-px bg-border" aria-hidden />
+                            <span className="text-sm text-muted-foreground uppercase tracking-wide">OR</span>
+                            <span className="flex-1 h-px bg-border" aria-hidden />
+                          </div>
+                          <button
+                            type="button"
+                            disabled={openaiConnecting}
+                            onClick={async () => {
+                              setOpenaiConnecting(true);
+                              await new Promise((r) => setTimeout(r, 1500));
+                              setOpenaiConnecting(false);
+                              setLlmApiKey('•'.repeat(20));
+                              setLlmApiKeyApproved(true);
+                            }}
+                            className="h-10 w-full rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          >
+                            {openaiConnecting ? (
+                              <Spinner className="w-5 h-5 shrink-0" color="border-t-primary-foreground" />
+                            ) : (
+                              'Connect with OpenAI'
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                        <span className="text-sm text-foreground">Custom Model</span>
+                        <input
+                          placeholder="openhands/claude-opus-4-5-20251101"
+                          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                          type="text"
+                          defaultValue="litellm_proxy/prod/claude-opus-4-5-20251101"
+                        />
+                      </label>
 
-                  <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                    <span className="text-sm text-foreground">Base URL</span>
-                    <input
-                      placeholder="https://api.openai.com"
-                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
-                      type="text"
-                      defaultValue="https://llm-proxy.app.all-hands.dev"
-                    />
-                  </label>
+                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                        <span className="text-sm text-foreground">Base URL</span>
+                        <input
+                          placeholder="https://api.openai.com"
+                          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                          type="text"
+                          defaultValue="https://llm-proxy.app.all-hands.dev"
+                        />
+                      </label>
 
-                  <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="text-sm text-foreground">API Key</span>
-                    </div>
-                    <input
-                      placeholder="<hidden>"
-                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
-                      type="password"
-                    />
-                  </label>
+                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                        <span className="text-sm text-foreground">API Key</span>
+                        <div className="relative w-full">
+                          <input
+                            placeholder="••••••••••"
+                            className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                            type="password"
+                          />
+                          <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none" aria-hidden />
+                        </div>
+                      </label>
 
-                  <p className="text-xs text-muted-foreground">
-                    Don't know your API key?{' '}
-                    <a
-                      href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
-                      rel="noreferrer noopener"
-                      target="_blank"
-                      className="underline underline-offset-2 text-white hover:text-gray-300"
-                    >
-                      Click here for instructions
-                    </a>
-                  </p>
+                      <p className="text-xs text-muted-foreground">
+                        Don't know your API key?{' '}
+                        <a
+                          href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
+                          rel="noreferrer noopener"
+                          target="_blank"
+                          className="underline underline-offset-2 text-white hover:text-gray-300"
+                        >
+                          Click here for instructions
+                        </a>
+                      </p>
 
-                  <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                    <span className="text-sm text-foreground">Memory condenser max history size</span>
-                    <input
-                      min="20"
-                      step="1"
-                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2"
-                      type="number"
-                      defaultValue="240"
-                    />
-                    <p className="text-xs text-muted-foreground mt-2">After this many events, the condenser will summarize history. Minimum 20.</p>
-                  </label>
+                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                        <span className="text-sm text-foreground">Memory condenser max history size</span>
+                        <input
+                          min={20}
+                          step={1}
+                          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                          type="number"
+                          defaultValue="240"
+                        />
+                        <p className="text-xs text-muted-foreground mt-2">After this many events, the condenser will summarize history. Minimum 20.</p>
+                      </label>
 
-                  <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
-                      checked={enableCondenser}
-                      onChange={(e) => setEnableCondenser(e.target.checked)}
-                    />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${enableCondenser ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableCondenser ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
-                    </div>
-                    <span className="text-sm text-foreground">Enable memory condensation</span>
-                  </label>
+                      <label className="flex items-center gap-2 w-fit cursor-pointer">
+                        <input
+                          hidden
+                          type="checkbox"
+                          checked={enableCondenser}
+                          onChange={(e) => setEnableCondenser(e.target.checked)}
+                        />
+                        <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableCondenser ? 'bg-white' : 'bg-muted border border-border'}`}>
+                          <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableCondenser ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
+                        </div>
+                        <span className="text-sm text-foreground">Enable memory condensation</span>
+                      </label>
 
-                  <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
-                      checked={enableConfirmation}
-                      onChange={(e) => setEnableConfirmation(e.target.checked)}
-                    />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out ${enableConfirmation ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableConfirmation ? 'translate-x-6 bg-black' : 'translate-x-1.5 bg-muted-foreground'}`}></div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground">Enable Confirmation Mode</span>
-                      <span className="text-[11px] leading-4 text-black font-medium tracking-tighter bg-white px-1 rounded-full">Beta</span>
-                    </div>
-                  </label>
+                      <label className="flex items-center gap-2 w-fit cursor-pointer">
+                        <input
+                          hidden
+                          type="checkbox"
+                          checked={enableConfirmation}
+                          onChange={(e) => setEnableConfirmation(e.target.checked)}
+                        />
+                        <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableConfirmation ? 'bg-white' : 'bg-muted border border-border'}`}>
+                          <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableConfirmation ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-foreground">Enable Confirmation Mode</span>
+                          <span className="text-[11px] leading-4 text-black font-medium tracking-tighter bg-white px-1 rounded-full">Beta</span>
+                        </div>
+                      </label>
+                    </>
+                  )}
                 </div>
                 <div className="flex gap-6 py-6 pr-6 justify-start">
                   <button
