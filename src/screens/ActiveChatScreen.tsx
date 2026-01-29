@@ -38,6 +38,7 @@ import {
   Hammer,
   MessageCircleQuestion,
   ListChecks,
+  RefreshCw,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -89,8 +90,8 @@ export function ActiveChatScreen({ theme, getThemeClasses }: ActiveChatScreenPro
   const [drawersAnimatedIn, setDrawersAnimatedIn] = useState(false);
   const [taskListExpanded, setTaskListExpanded] = useState(false);
   const [changesExpanded, setChangesExpanded] = useState(false);
-  const [taskListDrawerVisible, setTaskListDrawerVisible] = useState(true);
-  const [changesDrawerVisible, setChangesDrawerVisible] = useState(true);
+  const [taskListDrawerVisible, setTaskListDrawerVisible] = useState(false);
+  const [changesDrawerVisible, setChangesDrawerVisible] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [chatMode, setChatMode] = useState<'build' | 'ask' | 'plan'>('build');
   const [projectReadExpanded, setProjectReadExpanded] = useState(false);
@@ -799,6 +800,22 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <div className="z-10 h-2 w-full bg-base shrink-0" aria-hidden />
                         <div data-testid="interactive-chat-box" className="relative z-10 -mt-2">
                           <div className="w-full">
+                            <div
+                              role="status"
+                              aria-live="polite"
+                              className="w-full rounded-lg border border-teal-300 bg-teal-200 text-teal-950 px-3 py-2 mb-2 flex items-center gap-2"
+                              data-testid="reconnect-banner"
+                            >
+                              <RefreshCw className="w-4 h-4 text-teal-900 shrink-0" aria-hidden />
+                              <span className="text-sm font-medium flex-1 text-left">Refresh the page to update session</span>
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-md bg-teal-300/70 px-2 py-1 text-xs font-semibold text-teal-950 hover:bg-teal-300"
+                                onClick={() => window.location.reload()}
+                              >
+                                Refresh
+                              </button>
+                            </div>
                             <div className="relative w-full">
                               <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20 group" id="resize-grip">
                                 <div className="absolute top-1 left-0 w-full h-[3px] bg-white cursor-ns-resize z-10 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ userSelect: 'none' }} />
