@@ -42,6 +42,8 @@ import {
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
+import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,6 +99,7 @@ export function ActiveChatScreen({ theme, getThemeClasses }: ActiveChatScreenPro
   const [projectReadExpanded, setProjectReadExpanded] = useState(false);
   const [packageJsonReadExpanded, setPackageJsonReadExpanded] = useState(false);
   const [ranCommandExpanded, setRanCommandExpanded] = useState(false);
+  const [showPrototypeOverlays, setShowPrototypeOverlays] = useState(true);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -800,22 +803,29 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <div className="z-10 h-2 w-full bg-base shrink-0" aria-hidden />
                         <div data-testid="interactive-chat-box" className="relative z-10 -mt-2">
                           <div className="w-full">
-                            <div
-                              role="status"
-                              aria-live="polite"
-                              className="w-full rounded-lg border border-teal-300 bg-teal-200 text-teal-950 px-3 py-2 mb-2 flex items-center gap-2"
-                              data-testid="reconnect-banner"
+                          <div
+                            role="status"
+                            aria-live="polite"
+                            aria-hidden={!showPrototypeOverlays}
+                            className={cn(
+                              'w-full rounded-lg border border-teal-300 bg-teal-200 text-teal-950 px-3 py-2 mb-2 flex items-center gap-2 overflow-hidden',
+                              'transition-[max-height,opacity,margin] duration-200',
+                              showPrototypeOverlays
+                                ? 'animate-in fade-in-0 slide-in-from-top-1 max-h-24 opacity-100'
+                                : 'animate-out fade-out-0 slide-out-to-top-1 max-h-0 opacity-0 mb-0 pointer-events-none'
+                            )}
+                            data-testid="reconnect-banner"
+                          >
+                            <RefreshCw className="w-4 h-4 text-teal-900 shrink-0" aria-hidden />
+                            <span className="text-sm font-medium flex-1 text-left">Refresh the page to update session</span>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 rounded-md bg-teal-300/70 px-2 py-1 text-xs font-semibold text-teal-950 hover:bg-teal-300"
+                              onClick={() => window.location.reload()}
                             >
-                              <RefreshCw className="w-4 h-4 text-teal-900 shrink-0" aria-hidden />
-                              <span className="text-sm font-medium flex-1 text-left">Refresh the page to update session</span>
-                              <button
-                                type="button"
-                                className="inline-flex items-center gap-1 rounded-md bg-teal-300/70 px-2 py-1 text-xs font-semibold text-teal-950 hover:bg-teal-300"
-                                onClick={() => window.location.reload()}
-                              >
-                                Refresh
-                              </button>
-                            </div>
+                              Refresh
+                            </button>
+                          </div>
                             <div className="relative w-full">
                               <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20 group" id="resize-grip">
                                 <div className="absolute top-1 left-0 w-full h-[3px] bg-white cursor-ns-resize z-10 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ userSelect: 'none' }} />
@@ -1138,6 +1148,33 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
           </div>
         </div>
       </div>
+      <Popover>
+        <PopoverTrigger asChild>
+          <PrototypeControlsFab isActive={showPrototypeOverlays} />
+        </PopoverTrigger>
+        <PopoverContent side="top" align="end" className="w-64 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Refresh Notification</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showPrototypeOverlays}
+              onClick={() => setShowPrototypeOverlays((prev) => !prev)}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                showPrototypeOverlays ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  showPrototypeOverlays ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
