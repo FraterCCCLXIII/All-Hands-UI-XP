@@ -4,7 +4,7 @@ import { Input } from './input';
 import { cn } from '../../lib/utils';
 
 export interface SearchInputProps
-  extends Omit<React.ComponentProps<typeof Input>, 'type'> {
+  extends Omit<React.ComponentProps<typeof Input>, 'type' | 'size'> {
   value: string;
   onValueChange: (value: string) => void;
   /** Size: sm (h-9), default (h-10), lg (h-11) */
