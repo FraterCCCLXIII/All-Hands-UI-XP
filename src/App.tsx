@@ -232,6 +232,9 @@ function App() {
 
   const handleFlowPrototypeClick = useCallback((flowId: string) => {
     setActiveFlowPrototype(flowId);
+    if (flowId === 'new-user-experience') {
+      window.location.hash = '#/new-user-experience';
+    }
   }, []);
 
   const handleShare = useCallback(() => {
@@ -266,6 +269,11 @@ function App() {
   useEffect(() => {
     const syncFromHash = () => {
       const hash = window.location.hash.replace(/^#\/?/, '');
+      if (hash === 'new-user-experience') {
+        setActiveFlowPrototype('new-user-experience');
+        return;
+      }
+      setActiveFlowPrototype(null);
       const action = slugToAction[hash] ?? 'code';
       if (action === 'conversations') {
         setIsConversationDrawerOpen(true);
@@ -311,7 +319,12 @@ function App() {
               style={{ minWidth: 0 }}
             >
               {activeFlowPrototype === 'new-user-experience' ? (
-                <LoginScreen onBack={() => setActiveFlowPrototype(null)} />
+                <LoginScreen
+                onBack={() => {
+                  setActiveFlowPrototype(null);
+                  window.location.hash = actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+                }}
+              />
               ) : (
                 <>
               {showChatView && !isWelcomeScreenActive && (
