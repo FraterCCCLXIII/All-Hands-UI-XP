@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronDown, ExternalLink, GitBranch, Github, Plus } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { ChevronDown, ExternalLink, Folder, GitBranch, Github, Plus } from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 import { conversationSummaries } from '../../data/conversations';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface WelcomeScreenProps {
   theme: string;
@@ -12,6 +13,34 @@ interface WelcomeScreenProps {
   onCreateNewRepo: () => void;
   onClose: () => void;
 }
+
+const RECENT_REPOS = ['FraterCCCLXIII/All-Hands-UI-XP', 'FraterCCCLXIII/pr-navigator', 'FraterCCCLXIII/All-Hands-UI'];
+const ALL_REPOS = [
+  'FraterCCCLXIII/a1-hvac-local-leads',
+  'FraterCCCLXIII/acu-your-mobile-oasis',
+  'FraterCCCLXIII/ai-chat-insights',
+  'FraterCCCLXIII/ai-feed-notifications',
+  'FraterCCCLXIII/akash-sacred-scribe-ai',
+  'FraterCCCLXIII/alpha-omega',
+  'FraterCCCLXIII/amara-ai',
+  'FraterCCCLXIII/app-window-orchestrator',
+  'FraterCCCLXIII/app.cofounder',
+  'FraterCCCLXIII/ascii-demoscene',
+  'FraterCCCLXIII/beyond-one-mexico-retreat',
+  'FraterCCCLXIII/book-builder',
+  'FraterCCCLXIII/book-pay',
+  'FraterCCCLXIII/BreamStream',
+  'FraterCCCLXIII/brother',
+  'FraterCCCLXIII/brother-humbble',
+  'FraterCCCLXIII/brothers',
+  'FraterCCCLXIII/browser-use',
+  'FraterCCCLXIII/capcorp',
+  'FraterCCCLXIII/chatrtk',
+  'FraterCCCLXIII/chatrtk-revamp-refine-flow',
+  'FraterCCCLXIII/chronofy-flow-33',
+  'FraterCCCLXIII/cli-palette-builder',
+  ...RECENT_REPOS,
+];
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   theme,
@@ -24,6 +53,34 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 }) => {
   const [repoInput, setRepoInput] = useState('');
   const [branchInput, setBranchInput] = useState('');
+  const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
+
+  const filteredRecentRepos = useMemo(
+    () =>
+      RECENT_REPOS.filter((repo) =>
+        repo.toLowerCase().includes(repoInput.trim().toLowerCase())
+      ),
+    [repoInput]
+  );
+  const filteredAllRepos = useMemo(
+    () =>
+      ALL_REPOS.filter(
+        (repo) =>
+          !RECENT_REPOS.includes(repo) &&
+          repo.toLowerCase().includes(repoInput.trim().toLowerCase())
+      ),
+    [repoInput]
+  );
+  const hasRepos = filteredRecentRepos.length > 0 || filteredAllRepos.length > 0;
+
+  const handleRepoSelect = useCallback(
+    (repo: string) => {
+      setRepoInput(repo);
+      setBranchInput('main');
+      setRepoDropdownOpen(false);
+    },
+    []
+  );
 
   const suggestedTasks = useMemo(
     () => [
@@ -76,56 +133,157 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <div className="flex flex-col">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-[10px] pb-4">
-                    <Github className="w-5 h-5 text-foreground" />
+                    <Folder className="w-5 h-5 text-foreground" />
                     <span className="leading-5 font-bold text-base text-foreground">Open Repository</span>
                   </div>
                 </div>
                 <div className="flex flex-col gap-[10px] pb-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-foreground font-normal leading-[22px]">Select or insert a URL</span>
+                    <span className="text-sm text-foreground">Select or insert a URL</span>
                   </div>
                   <div className="relative max-w-auto">
-                    <div className="relative">
-                      <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
-                        <Github className="w-4 h-4" />
-                      </div>
-                      <input
-                        placeholder="user/repo"
-                        className="w-full px-3 py-2 border border-border rounded-sm shadow-none h-[42px] min-h-[42px] max-h-[42px] bg-muted/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-7 pr-12 text-sm font-normal leading-5"
-                        value={repoInput}
-                        onChange={(event) => setRepoInput(event.target.value)}
-                      />
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
-                        <button
-                          type="button"
-                          aria-label="Toggle menu"
-                          className="text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          <ChevronDown className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </div>
+                    <Popover open={repoDropdownOpen} onOpenChange={setRepoDropdownOpen}>
+                      <PopoverTrigger asChild>
+                        <div className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                            <Github className="w-4 h-4" />
+                          </div>
+                          <input
+                            placeholder="user/repo"
+                            className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
+                            value={repoInput}
+                            onChange={(event) => setRepoInput(event.target.value)}
+                            onFocus={() => setRepoDropdownOpen(true)}
+                            aria-expanded={repoDropdownOpen}
+                            aria-haspopup="listbox"
+                            aria-autocomplete="list"
+                            role="combobox"
+                          />
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                            <button
+                              type="button"
+                              aria-label="Toggle menu"
+                              onClick={(e) => {
+                              e.stopPropagation();
+                              setRepoDropdownOpen((prev) => !prev);
+                            }}
+                              className="text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <ChevronDown
+                                className={`w-4 h-4 transition-transform ${repoDropdownOpen ? 'rotate-180' : ''}`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[var(--radix-popover-trigger-width)] p-0 border border-border bg-card rounded-lg shadow-md mt-1 z-[9999] max-h-60 flex flex-col overflow-hidden"
+                        align="start"
+                        sideOffset={4}
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
+                        {hasRepos ? (
+                          <ul
+                            role="listbox"
+                            className="w-full flex-1 min-h-0 overflow-y-auto p-1 repo-dropdown-scroll"
+                            data-testid="git-repo-dropdown-menu"
+                          >
+                            {filteredRecentRepos.length > 0 && (
+                              <>
+                                <div className="px-2 py-1.5">
+                                  <span className="text-xs font-semibold leading-4 text-muted-foreground">
+                                    Most Recent
+                                  </span>
+                                </div>
+                                {filteredRecentRepos.map((repo) => (
+                                  <li
+                                    key={repo}
+                                    role="option"
+                                    tabIndex={-1}
+                                    className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground font-normal hover:bg-muted/60 focus:outline-none focus:bg-muted/60"
+                                    onClick={() => handleRepoSelect(repo)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handleRepoSelect(repo);
+                                      }
+                                    }}
+                                  >
+                                    <span className="font-medium">{repo}</span>
+                                  </li>
+                                ))}
+                                {filteredAllRepos.length > 0 && (
+                                  <div className="border-t border-border my-1" />
+                                )}
+                              </>
+                            )}
+                            {filteredAllRepos.length > 0 && (
+                              <>
+                                {filteredRecentRepos.length === 0 && (
+                                  <div className="px-2 py-1.5">
+                                    <span className="text-xs font-semibold leading-4 text-muted-foreground">
+                                      All Repositories
+                                    </span>
+                                  </div>
+                                )}
+                                {filteredAllRepos.map((repo) => (
+                                  <li
+                                    key={repo}
+                                    role="option"
+                                    tabIndex={-1}
+                                    className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground font-normal hover:bg-muted/60 focus:outline-none focus:bg-muted/60"
+                                    onClick={() => handleRepoSelect(repo)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handleRepoSelect(repo);
+                                      }
+                                    }}
+                                  >
+                                    <span className="font-medium">{repo}</span>
+                                  </li>
+                                ))}
+                              </>
+                            )}
+                          </ul>
+                        ) : (
+                          <div className="px-2 py-3 text-sm text-muted-foreground">
+                            No repositories found
+                          </div>
+                        )}
+                        <div className="flex-shrink-0 border-t border-border p-1 rounded-b-lg bg-card">
+                          <a
+                            href="https://github.com/apps/openhands-ai/installations/new"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center w-full px-2 py-2 text-sm text-foreground hover:bg-muted/60 rounded-md transition-colors font-normal"
+                          >
+                            + Add GitHub Repos
+                          </a>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="relative max-w-full">
                     <div className="relative">
-                      <div className="absolute left-2 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
                         <GitBranch className="w-4 h-4" />
                       </div>
                       <input
                         placeholder="Select branch..."
                         disabled={!repoInput}
-                        className="w-full px-3 py-2 border border-border rounded-sm shadow-none h-[42px] min-h-[42px] max-h-[42px] bg-muted/60 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-60 pl-7 pr-12 text-sm font-normal leading-5"
+                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
                         value={branchInput}
                         onChange={(event) => setBranchInput(event.target.value)}
                       />
-                      <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
                         <button
                           type="button"
                           aria-label="Toggle menu"
                           disabled={!repoInput}
                           className="text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                          <ChevronDown className="w-5 h-5" />
+                          <ChevronDown className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -135,7 +293,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   type="button"
                   onClick={handleLaunch}
                   disabled={!repoInput || !branchInput}
-                  className="p-2 text-sm rounded-sm disabled:opacity-30 disabled:cursor-not-allowed hover:bg-stone-100 cursor-pointer bg-white text-black w-full font-semibold border border-border"
+                  className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
                 >
                   Launch
                 </button>
@@ -147,13 +305,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <Plus className="w-4 h-4" />
                 <span className="flex items-center">Start from Scratch</span>
               </div>
-              <span className="text-sm font-normal text-muted-foreground leading-5.5">
+              <span className="text-sm text-muted-foreground">
                 Start a new conversation that is not connected to an existing repository.
               </span>
               <button
                 type="button"
                 onClick={handleCreateNewRepo}
-                className="p-2 text-sm rounded-sm hover:bg-stone-100 cursor-pointer bg-white text-black w-auto absolute bottom-5 left-5 right-5 font-semibold border border-border"
+                className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
               >
                 New Conversation
               </button>

@@ -75,11 +75,11 @@ export function CommentsDialog({ count }: { count: number }) {
         </div>
         <DialogFooter className="mt-4 flex items-center justify-between gap-3">
           <DialogClose asChild>
-            <button className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80">
+            <button className="h-10 flex items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-muted/80">
               Close
             </button>
           </DialogClose>
-          <button className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:brightness-95">
+          <button className="h-10 flex items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background hover:brightness-95">
             Fix
           </button>
         </DialogFooter>

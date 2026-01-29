@@ -71,7 +71,7 @@ export const SettingsScreen: React.FC = () => {
                     <label className="text-sm text-foreground">Email</label>
                     <div className="flex items-center gap-3">
                       <input
-                        className="text-base text-foreground p-2 bg-muted rounded-md border border-border flex-grow max-w-[680px]"
+                        className="h-10 text-base text-foreground px-3 bg-muted/40 hover:bg-muted/60 transition-colors rounded-md border border-border flex-grow max-w-[680px]"
                         placeholder="Loading..."
                         type="email"
                         value={userEmail}
@@ -82,7 +82,7 @@ export const SettingsScreen: React.FC = () => {
                       <button
                         type="button"
                         disabled
-                        className="px-4 py-2 rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="h-10 flex items-center justify-center px-4 rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       >
                         Save
                       </button>
@@ -107,7 +107,7 @@ export const SettingsScreen: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    className="px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                   >
                     Configure Github Repositories
                   </button>
@@ -151,7 +151,7 @@ export const SettingsScreen: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    className="px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                   >
                     Install OpenHands Slack App
                   </button>
@@ -167,7 +167,7 @@ export const SettingsScreen: React.FC = () => {
                   </div>
                   <button
                     type="button"
-                    className="px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                   >
                     Configure
                   </button>
@@ -186,7 +186,7 @@ export const SettingsScreen: React.FC = () => {
                       <span className="text-sm text-foreground">Language</span>
                     </div>
                     <input
-                      className="bg-muted border border-border h-10 w-full rounded-md p-2"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2"
                       type="text"
                       value="English"
                       readOnly
@@ -253,7 +253,7 @@ export const SettingsScreen: React.FC = () => {
                         <span className="text-sm text-foreground">Git Username</span>
                         <input
                           placeholder="Username for git commits"
-                          className="bg-muted border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                          className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
                           type="text"
                           value={gitUsername}
                           onChange={(e) => setGitUsername(e.target.value)}
@@ -263,7 +263,7 @@ export const SettingsScreen: React.FC = () => {
                         <span className="text-sm text-foreground">Git Email</span>
                         <input
                           placeholder="Email for git commits"
-                          className="bg-muted border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                          className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
                           type="email"
                           value={gitEmail}
                           onChange={(e) => setGitEmail(e.target.value)}
@@ -276,7 +276,7 @@ export const SettingsScreen: React.FC = () => {
                 <button
                   disabled
                   type="submit"
-                  className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Save Changes
                 </button>
@@ -307,7 +307,7 @@ export const SettingsScreen: React.FC = () => {
                     <span className="text-sm text-foreground">Custom Model</span>
                     <input
                       placeholder="openhands/claude-opus-4-5-20251101"
-                      className="bg-muted border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
                       type="text"
                       defaultValue="litellm_proxy/prod/claude-opus-4-5-20251101"
                     />
@@ -317,7 +317,7 @@ export const SettingsScreen: React.FC = () => {
                     <span className="text-sm text-foreground">Base URL</span>
                     <input
                       placeholder="https://api.openai.com"
-                      className="bg-muted border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
                       type="text"
                       defaultValue="https://llm-proxy.app.all-hands.dev"
                     />
@@ -330,7 +330,7 @@ export const SettingsScreen: React.FC = () => {
                     </div>
                     <input
                       placeholder="<hidden>"
-                      className="bg-muted border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
                       type="password"
                     />
                   </label>
@@ -352,7 +352,7 @@ export const SettingsScreen: React.FC = () => {
                     <input
                       min="20"
                       step="1"
-                      className="bg-muted border border-border h-10 w-full rounded-md p-2"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2"
                       type="number"
                       defaultValue="240"
                     />
@@ -392,7 +392,7 @@ export const SettingsScreen: React.FC = () => {
                   <button
                     disabled
                     type="submit"
-                    className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                   >
                     Save Changes
                   </button>
@@ -418,7 +418,7 @@ export const SettingsScreen: React.FC = () => {
                     </div>
                     <button
                       type="button"
-                      className="px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                      className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                     >
                       Manage Credits
                     </button>
@@ -432,7 +432,7 @@ export const SettingsScreen: React.FC = () => {
                       min="10"
                       max="25000"
                       step="1"
-                      className="bg-muted border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
                       type="number"
                     />
                   </label>
@@ -440,7 +440,7 @@ export const SettingsScreen: React.FC = () => {
                     <button
                       disabled
                       type="submit"
-                      className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       Add credit
                     </button>
@@ -462,7 +462,7 @@ export const SettingsScreen: React.FC = () => {
               <div className="flex flex-col gap-5">
                 <button
                   type="button"
-                  className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                 >
                   Add a new secret
                 </button>
@@ -492,7 +492,7 @@ export const SettingsScreen: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                     >
                       Refresh API Key
                     </button>
@@ -536,7 +536,7 @@ export const SettingsScreen: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
-                    className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                   >
                     Create API Key
                   </button>
@@ -614,7 +614,7 @@ export const SettingsScreen: React.FC = () => {
               <div className="flex flex-col gap-5">
                 <button
                   type="button"
-                  className="w-fit px-4 py-2 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
                 >
                   Add Server
                 </button>

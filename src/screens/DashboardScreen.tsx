@@ -124,11 +124,11 @@ export function DashboardScreen() {
                           <button
                             key={popoverPr.id}
                             type="button"
-                            className="w-full rounded-md border border-border px-3 py-2 text-left text-sm transition hover:border-foreground hover:bg-muted"
+                            className="w-full h-10 flex flex-col items-start justify-center gap-0 rounded-md border border-border px-4 bg-muted/40 hover:bg-muted/60 transition-colors text-left"
                             onClick={() => handleSelectPr(popoverPr.repoKey)}
                           >
-                            <p className="font-medium text-foreground">{popoverPr.title}</p>
-                            <p className="text-[11px] text-muted-foreground">{popoverPr.repoDisplay}</p>
+                            <p className="font-medium text-foreground text-xs leading-tight truncate w-full">{popoverPr.title}</p>
+                            <p className="text-[10px] text-muted-foreground leading-tight truncate w-full">{popoverPr.repoDisplay}</p>
                           </button>
                         ))}
                       </div>
@@ -137,7 +137,7 @@ export function DashboardScreen() {
                   <NewConversationDialog
                     repositoryName={pr.repoDisplay}
                     branches={['main']}
-                    triggerClassName="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground bg-muted hover:bg-muted/80 transition-colors"
+                    triggerClassName="inline-flex items-center gap-2 h-10 rounded-md border border-border px-3 text-xs text-muted-foreground bg-muted/40 hover:bg-muted/60 transition-colors"
                     triggerLabel={`New conversation for ${pr.id}`}
                     triggerContent={
                       <>

@@ -7,7 +7,7 @@ import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
-import { DashboardScreen, LoadingScreen, SkillsScreen } from './screens';
+import { DashboardScreen, LoadingScreen, SkillsScreen, LoginScreen } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
@@ -142,6 +142,7 @@ function App() {
   const minCanvasWidth = 30; // Minimum 30% width
   const maxCanvasWidth = 70; // Maximum 70% width
   const [showSharePreview, setShowSharePreview] = useState(false);
+  const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
@@ -204,6 +205,7 @@ function App() {
 
   const handleNavItemClick = useCallback(
     (action: string) => {
+      setActiveFlowPrototype(null);
       if (action === 'conversations') {
         setIsConversationDrawerOpen((prev) => {
           const next = !prev;
@@ -226,6 +228,10 @@ function App() {
       };
       setMessages((prev) => [...prev, tetrisMessage]);
     }
+  }, []);
+
+  const handleFlowPrototypeClick = useCallback((flowId: string) => {
+    setActiveFlowPrototype(flowId);
   }, []);
 
   const handleShare = useCallback(() => {
@@ -288,19 +294,26 @@ function App() {
             exit={{ opacity: 0 }}
             className="flex-1 flex relative overflow-hidden"
           >
-            <LeftNav
-              theme={theme}
-              getThemeClasses={getThemeClasses}
-              isExpanded={isLeftNavExpanded}
-              onExpandChange={setIsLeftNavExpanded}
-              onNavItemClick={handleNavItemClick}
-              activeNavItem={activeNavItem}
-              isConversationDrawerOpen={isConversationDrawerOpen}
-            />
+            {activeFlowPrototype !== 'new-user-experience' && (
+              <LeftNav
+                theme={theme}
+                getThemeClasses={getThemeClasses}
+                isExpanded={isLeftNavExpanded}
+                onExpandChange={setIsLeftNavExpanded}
+                onNavItemClick={handleNavItemClick}
+                onFlowPrototypeClick={handleFlowPrototypeClick}
+                activeNavItem={activeNavItem}
+                isConversationDrawerOpen={isConversationDrawerOpen}
+              />
+            )}
             <div 
-              className="flex-1 flex flex-col transition-all duration-200 ml-16 border-l border-sidebar-border"
+              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype === 'new-user-experience' ? '' : 'ml-16 border-l border-sidebar-border'}`}
               style={{ minWidth: 0 }}
             >
+              {activeFlowPrototype === 'new-user-experience' ? (
+                <LoginScreen onBack={() => setActiveFlowPrototype(null)} />
+              ) : (
+                <>
               {showChatView && !isWelcomeScreenActive && (
                     <TopBar
                   theme={theme}
@@ -400,6 +413,8 @@ function App() {
                   shareUrl={window.location.href}
                   onClose={() => setShowSharePreview(false)}
                 />
+              )}
+                </>
               )}
             </div>
           </motion.div>

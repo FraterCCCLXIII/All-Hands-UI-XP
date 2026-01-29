@@ -97,7 +97,7 @@ export function DashboardHeader({ activeTab, onSelectTab }: DashboardHeaderProps
             <input
               type="text"
               placeholder="Search PRs, repos, or authors"
-              className="w-full h-9 rounded-md bg-muted/50 border border-border pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
+              className="w-full h-10 rounded-md bg-muted/40 hover:bg-muted/60 transition-colors border border-border pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
             />
           </div>
         </div>

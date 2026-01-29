@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, LayoutDashboard, List, Plus, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown } from 'lucide-react';
+import { Bot, Box, LayoutDashboard, List, Plus, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Theme, ThemeElement } from '../../types/theme';
 
@@ -83,12 +83,18 @@ export interface LeftNavProps {
   isExpanded: boolean;
   onExpandChange: (expanded: boolean) => void;
   onNavItemClick: (action: string) => void;
+  onFlowPrototypeClick?: (flowId: string) => void;
   activeNavItem: string;
   isConversationDrawerOpen: boolean;
 }
 
+const flowPrototypes = [
+  { id: 'new-user-experience', label: 'New User Experience' },
+];
+
 export const LeftNav: React.FC<LeftNavProps> = ({
   onNavItemClick,
+  onFlowPrototypeClick,
   activeNavItem,
   isConversationDrawerOpen,
 }) => (
@@ -174,7 +180,39 @@ export const LeftNav: React.FC<LeftNavProps> = ({
           );
         })}
       </div>
-      <div className="mt-auto px-2">
+      <div className="mt-auto px-2 space-y-2">
+        {/* New flow prototypes */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
+              aria-label="New flow prototypes"
+            >
+              <Box className="w-5 h-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="end"
+            sideOffset={8}
+            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-56 p-3"
+          >
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+              New flow prototypes
+            </div>
+            {flowPrototypes.map((flow) => (
+              <button
+                key={flow.id}
+                type="button"
+                onClick={() => onFlowPrototypeClick?.(flow.id)}
+                className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
+              >
+                {flow.label}
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
         <Popover>
           <PopoverTrigger asChild>
             <button
@@ -198,7 +236,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             <div className="text-lg font-semibold mb-4">Account</div>
             
             {/* Organization Selector */}
-            <button className="w-full flex items-center justify-between px-4 py-3 mb-3 rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors text-left">
+            <button className="w-full h-10 flex items-center justify-between px-4 mb-3 rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors text-left">
               <span className="text-sm text-sidebar-foreground">Acme Inc.</span>
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
             </button>

@@ -93,12 +93,49 @@
   }
 }
 
+/* Hide native search clear button so we can use custom XCircle only */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .hide-scrollbar {
   scrollbar-width: none;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
   height: 0;
+}
+
+/* Custom scrollbar: visible thumb, no track background */
+.repo-dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+}
+
+.repo-dropdown-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.repo-dropdown-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.repo-dropdown-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 9999px;
+}
+
+.repo-dropdown-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
 }
 
 @layer base {

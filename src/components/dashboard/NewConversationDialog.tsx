@@ -39,7 +39,7 @@ export function NewConversationDialog({
         <button
           type="button"
           className={cn(
-            'inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 text-xs text-foreground bg-muted hover:bg-muted/80 transition-colors',
+            'inline-flex items-center gap-2 h-10 rounded-md border border-border px-3 text-xs text-foreground bg-muted/40 hover:bg-muted/60 transition-colors',
             triggerClassName
           )}
           onClick={(event) => event.stopPropagation()}
@@ -90,7 +90,7 @@ export function NewConversationDialog({
           <label className="text-sm font-medium text-muted-foreground" htmlFor="new-conversation-branch">
             Select a Branch
           </label>
-          <div className="rounded-md border border-border bg-muted/60 px-3 py-2">
+          <div className="h-10 flex items-center rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors px-3">
             <select
               id="new-conversation-branch"
               className="w-full bg-transparent text-sm text-foreground outline-none"
@@ -112,7 +112,7 @@ export function NewConversationDialog({
             <textarea
               id="new-conversation-prompt"
               rows={5}
-              className="w-full rounded-md border border-border bg-muted/60 p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="Describe what you want the agents to do..."
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
@@ -123,13 +123,13 @@ export function NewConversationDialog({
         <DialogFooter className="mt-4 flex items-center gap-3">
           <button
             type="button"
-            className="flex-1 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background"
+            className="flex-1 h-10 flex items-center justify-center rounded-md bg-foreground px-4 text-sm font-medium text-background"
             onClick={handleLaunch}
           >
             Launch
           </button>
           <DialogClose asChild>
-            <button className="flex-1 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground">
+            <button className="flex-1 h-10 flex items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground">
               Cancel
             </button>
           </DialogClose>

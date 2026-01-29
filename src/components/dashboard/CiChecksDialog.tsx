@@ -80,7 +80,7 @@ export function CiChecksDialog({ count }: CiChecksDialogProps) {
 
         <DialogFooter className="mt-4 justify-end">
           <DialogClose asChild>
-            <button className="rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/80">
+            <button className="h-10 flex items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-muted/80">
               Close
             </button>
           </DialogClose>
