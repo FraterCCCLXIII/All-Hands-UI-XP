@@ -48,8 +48,8 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl bg-background border-l border-border p-0 flex flex-col">
-        <SheetHeader className="border-b border-border px-4 pt-4 pb-2">
+      <SheetContent className="w-full sm:max-w-xl bg-background p-0 flex flex-col">
+        <SheetHeader className="px-4 pt-4 pb-2">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <GitPullRequest className="w-5 h-5 text-green-500 mt-0.5" />
@@ -63,7 +63,7 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
           </div>
         </SheetHeader>
 
-        <div className="border-b border-border px-4 pb-4 pt-0">
+        <div className="px-4 pb-4 pt-0">
           <div className="flex items-center justify-between">
             <Button size="sm" variant="outline" className="bg-background" onClick={handleCreateConversation}>
               Add New

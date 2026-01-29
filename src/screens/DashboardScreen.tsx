@@ -165,7 +165,7 @@ export function DashboardScreen() {
           <>
             <aside
               className={cn(
-                'shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-full transition-[width] duration-200 overflow-hidden',
+                'shrink-0 bg-sidebar text-sidebar-foreground h-full transition-[width] duration-200 overflow-hidden',
                 isRepoListOpen ? 'w-64' : 'w-0 border-0'
               )}
               aria-hidden={!isRepoListOpen}
@@ -212,7 +212,7 @@ export function DashboardScreen() {
         ) : (
           <>
             {activeView === 'active' && (
-              <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-full">
+              <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground h-full">
                 <div className="flex-1 px-3 py-4 overflow-y-auto">
                   <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
                     Active Repositories

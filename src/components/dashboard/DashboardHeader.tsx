@@ -83,7 +83,7 @@ export function DashboardHeader({ activeTab, onSelectTab }: DashboardHeaderProps
           </div>
         </div>
       </div>
-      <div className="border-b border-sidebar-border" />
+      <div />
     </header>
   );
 }

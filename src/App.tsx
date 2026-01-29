@@ -307,7 +307,7 @@ function App() {
               />
             )}
             <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype === 'new-user-experience' ? '' : 'ml-16 border-l border-sidebar-border'}`}
+              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype === 'new-user-experience' ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
               {activeFlowPrototype === 'new-user-experience' ? (
