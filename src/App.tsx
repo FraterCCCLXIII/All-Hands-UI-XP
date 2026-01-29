@@ -7,7 +7,14 @@ import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
-import { DashboardScreen, LoadingScreen, SkillsScreen, LoginScreen, ActiveChatScreen } from './screens';
+import {
+  DashboardScreen,
+  LoadingScreen,
+  SkillsScreen,
+  LoginScreen,
+  ActiveChatScreen,
+  ComponentLibraryScreen,
+} from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
@@ -121,6 +128,7 @@ const actionSlugs: Record<string, string> = {
   code: 'chat',
   dashboard: 'dashboard',
   skills: 'skills',
+  components: 'components',
   conversations: 'conversations',
   settings: 'settings',
 };
@@ -136,6 +144,7 @@ function App() {
   const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
   const [showRefreshNotification, setShowRefreshNotification] = useState(false);
   const [showCanvasTip, setShowCanvasTip] = useState(false);
+  const [showCanvasLoading, setShowCanvasLoading] = useState(true);
   const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
   const [showStatusBadge, setShowStatusBadge] = useState(false);
@@ -159,7 +168,8 @@ function App() {
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
-  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView;
+  const isComponentsView = activeNavItem === 'components';
+  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView;
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -392,7 +402,7 @@ function App() {
                   onChatWindowTabChange={handleChatWindowTabChange}
                 />
               )}
-              <div className="flex-1 flex">
+              <div className="flex-1 flex min-h-0">
                 {isActiveChatView && (
                   <div className="flex-1 flex min-w-0">
                     <ActiveChatScreen
@@ -402,6 +412,8 @@ function App() {
                       onToggleRefreshNotification={() => setShowRefreshNotification((prev) => !prev)}
                       showCanvasTip={showCanvasTip}
                       onToggleCanvasTip={() => setShowCanvasTip((prev) => !prev)}
+                      showCanvasLoading={showCanvasLoading}
+                      onToggleCanvasLoading={() => setShowCanvasLoading((prev) => !prev)}
                       chatContentMode={chatContentMode}
                       onChatContentModeChange={setChatContentMode}
                       repositoryStatus={repositoryStatus}
@@ -413,6 +425,7 @@ function App() {
                 )}
                 {isDashboardView && <DashboardScreen />}
                 {isSkillsView && <SkillsScreen />}
+                {isComponentsView && <ComponentLibraryScreen />}
                 {isSettingsView && (
                   <SettingsScreen
                     initialTab={settingsTab ?? undefined}

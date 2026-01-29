@@ -91,7 +91,8 @@ export interface LeftNavProps {
 }
 
 const flowPrototypes = [
-  { id: 'new-user-experience', label: 'New User Experience' },
+  { id: 'new-user-experience', label: 'New User Experience', flowId: 'new-user-experience' },
+  { id: 'component-library', label: 'Component Library', navAction: 'components' },
 ];
 
 export const LeftNav: React.FC<LeftNavProps> = ({
@@ -209,7 +210,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               <button
                 key={flow.id}
                 type="button"
-                onClick={() => onFlowPrototypeClick?.(flow.id)}
+                onClick={() => {
+                  if (flow.navAction) {
+                    onNavItemClick(flow.navAction);
+                    return;
+                  }
+                  onFlowPrototypeClick?.(flow.flowId ?? flow.id);
+                }}
                 className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
               >
                 {flow.label}

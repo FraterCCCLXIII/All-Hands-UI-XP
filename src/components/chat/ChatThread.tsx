@@ -38,6 +38,7 @@ interface ChatThreadProps {
   onSendMessage: (message: string) => void;
   onServerStatusChange: (status: 'active' | 'stopped' | 'thinking' | 'connecting') => void;
   onCanvasToggle: (messageIndex: number) => void;
+  disableAutoScroll?: boolean;
 }
 
 const messageTypeIcons: Record<MessageType, LucideIcon> = {
@@ -90,6 +91,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
   onSendMessage,
   onServerStatusChange,
   onCanvasToggle,
+  disableAutoScroll = false,
 }) => {
   const [hoveredMessageIndex, setHoveredMessageIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,8 +99,10 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!disableAutoScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, disableAutoScroll]);
 
   useEffect(() => {
     setLoading(true);

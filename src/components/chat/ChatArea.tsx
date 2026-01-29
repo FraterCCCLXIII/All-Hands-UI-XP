@@ -29,6 +29,7 @@ interface ChatAreaProps {
   onWelcomeScreenChange?: (isActive: boolean) => void;
   activeChatWindowTab: ChatWindowTabId;
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
+  disableAutoScroll?: boolean;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -50,6 +51,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onWelcomeScreenChange,
   activeChatWindowTab: _activeChatWindowTab,
   onChatWindowTabChange: _onChatWindowTabChange,
+  disableAutoScroll = false,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
@@ -124,8 +126,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!disableAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, disableAutoScroll]);
 
   useEffect(() => {
     onWelcomeScreenChange?.(showWelcomeScreen);

@@ -67,6 +67,8 @@ interface ActiveChatScreenProps {
   onToggleRefreshNotification: () => void;
   showCanvasTip: boolean;
   onToggleCanvasTip: () => void;
+  showCanvasLoading: boolean;
+  onToggleCanvasLoading: () => void;
   chatContentMode: 'skeleton' | 'conversation' | 'start';
   onChatContentModeChange: (mode: 'skeleton' | 'conversation' | 'start') => void;
   repositoryStatus: 'connected' | 'disconnected' | 'connect';
@@ -100,6 +102,8 @@ export function ActiveChatScreen({
   onToggleRefreshNotification,
   showCanvasTip,
   onToggleCanvasTip,
+  showCanvasLoading,
+  onToggleCanvasLoading,
   chatContentMode,
   onChatContentModeChange,
   repositoryStatus,
@@ -1207,22 +1211,26 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               >
                 <div className="flex flex-col flex-1 gap-3 min-w-max h-full min-h-0">
                   <div className="bg-muted/60 border border-border rounded-xl flex flex-col items-center justify-center h-full w-full min-h-[200px] relative">
-                    <div
-                      aria-hidden={!showCanvasTip}
-                      className={cn(
-                        'absolute bottom-4 left-0 right-0 flex justify-center px-4 z-10',
-                        'transition-[max-height,opacity,transform,margin] duration-200',
-                        showCanvasTip
-                          ? 'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 max-h-48 opacity-100'
-                          : 'animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-2 max-h-0 opacity-0 mb-0 pointer-events-none'
-                      )}
-                    >
-                      <div className="w-full max-w-2xl">
-                        <Protip getThemeClasses={getThemeClasses} />
-                      </div>
-                    </div>
-                    <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden />
-                    <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
+                    {showCanvasLoading && (
+                      <>
+                        <div
+                          aria-hidden={!showCanvasTip}
+                          className={cn(
+                            'absolute bottom-4 left-0 right-0 flex justify-center px-4 z-10',
+                            'transition-[max-height,opacity,transform,margin] duration-200',
+                            showCanvasTip
+                              ? 'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 max-h-48 opacity-100'
+                              : 'animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-2 max-h-0 opacity-0 mb-0 pointer-events-none'
+                          )}
+                        >
+                          <div className="w-full max-w-2xl">
+                            <Protip getThemeClasses={getThemeClasses} />
+                          </div>
+                        </div>
+                        <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden />
+                        <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1232,7 +1240,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
       </div>
       <Popover>
         <PopoverTrigger asChild>
-          <PrototypeControlsFab isActive={showRefreshNotification || showCanvasTip} />
+          <PrototypeControlsFab isActive={showRefreshNotification || showCanvasTip || showCanvasLoading} />
         </PopoverTrigger>
         <PopoverContent side="top" align="end" className="w-64 p-3 space-y-3">
           <div className="flex items-center justify-between gap-3">
@@ -1271,6 +1279,26 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 className={cn(
                   'h-4 w-4 rounded-full bg-background shadow transition-transform',
                   showCanvasTip ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Canvas Loading</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showCanvasLoading}
+              onClick={onToggleCanvasLoading}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                showCanvasLoading ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  showCanvasLoading ? 'translate-x-4' : 'translate-x-0'
                 )}
               />
             </button>
@@ -1379,7 +1407,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <Github className="w-4 h-4" aria-hidden />
                       </div>
                       <input
-                        placeholder="user/repo"
+                        placeholder="Select Repo"
                         className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm cursor-pointer"
                         aria-autocomplete="list"
                         role="combobox"
@@ -1470,7 +1498,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               <div className="relative max-w-full">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <div className="relative" role="button" tabIndex={0} aria-haspopup="listbox">
+                    <div
+                      className={cn('relative', !selectedRepository && 'pointer-events-none')}
+                      role="button"
+                      tabIndex={0}
+                      aria-haspopup="listbox"
+                      aria-disabled={!selectedRepository}
+                    >
                       <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
                         <GitBranch className="w-4 h-4" aria-hidden />
                       </div>
