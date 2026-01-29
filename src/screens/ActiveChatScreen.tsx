@@ -44,6 +44,7 @@ import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { Protip } from '../components/canvas/Protip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,6 +59,10 @@ import {
 interface ActiveChatScreenProps {
   theme: Theme;
   getThemeClasses: (element: ThemeElement) => string;
+  showRefreshNotification: boolean;
+  onToggleRefreshNotification: () => void;
+  showCanvasTip: boolean;
+  onToggleCanvasTip: () => void;
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
@@ -78,7 +83,14 @@ const LLM_MODELS = ['Claude 3.5 Sonnet', 'Claude 3 Opus', 'GPT-4o', 'GPT-4o mini
 const CHAT_STATUS_MESSAGES = ['Starting', 'Connecting...', 'Loading...', 'Ready'] as const;
 const CHAT_STATUS_CYCLE_MS = 500;
 
-export function ActiveChatScreen({ theme, getThemeClasses }: ActiveChatScreenProps) {
+export function ActiveChatScreen({
+  theme,
+  getThemeClasses,
+  showRefreshNotification,
+  onToggleRefreshNotification,
+  showCanvasTip,
+  onToggleCanvasTip,
+}: ActiveChatScreenProps) {
   const [leftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
   const [serverStatus, setServerStatus] = useState('Starting');
   const [showServerMenu, setShowServerMenu] = useState(false);
@@ -99,7 +111,6 @@ export function ActiveChatScreen({ theme, getThemeClasses }: ActiveChatScreenPro
   const [projectReadExpanded, setProjectReadExpanded] = useState(false);
   const [packageJsonReadExpanded, setPackageJsonReadExpanded] = useState(false);
   const [ranCommandExpanded, setRanCommandExpanded] = useState(false);
-  const [showPrototypeOverlays, setShowPrototypeOverlays] = useState(true);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -806,11 +817,11 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           <div
                             role="status"
                             aria-live="polite"
-                            aria-hidden={!showPrototypeOverlays}
+                            aria-hidden={!showRefreshNotification}
                             className={cn(
                               'w-full rounded-lg border border-teal-300 bg-teal-200 text-teal-950 px-3 py-2 mb-2 flex items-center gap-2 overflow-hidden',
                               'transition-[max-height,opacity,margin] duration-200',
-                              showPrototypeOverlays
+                              showRefreshNotification
                                 ? 'animate-in fade-in-0 slide-in-from-top-1 max-h-24 opacity-100'
                                 : 'animate-out fade-out-0 slide-out-to-top-1 max-h-0 opacity-0 mb-0 pointer-events-none'
                             )}
@@ -1138,7 +1149,21 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 style={{ width: `${rightPanelWidth}%`, transitionProperty: 'all' }}
               >
                 <div className="flex flex-col flex-1 gap-3 min-w-max h-full min-h-0">
-                  <div className="bg-muted/60 border border-border rounded-xl flex flex-col items-center justify-center h-full w-full min-h-[200px]">
+                  <div className="bg-muted/60 border border-border rounded-xl flex flex-col items-center justify-center h-full w-full min-h-[200px] relative">
+                    <div
+                      aria-hidden={!showCanvasTip}
+                      className={cn(
+                        'absolute bottom-4 left-0 right-0 flex justify-center px-4 z-10',
+                        'transition-[max-height,opacity,transform,margin] duration-200',
+                        showCanvasTip
+                          ? 'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 max-h-48 opacity-100'
+                          : 'animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-2 max-h-0 opacity-0 mb-0 pointer-events-none'
+                      )}
+                    >
+                      <div className="w-full max-w-2xl">
+                        <Protip getThemeClasses={getThemeClasses} />
+                      </div>
+                    </div>
                     <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden />
                     <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
                   </div>
@@ -1150,25 +1175,45 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
       </div>
       <Popover>
         <PopoverTrigger asChild>
-          <PrototypeControlsFab isActive={showPrototypeOverlays} />
+          <PrototypeControlsFab isActive={showRefreshNotification || showCanvasTip} />
         </PopoverTrigger>
-        <PopoverContent side="top" align="end" className="w-64 p-3">
+        <PopoverContent side="top" align="end" className="w-64 p-3 space-y-3">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Refresh Notification</div>
             <button
               type="button"
               role="switch"
-              aria-checked={showPrototypeOverlays}
-              onClick={() => setShowPrototypeOverlays((prev) => !prev)}
+              aria-checked={showRefreshNotification}
+              onClick={onToggleRefreshNotification}
               className={cn(
                 'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
-                showPrototypeOverlays ? 'bg-foreground/80' : 'bg-muted/60'
+                showRefreshNotification ? 'bg-foreground/80' : 'bg-muted/60'
               )}
             >
               <span
                 className={cn(
                   'h-4 w-4 rounded-full bg-background shadow transition-transform',
-                  showPrototypeOverlays ? 'translate-x-4' : 'translate-x-0'
+                  showRefreshNotification ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Canvas Tip</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showCanvasTip}
+              onClick={onToggleCanvasTip}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                showCanvasTip ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  showCanvasTip ? 'translate-x-4' : 'translate-x-0'
                 )}
               />
             </button>

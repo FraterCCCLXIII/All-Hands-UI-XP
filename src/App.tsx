@@ -134,6 +134,8 @@ function App() {
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
   const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
+  const [showRefreshNotification, setShowRefreshNotification] = useState(false);
+  const [showCanvasTip, setShowCanvasTip] = useState(false);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
@@ -390,7 +392,14 @@ function App() {
               <div className="flex-1 flex">
                 {isActiveChatView && (
                   <div className="flex-1 flex min-w-0">
-                    <ActiveChatScreen theme={theme} getThemeClasses={getThemeClasses} />
+                    <ActiveChatScreen
+                      theme={theme}
+                      getThemeClasses={getThemeClasses}
+                      showRefreshNotification={showRefreshNotification}
+                      onToggleRefreshNotification={() => setShowRefreshNotification((prev) => !prev)}
+                      showCanvasTip={showCanvasTip}
+                      onToggleCanvasTip={() => setShowCanvasTip((prev) => !prev)}
+                    />
                   </div>
                 )}
                 {isDashboardView && <DashboardScreen />}
@@ -460,6 +469,7 @@ function App() {
                             theme={theme}
                             getThemeClasses={getThemeClasses}
                             contentType={canvasContentType}
+                            showTip={showCanvasTip}
                             onResize={handleCanvasResize}
                             initialWidth={canvasWidth}
                             minWidth={minCanvasWidth}

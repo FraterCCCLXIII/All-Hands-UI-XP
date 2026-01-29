@@ -5,6 +5,8 @@ import { TerminalDrawer } from './TerminalDrawer';
 import { MessageType } from '../../types/message';
 import { ThemeElement } from '../../types/theme';
 import { Gripper } from '../common/Gripper';
+import { Protip } from './Protip';
+import { cn } from '../../lib/utils';
 
 export type CanvasContentType = 'preview' | 'code' | 'docs' | 'share' | 'run';
 
@@ -12,6 +14,7 @@ interface CanvasLayoutProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   children: React.ReactNode;
+  showTip?: boolean;
 }
 
 interface CanvasContentProps {
@@ -26,6 +29,7 @@ interface CanvasContentProps {
   initialWidth?: number;
   minWidth?: number;
   maxWidth?: number;
+  showTip?: boolean;
 }
 
 interface CanvasContentTypeProps {
@@ -36,12 +40,14 @@ interface CanvasContentTypeProps {
   initialWidth?: number;
   minWidth?: number;
   maxWidth?: number;
+  showTip?: boolean;
 }
 
 interface CanvasErrorProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   error: string;
+  showTip?: boolean;
 }
 
 const contentTypeToView: Record<CanvasContentType, 'changes' | 'code' | 'terminal' | 'browser' | 'preview'> = {
@@ -59,6 +65,7 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasCon
   const [isContentLoading, setIsContentLoading] = useState(false);
 
   const contentType = 'contentType' in props ? props.contentType : null;
+  const showTip = props.showTip ?? false;
 
   useEffect(() => {
     if (contentType) {
@@ -181,6 +188,20 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasCon
       
       <div className="flex-1 overflow-auto relative">
         {renderContent()}
+        <div
+          aria-hidden={!showTip}
+          className={cn(
+            'absolute bottom-4 left-0 right-0 flex justify-center px-4',
+            'transition-[max-height,opacity,transform,margin] duration-200',
+            showTip
+              ? 'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-2 max-h-48 opacity-100'
+              : 'animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-2 max-h-0 opacity-0 mb-0 pointer-events-none'
+          )}
+        >
+          <div className="pointer-events-auto w-full max-w-2xl">
+            <Protip getThemeClasses={props.getThemeClasses} />
+          </div>
+        </div>
         {'onResize' in props && props.onResize && (
           <Gripper
             getThemeClasses={props.getThemeClasses}
