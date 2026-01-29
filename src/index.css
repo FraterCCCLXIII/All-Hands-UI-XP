@@ -187,4 +187,30 @@ input[type="search"]::-webkit-search-results-decoration {
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  .gradient-flow {
+    display: inline-flex;
+    background-image: linear-gradient(
+      90deg,
+      hsl(var(--muted-foreground)) 0%,
+      hsl(var(--foreground)) 50%,
+      hsl(var(--muted-foreground)) 100%
+    );
+    background-size: 200% 100%;
+    background-repeat: repeat-x;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: gradient-slide 1.25s linear infinite;
+  }
+}
+
+@keyframes gradient-slide {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }

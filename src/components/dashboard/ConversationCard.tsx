@@ -13,7 +13,6 @@ import {
   Trash,
 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
-import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import {
   DropdownMenu,
@@ -131,19 +130,31 @@ export function ConversationCard({ conversation, isCompact = false, showBranchAc
 
       {!isCompact && (
         <div className="border-t border-border pt-2 mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
-          <Button variant="muted" size="xs">
-            <ArrowDown className="w-3 h-3 mr-1" />
-            Pull
-          </Button>
-          <Button variant="muted" size="xs">
-            <ArrowUp className="w-3 h-3 mr-1" />
-            Push
-          </Button>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+            aria-label="Pull"
+          >
+            <ArrowDown className="w-3 h-3" />
+            <span>Pull</span>
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+            aria-label="Push"
+          >
+            <ArrowUp className="w-3 h-3" />
+            <span>Push</span>
+          </button>
           {showBranchActions && (
-            <Button variant="muted" size="xs">
-              <GitPullRequest className="w-3 h-3 mr-1" />
-              Pull Request
-            </Button>
+            <button
+              type="button"
+              className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+              aria-label="Open pull request"
+            >
+              <GitPullRequest className="w-3 h-3 text-green-500" />
+              <span>Pull Request</span>
+            </button>
           )}
           <span className="flex items-center gap-1 text-xs">
             <GitBranch className="w-3 h-3 text-muted-foreground" />

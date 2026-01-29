@@ -56,7 +56,9 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
             .filter((conversation) => conversation.activity)
             .map((conversation) => (
               <div key={`${card.id}-activity-${conversation.id}`} className="p-2 rounded bg-muted/50 border border-border">
-                <p className="text-xs text-muted-foreground font-mono truncate">{conversation.activity}</p>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  <span className="gradient-flow">{conversation.activity}</span>
+                </p>
               </div>
             ))}
         </div>

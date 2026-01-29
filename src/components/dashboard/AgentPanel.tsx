@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { PRCard } from '../../types/pr';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
-import { Check, Ellipsis, ExternalLink, GitBranch, GitPullRequest, MessageSquare, Minus, Pause, Plus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronDown, Ellipsis, ExternalLink, GitBranch, GitPullRequest, MessageSquare, Minus, Pause, Plus } from 'lucide-react';
 import { CommentsDialog } from './CommentsDialog';
 import { CiChecksDialog } from './CiChecksDialog';
 
@@ -28,9 +28,14 @@ const formatTimeAgo = (dateString?: string) => {
 };
 
 export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSendMessage: _onSendMessage }: AgentPanelProps) {
+  const [showInactive, setShowInactive] = useState(false);
   const conversations = card?.conversations ?? [];
   const activeConversations = useMemo(
     () => conversations.filter((conversation) => Boolean(conversation.activity)),
+    [conversations]
+  );
+  const inactiveConversations = useMemo(
+    () => conversations.filter((conversation) => !conversation.activity),
     [conversations]
   );
 
@@ -44,7 +49,7 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-xl bg-background border-l border-border p-0 flex flex-col">
-        <SheetHeader className="p-4 border-b border-border">
+        <SheetHeader className="border-b border-border px-4 pt-4 pb-2">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
               <GitPullRequest className="w-5 h-5 text-green-500 mt-0.5" />
@@ -56,26 +61,14 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
               </div>
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1 font-mono">
-              <GitBranch className="w-3 h-3" />
-              {card.branch} → {card.baseBranch}
-            </span>
-            <span className="flex items-center gap-1">
-              <Plus className="w-3 h-3 text-success" />
-              <span className="text-success">{card.additions}</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <Minus className="w-3 h-3 text-destructive" />
-              <span className="text-destructive">{card.deletions}</span>
-            </span>
-          </div>
         </SheetHeader>
 
-        <div className="p-4 border-b border-border">
+        <div className="border-b border-border px-4 pb-4 pt-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <Button size="sm" variant="outline" className="bg-background" onClick={handleCreateConversation}>
+              Add New
+            </Button>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground shrink-0">
               <CommentsDialog
                 count={card.comments}
                 trigger={
@@ -103,9 +96,6 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
                 }
               />
             </div>
-            <Button size="sm" variant="outline" className="bg-background" onClick={handleCreateConversation}>
-              Add New
-            </Button>
           </div>
         </div>
 
@@ -127,7 +117,7 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 bg-primary" />
+                      <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 bg-green-500" />
                       <div>
                         <h4 className="font-medium text-foreground">{conversation.name}</h4>
                         <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -169,10 +159,92 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
                     </div>
                   </div>
                   <div className="border-t border-border pt-2 mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <span className="text-xs">Up to date</span>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                      aria-label="Pull"
+                    >
+                      <ArrowDown className="w-3 h-3" />
+                      <span>Pull</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                      aria-label="Push"
+                    >
+                      <ArrowUp className="w-3 h-3" />
+                      <span>Push</span>
+                    </button>
+                    <span className="flex items-center gap-1 text-xs">
+                      <GitBranch className="w-3 h-3 text-muted-foreground" />
+                      Up to date
+                    </span>
+                    <div className="flex items-center gap-3 shrink-0 ml-auto">
+                      <span className="flex items-center gap-1 text-xs">
+                        <Plus className="w-3 h-3 text-success" />
+                        <span className="text-success">{card.additions}</span>
+                      </span>
+                      <span className="flex items-center gap-1 text-xs">
+                        <Minus className="w-3 h-3 text-destructive" />
+                        <span className="text-destructive">{card.deletions}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))
+            )}
+
+            {inactiveConversations.length > 0 && (
+              <div className="px-0 pb-3">
+                <button
+                  type="button"
+                  onClick={() => setShowInactive((prev) => !prev)}
+                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2 w-full"
+                  aria-expanded={showInactive}
+                  aria-label={showInactive ? 'Collapse inactive conversations' : 'Expand inactive conversations'}
+                >
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform shrink-0 ${showInactive ? '' : '-rotate-90'}`}
+                    aria-hidden
+                  />
+                  <span>Inactive Conversations</span>
+                  <span className="flex items-center gap-1 text-xs">
+                    <MessageSquare className="w-3 h-3" aria-hidden />
+                    {inactiveConversations.length}
+                  </span>
+                </button>
+                {showInactive && (
+                  <div className="space-y-2">
+                    {inactiveConversations.map((conversation) => (
+                      <div
+                        key={conversation.id}
+                        className="bg-card border border-border rounded-lg p-4 hover:border-white/30 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 bg-muted-foreground" />
+                            <div>
+                              <h4 className="font-medium text-foreground">{conversation.name}</h4>
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                <span>{formatTimeAgo(conversation.updatedAt)}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              className="p-1 hover:bg-muted/80 rounded transition-colors text-muted-foreground hover:text-foreground"
+                              aria-label="Conversation options"
+                            >
+                              <Ellipsis className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>

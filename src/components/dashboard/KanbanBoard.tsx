@@ -366,7 +366,11 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
       </DragDropContext>
 
       <AgentPanel
-        card={selectedCard}
+        card={
+          selectedCard
+            ? columns.flatMap((col) => col.cards).find((c) => c.id === selectedCard.id) ?? selectedCard
+            : null
+        }
         isOpen={isPanelOpen}
         onClose={handleClosePanel}
         onCreateConversation={handleCreateConversation}
