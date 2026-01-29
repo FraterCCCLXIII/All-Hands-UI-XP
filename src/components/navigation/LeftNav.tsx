@@ -86,6 +86,8 @@ export interface LeftNavProps {
   onFlowPrototypeClick?: (flowId: string) => void;
   activeNavItem: string;
   isConversationDrawerOpen: boolean;
+  isInspectorEnabled: boolean;
+  onInspectorToggle: () => void;
 }
 
 const flowPrototypes = [
@@ -97,6 +99,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onFlowPrototypeClick,
   activeNavItem,
   isConversationDrawerOpen,
+  isInspectorEnabled,
+  onInspectorToggle,
 }) => (
   <aside className="fixed left-0 top-0 z-50 h-screen w-16 flex bg-sidebar pointer-events-auto">
     <div className="flex h-full flex-col w-16 px-2 py-4 text-sidebar-foreground">
@@ -211,6 +215,34 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 {flow.label}
               </button>
             ))}
+            <div className="mt-3 border-t border-border pt-3">
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Inspector mode
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    Click any element to view code.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isInspectorEnabled}
+                  data-testid="inspector-toggle"
+                  onClick={onInspectorToggle}
+                  className={`h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors ${
+                    isInspectorEnabled ? 'bg-foreground/80' : 'bg-muted/60'
+                  }`}
+                >
+                  <span
+                    className={`h-4 w-4 rounded-full bg-background shadow transition-transform ${
+                      isInspectorEnabled ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
         <Popover>

@@ -11,6 +11,7 @@ import { DashboardScreen, LoadingScreen, SkillsScreen, LoginScreen, ActiveChatSc
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
+import { InspectorOverlay } from './components/common/InspectorOverlay';
 import { conversationSummaries } from './data/conversations';
 import { ChatWindowTabId } from './components/chat/ChatWindowTabs';
 
@@ -149,6 +150,7 @@ function App() {
   const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<string | null>(null);
   const [isActiveChatView, setIsActiveChatView] = useState(false);
+  const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
@@ -347,12 +349,18 @@ function App() {
                 onFlowPrototypeClick={handleFlowPrototypeClick}
                 activeNavItem={activeNavItem}
                 isConversationDrawerOpen={isConversationDrawerOpen}
+                isInspectorEnabled={isInspectorEnabled}
+                onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
               />
             )}
             <div 
               className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype === 'new-user-experience' ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
+              <InspectorOverlay
+                enabled={isInspectorEnabled}
+                onRequestDisable={() => setIsInspectorEnabled(false)}
+              />
               {activeFlowPrototype === 'new-user-experience' ? (
                 <LoginScreen
                 onBack={() => {
