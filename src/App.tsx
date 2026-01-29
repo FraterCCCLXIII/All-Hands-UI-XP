@@ -14,6 +14,7 @@ import {
   LoginScreen,
   ActiveChatScreen,
   ComponentLibraryScreen,
+  NewComponentsScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -129,6 +130,7 @@ const actionSlugs: Record<string, string> = {
   dashboard: 'dashboard',
   skills: 'skills',
   components: 'components',
+  'new-components': 'new-components',
   conversations: 'conversations',
   settings: 'settings',
 };
@@ -169,7 +171,8 @@ function App() {
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
   const isComponentsView = activeNavItem === 'components';
-  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView;
+  const isNewComponentsView = activeNavItem === 'new-components';
+  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView;
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -426,6 +429,7 @@ function App() {
                 {isDashboardView && <DashboardScreen />}
                 {isSkillsView && <SkillsScreen />}
                 {isComponentsView && <ComponentLibraryScreen />}
+                {isNewComponentsView && <NewComponentsScreen />}
                 {isSettingsView && (
                   <SettingsScreen
                     initialTab={settingsTab ?? undefined}
