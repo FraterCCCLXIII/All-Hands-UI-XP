@@ -136,6 +136,9 @@ function App() {
   const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
   const [showRefreshNotification, setShowRefreshNotification] = useState(false);
   const [showCanvasTip, setShowCanvasTip] = useState(false);
+  const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
+  const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
+  const [showStatusBadge, setShowStatusBadge] = useState(false);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
@@ -399,6 +402,12 @@ function App() {
                       onToggleRefreshNotification={() => setShowRefreshNotification((prev) => !prev)}
                       showCanvasTip={showCanvasTip}
                       onToggleCanvasTip={() => setShowCanvasTip((prev) => !prev)}
+                      chatContentMode={chatContentMode}
+                      onChatContentModeChange={setChatContentMode}
+                      repositoryStatus={repositoryStatus}
+                      onRepositoryStatusChange={setRepositoryStatus}
+                      showStatusBadge={showStatusBadge}
+                      onToggleStatusBadge={() => setShowStatusBadge((prev) => !prev)}
                     />
                   </div>
                 )}

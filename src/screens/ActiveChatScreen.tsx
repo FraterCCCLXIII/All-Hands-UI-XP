@@ -39,12 +39,16 @@ import {
   MessageCircleQuestion,
   ListChecks,
   RefreshCw,
+  GitFork,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Protip } from '../components/canvas/Protip';
+import { ChatStartScreen } from '../components/chat/ChatStartScreen';
+import { Button } from '../components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,6 +67,12 @@ interface ActiveChatScreenProps {
   onToggleRefreshNotification: () => void;
   showCanvasTip: boolean;
   onToggleCanvasTip: () => void;
+  chatContentMode: 'skeleton' | 'conversation' | 'start';
+  onChatContentModeChange: (mode: 'skeleton' | 'conversation' | 'start') => void;
+  repositoryStatus: 'connected' | 'disconnected' | 'connect';
+  onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
+  showStatusBadge: boolean;
+  onToggleStatusBadge: () => void;
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
@@ -90,6 +100,12 @@ export function ActiveChatScreen({
   onToggleRefreshNotification,
   showCanvasTip,
   onToggleCanvasTip,
+  chatContentMode,
+  onChatContentModeChange,
+  repositoryStatus,
+  onRepositoryStatusChange,
+  showStatusBadge,
+  onToggleStatusBadge,
 }: ActiveChatScreenProps) {
   const [leftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
   const [serverStatus, setServerStatus] = useState('Starting');
@@ -111,6 +127,10 @@ export function ActiveChatScreen({
   const [projectReadExpanded, setProjectReadExpanded] = useState(false);
   const [packageJsonReadExpanded, setPackageJsonReadExpanded] = useState(false);
   const [ranCommandExpanded, setRanCommandExpanded] = useState(false);
+  const shouldShowStatusBadge = showStatusBadge || !conversationLoaded;
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [selectedRepository, setSelectedRepository] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('main');
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -125,12 +145,12 @@ export function ActiveChatScreen({
   }, [conversationLoaded]);
 
   useEffect(() => {
-    if (conversationLoaded) return;
+    if (!shouldShowStatusBadge) return;
     const id = window.setInterval(() => {
       setChatStatusIndex((i) => (i + 1) % CHAT_STATUS_MESSAGES.length);
     }, CHAT_STATUS_CYCLE_MS);
     return () => window.clearInterval(id);
-  }, [conversationLoaded]);
+  }, [shouldShowStatusBadge]);
 
   useEffect(() => {
     if (!conversationLoaded) return;
@@ -358,11 +378,11 @@ export function ActiveChatScreen({
                         <div
                           className={cn(
                             'absolute inset-0 flex flex-col gap-6 p-4 px-4 pt-4 overflow-hidden transition-opacity duration-300 ease-out pointer-events-none',
-                            conversationLoaded ? 'opacity-0' : 'opacity-100'
+                            chatContentMode === 'skeleton' ? 'opacity-100' : 'opacity-0'
                           )}
                           data-testid="chat-messages-skeleton"
                           aria-label="Loading conversation"
-                          aria-hidden={conversationLoaded}
+                          aria-hidden={chatContentMode !== 'skeleton'}
                         >
                           <div className="flex w-full justify-end">
                             <div className="rounded-md bg-foreground/5 animate-pulse w-[25%] h-4" />
@@ -396,10 +416,10 @@ export function ActiveChatScreen({
                         <div
                           className={cn(
                             'absolute inset-0 flex flex-col gap-2 overflow-y-auto overflow-x-hidden scrollbar-on-hover transition-opacity duration-300 ease-out',
-                            conversationLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            chatContentMode === 'conversation' && conversationLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
                           )}
                           data-testid="chat-conversation"
-                          aria-hidden={!conversationLoaded}
+                          aria-hidden={chatContentMode !== 'conversation' || !conversationLoaded}
                         >
                           <article
                             data-testid="user-message"
@@ -671,39 +691,16 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             </div>
                           </article>
                         </div>
+                        {chatContentMode === 'start' && <ChatStartScreen />}
                       </div>
                       <div className="flex flex-col gap-0 flex-shrink-0">
-                        <div className={cn('flex justify-between relative', conversationLoaded ? 'mb-0' : 'mb-1')}>
-                          <div className="flex items-end gap-1">
-                            {(!conversationLoaded || statusIndicatorExiting) && (
-                              <div
-                                data-testid="chat-status-indicator"
-                                className={cn(
-                                  'h-6 w-fit rounded-full py-1 px-2.5 bg-muted flex items-center gap-1.5 transition-opacity duration-300',
-                                  statusIndicatorExiting && 'opacity-0'
-                                )}
-                              >
-                                <span className={cn('opacity-100', chatStatusIndex < CHAT_STATUS_MESSAGES.length - 1 && 'animate-pulse')}>
-                                  <span
-                                    className={cn(
-                                      'w-2 h-2 rounded-full block shrink-0',
-                                      chatStatusIndex === CHAT_STATUS_MESSAGES.length - 1 ? 'bg-success' : 'bg-[#FFD600]'
-                                    )}
-                                  />
-                                </span>
-                                <span className="font-normal text-[10px] leading-4 normal-case">
-                                  {CHAT_STATUS_MESSAGES[chatStatusIndex]}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
                         {conversationLoaded && (
                           <div
                             className={cn(
                               'relative z-0 w-full flex flex-col gap-0 shrink-0 overflow-visible transition-opacity duration-300 ease-out -mb-2 -mt-6',
                               drawersAnimatedIn ? 'opacity-100' : 'opacity-0 pointer-events-none'
                             )}
+                            style={{ transform: 'translateY(16px)' }}
                             aria-hidden={!drawersAnimatedIn}
                           >
                             {taskListDrawerVisible && (
@@ -811,8 +808,31 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             )}
                           </div>
                         )}
-                        <div className="z-10 h-2 w-full bg-base shrink-0" aria-hidden />
-                        <div data-testid="interactive-chat-box" className="relative z-10 -mt-2">
+                        <div className="z-10 h-0 w-full bg-base shrink-0" aria-hidden />
+                        <div data-testid="interactive-chat-box" className="relative z-10 -mt-[1px]">
+                          {shouldShowStatusBadge && (
+                            <div className="absolute left-0 bottom-[calc(100%-8px)] flex items-end gap-1">
+                              <div
+                                data-testid="chat-status-indicator"
+                                className={cn(
+                                  'h-6 w-fit rounded-full py-1 px-2.5 bg-muted flex items-center gap-1.5 transition-opacity duration-300',
+                                  statusIndicatorExiting && 'opacity-0'
+                                )}
+                              >
+                                <span className={cn('opacity-100', chatStatusIndex < CHAT_STATUS_MESSAGES.length - 1 && 'animate-pulse')}>
+                                  <span
+                                    className={cn(
+                                      'w-2 h-2 rounded-full block shrink-0',
+                                      chatStatusIndex === CHAT_STATUS_MESSAGES.length - 1 ? 'bg-success' : 'bg-[#FFD600]'
+                                    )}
+                                  />
+                                </span>
+                                <span className="font-normal text-[10px] leading-4 normal-case">
+                                  {CHAT_STATUS_MESSAGES[chatStatusIndex]}
+                                </span>
+                              </div>
+                            </div>
+                          )}
                           <div className="w-full">
                           <div
                             role="status"
@@ -837,6 +857,9 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               Refresh
                             </button>
                           </div>
+                            {showStatusBadge && (
+                              <div className="sr-only" />
+                            )}
                             <div className="relative w-full">
                               <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20 group" id="resize-grip">
                                 <div className="absolute top-1 left-0 w-full h-[3px] bg-white cursor-ns-resize z-10 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ userSelect: 'none' }} />
@@ -887,12 +910,12 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   </button>
                                 </div>
                                 <div className="w-full flex items-center justify-between">
-                                  <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground"
+                                          className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
                                           aria-label="Tools"
                                           data-testid="tools-trigger"
                                         >
@@ -986,7 +1009,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         <button
                                           type="button"
                                           className={cn(
-                                            'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 hover:opacity-90 data-[state=open]:opacity-90',
+                                            'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 hover:opacity-90 data-[state=open]:opacity-90 whitespace-nowrap shrink-0',
                                             chatMode === 'build' && 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                                             chatMode === 'ask' && 'border-blue-500/50 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
                                             chatMode === 'plan' && 'border-emerald-500/50 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
@@ -1026,7 +1049,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0"
+                                          className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
                                           aria-label="Select model"
                                           title={selectedModel}
                                           data-testid="model-trigger"
@@ -1067,7 +1090,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     </DropdownMenu>
                                   </div>
                                   <div className="flex items-center gap-1 min-w-0 ml-2 md:ml-3">
-                                    <span className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full whitespace-normal break-words" title="An error occurred. Please try again.">
+                                    <span className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate" title="An error occurred. Please try again.">
                                       An error occurred. Please try again.
                                     </span>
                                     <div className="bg-muted box-border flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 rounded-[100px] shrink-0 size-6">
@@ -1084,50 +1107,84 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <div className="mt-4">
                           <div className="flex flex-row items-center">
                             <div className="flex flex-row gap-2.5 items-center overflow-x-auto flex-wrap md:flex-nowrap relative scrollbar-hide">
-                              <a
-                                href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
-                              >
-                                <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                  <Github className="w-3 h-3 text-foreground" />
-                                </div>
-                                <div className="font-normal text-foreground text-sm leading-5 truncate flex-1 min-w-0" title="FraterCCCLXIII/All-Hands-UI-XP">
-                                  FraterCCCLXIII/All-Hands-UI-XP
-                                </div>
-                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-1/2 -translate-y-1/2 h-full w-10.5 pr-2.5 justify-end">
-                                  <ExternalLink className="w-3 h-3 text-foreground" />
-                                </div>
-                              </a>
-                              <a
-                                href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP/tree/feature/kanban-drawer"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
-                              >
-                                <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                  <GitBranch className="w-3 h-3 text-foreground" />
-                                </div>
-                                <div className="font-normal text-foreground text-sm leading-5 truncate" title="feature/kanban-drawer">
-                                  feature/kanban-drawer
-                                </div>
-                                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-1/2 -translate-y-1/2 h-full w-10.5 pr-2.5 justify-end">
-                                  <ExternalLink className="w-3 h-3 text-foreground" />
-                                </div>
-                              </a>
-                              <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-0.5 py-1 rounded-[100px] w-[76px] min-w-[76px] bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
-                                <ArrowDownToLine className="w-3 h-3 text-foreground" />
-                                <div className="font-normal text-foreground text-sm leading-5 max-w-[76px] truncate" title="Pull">Pull</div>
-                              </button>
-                              <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[77px] min-w-[77px] bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
-                                <ArrowUp className="w-3 h-3 text-foreground" />
-                                <div className="font-normal text-foreground text-sm leading-5 max-w-[77px] truncate" title="Push">Push</div>
-                              </button>
-                              <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[126px] min-w-[126px] h-7 bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
-                                <GitPullRequest className="w-3 h-3 text-foreground" />
-                                <div className="font-normal text-foreground text-sm leading-5 max-w-[126px] truncate" title="Pull Request">Pull Request</div>
-                              </button>
+                              {repositoryStatus === 'connected' ? (
+                                <>
+                                  <a
+                                    href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
+                                  >
+                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                      <Github className="w-3 h-3 text-foreground" />
+                                    </div>
+                                    <div className="font-normal text-foreground text-sm leading-5 truncate flex-1 min-w-0" title="FraterCCCLXIII/All-Hands-UI-XP">
+                                      FraterCCCLXIII/All-Hands-UI-XP
+                                    </div>
+                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-1/2 -translate-y-1/2 h-full w-10.5 pr-2.5 justify-end">
+                                      <ExternalLink className="w-3 h-3 text-foreground" />
+                                    </div>
+                                  </a>
+                                  <a
+                                    href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP/tree/feature/kanban-drawer"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
+                                  >
+                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                      <GitBranch className="w-3 h-3 text-foreground" />
+                                    </div>
+                                    <div className="font-normal text-foreground text-sm leading-5 truncate" title="feature/kanban-drawer">
+                                      feature/kanban-drawer
+                                    </div>
+                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-1/2 -translate-y-1/2 h-full w-10.5 pr-2.5 justify-end">
+                                      <ExternalLink className="w-3 h-3 text-foreground" />
+                                    </div>
+                                  </a>
+                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-0.5 py-1 rounded-[100px] w-[76px] min-w-[76px] bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
+                                    <ArrowDownToLine className="w-3 h-3 text-foreground" />
+                                    <div className="font-normal text-foreground text-sm leading-5 max-w-[76px] truncate" title="Pull">Pull</div>
+                                  </button>
+                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[77px] min-w-[77px] bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
+                                    <ArrowUp className="w-3 h-3 text-foreground" />
+                                    <div className="font-normal text-foreground text-sm leading-5 max-w-[77px] truncate" title="Push">Push</div>
+                                  </button>
+                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[126px] min-w-[126px] h-7 bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
+                                    <GitPullRequest className="w-3 h-3 text-foreground" />
+                                    <div className="font-normal text-foreground text-sm leading-5 max-w-[126px] truncate" title="Pull Request">Pull Request</div>
+                                  </button>
+                                </>
+                              ) : repositoryStatus === 'connect' ? (
+                                <button
+                                  type="button"
+                                  className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] border border-border bg-muted/40 text-sm font-normal leading-5 text-muted-foreground hover:bg-muted/60 h-7 min-w-[76px]"
+                                  onClick={() => setIsConnectModalOpen(true)}
+                                >
+                                  <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                    <GitFork className="w-3 h-3 text-muted-foreground" />
+                                  </span>
+                                  Connect
+                                </button>
+                              ) : (
+                                <>
+                                  <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[170px]">
+                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                      <Github className="w-3 h-3 text-muted-foreground" />
+                                    </div>
+                                    <div className="font-normal text-muted-foreground text-sm leading-5 truncate flex-1 min-w-0" title="No Repo Connected">
+                                      No Repo Connected
+                                    </div>
+                                  </div>
+                                  <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[108px]">
+                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                      <GitBranch className="w-3 h-3 text-muted-foreground" />
+                                    </div>
+                                    <div className="font-normal text-muted-foreground text-sm leading-5 truncate" title="No Branch">
+                                      No Branch
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1218,8 +1275,255 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               />
             </button>
           </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Repository</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
+                  aria-label="Repository status"
+                >
+                  <span className="capitalize whitespace-nowrap">
+                    {repositoryStatus === 'connected' ? 'Connected' : repositoryStatus === 'connect' ? 'Connect' : 'Disconnected'}
+                  </span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+                {[
+                  { id: 'connected', label: 'Connected' },
+                  { id: 'disconnected', label: 'Disconnected' },
+                  { id: 'connect', label: 'Connect' },
+                ].map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    className="cursor-pointer"
+                    onSelect={() => onRepositoryStatusChange(option.id as 'connected' | 'disconnected' | 'connect')}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Chat Content</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
+                  aria-label="Chat content"
+                >
+                  <span className="capitalize whitespace-nowrap">
+                    {chatContentMode === 'skeleton' ? 'Loading skeleton' : chatContentMode === 'start' ? 'Start screen' : 'Example content'}
+                  </span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+                {[
+                  { id: 'conversation', label: 'Example content' },
+                  { id: 'skeleton', label: 'Loading skeleton' },
+                  { id: 'start', label: 'Start screen' },
+                ].map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    className="cursor-pointer"
+                    onSelect={() => onChatContentModeChange(option.id as 'skeleton' | 'conversation' | 'start')}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Status Badge</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showStatusBadge}
+              onClick={onToggleStatusBadge}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                showStatusBadge ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  showStatusBadge ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
         </PopoverContent>
       </Popover>
+      <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>
+        <DialogContent className="max-w-md bg-popover text-popover-foreground">
+          <DialogHeader>
+            <DialogTitle>Connect your project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-[10px] pb-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground">Select or insert a URL</span>
+              </div>
+              <div className="relative max-w-auto">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="relative" role="button" tabIndex={0} aria-haspopup="listbox">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                        <Github className="w-4 h-4" aria-hidden />
+                      </div>
+                      <input
+                        placeholder="user/repo"
+                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm cursor-pointer"
+                        aria-autocomplete="list"
+                        role="combobox"
+                        readOnly
+                        value={selectedRepository}
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                        <button type="button" aria-label="Toggle menu" className="text-muted-foreground">
+                          <ChevronDown className="w-4 h-4 transition-transform" aria-hidden />
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="bottom" className="w-[var(--radix-popover-trigger-width)] p-0 border border-border bg-card rounded-lg shadow-md mt-1 z-[9999] max-h-60 flex flex-col overflow-hidden">
+                    <ul role="listbox" className="w-full flex-1 min-h-0 overflow-y-auto p-1 repo-dropdown-scroll" data-testid="git-repo-dropdown-menu">
+                      <div className="px-2 py-1.5">
+                        <span className="text-xs font-semibold leading-4 text-muted-foreground">Most Recent</span>
+                      </div>
+                      {[
+                        'FraterCCCLXIII/All-Hands-UI-XP',
+                        'FraterCCCLXIII/pr-navigator',
+                        'FraterCCCLXIII/All-Hands-UI',
+                      ].map((repo) => (
+                        <li
+                          key={repo}
+                          role="option"
+                          className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground font-normal hover:bg-muted/60 focus:outline-none focus:bg-muted/60"
+                          onClick={() => {
+                            setSelectedRepository(repo);
+                            setSelectedBranch('main');
+                          }}
+                        >
+                          <span className="font-medium">{repo}</span>
+                        </li>
+                      ))}
+                      <div className="border-t border-border my-1"></div>
+                      {[
+                        'FraterCCCLXIII/a1-hvac-local-leads',
+                        'FraterCCCLXIII/acu-your-mobile-oasis',
+                        'FraterCCCLXIII/ai-chat-insights',
+                        'FraterCCCLXIII/ai-feed-notifications',
+                        'FraterCCCLXIII/akash-sacred-scribe-ai',
+                        'FraterCCCLXIII/alpha-omega',
+                        'FraterCCCLXIII/amara-ai',
+                        'FraterCCCLXIII/app-window-orchestrator',
+                        'FraterCCCLXIII/app.cofounder',
+                        'FraterCCCLXIII/ascii-demoscene',
+                        'FraterCCCLXIII/beyond-one-mexico-retreat',
+                        'FraterCCCLXIII/book-builder',
+                        'FraterCCCLXIII/book-pay',
+                        'FraterCCCLXIII/BreamStream',
+                        'FraterCCCLXIII/brother',
+                        'FraterCCCLXIII/brother-humbble',
+                        'FraterCCCLXIII/brothers',
+                        'FraterCCCLXIII/browser-use',
+                        'FraterCCCLXIII/capcorp',
+                        'FraterCCCLXIII/chatrtk',
+                        'FraterCCCLXIII/chatrtk-revamp-refine-flow',
+                        'FraterCCCLXIII/chronofy-flow-33',
+                        'FraterCCCLXIII/cli-palette-builder',
+                      ].map((repo) => (
+                        <li
+                          key={repo}
+                          role="option"
+                          className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground font-normal hover:bg-muted/60 focus:outline-none focus:bg-muted/60"
+                          onClick={() => {
+                            setSelectedRepository(repo);
+                            setSelectedBranch('main');
+                          }}
+                        >
+                          <span className="font-medium">{repo}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex-shrink-0 border-t border-border p-1 rounded-b-lg bg-card">
+                      <a
+                        href="https://github.com/apps/openhands-ai/installations/new"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center w-full px-2 py-2 text-sm text-foreground hover:bg-muted/60 rounded-md transition-colors font-normal"
+                      >
+                        + Add GitHub Repos
+                      </a>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="relative max-w-full">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="relative" role="button" tabIndex={0} aria-haspopup="listbox">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                        <GitBranch className="w-4 h-4" aria-hidden />
+                      </div>
+                      <input
+                        placeholder="Select branch..."
+                        disabled={!selectedRepository}
+                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm cursor-pointer"
+                        value={selectedRepository ? selectedBranch : ''}
+                        readOnly
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                        <button
+                          type="button"
+                          aria-label="Toggle menu"
+                          disabled={!selectedRepository}
+                          className="text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <ChevronDown className="w-4 h-4" aria-hidden />
+                        </button>
+                      </div>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="bottom" className="w-[var(--radix-popover-trigger-width)] p-0 border border-border bg-card rounded-lg shadow-md mt-1 z-[9999] max-h-60 flex flex-col overflow-hidden">
+                    <ul role="listbox" className="w-full flex-1 min-h-0 overflow-y-auto p-1 repo-dropdown-scroll">
+                      {['main', 'develop', 'feature/kanban-drawer', 'bugfix/status-badge', 'release/v1.2.0'].map((branch) => (
+                        <li
+                          key={branch}
+                          role="option"
+                          className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground font-normal hover:bg-muted/60 focus:outline-none focus:bg-muted/60"
+                          onClick={() => setSelectedBranch(branch)}
+                        >
+                          <span className="font-medium">{branch}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <DialogFooter className="sm:flex-row sm:justify-start sm:space-x-2 flex flex-row items-center justify-start">
+              <Button className="h-10 px-4 py-2 bg-white text-black hover:bg-white/90" onClick={() => setIsConnectModalOpen(false)}>
+                Connect
+              </Button>
+              <Button
+                className="h-10 px-4 py-2 rounded-md bg-muted/60 hover:bg-muted border border-border text-foreground"
+                onClick={() => setIsConnectModalOpen(false)}
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
