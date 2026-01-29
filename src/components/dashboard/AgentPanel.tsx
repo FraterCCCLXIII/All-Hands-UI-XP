@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { PRCard } from '../../types/pr';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
-import { Ellipsis, ExternalLink, GitBranch, GitPullRequest, Minus, Pause, Plus } from 'lucide-react';
+import { Check, Ellipsis, ExternalLink, GitBranch, GitPullRequest, MessageSquare, Minus, Pause, Plus } from 'lucide-react';
+import { CommentsDialog } from './CommentsDialog';
+import { CiChecksDialog } from './CiChecksDialog';
 
 interface AgentPanelProps {
   card: PRCard | null;
@@ -45,7 +47,7 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
         <SheetHeader className="p-4 border-b border-border">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">
-              <GitPullRequest className="w-5 h-5 text-success mt-0.5" />
+              <GitPullRequest className="w-5 h-5 text-green-500 mt-0.5" />
               <div>
                 <SheetTitle className="text-left text-base font-medium leading-tight">{card.title}</SheetTitle>
                 <p className="text-sm text-muted-foreground font-mono mt-1">
@@ -72,10 +74,34 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
         </SheetHeader>
 
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Start a Conversation</h3>
-              <p className="text-[11px] text-muted-foreground mt-1">Add a new thread for this PR.</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <CommentsDialog
+                count={card.comments}
+                trigger={
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="View comments"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>{card.comments}</span>
+                  </button>
+                }
+              />
+              <CiChecksDialog
+                count={4}
+                trigger={
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="View CI check results"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>4</span>
+                  </button>
+                }
+              />
             </div>
             <Button size="sm" variant="outline" className="bg-background" onClick={handleCreateConversation}>
               Add New

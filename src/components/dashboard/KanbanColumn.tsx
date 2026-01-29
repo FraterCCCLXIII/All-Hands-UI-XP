@@ -46,7 +46,7 @@ export function KanbanColumn({
   };
 
   return (
-    <div className="flex flex-col w-80 flex-shrink-0">
+    <div className="flex flex-col w-80 flex-shrink-0 h-full min-h-0">
       <div className="flex items-center justify-between mb-3 px-2 group">
         <div className="flex items-center gap-2 relative">
           <button
@@ -114,9 +114,9 @@ export function KanbanColumn({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              'flex-1 space-y-2 p-2 rounded-lg min-h-[200px] transition-colors duration-200',
-              'bg-secondary/30 border border-transparent',
-              snapshot.isDraggingOver && 'border-foreground/20 bg-background'
+              'flex-1 min-h-0 space-y-2 p-2 pb-6 rounded-lg transition-colors duration-200 overflow-y-auto',
+              'bg-card border-0',
+              snapshot.isDraggingOver && 'ring-1 ring-foreground/20 bg-background'
             )}
           >
             {column.cards.map((card, index) => (

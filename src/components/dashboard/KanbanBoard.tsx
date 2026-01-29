@@ -5,13 +5,15 @@ import { KanbanColumn } from './KanbanColumn';
 import { AgentPanel } from './AgentPanel';
 import { availablePullRequests, initialColumns } from '../../data/mockData';
 import { Button } from '../ui/button';
-import { Plus } from 'lucide-react';
+import { Menu, Plus } from 'lucide-react';
 
 interface KanbanBoardProps {
   activeRepo: string;
+  isRepoListOpen?: boolean;
+  onToggleRepoList?: () => void;
 }
 
-export function KanbanBoard({ activeRepo }: KanbanBoardProps) {
+export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoList }: KanbanBoardProps) {
   const [columns, setColumns] = useState<KanbanColumnType[]>(initialColumns);
   const [selectedCard, setSelectedCard] = useState<PRCard | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -32,48 +34,76 @@ export function KanbanBoard({ activeRepo }: KanbanBoardProps) {
     return repoMatches.filter((pr) => !existingIds.has(pr.id));
   }, [activeRepo, existingIds]);
 
-  const handleDragEnd = useCallback((result: DropResult) => {
-    if (isFiltered) return;
-    const { destination, source } = result;
+  const handleDragEnd = useCallback(
+    (result: DropResult) => {
+      const { destination, source } = result;
 
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) {
-      return;
-    }
+      if (!destination) return;
+      if (destination.droppableId === source.droppableId && destination.index === source.index) {
+        return;
+      }
 
-    if (result.type === 'COLUMN') {
+      if (result.type === 'COLUMN') {
+        setColumns((prev) => {
+          const newColumns = [...prev];
+          const [moved] = newColumns.splice(source.index, 1);
+          newColumns.splice(destination.index, 0, moved);
+          return newColumns;
+        });
+        return;
+      }
+
       setColumns((prev) => {
-        const newColumns = [...prev];
-        const [moved] = newColumns.splice(source.index, 1);
-        newColumns.splice(destination.index, 0, moved);
+        const newColumns = prev.map((col) => ({ ...col, cards: [...col.cards] }));
+        const sourceColIndex = newColumns.findIndex((col) => col.id === source.droppableId);
+        const destColIndex = newColumns.findIndex((col) => col.id === destination.droppableId);
+        if (sourceColIndex === -1 || destColIndex === -1) return prev;
+
+        const sourceCards = newColumns[sourceColIndex].cards;
+        const destCards = newColumns[destColIndex].cards;
+
+        let card: PRCard;
+        let removeIndex: number;
+        if (isFiltered) {
+          const visibleSource = sourceCards.filter((c) => c.repo === activeRepo);
+          card = visibleSource[source.index];
+          if (!card) return prev;
+          removeIndex = sourceCards.findIndex((c) => c.id === card.id);
+        } else {
+          card = sourceCards[source.index];
+          removeIndex = source.index;
+        }
+
+        newColumns[sourceColIndex] = {
+          ...newColumns[sourceColIndex],
+          cards: sourceCards.filter((_, i) => i !== removeIndex),
+        };
+
+        let insertIndex: number;
+        if (isFiltered) {
+          let visibleCount = 0;
+          insertIndex = 0;
+          for (const c of destCards) {
+            if (visibleCount === destination.index) break;
+            if (c.repo === activeRepo) visibleCount++;
+            insertIndex++;
+          }
+        } else {
+          insertIndex = destination.index;
+        }
+
+        const newDestCards = [...destCards];
+        newDestCards.splice(insertIndex, 0, card);
+        newColumns[destColIndex] = {
+          ...newColumns[destColIndex],
+          cards: newDestCards,
+        };
+
         return newColumns;
       });
-      return;
-    }
-
-    setColumns((prev) => {
-      const newColumns = [...prev];
-
-      const sourceColIndex = newColumns.findIndex((col) => col.id === source.droppableId);
-      const destColIndex = newColumns.findIndex((col) => col.id === destination.droppableId);
-
-      const card = newColumns[sourceColIndex].cards[source.index];
-
-      newColumns[sourceColIndex] = {
-        ...newColumns[sourceColIndex],
-        cards: newColumns[sourceColIndex].cards.filter((_, i) => i !== source.index),
-      };
-
-      const destCards = [...newColumns[destColIndex].cards];
-      destCards.splice(destination.index, 0, card);
-      newColumns[destColIndex] = {
-        ...newColumns[destColIndex],
-        cards: destCards,
-      };
-
-      return newColumns;
-    });
-  }, [isFiltered]);
+    },
+    [isFiltered, activeRepo]
+  );
 
   const handleCardClick = useCallback(
     (cardId: string) => {
@@ -249,17 +279,35 @@ export function KanbanBoard({ activeRepo }: KanbanBoardProps) {
   }, []);
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex items-center justify-end px-4 pb-3 gap-2">
-          <div className="relative">
-            <Button
-              variant="outline"
-              onClick={() => setIsAddPrOpen((prev) => !prev)}
-              aria-label="Add PR"
-            >
-              Add PR
-            </Button>
+        <div className="flex items-center justify-between px-4 pb-3 gap-2 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            {onToggleRepoList && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={onToggleRepoList}
+                aria-label={isRepoListOpen ? 'Hide repository list' : 'Show repository list'}
+                aria-expanded={isRepoListOpen}
+                className="shrink-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              >
+                <Menu className="w-4 h-4" />
+              </Button>
+            )}
+            <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">
+              {activeRepo === 'all' ? 'All' : activeRepo}
+            </h2>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Button
+                variant="outline"
+                onClick={() => setIsAddPrOpen((prev) => !prev)}
+                aria-label="Add PR"
+              >
+                Add PR
+              </Button>
             {isAddPrOpen && (
               <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border bg-popover shadow-lg z-20">
                 <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -286,25 +334,26 @@ export function KanbanBoard({ activeRepo }: KanbanBoardProps) {
                 </div>
               </div>
             )}
+            </div>
+            <Button size="icon" variant="outline" onClick={handleAddColumn} aria-label="Add column">
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
-          <Button size="icon" variant="outline" onClick={handleAddColumn} aria-label="Add column">
-            <Plus className="w-4 h-4" />
-          </Button>
         </div>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="flex gap-4 overflow-x-auto pb-4 px-4 hide-scrollbar">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-8 px-4 hide-scrollbar items-stretch">
               {visibleColumns.map((column, index) => (
                 <Draggable key={column.id} draggableId={column.id} index={index}>
                   {(provided) => (
-                    <div ref={provided.innerRef} {...provided.draggableProps}>
+                    <div ref={provided.innerRef} {...provided.draggableProps} className="flex h-full">
                       <KanbanColumn
                         column={column}
                         onCardClick={handleCardClick}
                         onRenameColumn={handleRenameColumn}
                         onDeleteColumn={handleDeleteColumn}
                         dragHandleProps={provided.dragHandleProps}
-                        isDragDisabled={isFiltered}
+                        isDragDisabled={false}
                       />
                     </div>
                   )}
@@ -323,6 +372,6 @@ export function KanbanBoard({ activeRepo }: KanbanBoardProps) {
         onCreateConversation={handleCreateConversation}
         onSendMessage={handleSendMessage}
       />
-    </>
+    </div>
   );
 }

@@ -29,8 +29,8 @@ export const availableSkills: Skill[] = [
 
 export const initialColumns: KanbanColumn[] = [
   {
-    id: 'to-review',
-    title: 'To Review',
+    id: 'todo',
+    title: 'Todo',
     cards: [
       {
         id: 'pr-1',
@@ -79,8 +79,8 @@ export const initialColumns: KanbanColumn[] = [
     ],
   },
   {
-    id: 'agent-working',
-    title: 'Agent Working',
+    id: 'in-progress',
+    title: 'In Progress',
     cards: [
       {
         id: 'pr-3',
@@ -139,6 +139,16 @@ export const initialColumns: KanbanColumn[] = [
         ],
       },
     ],
+  },
+  {
+    id: 'blocked',
+    title: 'Blocked',
+    cards: [],
+  },
+  {
+    id: 'needs-review',
+    title: 'Needs Review',
+    cards: [],
   },
   {
     id: 'ready-to-merge',

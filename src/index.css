@@ -138,6 +138,13 @@ input[type="search"]::-webkit-search-results-decoration {
   background: hsl(var(--muted-foreground) / 0.7);
 }
 
+/* Kanban: hide dnd placeholder so it doesn’t show as a visible pattern/shape */
+[data-rfd-placeholder-context-id] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 @layer base {
   * {
     @apply border-border;

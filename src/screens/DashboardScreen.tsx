@@ -12,6 +12,7 @@ import { initialColumns } from '../data/mockData';
 export function DashboardScreen() {
   const [activeView, setActiveView] = useState<DashboardTabId>('kanban');
   const [activeRepo, setActiveRepo] = useState('all');
+  const [isRepoListOpen, setIsRepoListOpen] = useState(true);
   const repositories = useMemo(() => {
     const repoSet = new Set<string>();
     initialColumns.forEach((column) => {
@@ -162,12 +163,18 @@ export function DashboardScreen() {
       <div className="flex min-h-0 h-full">
         {activeView === 'kanban' ? (
           <>
-            <aside className="w-64 shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-full">
-              <div className="flex-1 px-3 py-4 overflow-y-auto">
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
+            <aside
+              className={cn(
+                'shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground h-full transition-[width] duration-200 overflow-hidden',
+                isRepoListOpen ? 'w-64' : 'w-0 border-0'
+              )}
+              aria-hidden={!isRepoListOpen}
+            >
+              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-4">
+                <h3 className="shrink-0 whitespace-nowrap px-2 mb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Active Repositories
                 </h3>
-                <nav className="space-y-1">
+                <nav className="min-w-0 space-y-1 whitespace-nowrap">
                   {repositories.map((repo) => {
                     const repoId = repo === 'View all' ? 'all' : repo;
                     const isActive = activeRepo === repoId;
@@ -176,7 +183,7 @@ export function DashboardScreen() {
                         key={repoId}
                         type="button"
                         onClick={() => setActiveRepo(repoId)}
-                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                        className={`w-full min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left ${
                           isActive
                             ? 'bg-sidebar-accent text-sidebar-accent-foreground'
                             : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
@@ -184,16 +191,22 @@ export function DashboardScreen() {
                         aria-pressed={isActive}
                       >
                         <Github className="w-4 h-4 shrink-0" />
-                        <span className="truncate">{repo}</span>
+                        <span className="min-w-0 truncate">{repo}</span>
                       </button>
                     );
                   })}
                 </nav>
               </div>
             </aside>
-            <main className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-full">
-              <div className="px-4 mb-6" />
-              <KanbanBoard activeRepo={activeRepo} />
+            <main className="flex flex-col flex-1 min-w-0 min-h-0 bg-sidebar text-sidebar-foreground">
+              <div className="px-4 mb-6 shrink-0" />
+              <div className="flex flex-1 min-h-0 flex-col pb-12">
+                <KanbanBoard
+                activeRepo={activeRepo}
+                isRepoListOpen={isRepoListOpen}
+                onToggleRepoList={() => setIsRepoListOpen((prev) => !prev)}
+              />
+              </div>
             </main>
           </>
         ) : (
