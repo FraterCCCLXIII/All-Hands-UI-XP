@@ -1,5 +1,19 @@
 import { useMemo } from 'react';
 import { PrLabel, type PrLabelStatus } from '../components/dashboard/PrLabel';
+import {
+  ChevronDown,
+  ChevronRight,
+  EllipsisVertical,
+  FileCode,
+  FolderOpen,
+} from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { cn } from '../lib/utils';
 
 type ComponentItem = {
   id: string;
@@ -60,6 +74,167 @@ export function NewComponentsScreen() {
         id: 'new-components',
         title: 'New Components',
         items: [
+          {
+            id: 'skill-detail-panel',
+            name: 'Skill Detail Panel',
+            description:
+              'A detailed repository view with a folder tree, file list, and action menu.',
+            usage: `<section className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card w-full" aria-label="Skill detail">
+  <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+    <div className="flex min-w-0 flex-1 items-center gap-2">
+      <span className="truncate text-sm font-medium text-foreground">orbit234/sudoku</span>
+    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button type="button" className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+          <EllipsisVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem>Copy link</DropdownMenuItem>
+        <DropdownMenuItem>Open in new tab</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
+  <div className="flex-1 overflow-y-auto p-4 repo-dropdown-scroll">
+    <ul className="list-none">
+      <li className="py-0.5">
+        <button type="button" className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground">
+          <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
+            <ChevronDown className="h-4 w-4" />
+          </span>
+          <FolderOpen className="h-4 w-4 flex-shrink-0" />
+          <span className="font-medium">examples</span>
+        </button>
+        <ul className="list-none pl-4 border-l border-border ml-1">
+          <li className="py-0.5">
+            <button type="button" className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground">
+              <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
+                <ChevronDown className="h-4 w-4" />
+              </span>
+              <FolderOpen className="h-4 w-4 flex-shrink-0" />
+              <span className="font-medium">tutorials</span>
+            </button>
+            <ul className="list-none pl-4 border-l border-border ml-1">
+              {['01_hello.py', '02_navigation.py', '03_forms.py', 'README.md'].map((file) => (
+                <li key={file} className="py-0.5">
+                  <button type="button" className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline">
+                    <FileCode className="h-4 w-4 flex-shrink-0" />
+                    <span>{file}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li className="py-0.5">
+        <button type="button" className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline">
+          <FileCode className="h-4 w-4 flex-shrink-0" />
+          <span>Plugin.json</span>
+        </button>
+      </li>
+      <li className="py-0.5">
+        <button type="button" className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline">
+          <FileCode className="h-4 w-4 flex-shrink-0" />
+          <span>README.md</span>
+        </button>
+      </li>
+    </ul>
+  </div>
+</section>`,
+            preview: (
+              <section
+                className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card w-full max-w-md"
+                aria-label="Skill detail"
+              >
+                <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="truncate text-sm font-medium text-foreground">
+                      orbit234/sudoku
+                    </span>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                      >
+                        <EllipsisVertical className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>Copy link</DropdownMenuItem>
+                      <DropdownMenuItem>Open in new tab</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4 repo-dropdown-scroll max-h-[300px]">
+                  <ul className="list-none">
+                    <li className="py-0.5">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
+                          <ChevronDown className="h-4 w-4" />
+                        </span>
+                        <FolderOpen className="h-4 w-4 flex-shrink-0" />
+                        <span className="font-medium">examples</span>
+                      </button>
+                      <ul className="list-none pl-4 border-l border-border ml-1">
+                        <li className="py-0.5">
+                          <button
+                            type="button"
+                            className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground"
+                          >
+                            <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
+                              <ChevronDown className="h-4 w-4" />
+                            </span>
+                            <FolderOpen className="h-4 w-4 flex-shrink-0" />
+                            <span className="font-medium">tutorials</span>
+                          </button>
+                          <ul className="list-none pl-4 border-l border-border ml-1">
+                            {['01_hello.py', '02_navigation.py', '03_forms.py', 'README.md'].map(
+                              (file) => (
+                                <li key={file} className="py-0.5">
+                                  <button
+                                    type="button"
+                                    className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline"
+                                  >
+                                    <FileCode className="h-4 w-4 flex-shrink-0" />
+                                    <span>{file}</span>
+                                  </button>
+                                </li>
+                              )
+                            )}
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li className="py-0.5">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline"
+                      >
+                        <FileCode className="h-4 w-4 flex-shrink-0" />
+                        <span>Plugin.json</span>
+                      </button>
+                    </li>
+                    <li className="py-0.5">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline"
+                      >
+                        <FileCode className="h-4 w-4 flex-shrink-0" />
+                        <span>README.md</span>
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </section>
+            ),
+          },
           {
             id: 'new-pr-labels',
             name: 'PR Labels',
