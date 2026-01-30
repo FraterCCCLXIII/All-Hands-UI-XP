@@ -15,6 +15,7 @@ import {
   ActiveChatScreen,
   ComponentLibraryScreen,
   NewComponentsScreen,
+  NewLlmSwitcherScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -131,6 +132,7 @@ const actionSlugs: Record<string, string> = {
   skills: 'skills',
   components: 'components',
   'new-components': 'new-components',
+  'new-llm-switcher': 'new-llm-switcher',
   conversations: 'conversations',
   settings: 'settings',
 };
@@ -172,7 +174,8 @@ function App() {
   const isSettingsView = activeNavItem === 'settings';
   const isComponentsView = activeNavItem === 'components';
   const isNewComponentsView = activeNavItem === 'new-components';
-  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView;
+  const isNewLlmSwitcherView = activeNavItem === 'new-llm-switcher';
+  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView;
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -430,6 +433,7 @@ function App() {
                 {isSkillsView && <SkillsScreen />}
                 {isComponentsView && <ComponentLibraryScreen />}
                 {isNewComponentsView && <NewComponentsScreen />}
+                {isNewLlmSwitcherView && <NewLlmSwitcherScreen />}
                 {isSettingsView && (
                   <SettingsScreen
                     initialTab={settingsTab ?? undefined}

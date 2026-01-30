@@ -94,6 +94,7 @@ const flowPrototypes = [
   { id: 'new-user-experience', label: 'New User Experience', flowId: 'new-user-experience' },
   { id: 'component-library', label: 'Component Library', navAction: 'components' },
   { id: 'new-components', label: 'New Components', navAction: 'new-components' },
+  { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
 ];
 
 export const LeftNav: React.FC<LeftNavProps> = ({
