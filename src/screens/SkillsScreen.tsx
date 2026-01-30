@@ -336,11 +336,11 @@ export function SkillsScreen() {
               <li>
                 <button
                   type="button"
-                  onClick={() => handleToggleRepo('paulbloch/personal-lab')}
+                  onClick={() => handleToggleRepo('personal-lab-section')}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                 >
                   <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
-                    {expandedRepos.has('paulbloch/personal-lab') ? (
+                    {expandedRepos.has('personal-lab-section') ? (
                       <ChevronDown className="h-4 w-4" />
                     ) : (
                       <ChevronRight className="h-4 w-4" />
@@ -350,7 +350,7 @@ export function SkillsScreen() {
                   <span className="min-w-0 flex-1 truncate">paulbloch/personal-lab</span>
                   <span className="tabular-nums text-xs text-muted-foreground">3</span>
                 </button>
-                {expandedRepos.has('paulbloch/personal-lab') && (
+                {expandedRepos.has('personal-lab-section') && (
                   <ul className="list-none space-y-1">
                     {[
                       {
