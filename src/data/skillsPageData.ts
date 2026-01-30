@@ -388,6 +388,22 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
     conversationCount: 1,
   },
   {
+    id: 'personal-lab',
+    repo: 'paulbloch/personal-lab',
+    title: 'paulbloch/personal-lab',
+    skillName: 'Personal Repo',
+    repoUrl: 'https://github.com/paulbloch/personal-lab',
+    description:
+      'Personal experiments and UI prototypes. Notes, drafts, and early iterations live here.',
+    initialPrompt: `Summarize the latest work in this repo and suggest next steps to ship a polished component.`,
+    curlCommand: `curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "personal-lab", "repo": "paulbloch/personal-lab"}'`,
+    docTitle: 'README.md',
+    conversationCount: 1,
+  },
+  {
     id: 'update-readme',
     repo: 'orbit234/sudoku',
     title: 'Update Readme',

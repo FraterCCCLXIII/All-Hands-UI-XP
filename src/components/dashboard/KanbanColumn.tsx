@@ -46,7 +46,7 @@ export function KanbanColumn({
   };
 
   return (
-    <div className="flex flex-col w-80 flex-shrink-0 h-full min-h-0">
+    <div className="flex flex-col w-[22rem] flex-shrink-0 h-full min-h-0">
       <div className="flex items-center justify-between mb-3 px-2 group">
         <div className="flex items-center gap-2 relative">
           <button

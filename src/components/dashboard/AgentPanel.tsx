@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import { ArrowDown, ArrowUp, Check, ChevronDown, Ellipsis, ExternalLink, GitBranch, GitPullRequest, MessageSquare, Minus, Pause, Plus } from 'lucide-react';
 import { CommentsDialog } from './CommentsDialog';
 import { CiChecksDialog } from './CiChecksDialog';
+import { PrLabel, type PrLabelStatus } from './PrLabel';
 
 interface AgentPanelProps {
   card: PRCard | null;
@@ -45,20 +46,24 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
   };
 
   if (!card) return null;
+  const labelStatus = getPrLabelStatus(card);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-xl bg-background p-0 flex flex-col">
         <SheetHeader className="px-4 pt-4 pb-2">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <GitPullRequest className="w-5 h-5 text-green-500 mt-0.5" />
-              <div>
-                <SheetTitle className="text-left text-base font-medium leading-tight">{card.title}</SheetTitle>
-                <p className="text-sm text-muted-foreground font-mono mt-1">
-                  {card.repo} #{card.number}
-                </p>
-              </div>
+          <div className="flex items-start gap-3 pr-10">
+            <GitPullRequest className="w-5 h-5 text-green-500 mt-0.5" />
+            <div className="min-w-0">
+              <SheetTitle className="text-left text-base font-medium leading-tight">{card.title}</SheetTitle>
+              <p className="text-sm text-muted-foreground font-mono mt-1">
+                {card.repo} #{card.number}
+              </p>
+              {labelStatus && (
+                <div className="mt-2">
+                  <PrLabel status={labelStatus} />
+                </div>
+              )}
             </div>
           </div>
         </SheetHeader>
@@ -251,4 +256,60 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
       </SheetContent>
     </Sheet>
   );
+}
+
+function getPrLabelStatus(card: PRCard): PrLabelStatus | null {
+  const labelMatch = card.labels.find((label) => {
+    const normalized = label.name.trim().toLowerCase();
+    return [
+      'draft',
+      'open',
+      'ready for review',
+      'changes requested',
+      'approved',
+      'merged',
+      'closed',
+    ].includes(normalized);
+  });
+
+  if (labelMatch) {
+    return mapLabelNameToStatus(labelMatch.name);
+  }
+
+  switch (card.status) {
+    case 'draft':
+      return 'draft';
+    case 'open':
+      return 'open';
+    case 'approved':
+      return 'approved';
+    case 'changes-requested':
+      return 'changes_requested';
+    case 'merged':
+      return 'merged';
+    default:
+      return null;
+  }
+}
+
+function mapLabelNameToStatus(labelName: string): PrLabelStatus {
+  const normalized = labelName.trim().toLowerCase();
+  switch (normalized) {
+    case 'draft':
+      return 'draft';
+    case 'open':
+      return 'open';
+    case 'ready for review':
+      return 'ready_for_review';
+    case 'changes requested':
+      return 'changes_requested';
+    case 'approved':
+      return 'approved';
+    case 'merged':
+      return 'merged';
+    case 'closed':
+      return 'closed';
+    default:
+      return 'open';
+  }
 }

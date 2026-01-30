@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bot, ChevronDown, GitBranch, GitPullRequest, Github, MessageSquare, Minus } from 'lucide-react';
-import { StatusBadge } from './StatusBadge';
+import { PrLabel, type PrLabelStatus } from './PrLabel';
 import { CiChecksDialog } from './CiChecksDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ConversationCard } from './ConversationCard';
@@ -55,6 +55,21 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
     );
   };
 
+  const mapBranchStatus = (status: Branch['status']): PrLabelStatus => {
+    switch (status) {
+      case 'draft':
+        return 'draft';
+      case 'open':
+        return 'open';
+      case 'closed':
+        return 'closed';
+      case 'error':
+        return 'changes_requested';
+      default:
+        return 'open';
+    }
+  };
+
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-muted/70 border-b-[1px] border-border">
@@ -94,11 +109,7 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
                       <span className="text-muted-foreground whitespace-nowrap">PR #{branch.prNumber}</span>
                     )}
                     <span className="text-foreground whitespace-nowrap">{branch.prTitle || branch.name}</span>
-                    {['open', 'error', 'closed'].includes(branch.status) && (
-                      <StatusBadge variant={branch.status as 'open' | 'error' | 'closed'}>
-                        {branch.status.charAt(0).toUpperCase() + branch.status.slice(1)}
-                      </StatusBadge>
-                    )}
+                    <PrLabel status={mapBranchStatus(branch.status)} />
                   </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">

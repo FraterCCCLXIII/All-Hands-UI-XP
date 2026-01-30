@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
+import { PrLabel, type PrLabelStatus } from '../components/dashboard/PrLabel';
 
 type ComponentItem = {
   id: string;
   name: string;
   description?: string;
   usage?: string;
+  preview?: React.ReactNode;
 };
 
 type ComponentSection = {
@@ -17,15 +19,17 @@ type ComponentCardProps = {
   title: string;
   description: string;
   usage?: string;
+  preview?: React.ReactNode;
 };
 
-function ComponentCard({ title, description, usage }: ComponentCardProps) {
+function ComponentCard({ title, description, usage, preview }: ComponentCardProps) {
   return (
     <section className="rounded-xl border border-border bg-card p-5">
       <div>
         <h2 className="text-base font-semibold text-foreground">{title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
+      {preview && <div className="mt-4 flex flex-wrap items-center gap-2">{preview}</div>}
       {usage && (
         <div className="mt-4 rounded-lg bg-muted/40 px-3 py-2 text-xs font-mono text-muted-foreground">
           {usage}
@@ -56,6 +60,30 @@ export function NewComponentsScreen() {
         id: 'new-components',
         title: 'New Components',
         items: [
+          {
+            id: 'new-pr-labels',
+            name: 'PR Labels',
+            description:
+              'Status label used in PR cards. Only one label should be displayed at a time.',
+            usage: `<PrLabel status="open" />`,
+            preview: (
+              <>
+                {(
+                  [
+                    'draft',
+                    'open',
+                    'ready_for_review',
+                    'changes_requested',
+                    'approved',
+                    'merged',
+                    'closed',
+                  ] as PrLabelStatus[]
+                ).map((status) => (
+                  <PrLabel key={status} status={status} />
+                ))}
+              </>
+            ),
+          },
           {
             id: 'new-component-placeholder',
             name: 'Start a new entry',
@@ -143,6 +171,7 @@ export function NewComponentsScreen() {
                         title={item.name}
                         description={item.description ?? 'Component reference entry.'}
                         usage={item.usage}
+                        preview={item.preview}
                       />
                     </div>
                   ))}

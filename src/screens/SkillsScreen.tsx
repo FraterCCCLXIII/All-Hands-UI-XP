@@ -328,10 +328,81 @@ export function SkillsScreen() {
           </nav>
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-4">
+          <div className="mb-4 px-1">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Personal Repository
+            </div>
+            <ul className="mt-2 list-none space-y-1">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => handleToggleRepo('paulbloch/personal-lab')}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                    {expandedRepos.has('paulbloch/personal-lab') ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </span>
+                  <Github className="h-4 w-4 flex-shrink-0" />
+                  <span className="min-w-0 flex-1 truncate">paulbloch/personal-lab</span>
+                  <span className="tabular-nums text-xs text-muted-foreground">3</span>
+                </button>
+                {expandedRepos.has('paulbloch/personal-lab') && (
+                  <ul className="list-none space-y-1">
+                    {[
+                      {
+                        id: 'personal-lab-foundations',
+                        title: 'Foundations Audit',
+                      },
+                      {
+                        id: 'personal-lab-components',
+                        title: 'Component Refresh',
+                      },
+                      {
+                        id: 'personal-lab-tokens',
+                        title: 'Token Cleanup',
+                      },
+                    ].map((skill) => (
+                      <li key={skill.id}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedItem({
+                              id: skill.id,
+                              repo: 'paulbloch/personal-lab',
+                              title: skill.title,
+                              repoUrl: 'https://github.com/paulbloch/personal-lab',
+                              description:
+                                'Personal repo skill. Use this to document updates and request changes.',
+                              initialPrompt:
+                                'Summarize recent work and suggest next steps for this repo.',
+                              curlCommand: `curl -X POST https://api.example.com/skills/run \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer <token>" \\\n  -d '{"skillId": "${skill.id}", "repo": "paulbloch/personal-lab"}'`,
+                              docTitle: 'README.md',
+                            })
+                          }
+                          className={cn(
+                            'flex w-full items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-left text-sm transition-colors',
+                            selectedItem?.id === skill.id
+                              ? 'bg-muted/80 text-foreground'
+                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                          )}
+                        >
+                          <span className="min-w-0 flex-1 truncate">{skill.title}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            </ul>
+          </div>
           <h3 className="mb-3 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Active Repositories
           </h3>
-            <ul className="list-none space-y-1">
+          <ul className="list-none space-y-1">
             {repoGroups.map(({ repo, skills }) => {
               const isRepoExpanded = expandedRepos.has(repo);
               return (

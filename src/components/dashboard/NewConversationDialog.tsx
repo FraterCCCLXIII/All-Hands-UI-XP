@@ -39,7 +39,7 @@ export function NewConversationDialog({
         <button
           type="button"
           className={cn(
-            'inline-flex items-center gap-2 h-10 rounded-md border border-border px-3 text-xs text-foreground bg-muted/40 hover:bg-muted/60 transition-colors',
+            'inline-flex items-center gap-2 h-7 rounded-full border border-transparent px-2.5 text-[11px] text-foreground bg-muted/40 hover:bg-muted/60 transition-colors',
             triggerClassName
           )}
           onClick={(event) => event.stopPropagation()}

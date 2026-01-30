@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { CommentsDialog } from './CommentsDialog';
 import { CiChecksDialog } from './CiChecksDialog';
+import { PrLabel, type PrLabelStatus } from './PrLabel';
 
 interface PRCardProps {
   card: PRCardType;
@@ -25,6 +26,7 @@ function formatTimeAgo(dateString: string): string {
 
 export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
   const conversationCount = card.conversations?.length ?? 0;
+  const labelStatus = getPrLabelStatus(card);
 
   return (
     <motion.div
@@ -38,7 +40,7 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="flex items-start gap-2 mb-2">
+      <div className="flex flex-wrap items-start gap-2 mb-2">
         <GitPullRequest className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-500" />
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
@@ -48,6 +50,11 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
             {card.repo} #{card.number}
           </p>
         </div>
+        {labelStatus && (
+          <div className="w-full pt-1 sm:w-auto sm:pt-0 sm:ml-auto">
+            <PrLabel status={labelStatus} />
+          </div>
+        )}
       </div>
 
       {(card.conversations ?? []).some((conversation) => conversation.activity) && (
@@ -114,4 +121,60 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
       </div>
     </motion.div>
   );
+}
+
+function getPrLabelStatus(card: PRCardType): PrLabelStatus | null {
+  const labelMatch = card.labels.find((label) => {
+    const normalized = label.name.trim().toLowerCase();
+    return [
+      'draft',
+      'open',
+      'ready for review',
+      'changes requested',
+      'approved',
+      'merged',
+      'closed',
+    ].includes(normalized);
+  });
+
+  if (labelMatch) {
+    return mapLabelNameToStatus(labelMatch.name);
+  }
+
+  switch (card.status) {
+    case 'draft':
+      return 'draft';
+    case 'open':
+      return 'open';
+    case 'approved':
+      return 'approved';
+    case 'changes-requested':
+      return 'changes_requested';
+    case 'merged':
+      return 'merged';
+    default:
+      return null;
+  }
+}
+
+function mapLabelNameToStatus(labelName: string): PrLabelStatus {
+  const normalized = labelName.trim().toLowerCase();
+  switch (normalized) {
+    case 'draft':
+      return 'draft';
+    case 'open':
+      return 'open';
+    case 'ready for review':
+      return 'ready_for_review';
+    case 'changes requested':
+      return 'changes_requested';
+    case 'approved':
+      return 'approved';
+    case 'merged':
+      return 'merged';
+    case 'closed':
+      return 'closed';
+    default:
+      return 'open';
+  }
 }
