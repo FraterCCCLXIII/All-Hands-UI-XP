@@ -400,10 +400,10 @@ export function SkillsScreen() {
             </ul>
           </div>
           <h3 className="mb-3 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Active Repositories
+            All Repositories
           </h3>
           <ul className="list-none space-y-1">
-            {repoGroups.map(({ repo, skills }) => {
+            {repoGroups.slice(0, 10).map(({ repo, skills }) => {
               const isRepoExpanded = expandedRepos.has(repo);
               return (
                 <li key={repo}>
@@ -450,7 +450,42 @@ export function SkillsScreen() {
                 </li>
               );
             })}
+          </ul>
+          <div className="mt-4 border-t border-border pt-4">
+            <ul className="list-none space-y-1">
+              {[
+                'facebook/react',
+                'vercel/next.js',
+                'tailwindlabs/tailwindcss',
+                'shadcn-ui/ui',
+                'microsoft/vscode',
+                'facebook/react-native',
+                'nodejs/node',
+                'python/cpython',
+                'rust-lang/rust',
+                'golang/go',
+              ].map((repo) => (
+                <li key={repo}>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                      <ChevronRight className="h-4 w-4" />
+                    </span>
+                    <Github className="h-4 w-4 flex-shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">{repo}</span>
+                  </button>
+                </li>
+              ))}
             </ul>
+            <button
+              type="button"
+              className="mt-2 w-full px-2 py-1.5 text-left text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              View more...
+            </button>
+          </div>
         </div>
       </aside>
 
