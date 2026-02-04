@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import type { KeyboardEvent } from 'react';
 import {
   Loader2,
   ArrowUp,
@@ -18,12 +19,8 @@ import {
   ExternalLink,
   Wrench,
   ArrowUp as ArrowUpIcon,
-  FileText,
   Merge,
   Package,
-  Sparkles,
-  TestTube,
-  Microchip,
   ChevronDown,
   ChevronUp,
   CheckCircle,
@@ -93,6 +90,22 @@ const DEFAULT_LLM_MODEL = 'Claude 3.5 Sonnet';
 const LLM_MODELS = ['Claude 3.5 Sonnet', 'Claude 3 Opus', 'GPT-4o', 'GPT-4o mini'] as const;
 const CHAT_STATUS_MESSAGES = ['Starting', 'Connecting...', 'Loading...', 'Ready'] as const;
 const CHAT_STATUS_CYCLE_MS = 500;
+const COMMAND_LIST_ID = 'chat-command-list';
+
+type CommandItem = {
+  id: string;
+  label: string;
+  description: string;
+  command: string;
+};
+
+const CHAT_COMMANDS: CommandItem[] = [
+  { id: 'summarize', label: 'Summarize thread', description: 'Recap the conversation so far.', command: '/summarize' },
+  { id: 'explain', label: 'Explain selection', description: 'Explain highlighted code or output.', command: '/explain' },
+  { id: 'tests', label: 'Generate tests', description: 'Add tests for recent changes.', command: '/tests' },
+  { id: 'plan', label: 'Create a plan', description: 'Break the work into steps.', command: '/plan' },
+  { id: 'optimize', label: 'Optimize performance', description: 'Identify and fix slow paths.', command: '/optimize' },
+];
 
 export function ActiveChatScreen({
   theme,
@@ -134,6 +147,10 @@ export function ActiveChatScreen({
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedRepository, setSelectedRepository] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('main');
+  const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState('');
+  const [commandActiveIndex, setCommandActiveIndex] = useState(0);
+  const blurTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -172,15 +189,129 @@ export function ActiveChatScreen({
 
   const rightPanelWidth = 100 - leftPanelWidth;
   const hasInput = !!chatInput.trim();
+  const filteredCommands = useMemo(() => {
+    const query = commandQuery.trim().toLowerCase();
+    if (!query) return CHAT_COMMANDS;
+    return CHAT_COMMANDS.filter((command) => {
+      const haystack = `${command.label} ${command.command} ${command.description}`.toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [commandQuery]);
 
   const handleSendMessage = useCallback(() => {
     const text = chatInputRef.current?.innerText?.trim() ?? chatInput.trim();
     if (text) {
       setChatInput('');
       if (chatInputRef.current) chatInputRef.current.innerText = '';
+      setIsCommandMenuOpen(false);
+      setCommandQuery('');
       // Could wire to parent or local messages state here
     }
   }, [chatInput]);
+
+  const updateCommandMenuState = useCallback((value: string) => {
+    const match = value.match(/(?:^|\s)\/([^\s]*)$/);
+    if (!match) {
+      setIsCommandMenuOpen(false);
+      setCommandQuery('');
+      return;
+    }
+    setCommandQuery(match[1] ?? '');
+    setIsCommandMenuOpen(true);
+    setCommandActiveIndex(0);
+  }, []);
+
+  const placeCaretAtEnd = useCallback((element: HTMLElement) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    range.collapse(false);
+    const selection = window.getSelection();
+    if (selection) {
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }, []);
+
+  const applyCommandChip = useCallback(
+    (command: CommandItem) => {
+      const input = chatInputRef.current;
+      if (!input) return;
+
+      const currentText = input.innerText;
+      const match = currentText.match(/(?:^|\s)\/[^\s]*$/);
+      if (!match) return;
+
+      const matchIndex = match.index ?? 0;
+      const matchedText = match[0];
+      const leadingSpace = matchedText.startsWith(' ') ? ' ' : '';
+      const prefixText = currentText.slice(0, matchIndex);
+      const suffixText = currentText.slice(matchIndex + matchedText.length);
+
+      input.innerHTML = '';
+
+      if (prefixText) {
+        input.appendChild(document.createTextNode(prefixText));
+      }
+      if (leadingSpace) {
+        input.appendChild(document.createTextNode(leadingSpace));
+      }
+
+      const chip = document.createElement('span');
+      chip.textContent = command.command;
+      chip.setAttribute('data-command-chip', 'true');
+      chip.setAttribute('contenteditable', 'false');
+      chip.className =
+        'inline-flex items-center rounded-full border border-border bg-muted/60 text-foreground px-2 py-0.5 text-xs font-medium align-middle';
+      input.appendChild(chip);
+      input.appendChild(document.createTextNode(' '));
+
+      if (suffixText) {
+        input.appendChild(document.createTextNode(suffixText));
+      }
+
+      placeCaretAtEnd(input);
+      setChatInput(input.innerText);
+      setIsCommandMenuOpen(false);
+      setCommandQuery('');
+    },
+    [placeCaretAtEnd]
+  );
+
+  const handleCommandNavigation = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (!isCommandMenuOpen) return false;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsCommandMenuOpen(false);
+        setCommandQuery('');
+        return true;
+      }
+
+      if (filteredCommands.length === 0) return false;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        setCommandActiveIndex((index) => (index + 1) % filteredCommands.length);
+        return true;
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        setCommandActiveIndex((index) => (index - 1 + filteredCommands.length) % filteredCommands.length);
+        return true;
+      }
+
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        applyCommandChip(filteredCommands[commandActiveIndex]);
+        return true;
+      }
+
+      return false;
+    },
+    [applyCommandChip, commandActiveIndex, filteredCommands, isCommandMenuOpen]
+  );
 
   return (
     <div className="flex flex-col w-full h-[calc(100%-50px)] md:h-full gap-3" data-theme={theme}>
@@ -864,6 +995,55 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               <div className="sr-only" />
                             )}
                             <div className="relative w-full">
+                              {isCommandMenuOpen && (
+                                <div className="absolute left-0 bottom-full mb-3 w-full max-w-[420px] z-30">
+                                  <div className="rounded-lg border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
+                                    <div className="px-3 py-2 text-xs font-medium text-muted-foreground border-b border-border/60">
+                                      Commands
+                                    </div>
+                                    <div
+                                      role="listbox"
+                                      id={COMMAND_LIST_ID}
+                                      aria-label="Slash commands"
+                                      className="max-h-56 overflow-auto"
+                                    >
+                                      {filteredCommands.length > 0 ? (
+                                        filteredCommands.map((command, index) => {
+                                          const isActive = index === commandActiveIndex;
+                                          return (
+                                            <button
+                                              key={command.id}
+                                              type="button"
+                                              role="option"
+                                              aria-selected={isActive}
+                                              className={cn(
+                                                'w-full text-left px-3 py-2 flex items-start text-sm transition-colors',
+                                                isActive
+                                                  ? 'bg-muted text-foreground'
+                                                  : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                                              )}
+                                              onMouseDown={(event) => {
+                                                event.preventDefault();
+                                                applyCommandChip(command);
+                                              }}
+                                            >
+                                              <span className="flex-1 min-w-0">
+                                                <span className="flex items-center gap-2">
+                                                  <span className="font-medium text-foreground">{command.label}</span>
+                                                  <span className="text-xs text-muted-foreground">{command.command}</span>
+                                                </span>
+                                                <span className="block text-xs text-muted-foreground">{command.description}</span>
+                                              </span>
+                                            </button>
+                                          );
+                                        })
+                                      ) : (
+                                        <div className="px-3 py-2 text-xs text-muted-foreground">No matching commands.</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                               <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20 group" id="resize-grip">
                                 <div className="absolute top-1 left-0 w-full h-[3px] bg-white cursor-ns-resize z-10 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ userSelect: 'none' }} />
                               </div>
@@ -886,12 +1066,34 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         data-testid="chat-input"
                                         className="chat-input bg-transparent text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 max-h-[400px] w-full block whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                                         style={{ height: 20, overflowY: 'hidden' }}
-                                        onInput={(e) => setChatInput((e.target as HTMLDivElement).innerText)}
+                                        role="textbox"
+                                        aria-multiline="true"
+                                        aria-expanded={isCommandMenuOpen}
+                                        aria-controls={COMMAND_LIST_ID}
+                                        onInput={(e) => {
+                                          const value = (e.target as HTMLDivElement).innerText;
+                                          setChatInput(value);
+                                          updateCommandMenuState(value);
+                                        }}
                                         onKeyDown={(e) => {
+                                          const handled = handleCommandNavigation(e);
+                                          if (handled) return;
                                           if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
                                             handleSendMessage();
                                           }
+                                        }}
+                                        onFocus={() => {
+                                          if (blurTimeoutRef.current) {
+                                            window.clearTimeout(blurTimeoutRef.current);
+                                            blurTimeoutRef.current = null;
+                                          }
+                                        }}
+                                        onBlur={() => {
+                                          blurTimeoutRef.current = window.setTimeout(() => {
+                                            setIsCommandMenuOpen(false);
+                                            setCommandQuery('');
+                                          }, 150);
                                         }}
                                       />
                                     </div>
