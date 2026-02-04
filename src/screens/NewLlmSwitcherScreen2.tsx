@@ -49,7 +49,6 @@ export function NewLlmSwitcherScreen2() {
   const [profiles, setProfiles] = useState(defaultProfiles);
   const [defaultProfileId, setDefaultProfileId] = useState<string | null>(defaultProfiles[0]?.id ?? null);
   const [deleteTarget, setDeleteTarget] = useState<(typeof defaultProfiles)[number] | null>(null);
-  const [editTarget, setEditTarget] = useState<(typeof defaultProfiles)[number] | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [providerName, setProviderName] = useState('');
   const [modelName, setModelName] = useState('');

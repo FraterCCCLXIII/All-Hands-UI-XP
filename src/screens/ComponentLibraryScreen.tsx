@@ -151,7 +151,6 @@ export function ComponentLibraryScreen() {
   const [isRunningPreview, setIsRunningPreview] = useState(false);
   const [isCanvasVisiblePreview, setIsCanvasVisiblePreview] = useState(false);
   const [activeNavItemPreview, setActiveNavItemPreview] = useState('code');
-  const [isConversationDrawerOpenPreview, setIsConversationDrawerOpenPreview] = useState(false);
   const [isInspectorPreview, setIsInspectorPreview] = useState(false);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
 
@@ -636,7 +635,7 @@ export function ComponentLibraryScreen() {
             preview: (
               <StatusIndicator
                 serverStatus={statusIndicatorStatus}
-                onServerStatusChange={setStatusIndicatorStatus}
+                onServerStatusChange={(status) => setStatusIndicatorStatus(status as 'active' | 'thinking' | 'stopped')}
               />
             ),
           },

@@ -1,14 +1,6 @@
 import { useMemo } from 'react';
 import { PrLabel, type PrLabelStatus } from '../components/dashboard/PrLabel';
-import {
-  ChevronDown,
-  ChevronRight,
-  Copy,
-  EllipsisVertical,
-  FileCode,
-  FolderOpen,
-  Wrench,
-} from 'lucide-react';
+import { ChevronDown, Copy, EllipsisVertical, FileCode, FolderOpen, Wrench } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +9,6 @@ import {
 } from '../components/ui/dropdown-menu';
 import { InfoCard } from '../components/common/InfoCard';
 import { ConversationCard } from '../components/dashboard/ConversationCard';
-import { cn } from '../lib/utils';
 
 type ComponentItem = {
   id: string;
