@@ -3,9 +3,11 @@ import { PrLabel, type PrLabelStatus } from '../components/dashboard/PrLabel';
 import {
   ChevronDown,
   ChevronRight,
+  Copy,
   EllipsisVertical,
   FileCode,
   FolderOpen,
+  Wrench,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -13,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import { InfoCard } from '../components/common/InfoCard';
 import { cn } from '../lib/utils';
 
 type ComponentItem = {
@@ -74,6 +77,93 @@ export function NewComponentsScreen() {
         id: 'new-components',
         title: 'New Components',
         items: [
+              {
+                id: 'copyable-code-panel',
+                name: 'Copyable Code Panel',
+                description:
+                  'Scrollable code panel with header actions and a custom scrollbar.',
+                usage: `<div className="overflow-hidden rounded-xl border border-border bg-card [&_textarea]:min-h-[100px]">
+  <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+    <span className="text-sm font-medium text-foreground">Curl Command</span>
+    <button
+      type="button"
+      className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+      aria-label="Copy"
+    >
+      <Copy className="h-4 w-4" />
+    </button>
+  </div>
+  <textarea
+    readOnly
+    rows={4}
+    className="repo-dropdown-scroll max-h-[180px] w-full resize-none overflow-y-auto border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
+    value="curl -X POST https://api.example.com/skills/run \\\n  -H &quot;Content-Type: application/json&quot; \\\n  -H &quot;Authorization: Bearer &lt;token&gt;&quot; \\\n  -d '{&quot;skillId&quot;: &quot;update-readme&quot;, &quot;repo&quot;: &quot;orbit234/sudoku&quot;}'"
+  />
+</div>`,
+                preview: (
+                  <div className="overflow-hidden rounded-xl border border-border bg-card [&_textarea]:min-h-[100px]">
+                    <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+                      <span className="text-sm font-medium text-foreground">Curl Command</span>
+                      <button
+                        type="button"
+                        className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        aria-label="Copy"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <textarea
+                      readOnly
+                      rows={4}
+                      className="repo-dropdown-scroll max-h-[180px] w-full resize-none overflow-y-auto border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
+                      value={`curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "update-readme", "repo": "orbit234/sudoku"}'`}
+                    />
+                  </div>
+                ),
+              },
+              {
+                id: 'info-card',
+                name: 'Info Card',
+                description:
+                  'Generic card for summarizing a single item with an optional icon and body text.',
+                usage: `<InfoCard
+  title="Component Name"
+  description="Short supporting description goes here."
+  icon={<Wrench className="h-4 w-4" />}
+/>`,
+                preview: (
+                  <InfoCard
+                    title="Foundations Audit"
+                    description="Document baseline UI patterns and highlight reusable foundations."
+                    icon={<Wrench className="h-4 w-4" />}
+                    className="max-w-md"
+                  />
+                ),
+              },
+              {
+                id: 'info-card-left-icon',
+                name: 'Info Card (Left Icon)',
+                description: 'Variant with icon aligned to the left of the text.',
+                usage: `<InfoCard
+  title="Foundations Audit"
+  description="Document baseline UI patterns and highlight reusable foundations."
+  icon={<Wrench className="h-4 w-4" />}
+  iconPosition="left"
+  interactive
+/>`,
+                preview: (
+                  <InfoCard
+                    title="Foundations Audit"
+                    description="Document baseline UI patterns and highlight reusable foundations."
+                    icon={<Wrench className="h-4 w-4" />}
+                    iconPosition="left"
+                    className="max-w-md"
+                  />
+                ),
+              },
           {
             id: 'skill-detail-panel',
             name: 'Skill Detail Panel',

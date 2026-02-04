@@ -22,6 +22,25 @@ export interface SkillRepositoryItem {
   category?: string;
 }
 
+export type SkillRepositoryLinkType = 'repo' | 'docs' | 'issues' | 'homepage';
+
+export interface SkillRepositoryLink {
+  label: string;
+  url: string;
+  type: SkillRepositoryLinkType;
+}
+
+export interface SkillRepositoryMetadata {
+  repo: string;
+  repoUrl: string;
+  description: string;
+  primaryLanguage?: string;
+  defaultBranch?: string;
+  visibility?: 'public' | 'private';
+  lastUpdated?: string;
+  links?: SkillRepositoryLink[];
+}
+
 /** Categories for the Skills Market (slug, display name, export count). */
 export const marketplaceCategories = [
   { slug: 'tools', name: 'Tools', exports: 35466 },
@@ -370,6 +389,54 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
   },
 ];
 
+export const skillRepositoryMetadata: SkillRepositoryMetadata[] = [
+  {
+    repo: 'orbit234/sudoku',
+    repoUrl: 'https://github.com/orbit234/sudoku',
+    description:
+      'Sudoku solver with a focus on onboarding, tutorials, and solid developer ergonomics.',
+    primaryLanguage: 'TypeScript',
+    defaultBranch: 'main',
+    visibility: 'public',
+    lastUpdated: '2024-01-30',
+    links: [
+      { label: 'Repository', url: 'https://github.com/orbit234/sudoku', type: 'repo' },
+      { label: 'Docs', url: 'https://github.com/orbit234/sudoku/blob/main/README.md', type: 'docs' },
+      { label: 'Issues', url: 'https://github.com/orbit234/sudoku/issues', type: 'issues' },
+    ],
+  },
+  {
+    repo: 'paulbloch/personal-lab',
+    repoUrl: 'https://github.com/paulbloch/personal-lab',
+    description:
+      'Personal experiments and UI prototypes. Notes, drafts, and early iterations live here.',
+    primaryLanguage: 'TypeScript',
+    defaultBranch: 'main',
+    visibility: 'private',
+    lastUpdated: '2024-01-28',
+    links: [
+      { label: 'Repository', url: 'https://github.com/paulbloch/personal-lab', type: 'repo' },
+      { label: 'Docs', url: 'https://github.com/paulbloch/personal-lab/blob/main/README.md', type: 'docs' },
+      { label: 'Issues', url: 'https://github.com/paulbloch/personal-lab/issues', type: 'issues' },
+    ],
+  },
+  {
+    repo: 'acme/backend-api',
+    repoUrl: 'https://github.com/acme/backend-api',
+    description:
+      'Backend API service with authentication, rate limiting, and structured observability.',
+    primaryLanguage: 'Go',
+    defaultBranch: 'main',
+    visibility: 'public',
+    lastUpdated: '2024-01-25',
+    links: [
+      { label: 'Repository', url: 'https://github.com/acme/backend-api', type: 'repo' },
+      { label: 'Docs', url: 'https://github.com/acme/backend-api/blob/main/README.md', type: 'docs' },
+      { label: 'Issues', url: 'https://github.com/acme/backend-api/issues', type: 'issues' },
+    ],
+  },
+];
+
 export const skillRepositoryItems: SkillRepositoryItem[] = [
   {
     id: 'orbit234-sudoku',
@@ -388,22 +455,6 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
     conversationCount: 1,
   },
   {
-    id: 'personal-lab',
-    repo: 'paulbloch/personal-lab',
-    title: 'paulbloch/personal-lab',
-    skillName: 'Personal Repo',
-    repoUrl: 'https://github.com/paulbloch/personal-lab',
-    description:
-      'Personal experiments and UI prototypes. Notes, drafts, and early iterations live here.',
-    initialPrompt: `Summarize the latest work in this repo and suggest next steps to ship a polished component.`,
-    curlCommand: `curl -X POST https://api.example.com/skills/run \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer <token>" \\
-  -d '{"skillId": "personal-lab", "repo": "paulbloch/personal-lab"}'`,
-    docTitle: 'README.md',
-    conversationCount: 1,
-  },
-  {
     id: 'update-readme',
     repo: 'orbit234/sudoku',
     title: 'Update Readme',
@@ -416,6 +467,54 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -H "Authorization: Bearer <token>" \\
   -d '{"skillId": "update-readme", "repo": "orbit234/sudoku"}'`,
     docTitle: 'Plugin.json',
+    conversationCount: 1,
+  },
+  {
+    id: 'personal-lab-foundations',
+    repo: 'paulbloch/personal-lab',
+    title: 'Foundations Audit',
+    repoUrl: 'https://github.com/paulbloch/personal-lab',
+    description:
+      'Document baseline UI patterns and highlight reusable foundations that should be standardized.',
+    initialPrompt:
+      'Audit the foundations of this repo. Summarize the strongest patterns and the top gaps.',
+    curlCommand: `curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "personal-lab-foundations", "repo": "paulbloch/personal-lab"}'`,
+    docTitle: 'README.md',
+    conversationCount: 1,
+  },
+  {
+    id: 'personal-lab-components',
+    repo: 'paulbloch/personal-lab',
+    title: 'Component Refresh',
+    repoUrl: 'https://github.com/paulbloch/personal-lab',
+    description:
+      'Refresh component specs, props, and accessibility notes for upcoming releases.',
+    initialPrompt:
+      'Review the current component set and recommend updates to props, a11y, and docs.',
+    curlCommand: `curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "personal-lab-components", "repo": "paulbloch/personal-lab"}'`,
+    docTitle: 'README.md',
+    conversationCount: 1,
+  },
+  {
+    id: 'personal-lab-tokens',
+    repo: 'paulbloch/personal-lab',
+    title: 'Token Cleanup',
+    repoUrl: 'https://github.com/paulbloch/personal-lab',
+    description:
+      'Tighten design tokens and flag any duplicated or hardcoded values.',
+    initialPrompt:
+      'Review the design tokens and list duplicates, conflicts, and opportunities to normalize.',
+    curlCommand: `curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "personal-lab-tokens", "repo": "paulbloch/personal-lab"}'`,
+    docTitle: 'README.md',
     conversationCount: 1,
   },
   {

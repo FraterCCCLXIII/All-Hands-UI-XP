@@ -6,16 +6,16 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
-  FileCode,
-  Folder,
-  FolderOpen,
   GitFork,
+  Package,
   Github,
   MessageSquare,
   MoreVertical,
   Star,
-  Store,
+  Wrench,
 } from 'lucide-react';
+import { InfoCard } from '../components/common/InfoCard';
+import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { SearchInput } from '../components/ui/search-input';
 import {
@@ -35,102 +35,77 @@ import {
 import {
   marketplaceCategories,
   marketplaceSkills,
+  skillRepositoryMetadata,
   skillRepositoryItems,
-  skillRepoTree,
-  type RepoTreeNode,
+  type SkillRepositoryLink,
   type SkillRepositoryItem,
 } from '../data/skillsPageData';
 import { cn } from '../lib/utils';
 
-function collectFolderPaths(nodes: RepoTreeNode[], prefix = ''): string[] {
-  return nodes.flatMap((n) => {
-    if (n.type === 'folder') {
-      const path = prefix ? `${prefix}/${n.name}` : n.name;
-      return [path, ...collectFolderPaths(n.children ?? [], path)];
-    }
-    return [];
-  });
+function groupSkillsByRepo(items: SkillRepositoryItem[]) {
+  const byRepo = new Map<string, SkillRepositoryItem[]>();
+  for (const item of items) {
+    const list = byRepo.get(item.repo) ?? [];
+    list.push(item);
+    byRepo.set(item.repo, list);
+  }
+  return Array.from(byRepo.entries()).map(([repo, skills]) => ({ repo, skills }));
 }
 
-/** Right panel: repo folder tree (default view). */
-function RepoFolderTree({
-  tree,
-  onFileClick,
-  depth = 0,
-  pathPrefix = '',
-  expanded,
-  onToggleFolder,
-}: {
-  tree: RepoTreeNode[];
-  onFileClick: (node: RepoTreeNode) => void;
-  depth?: number;
-  pathPrefix?: string;
-  expanded: Set<string>;
-  onToggleFolder: (path: string) => void;
-}) {
-  return (
-    <ul className={cn('list-none', depth > 0 && 'pl-4 border-l border-border ml-1')}>
-      {tree.map((node) =>
-        node.type === 'folder' ? (
-          <li key={node.name} className="py-0.5">
-            {(() => {
-              const folderPath = pathPrefix ? `${pathPrefix}/${node.name}` : node.name;
-              const isExpanded = expanded.has(folderPath);
-              const hasChildren = (node.children?.length ?? 0) > 0;
-              return (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => hasChildren && onToggleFolder(folderPath)}
-                    className="flex w-full items-center gap-1.5 text-left text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
-                      {hasChildren ? (
-                        isExpanded ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )
-                      ) : (
-                        <span className="w-4" aria-hidden />
-                      )}
-                    </span>
-                    {isExpanded ? (
-                      <FolderOpen className="h-4 w-4 flex-shrink-0" />
-                    ) : (
-                      <Folder className="h-4 w-4 flex-shrink-0" />
-                    )}
-                    <span className="font-medium">{node.name}</span>
-                  </button>
-                  {hasChildren && isExpanded && (
-                    <RepoFolderTree
-                      tree={node.children!}
-                      onFileClick={onFileClick}
-                      depth={depth + 1}
-                      pathPrefix={folderPath}
-                      expanded={expanded}
-                      onToggleFolder={onToggleFolder}
-                    />
-                  )}
-                </>
-              );
-            })()}
-          </li>
-        ) : (
-          <li key={node.name} className="py-0.5">
-            <button
-              type="button"
-              onClick={() => onFileClick(node)}
-              className="flex w-full items-center gap-1.5 text-left text-sm text-foreground hover:text-primary hover:underline"
-            >
-              <FileCode className="h-4 w-4 flex-shrink-0" />
-              <span>{node.name}</span>
-            </button>
-          </li>
-        )
-      )}
-    </ul>
-  );
+function getRepoLinkIcon(type: SkillRepositoryLink['type']) {
+  switch (type) {
+    case 'repo':
+      return Github;
+    case 'docs':
+      return BookOpen;
+    case 'issues':
+      return MessageSquare;
+    case 'homepage':
+      return ExternalLink;
+    default:
+      return ExternalLink;
+  }
+}
+
+function highlightJson(content: string) {
+  const tokenRegex = /("(?:\\.|[^"\\])*")|(\btrue\b|\bfalse\b|null)|(-?\d+(?:\.\d+)?)/g;
+  const lines = content.split('\n');
+
+  return lines.map((line, lineIndex) => {
+    const tokens: React.ReactNode[] = [];
+    let lastIndex = 0;
+    for (const match of line.matchAll(tokenRegex)) {
+      const index = match.index ?? 0;
+      if (index > lastIndex) {
+        tokens.push(line.slice(lastIndex, index));
+      }
+      const token = match[0];
+      let className = 'text-emerald-300';
+      if (match[1]) {
+        const rest = line.slice(index + token.length);
+        className = /^\s*:/.test(rest) ? 'text-sky-300' : 'text-emerald-300';
+      } else if (match[2]) {
+        className = 'text-purple-300';
+      } else if (match[3]) {
+        className = 'text-amber-300';
+      }
+      tokens.push(
+        <span key={`${lineIndex}-${index}`} className={className}>
+          {token}
+        </span>
+      );
+      lastIndex = index + token.length;
+    }
+    if (lastIndex < line.length) {
+      tokens.push(line.slice(lastIndex));
+    }
+    return (
+      <span key={`line-${lineIndex}`}>
+        {tokens}
+        {lineIndex < lines.length - 1 ? '\n' : null}
+      </span>
+    );
+  });
 }
 
 /** Right panel: file code/content view. */
@@ -145,8 +120,15 @@ function FileContentView({ content, fileName }: { content: string; fileName: str
       </div>
     );
   }
+  if (fileName === 'skill.md') {
+    return (
+      <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
+        {highlightJson(content)}
+      </pre>
+    );
+  }
   return (
-    <pre className="text-xs font-mono text-foreground overflow-x-auto whitespace-pre p-0">
+    <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
       {content || '(empty)'}
     </pre>
   );
@@ -191,40 +173,108 @@ function CopyableBlock({
   );
 }
 
-type DetailPanelView = 'folder' | 'file';
 type SkillsViewMode = 'marketplace' | 'repos';
 
 export function SkillsScreen() {
   const [viewMode, setViewMode] = useState<SkillsViewMode>('marketplace');
   const [searchQuery, setSearchQuery] = useState('');
   const [marketplaceSearchQuery, setMarketplaceSearchQuery] = useState('');
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SkillRepositoryItem | null>(null);
-  const [detailPanelView, setDetailPanelView] = useState<DetailPanelView>('folder');
-  const [selectedFile, setSelectedFile] = useState<{ name: string; content: string } | null>(null);
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() =>
-    new Set(collectFolderPaths(skillRepoTree))
-  );
   const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set());
   const [addToRepoModalOpen, setAddToRepoModalOpen] = useState(false);
+  const [addSkillModalOpen, setAddSkillModalOpen] = useState(false);
+  const [addSkillTargetRepo, setAddSkillTargetRepo] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const repoMetadataMap = useMemo(
+    () => new Map(skillRepositoryMetadata.map((meta) => [meta.repo, meta])),
+    []
+  );
+
+  const allRepoGroups = useMemo(() => groupSkillsByRepo(skillRepositoryItems), []);
 
   /** Repos with their skills; filtered by search. Number in column = skills count. */
   const repoGroups = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const items = q
-      ? skillRepositoryItems.filter(
-          (item) =>
-            item.repo.toLowerCase().includes(q) || item.title.toLowerCase().includes(q)
-        )
+      ? skillRepositoryItems.filter((item) => {
+          const label = (item.skillName ?? item.title).toLowerCase();
+          return item.repo.toLowerCase().includes(q) || label.includes(q);
+        })
       : skillRepositoryItems;
-    const byRepo = new Map<string, SkillRepositoryItem[]>();
-    for (const item of items) {
-      const list = byRepo.get(item.repo) ?? [];
-      list.push(item);
-      byRepo.set(item.repo, list);
-    }
-    return Array.from(byRepo.entries()).map(([repo, skills]) => ({ repo, skills }));
+    return groupSkillsByRepo(items);
   }, [searchQuery]);
+
+  const selectedRepoGroup = useMemo(() => {
+    if (!selectedRepo) return null;
+    return allRepoGroups.find((group) => group.repo === selectedRepo) ?? null;
+  }, [allRepoGroups, selectedRepo]);
+
+  const selectedRepoMeta = useMemo(() => {
+    if (!selectedRepoGroup) return null;
+    const { repo, skills } = selectedRepoGroup;
+    const metadata = repoMetadataMap.get(repo);
+    const repoUrl = metadata?.repoUrl ?? skills[0]?.repoUrl ?? '';
+    const docsFallback =
+      repoUrl && skills[0]?.docTitle ? `${repoUrl}/blob/main/${skills[0].docTitle}` : '';
+    const links =
+      metadata?.links?.length
+        ? metadata.links
+        : [
+            ...(repoUrl ? [{ label: 'Repository', url: repoUrl, type: 'repo' as const }] : []),
+            ...(docsFallback ? [{ label: 'Docs', url: docsFallback, type: 'docs' as const }] : []),
+            ...(repoUrl
+              ? [{ label: 'Issues', url: `${repoUrl}/issues`, type: 'issues' as const }]
+              : []),
+          ];
+    return {
+      repo,
+      repoUrl,
+      description: metadata?.description ?? skills[0]?.description ?? '',
+      primaryLanguage: metadata?.primaryLanguage,
+      defaultBranch: metadata?.defaultBranch,
+      visibility: metadata?.visibility,
+      lastUpdated: metadata?.lastUpdated,
+      links,
+    };
+  }, [repoMetadataMap, selectedRepoGroup]);
+
+  const personalRepoSlug = 'paulbloch/personal-lab';
+  const orderedRepoGroups = useMemo(() => {
+    const personal = allRepoGroups.find((group) => group.repo === personalRepoSlug) ?? null;
+    const rest = allRepoGroups.filter((group) => group.repo !== personalRepoSlug);
+    return personal ? [personal, ...rest] : rest;
+  }, [allRepoGroups, personalRepoSlug]);
+  const personalRepoGroup = useMemo(
+    () => repoGroups.find((group) => group.repo === personalRepoSlug) ?? null,
+    [repoGroups]
+  );
+  const nonPersonalRepoGroups = useMemo(
+    () => repoGroups.filter((group) => group.repo !== personalRepoSlug),
+    [repoGroups]
+  );
+  const displayItem = selectedItem;
+  const selectedRepoConversations = useMemo(() => {
+    if (!selectedRepoGroup) return 0;
+    return selectedRepoGroup.skills.reduce(
+      (total, skill) => total + (skill.conversationCount ?? 0),
+      0
+    );
+  }, [selectedRepoGroup]);
+  const displayItemConversations = displayItem?.conversationCount ?? 0;
+  const skillFileContent = useMemo(() => {
+    if (!displayItem) return '';
+    const payload = {
+      title: displayItem.skillName ?? displayItem.title,
+      repo: displayItem.repo,
+      repoUrl: displayItem.repoUrl,
+      description: displayItem.description,
+      initialPrompt: displayItem.initialPrompt,
+      curlCommand: displayItem.curlCommand,
+    };
+    return JSON.stringify(payload, null, 2);
+  }, [displayItem]);
 
   const handleToggleRepo = useCallback((repo: string) => {
     setExpandedRepos((prev) => {
@@ -235,34 +285,37 @@ export function SkillsScreen() {
     });
   }, []);
 
+  const handleSelectRepo = useCallback((repo: string) => {
+    setViewMode('repos');
+    setSelectedRepo(repo);
+    setSelectedItem(null);
+  }, []);
+
+  const handleSelectSkill = useCallback((skill: SkillRepositoryItem) => {
+    setViewMode('repos');
+    setSelectedRepo(skill.repo);
+    setSelectedItem(skill);
+  }, []);
+
   const handleCopy = useCallback((text: string) => {
     void navigator.clipboard.writeText(text);
   }, []);
 
-  const handleFileClick = useCallback((node: RepoTreeNode) => {
-    if (node.type === 'file') {
-      setSelectedFile({ name: node.name, content: node.content ?? '' });
-      setDetailPanelView('file');
-    }
-  }, []);
-
-  const handleDetailBack = useCallback(() => {
-    setDetailPanelView('folder');
-    setSelectedFile(null);
-  }, []);
-
-  const handleToggleFolder = useCallback((path: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  }, []);
-
-  const handleAddToRepo = useCallback((_repo: string) => {
+  const handleAddToRepo = useCallback((repo: string) => {
+    void repo;
     setAddToRepoModalOpen(false);
+    setAddSkillModalOpen(false);
   }, []);
+
+  const handleAddSkillModalChange = useCallback(
+    (open: boolean) => {
+      setAddSkillModalOpen(open);
+      if (open && !addSkillTargetRepo) {
+        setAddSkillTargetRepo(orderedRepoGroups[0]?.repo ?? null);
+      }
+    },
+    [addSkillTargetRepo, orderedRepoGroups]
+  );
 
   const filteredMarketplaceSkills = useMemo(() => {
     let items = marketplaceSkills;
@@ -279,9 +332,10 @@ export function SkillsScreen() {
     );
   }, [marketplaceSearchQuery, selectedCategory]);
 
-  const displayItem = selectedItem;
   const isMarketplaceSkill =
     displayItem?.id != null && String(displayItem.id).startsWith('marketplace-');
+  const showMarketplace = viewMode === 'marketplace' && !displayItem;
+  const showRepoPage = viewMode === 'repos' && !!selectedRepo && !displayItem;
 
   return (
     <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
@@ -312,6 +366,7 @@ export function SkillsScreen() {
               type="button"
               onClick={() => {
                 setViewMode('marketplace');
+                setSelectedRepo(null);
                 setSelectedItem(null);
               }}
               className={cn(
@@ -322,116 +377,130 @@ export function SkillsScreen() {
                   : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               )}
             >
-              <Store className="h-4 w-4 flex-shrink-0" />
-              <span>Marketplace</span>
+              <Package className="h-4 w-4 flex-shrink-0" />
+              <span>All Skills</span>
             </button>
           </nav>
         </div>
-        <div className="flex-1 overflow-y-auto px-3 py-4">
+        <div className="flex-1 overflow-y-auto px-3 py-4 repo-dropdown-scroll">
           <div className="mb-4 px-1">
             <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Personal Repository
             </div>
             <ul className="mt-2 list-none space-y-1">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => handleToggleRepo('personal-lab-section')}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                >
-                  <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
-                    {expandedRepos.has('personal-lab-section') ? (
-                      <ChevronDown className="h-4 w-4" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4" />
+              {personalRepoGroup ? (
+                <li>
+                  <div
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
+                      selectedRepo === personalRepoGroup.repo
+                        ? 'bg-muted/80 text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                     )}
-                  </span>
-                  <Github className="h-4 w-4 flex-shrink-0" />
-                  <span className="min-w-0 flex-1 truncate">paulbloch/personal-lab</span>
-                  <span className="tabular-nums text-xs text-muted-foreground">3</span>
-                </button>
-                {expandedRepos.has('personal-lab-section') && (
-                  <ul className="list-none space-y-1">
-                    {[
-                      {
-                        id: 'personal-lab-foundations',
-                        title: 'Foundations Audit',
-                      },
-                      {
-                        id: 'personal-lab-components',
-                        title: 'Component Refresh',
-                      },
-                      {
-                        id: 'personal-lab-tokens',
-                        title: 'Token Cleanup',
-                      },
-                    ].map((skill) => (
-                      <li key={skill.id}>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setSelectedItem({
-                              id: skill.id,
-                              repo: 'paulbloch/personal-lab',
-                              title: skill.title,
-                              repoUrl: 'https://github.com/paulbloch/personal-lab',
-                              description:
-                                'Personal repo skill. Use this to document updates and request changes.',
-                              initialPrompt:
-                                'Summarize recent work and suggest next steps for this repo.',
-                              curlCommand: `curl -X POST https://api.example.com/skills/run \\\n  -H "Content-Type: application/json" \\\n  -H "Authorization: Bearer <token>" \\\n  -d '{"skillId": "${skill.id}", "repo": "paulbloch/personal-lab"}'`,
-                              docTitle: 'README.md',
-                            })
-                          }
-                          className={cn(
-                            'flex w-full items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-left text-sm transition-colors',
-                            selectedItem?.id === skill.id
-                              ? 'bg-muted/80 text-foreground'
-                              : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                          )}
-                        >
-                          <span className="min-w-0 flex-1 truncate">{skill.title}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleToggleRepo(personalRepoGroup.repo)}
+                      className="flex h-4 w-4 items-center justify-center"
+                      aria-label={`Toggle ${personalRepoGroup.repo} skills`}
+                    >
+                      {expandedRepos.has(personalRepoGroup.repo) ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectRepo(personalRepoGroup.repo)}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      aria-current={selectedRepo === personalRepoGroup.repo}
+                    >
+                      <Github className="h-4 w-4 flex-shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{personalRepoGroup.repo}</span>
+                    </button>
+                    <span className="tabular-nums text-xs text-muted-foreground">
+                      {personalRepoGroup.skills.length}
+                    </span>
+                  </div>
+                  {expandedRepos.has(personalRepoGroup.repo) && (
+                    <ul className="list-none space-y-1">
+                      {personalRepoGroup.skills.map((skill) => (
+                        <li key={skill.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectSkill(skill)}
+                            className={cn(
+                              'flex w-full items-center gap-2 rounded-md py-1.5 pl-6 pr-2 text-left text-sm transition-colors',
+                              selectedItem?.id === skill.id
+                                ? 'bg-muted/80 text-foreground'
+                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                            )}
+                          >
+                            <span className="min-w-0 flex-1 truncate">
+                              {skill.skillName ?? skill.title}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ) : (
+                <li className="px-2 py-1.5 text-xs text-muted-foreground">
+                  No personal repository yet.
+                </li>
+              )}
             </ul>
           </div>
           <h3 className="mb-3 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
             All Repositories
           </h3>
           <ul className="list-none space-y-1">
-            {repoGroups.slice(0, 10).map(({ repo, skills }) => {
+            {nonPersonalRepoGroups.slice(0, 10).map(({ repo, skills }) => {
               const isRepoExpanded = expandedRepos.has(repo);
               return (
                 <li key={repo}>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleRepo(repo)}
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  <div
+                    className={cn(
+                      'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
+                      selectedRepo === repo
+                        ? 'bg-muted/80 text-foreground'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                    )}
                   >
-                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleRepo(repo)}
+                      className="flex h-4 w-4 items-center justify-center"
+                      aria-label={`Toggle ${repo} skills`}
+                    >
                       {isRepoExpanded ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (
                         <ChevronRight className="h-4 w-4" />
                       )}
-                    </span>
-                    <Github className="h-4 w-4 flex-shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">{repo}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectRepo(repo)}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      aria-current={selectedRepo === repo}
+                    >
+                      <Github className="h-4 w-4 flex-shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{repo}</span>
+                    </button>
                     <span className="tabular-nums text-xs text-muted-foreground">
                       {skills.length}
                     </span>
-                  </button>
+                  </div>
                   {isRepoExpanded && (
                     <ul className="list-none space-y-1">
                       {skills.map((skill) => (
                         <li key={skill.id}>
                           <button
                             type="button"
-                            onClick={() => setSelectedItem(skill)}
+                            onClick={() => handleSelectSkill(skill)}
                             className={cn(
                               'flex w-full items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-left text-sm transition-colors',
                               selectedItem?.id === skill.id
@@ -492,14 +561,14 @@ export function SkillsScreen() {
       {/* Main content: spans available width (right panel only when skill selected) */}
       <main className="flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="p-6">
-          {viewMode === 'marketplace' && !displayItem ? (
+          {showMarketplace ? (
             <>
                   <div className="rounded-xl border border-border bg-gradient-to-br from-muted/50 via-muted/30 to-muted/10 p-10 sm:p-12 flex flex-col items-start">
                     <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-[4px] bg-foreground/10 text-foreground">
-                      <Store className="h-5 w-5" />
+                      <Package className="h-5 w-5" />
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight text-left">
-                      Skills Market
+                      Skills
                     </h2>
                     <div className="mt-8 w-full max-w-lg">
                       <SearchInput
@@ -601,7 +670,17 @@ export function SkillsScreen() {
                   className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Back to Skills Market</span>
+                  <span>Back to Skills</span>
+                </button>
+              )}
+              {!isMarketplaceSkill && selectedRepo && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedItem(null)}
+                  className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>Back to {selectedRepo}</span>
                 </button>
               )}
               <h2 className="text-[28px] font-semibold text-foreground leading-tight">
@@ -646,9 +725,20 @@ export function SkillsScreen() {
                     Add to repos
                   </Button>
                 ) : (
-                  <Button variant="default" size="sm">
-                    Create New Conversation
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="default" size="sm">
+                      Create New Conversation
+                    </Button>
+                    {displayItemConversations > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAddSkillModalOpen(true)}
+                      >
+                        Add Skill
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
               {displayItem && isMarketplaceSkill && (
@@ -691,6 +781,168 @@ export function SkillsScreen() {
                   </DialogContent>
                 </Dialog>
               )}
+              {displayItem && !isMarketplaceSkill && (
+                <Dialog open={addSkillModalOpen} onOpenChange={handleAddSkillModalChange}>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add skill to repository</DialogTitle>
+                      <DialogDescription>
+                        Choose a repository to add "{displayItem.skillName ?? displayItem.title}"
+                        to.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3 py-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/60"
+                          >
+                            <span className="flex min-w-0 items-center gap-2">
+                              <Github className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                              <span className="truncate">
+                                {addSkillTargetRepo ?? 'Select a repository'}
+                              </span>
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-[var(--radix-dropdown-menu-trigger-width)]"
+                        >
+                          {orderedRepoGroups.map(({ repo }) => (
+                            <DropdownMenuItem
+                              key={repo}
+                              onClick={() => setAddSkillTargetRepo(repo)}
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                <Github className="h-4 w-4 text-muted-foreground" />
+                                <span className="truncate">{repo}</span>
+                              </span>
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    {orderedRepoGroups.length === 0 && (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        No repositories yet. Add a repo in My repositories first.
+                      </p>
+                    )}
+                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-start sm:space-x-2">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
+                        disabled={!addSkillTargetRepo}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAddSkillModalOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
+            </>
+          ) : showRepoPage && selectedRepoGroup && selectedRepoMeta ? (
+            <>
+              <div className="space-y-6">
+                <section className="rounded-xl border border-border bg-card p-6">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <h2 className="text-[28px] font-semibold text-foreground leading-tight">
+                        {selectedRepoMeta.repo}
+                      </h2>
+                      {selectedRepoMeta.description && (
+                        <p className="mt-3 text-sm text-muted-foreground">
+                          {selectedRepoMeta.description}
+                        </p>
+                      )}
+                      {selectedRepoMeta.links.length > 0 && (
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          {selectedRepoMeta.links.map((link) => {
+                            const LinkIcon = getRepoLinkIcon(link.type);
+                            return (
+                              <a
+                                key={link.label}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                              >
+                                <LinkIcon className="h-4 w-4" />
+                                <span>{link.label}</span>
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedRepoMeta.visibility && (
+                        <Badge variant="outline">
+                          {selectedRepoMeta.visibility === 'public' ? 'Public' : 'Private'}
+                        </Badge>
+                      )}
+                      {selectedRepoMeta.primaryLanguage && (
+                        <Badge variant="outline">{selectedRepoMeta.primaryLanguage}</Badge>
+                      )}
+                      {selectedRepoMeta.defaultBranch && (
+                        <Badge variant="outline">
+                          Branch {selectedRepoMeta.defaultBranch}
+                        </Badge>
+                      )}
+                      {selectedRepoMeta.lastUpdated && (
+                        <Badge variant="outline">
+                          Updated{' '}
+                          {new Date(selectedRepoMeta.lastUpdated).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </Badge>
+                      )}
+                      <Badge variant="secondary">
+                        {selectedRepoGroup.skills.length} Skills
+                      </Badge>
+                      {selectedRepoConversations > 0 && (
+                        <Badge variant="secondary">
+                          {selectedRepoConversations} Conversations
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </section>
+                <section>
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">Skills in this repo</h3>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {selectedRepoGroup.skills.map((skill) => (
+                      <InfoCard
+                        key={skill.id}
+                        as="button"
+                        type="button"
+                        onClick={() => handleSelectSkill(skill)}
+                        title={skill.skillName ?? skill.title}
+                        description={skill.description}
+                        icon={<Wrench className="h-4 w-4" />}
+                        iconPosition="left"
+                        interactive
+                        className="w-full"
+                      />
+                    ))}
+                  </div>
+                </section>
+              </div>
             </>
           ) : null}
         </div>
@@ -704,30 +956,7 @@ export function SkillsScreen() {
           >
             <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
               <div className="flex min-w-0 flex-1 items-center gap-2">
-                {detailPanelView === 'file' && (
-                  <button
-                    type="button"
-                    onClick={handleDetailBack}
-                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                    aria-label="Back to folder structure"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                )}
-                <span className="truncate text-sm font-medium text-foreground">
-                  {detailPanelView === 'folder'
-                    ? displayItem.repo
-                    : selectedFile?.name ?? ''}
-                </span>
-                {detailPanelView === 'file' && (
-                  <a
-                    href="#"
-                    className="flex-shrink-0 text-muted-foreground hover:text-foreground"
-                    aria-label="Open in new tab"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
+                <span className="truncate text-sm font-medium text-foreground">skill.md</span>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -746,16 +975,7 @@ export function SkillsScreen() {
               </DropdownMenu>
             </div>
             <div className="flex-1 overflow-y-auto p-4 repo-dropdown-scroll">
-              {detailPanelView === 'folder' ? (
-                <RepoFolderTree
-                  tree={skillRepoTree}
-                  onFileClick={handleFileClick}
-                  expanded={expandedFolders}
-                  onToggleFolder={handleToggleFolder}
-                />
-              ) : selectedFile ? (
-                <FileContentView content={selectedFile.content} fileName={selectedFile.name} />
-              ) : null}
+              <FileContentView content={skillFileContent} fileName="skill.md" />
             </div>
           </section>
         </div>
