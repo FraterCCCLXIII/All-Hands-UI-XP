@@ -129,7 +129,6 @@ export function NewLlmSwitcherScreen2() {
 
   const handleEditProfile = (profile: (typeof defaultProfiles)[number]) => {
     const normalizedModel = profile.model.trim().toLowerCase().replace(/\s+/g, '-');
-    setEditTarget(profile);
     setDisplayName(profile.name);
     setProviderName(profile.provider.trim().toLowerCase());
     setModelName(normalizedModel);
