@@ -19,6 +19,10 @@ import {
   ExternalLink,
   Wrench,
   ArrowUp as ArrowUpIcon,
+  FileText,
+  Sparkles,
+  TestTube,
+  Microchip,
   Merge,
   Package,
   ChevronDown,
@@ -151,6 +155,8 @@ export function ActiveChatScreen({
   const [commandQuery, setCommandQuery] = useState('');
   const [commandActiveIndex, setCommandActiveIndex] = useState(0);
   const blurTimeoutRef = useRef<number | null>(null);
+  const commandListRef = useRef<HTMLDivElement | null>(null);
+  const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -192,11 +198,44 @@ export function ActiveChatScreen({
   const filteredCommands = useMemo(() => {
     const query = commandQuery.trim().toLowerCase();
     if (!query) return CHAT_COMMANDS;
-    return CHAT_COMMANDS.filter((command) => {
-      const haystack = `${command.label} ${command.command} ${command.description}`.toLowerCase();
-      return haystack.includes(query);
-    });
+
+    const scored = CHAT_COMMANDS.map((command, index) => {
+      const label = command.label.toLowerCase();
+      const commandText = command.command.toLowerCase();
+      const description = command.description.toLowerCase();
+      const queryWithSlash = `/${query}`;
+
+      let score = 6;
+      if (commandText === queryWithSlash) score = 0;
+      else if (commandText.startsWith(queryWithSlash)) score = 1;
+      else if (label.startsWith(query)) score = 2;
+      else if (label.includes(query)) score = 3;
+      else if (commandText.includes(query)) score = 4;
+      else if (description.includes(query)) score = 5;
+
+      return { command, score, index };
+    })
+      .filter(({ score }) => score < 6)
+      .sort((a, b) => (a.score !== b.score ? a.score - b.score : a.index - b.index));
+
+    return scored.map(({ command }) => command);
   }, [commandQuery]);
+
+  useEffect(() => {
+    if (!isCommandMenuOpen) return;
+    const activeItem = commandItemRefs.current[commandActiveIndex];
+    if (activeItem) {
+      activeItem.scrollIntoView({ block: 'nearest' });
+    } else if (commandListRef.current) {
+      commandListRef.current.scrollTop = 0;
+    }
+  }, [commandActiveIndex, isCommandMenuOpen, filteredCommands.length]);
+
+  useEffect(() => {
+    if (commandActiveIndex >= filteredCommands.length) {
+      setCommandActiveIndex(0);
+    }
+  }, [commandActiveIndex, filteredCommands.length]);
 
   const handleSendMessage = useCallback(() => {
     const text = chatInputRef.current?.innerText?.trim() ?? chatInput.trim();
@@ -1005,7 +1044,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       role="listbox"
                                       id={COMMAND_LIST_ID}
                                       aria-label="Slash commands"
-                                      className="max-h-56 overflow-auto"
+                                      className="max-h-56 overflow-auto p-1"
+                                      ref={commandListRef}
                                     >
                                       {filteredCommands.length > 0 ? (
                                         filteredCommands.map((command, index) => {
@@ -1017,11 +1057,14 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                               role="option"
                                               aria-selected={isActive}
                                               className={cn(
-                                                'w-full text-left px-3 py-2 flex items-start text-sm transition-colors',
+                                                'w-full text-left px-3 py-2 rounded-md flex items-start text-sm transition-colors',
                                                 isActive
                                                   ? 'bg-muted text-foreground'
                                                   : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
                                               )}
+                                              ref={(node) => {
+                                                commandItemRefs.current[index] = node;
+                                              }}
                                               onMouseDown={(event) => {
                                                 event.preventDefault();
                                                 applyCommandChip(command);
