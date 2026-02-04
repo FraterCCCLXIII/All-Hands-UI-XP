@@ -17,6 +17,7 @@ import {
   NewComponentsScreen,
   NewLlmSwitcherScreen,
   NewLlmSwitcherScreen2,
+  SaasCreditCardFlow,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -171,6 +172,7 @@ function App() {
   const [settingsTab, setSettingsTab] = useState<string | null>(null);
   const [isActiveChatView, setIsActiveChatView] = useState(false);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
+  const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
@@ -301,7 +303,32 @@ function App() {
     setActiveFlowPrototype(flowId);
     if (flowId === 'new-user-experience') {
       window.location.hash = '#/new-user-experience';
+      return;
     }
+    if (flowId === 'saas-credit-card') {
+      window.location.hash = '#/saas-credit-card';
+    }
+  }, []);
+
+  const handleExitFlowPrototype = useCallback(() => {
+    setActiveFlowPrototype(null);
+    window.location.hash = actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+  }, [lastNonDrawerNavItem]);
+
+  const handleClaimCreditsSkip = useCallback(() => {
+    setShowClaimCreditsPrompt(true);
+    handleExitFlowPrototype();
+  }, [handleExitFlowPrototype]);
+
+  const handleClaimCreditsComplete = useCallback(() => {
+    setShowClaimCreditsPrompt(false);
+    handleExitFlowPrototype();
+  }, [handleExitFlowPrototype]);
+
+  const handleClaimCreditsOpen = useCallback(() => {
+    setShowClaimCreditsPrompt(false);
+    setActiveFlowPrototype('saas-credit-card');
+    window.location.hash = '#/saas-credit-card';
   }, []);
 
 
@@ -314,6 +341,11 @@ function App() {
       const hash = window.location.hash.replace(/^#\/?/, '');
       if (hash === 'new-user-experience') {
         setActiveFlowPrototype('new-user-experience');
+        setIsActiveChatView(false);
+        return;
+      }
+      if (hash === 'saas-credit-card') {
+        setActiveFlowPrototype('saas-credit-card');
         setIsActiveChatView(false);
         return;
       }
@@ -363,7 +395,7 @@ function App() {
             exit={{ opacity: 0 }}
             className="flex-1 flex relative overflow-hidden"
           >
-            {activeFlowPrototype !== 'new-user-experience' && (
+            {!activeFlowPrototype && (
               <LeftNav
                 theme={theme}
                 getThemeClasses={getThemeClasses}
@@ -378,7 +410,7 @@ function App() {
               />
             )}
             <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype === 'new-user-experience' ? '' : 'ml-16'}`}
+              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
               <InspectorOverlay
@@ -386,12 +418,9 @@ function App() {
                 onRequestDisable={() => setIsInspectorEnabled(false)}
               />
               {activeFlowPrototype === 'new-user-experience' ? (
-                <LoginScreen
-                onBack={() => {
-                  setActiveFlowPrototype(null);
-                  window.location.hash = actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
-                }}
-              />
+                <LoginScreen onBack={handleExitFlowPrototype} />
+              ) : activeFlowPrototype === 'saas-credit-card' ? (
+                <SaasCreditCardFlow onSkip={handleClaimCreditsSkip} onComplete={handleClaimCreditsComplete} />
               ) : (
                 <>
               {showChatView && !isWelcomeScreenActive && !isActiveChatView && (
@@ -430,6 +459,28 @@ function App() {
                       showStatusBadge={showStatusBadge}
                       onToggleStatusBadge={() => setShowStatusBadge((prev) => !prev)}
                     />
+                  </div>
+                )}
+                {!activeFlowPrototype && showClaimCreditsPrompt && (
+                  <div className="fixed bottom-6 right-6 z-50">
+                    <div className="relative flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-lg">
+                      <button
+                        type="button"
+                        onClick={() => setShowClaimCreditsPrompt(false)}
+                        className="absolute right-0 top-0 inline-flex h-7 w-7 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors"
+                        aria-label="Dismiss claim free credits"
+                      >
+                        ×
+                      </button>
+                      <span className="text-sm font-medium text-foreground">Claim Free Credits</span>
+                      <button
+                        type="button"
+                        onClick={handleClaimCreditsOpen}
+                        className="h-8 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        Claim now
+                      </button>
+                    </div>
                   </div>
                 )}
                 {isDashboardView && <DashboardScreen />}

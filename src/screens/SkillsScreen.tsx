@@ -173,6 +173,91 @@ function CopyableBlock({
   );
 }
 
+type AddSkillDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  repoGroups: { repo: string }[];
+  selectedRepo: string | null;
+  onSelectRepo: (repo: string) => void;
+  onAdd: () => void;
+};
+
+function AddSkillDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  repoGroups,
+  selectedRepo,
+  onSelectRepo,
+  onAdd,
+}: AddSkillDialogProps) {
+  const canAdd = Boolean(selectedRepo);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
+                disabled={repoGroups.length === 0}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <Github className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <span className="truncate">{selectedRepo ?? 'Select a repository'}</span>
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className="w-[var(--radix-dropdown-menu-trigger-width)]"
+            >
+              {repoGroups.map(({ repo }) => (
+                <DropdownMenuItem key={repo} onClick={() => onSelectRepo(repo)}>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Github className="h-4 w-4 text-muted-foreground" />
+                    <span className="truncate">{repo}</span>
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        {repoGroups.length === 0 && (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            No repositories yet. Add a repo in My repositories first.
+          </p>
+        )}
+        <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-start sm:space-x-2">
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              if (canAdd) onAdd();
+            }}
+            disabled={!canAdd}
+          >
+            Add
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type SkillsViewMode = 'marketplace' | 'repos';
 
 export function SkillsScreen() {
@@ -310,6 +395,16 @@ export function SkillsScreen() {
   const handleAddSkillModalChange = useCallback(
     (open: boolean) => {
       setAddSkillModalOpen(open);
+      if (open && !addSkillTargetRepo) {
+        setAddSkillTargetRepo(orderedRepoGroups[0]?.repo ?? null);
+      }
+    },
+    [addSkillTargetRepo, orderedRepoGroups]
+  );
+
+  const handleAddToRepoModalChange = useCallback(
+    (open: boolean) => {
+      setAddToRepoModalOpen(open);
       if (open && !addSkillTargetRepo) {
         setAddSkillTargetRepo(orderedRepoGroups[0]?.repo ?? null);
       }
@@ -720,9 +815,9 @@ export function SkillsScreen() {
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={() => setAddToRepoModalOpen(true)}
+                    onClick={() => handleAddToRepoModalChange(true)}
                   >
-                    Add to repos
+                    Add Skill
                   </Button>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -733,7 +828,7 @@ export function SkillsScreen() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setAddSkillModalOpen(true)}
+                        onClick={() => handleAddSkillModalChange(true)}
                       >
                         Add Skill
                       </Button>
@@ -742,113 +837,28 @@ export function SkillsScreen() {
                 )}
               </div>
               {displayItem && isMarketplaceSkill && (
-                <Dialog open={addToRepoModalOpen} onOpenChange={setAddToRepoModalOpen}>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Add skill to repository</DialogTitle>
-                      <DialogDescription>
-                        Choose a repository to add "{displayItem.skillName ?? displayItem.title}" to.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <ul className="max-h-[280px] space-y-1 overflow-y-auto py-2">
-                      {repoGroups.map(({ repo }) => (
-                        <li key={repo}>
-                          <button
-                            type="button"
-                            onClick={() => handleAddToRepo(repo)}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/60"
-                          >
-                            <Github className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                            <span className="truncate">{repo}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    {repoGroups.length === 0 && (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        No repositories yet. Add a repo in My repositories first.
-                      </p>
-                    )}
-                    <DialogFooter>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setAddToRepoModalOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <AddSkillDialog
+                  open={addToRepoModalOpen}
+                  onOpenChange={handleAddToRepoModalChange}
+                  title="Add skill to repository"
+                  description={`Choose a repository to add "${displayItem.skillName ?? displayItem.title}" to.`}
+                  repoGroups={orderedRepoGroups}
+                  selectedRepo={addSkillTargetRepo}
+                  onSelectRepo={setAddSkillTargetRepo}
+                  onAdd={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
+                />
               )}
               {displayItem && !isMarketplaceSkill && (
-                <Dialog open={addSkillModalOpen} onOpenChange={handleAddSkillModalChange}>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Add skill to repository</DialogTitle>
-                      <DialogDescription>
-                        Choose a repository to add "{displayItem.skillName ?? displayItem.title}"
-                        to.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-3 py-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/60"
-                          >
-                            <span className="flex min-w-0 items-center gap-2">
-                              <Github className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                              <span className="truncate">
-                                {addSkillTargetRepo ?? 'Select a repository'}
-                              </span>
-                            </span>
-                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="start"
-                          className="w-[var(--radix-dropdown-menu-trigger-width)]"
-                        >
-                          {orderedRepoGroups.map(({ repo }) => (
-                            <DropdownMenuItem
-                              key={repo}
-                              onClick={() => setAddSkillTargetRepo(repo)}
-                            >
-                              <span className="flex min-w-0 items-center gap-2">
-                                <Github className="h-4 w-4 text-muted-foreground" />
-                                <span className="truncate">{repo}</span>
-                              </span>
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    {orderedRepoGroups.length === 0 && (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        No repositories yet. Add a repo in My repositories first.
-                      </p>
-                    )}
-                    <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-start sm:space-x-2">
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
-                        disabled={!addSkillTargetRepo}
-                      >
-                        Add
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setAddSkillModalOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                <AddSkillDialog
+                  open={addSkillModalOpen}
+                  onOpenChange={handleAddSkillModalChange}
+                  title="Add skill to repository"
+                  description={`Choose a repository to add "${displayItem.skillName ?? displayItem.title}" to.`}
+                  repoGroups={orderedRepoGroups}
+                  selectedRepo={addSkillTargetRepo}
+                  onSelectRepo={setAddSkillTargetRepo}
+                  onAdd={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
+                />
               )}
             </>
           ) : showRepoPage && selectedRepoGroup && selectedRepoMeta ? (

@@ -30,7 +30,6 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
 
   return (
     <motion.div
-      layoutId={card.id}
       onClick={onClick}
       className={cn(
         'group relative bg-card border border-border rounded-md p-3 cursor-pointer',

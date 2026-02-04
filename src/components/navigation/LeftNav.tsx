@@ -92,6 +92,7 @@ export interface LeftNavProps {
 
 const flowPrototypes = [
   { id: 'new-user-experience', label: 'New User Experience', flowId: 'new-user-experience' },
+  { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', flowId: 'saas-credit-card' },
   { id: 'component-library', label: 'Component Library', navAction: 'components' },
   { id: 'new-components', label: 'New Components', navAction: 'new-components' },
   { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
