@@ -5,7 +5,13 @@ import { KanbanColumn } from './KanbanColumn';
 import { AgentPanel } from './AgentPanel';
 import { availablePullRequests, initialColumns } from '../../data/mockData';
 import { Button } from '../ui/button';
-import { Menu, Plus } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
+import { ChevronDown, Menu, Plus } from 'lucide-react';
 
 interface KanbanBoardProps {
   activeRepo: string;
@@ -18,6 +24,13 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
   const [selectedCard, setSelectedCard] = useState<PRCard | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isAddPrOpen, setIsAddPrOpen] = useState(false);
+  const [prFilter, setPrFilter] = useState<'all' | 'created' | 'assigned'>('all');
+  const prFilterLabel =
+    prFilter === 'all'
+      ? 'All PRs'
+      : prFilter === 'created'
+        ? 'PRs created by me'
+        : 'PRs assigned to me';
   const isFiltered = activeRepo !== 'all';
   const visibleColumns = useMemo(() => {
     if (!isFiltered) return columns;
@@ -298,6 +311,25 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
             <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">
               {activeRepo === 'all' ? 'All' : activeRepo}
             </h2>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label="Filter pull requests">
+                  {prFilterLabel}
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => setPrFilter('all')}>
+                  All PRs
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPrFilter('created')}>
+                  PRs created by me
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPrFilter('assigned')}>
+                  PRs assigned to me
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -375,6 +407,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         onClose={handleClosePanel}
         onCreateConversation={handleCreateConversation}
         onSendMessage={handleSendMessage}
+        showConversationFooter={false}
       />
     </div>
   );

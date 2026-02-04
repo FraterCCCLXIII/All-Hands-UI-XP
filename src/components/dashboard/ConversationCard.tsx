@@ -36,27 +36,33 @@ interface ConversationCardProps {
   conversation: Conversation;
   isCompact?: boolean;
   showBranchActions?: boolean;
+  showFooter?: boolean;
 }
 
-export function ConversationCard({ conversation, isCompact = false, showBranchActions = true }: ConversationCardProps) {
+export function ConversationCard({
+  conversation,
+  isCompact = false,
+  showBranchActions = true,
+  showFooter = true,
+}: ConversationCardProps) {
   return (
     <div className="bg-card border border-border rounded-lg p-4 hover:border-white/30 transition-colors">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
           <div
             className={cn(
-              'w-2.5 h-2.5 rounded-full mt-1.5 shrink-0',
+              'w-2 h-2 rounded-full mt-0.5 self-start shrink-0',
               conversation.isActive ? 'bg-primary' : 'bg-muted-foreground'
             )}
           />
           <div>
-            <h4 className="font-medium text-foreground">{conversation.name}</h4>
             {!isCompact ? (
-              <>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-foreground">{conversation.name}</h4>
+                <p className="text-xs text-muted-foreground flex items-center gap-2">
                   <span className="gradient-flow">{conversation.description}</span>
                 </p>
-                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>{conversation.timestamp}</span>
                   <span>•</span>
                   <div className="flex items-center gap-1">
@@ -67,10 +73,13 @@ export function ConversationCard({ conversation, isCompact = false, showBranchAc
                     {conversation.agentStatus === 'error' && <StatusBadge variant="error">Error</StatusBadge>}
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                <span>{conversation.timestamp}</span>
+              <div className="space-y-2">
+                <h4 className="text-xs font-medium text-foreground">{conversation.name}</h4>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>{conversation.timestamp}</span>
+                </div>
               </div>
             )}
           </div>
@@ -128,7 +137,7 @@ export function ConversationCard({ conversation, isCompact = false, showBranchAc
         </div>
       </div>
 
-      {!isCompact && (
+      {!isCompact && showFooter && (
         <div className="border-t border-border pt-2 mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
           <button
             type="button"
@@ -171,6 +180,7 @@ interface ConversationListProps {
   title?: string;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  showFooter?: boolean;
 }
 
 export function ConversationList({
@@ -178,6 +188,7 @@ export function ConversationList({
   title,
   collapsible = false,
   defaultCollapsed = false,
+  showFooter = true,
 }: ConversationListProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
@@ -208,7 +219,7 @@ export function ConversationList({
       {!isCollapsed && (
         <div className="space-y-2">
           {conversations.map((conv) => (
-            <ConversationCard key={conv.id} conversation={conv} />
+            <ConversationCard key={conv.id} conversation={conv} showFooter={showFooter} />
           ))}
         </div>
       )}

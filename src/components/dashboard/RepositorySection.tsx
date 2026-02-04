@@ -138,7 +138,12 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
                   {activeConversations.length > 0 && (
                     <div className="px-4 pb-3 space-y-3">
                       {activeConversations.map((conv) => (
-                        <ConversationCard key={conv.id} conversation={conv} showBranchActions={!branch.prNumber} />
+                        <ConversationCard
+                          key={conv.id}
+                          conversation={conv}
+                          showBranchActions={!branch.prNumber}
+                          showFooter={false}
+                        />
                       ))}
                     </div>
                   )}
@@ -167,6 +172,7 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
                               conversation={conv}
                               isCompact
                               showBranchActions={!branch.prNumber}
+                              showFooter={false}
                             />
                           ))}
                         </div>

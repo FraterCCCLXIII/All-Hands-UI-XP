@@ -39,7 +39,6 @@ import {
   MessageCircleQuestion,
   ListChecks,
   RefreshCw,
-  GitFork,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -1159,16 +1158,38 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   </button>
                                 </>
                               ) : repositoryStatus === 'connect' ? (
-                                <button
-                                  type="button"
-                                  className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] border border-border bg-muted/40 text-sm font-normal leading-5 text-muted-foreground hover:bg-muted/60 h-7 min-w-[76px]"
-                                  onClick={() => setIsConnectModalOpen(true)}
-                                >
-                                  <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                    <GitFork className="w-3 h-3 text-muted-foreground" />
-                                  </span>
-                                  Connect
-                                </button>
+                                <>
+                                  <div className="flex flex-row items-center">
+                                    <div className="flex flex-row gap-2.5 items-center overflow-x-auto flex-wrap md:flex-nowrap relative scrollbar-hide">
+                                      <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[170px]">
+                                        <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                          <Github className="w-3 h-3 text-muted-foreground" />
+                                        </div>
+                                        <div className="font-normal text-muted-foreground text-sm leading-5 truncate flex-1 min-w-0" title="No Repo Connected">
+                                          No Repo Connected
+                                        </div>
+                                      </div>
+                                      <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[108px]">
+                                        <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                          <GitBranch className="w-3 h-3 text-muted-foreground" />
+                                        </div>
+                                        <div className="font-normal text-muted-foreground text-sm leading-5 truncate" title="No Branch">
+                                          No Branch
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] text-sm font-normal leading-5 h-7 min-w-[76px] bg-[#9E28B0] hover:bg-[#8a2399] text-white border-0"
+                                    onClick={() => setIsConnectModalOpen(true)}
+                                  >
+                                    <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                      <Github className="w-3 h-3 text-white" />
+                                    </span>
+                                    Connect
+                                  </button>
+                                </>
                               ) : (
                                 <>
                                   <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[170px]">
@@ -1545,7 +1566,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               </div>
             </div>
             <DialogFooter className="sm:flex-row sm:justify-start sm:space-x-2 flex flex-row items-center justify-start">
-              <Button className="h-10 px-4 py-2 bg-white text-black hover:bg-white/90" onClick={() => setIsConnectModalOpen(false)}>
+              <Button
+                className="h-10 px-4 py-2 bg-white text-black hover:bg-white/90"
+                onClick={() => {
+                  setIsConnectModalOpen(false);
+                  onRepositoryStatusChange('connected');
+                }}
+              >
                 Connect
               </Button>
               <Button

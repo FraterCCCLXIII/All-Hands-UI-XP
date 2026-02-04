@@ -1,6 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, User, Cloud, Key, Shield, CreditCard, Cpu, Puzzle, CheckCircle, ChevronDown } from 'lucide-react';
-import { Spinner } from '../components/common/Spinner';
+import {
+  Bell,
+  Building2,
+  Cloud,
+  Cpu,
+  CreditCard,
+  CheckCircle,
+  ChevronDown,
+  Key,
+  Plus,
+  Puzzle,
+  Settings as SettingsIcon,
+  Shield,
+  User,
+  Users,
+} from 'lucide-react';
+import { AdvancedLlmForm } from '../components/settings/AdvancedLlmForm';
+import { ChatGPTConnectSection } from '../components/settings/ChatGPTConnectSection';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
@@ -13,14 +35,51 @@ const settingsTabs = [
   { id: 'mcp', label: 'MCP', icon: Cloud },
 ];
 
+const settingsLinks = [
+  { id: 'manage-account', label: 'Manage Account', icon: CreditCard, tabId: 'billing' },
+  { id: 'manage-team', label: 'Manage Team', icon: Users, tabId: 'user' },
+  { id: 'integrations', label: 'Integrations', icon: Puzzle, tabId: 'integrations' },
+  { id: 'llm', label: 'Language Model (LLM)', icon: Cpu, tabId: 'llm' },
+  { id: 'api-keys', label: 'API Keys', icon: Key, tabId: 'api-keys' },
+  { id: 'secrets', label: 'Secrets', icon: Shield, tabId: 'secrets' },
+  { id: 'mcp', label: 'MCP', icon: Cloud, tabId: 'mcp' },
+];
+
+const orgOptions = [
+  { id: 'personal', name: 'Personal Account', role: null, type: 'personal' },
+  { id: 'acme-admin', name: 'Acme Inc', role: 'Admin', type: 'org' },
+  { id: 'starlight-user', name: 'Starlight Labs', role: 'User', type: 'org' },
+];
+
 export interface SettingsScreenProps {
   /** Initial tab from route (e.g. llm for #/settings/llm) */
   initialTab?: string;
   /** Called when user switches tab so the URL can be updated */
   onTabChange?: (tab: string) => void;
+  /** Optional override for LLM tab content */
+  llmContentOverride?: React.ReactNode;
+  /** Optional label override for the LLM tab heading */
+  llmTabLabelOverride?: string;
+  /** Control whether LLM content is scrollable */
+  llmContentScrollable?: boolean;
+  /** Control whether main content is scrollable */
+  mainContentScrollable?: boolean;
+  /** Optional controlled org selection */
+  selectedOrgId?: string;
+  /** Optional org change callback */
+  onOrgChange?: (orgId: string) => void;
 }
 
-export const SettingsScreen: React.FC<SettingsScreenProps> = ({ initialTab, onTabChange }) => {
+export const SettingsScreen: React.FC<SettingsScreenProps> = ({
+  initialTab,
+  onTabChange,
+  llmContentOverride,
+  llmTabLabelOverride,
+  llmContentScrollable = true,
+  mainContentScrollable = true,
+  selectedOrgId: controlledOrgId,
+  onOrgChange,
+}) => {
   const [activeTab, setActiveTab] = useState(initialTab ?? 'api-keys');
   const [gitUsername, setGitUsername] = useState('openhands');
   const [gitEmail, setGitEmail] = useState('openhands@all-hands.dev');
@@ -36,6 +95,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ initialTab, onTa
   const [openaiConnecting, setOpenaiConnecting] = useState(false);
   const [enableCondenser, setEnableCondenser] = useState(true);
   const [enableConfirmation, setEnableConfirmation] = useState(false);
+  const [advancedModel, setAdvancedModel] = useState('litellm_proxy/prod/claude-opus-4-5-20251101');
+  const [advancedBaseUrl, setAdvancedBaseUrl] = useState('https://llm-proxy.app.all-hands.dev');
+  const [uncontrolledOrgId, setUncontrolledOrgId] = useState(orgOptions[0]?.id ?? 'personal');
+  const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   useEffect(() => {
     if (initialTab && settingsTabs.some((t) => t.id === initialTab)) {
@@ -48,6 +111,55 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ initialTab, onTa
     onTabChange?.(tabId);
   };
 
+  const isChatGPTConnected = llmProvider === 'openai' && llmApiKeyApproved && llmApiKey.length > 0;
+  const isValidBaseUrl = (() => {
+    try {
+      const parsed = new URL(advancedBaseUrl.trim());
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  })();
+  const isValidModelName = advancedModel.trim().length > 0 && !advancedModel.includes(' ');
+  const selectedOrg = orgOptions.find((org) => org.id === selectedOrgId) ?? orgOptions[0];
+  const handleOrgChange = (orgId: string) => {
+    if (controlledOrgId === undefined) {
+      setUncontrolledOrgId(orgId);
+    }
+    onOrgChange?.(orgId);
+  };
+
+  const handleChatGPTConnect = async () => {
+    setOpenaiConnecting(true);
+    setLlmProvider('openai');
+    await new Promise((r) => setTimeout(r, 1500));
+    setOpenaiConnecting(false);
+    setLlmApiKey('•'.repeat(20));
+    setLlmApiKeyApproved(true);
+  };
+
+  const handleChatGPTDisconnect = () => {
+    setLlmProvider('');
+    setLlmApiKey('');
+    setLlmApiKeyApproved(false);
+  };
+
+  const chatGPTConnectSection = (
+    <ChatGPTConnectSection
+      isConnected={isChatGPTConnected}
+      isConnecting={openaiConnecting}
+      onConnect={handleChatGPTConnect}
+      onDisconnect={handleChatGPTDisconnect}
+    />
+  );
+
+  const activeTabLabel = (() => {
+    if (activeTab === 'llm' && llmTabLabelOverride !== undefined) {
+      return llmTabLabelOverride;
+    }
+    return settingsTabs.find((t) => t.id === activeTab)?.label;
+  })();
+
   return (
     <div className="flex flex-1 overflow-hidden gap-10 p-8">
       {/* Left Navigation */}
@@ -55,35 +167,113 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ initialTab, onTa
         <div className="flex items-center gap-2 ml-1">
           <h2 className="text-xl font-semibold leading-6 text-foreground">Settings</h2>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/40 transition-colors"
+              aria-label="Select organization"
+            >
+              <span className="flex items-center gap-2 w-full">
+                {selectedOrg?.type === 'org' ? (
+                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <User className="w-4 h-4 text-muted-foreground" />
+                )}
+                <span>{selectedOrg?.name ?? 'Personal Account'}</span>
+                {selectedOrg?.role && (
+                  <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {selectedOrg.role}
+                  </span>
+                )}
+              </span>
+              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+            {orgOptions.map((org) => (
+              <DropdownMenuItem key={org.id} onClick={() => handleOrgChange(org.id)}>
+                <span className="flex items-center gap-2 w-full">
+                  {org.type === 'org' ? (
+                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <User className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span>{org.name}</span>
+                  {org.role && (
+                    <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {org.role}
+                    </span>
+                  )}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div className="flex flex-col gap-2">
-          {settingsTabs.map((tab) => {
-            const Icon = tab.icon;
+          {settingsLinks.map((item) => {
+            const Icon = item.icon;
             return (
               <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
+                key={item.id}
+                onClick={() => handleTabClick(item.tabId)}
                 className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
-                  activeTab === tab.id
+                  activeTab === item.tabId
                     ? 'bg-muted/60'
                     : 'hover:bg-muted/40'
                 }`}
               >
                 <Icon className="w-5 h-5 text-muted-foreground" />
                 <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
-                  {tab.label}
+                  {item.label}
                 </span>
               </button>
             );
           })}
         </div>
+        <div className="border-t border-border" />
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => handleTabClick('user')}
+            className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
+              activeTab === 'user'
+                ? 'bg-muted/60'
+                : 'hover:bg-muted/40'
+            }`}
+          >
+            <User className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+              User
+            </span>
+          </button>
+          <button
+            onClick={() => handleTabClick('app')}
+            className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
+              activeTab === 'app'
+                ? 'bg-muted/60'
+                : 'hover:bg-muted/40'
+            }`}
+          >
+            <SettingsIcon className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+              Application
+            </span>
+          </button>
+          <button className="flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/40">
+            <Plus className="w-5 h-5 text-muted-foreground" />
+            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+              Create New Organization
+            </span>
+          </button>
+        </div>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className={mainContentScrollable ? 'flex-1 overflow-auto' : 'flex-1'}>
         <div className="flex flex-col gap-6 h-full">
-          <h2 className="text-xl font-semibold leading-6 text-foreground">
-            {settingsTabs.find((t) => t.id === activeTab)?.label}
-          </h2>
+          {activeTabLabel && (
+            <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
+          )}
 
           {/* User Content */}
           {activeTab === 'user' && (
@@ -310,229 +500,149 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ initialTab, onTa
 
           {/* LLM Content */}
           {activeTab === 'llm' && (
-            <div className="flex-1 overflow-auto">
-              <form className="flex flex-col h-full justify-between">
-                <div className="flex flex-col gap-6">
-                  <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
-                      checked={advancedLLM}
-                      onChange={(e) => setAdvancedLLM(e.target.checked)}
-                      data-testid="advanced-settings-switch"
-                    />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${advancedLLM ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${advancedLLM ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                    </div>
-                    <span className="text-sm text-foreground">Advanced</span>
-                  </label>
-
-                  {!advancedLLM ? (
-                    <>
-                      <div className="flex flex-col gap-6 w-full max-w-[680px]">
-                        <fieldset className="flex flex-col gap-2.5 w-full">
-                          <label className="text-sm text-foreground">LLM Provider</label>
-                          <div className="relative w-full">
-                            <select
-                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
-                              data-testid="llm-provider-input"
-                              aria-label="LLM Provider"
-                              value={llmProvider}
-                              onChange={(e) => {
-                                setLlmProvider(e.target.value);
-                                setLlmApiKey('');
-                                setLlmApiKeyApproved(false);
-                              }}
-                            >
-                              <option value="">Select a provider</option>
-                              <option value="openai">OpenAI</option>
-                              <option value="anthropic">Anthropic</option>
-                              <option value="litellm">LiteLLM</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" aria-hidden />
-                          </div>
-                        </fieldset>
-                        <fieldset className="flex flex-col gap-2.5 w-full">
-                          <label className="text-sm text-foreground">LLM Model</label>
-                          <div className="relative w-full">
-                            <select
-                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
-                              data-testid="llm-model-input"
-                              aria-label="LLM Model"
-                              defaultValue=""
-                            >
-                              <option value="">Select a model</option>
-                              <option value="claude-opus">Claude Opus</option>
-                              <option value="gpt-4o">GPT-4o</option>
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" aria-hidden />
-                          </div>
-                        </fieldset>
+            <div className={llmContentScrollable ? 'flex-1 overflow-auto' : 'flex-1'}>
+              {llmContentOverride ?? (
+                <form className="flex flex-col h-full justify-between">
+                  <div className="flex flex-col gap-6">
+                    <label className="flex items-center gap-2 w-fit cursor-pointer">
+                      <input
+                        hidden
+                        type="checkbox"
+                        checked={advancedLLM}
+                        onChange={(e) => setAdvancedLLM(e.target.checked)}
+                        data-testid="advanced-settings-switch"
+                      />
+                      <div
+                        className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${
+                          advancedLLM ? 'bg-white' : 'bg-muted border border-border'
+                        }`}
+                      >
+                        <div
+                          className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${
+                            advancedLLM ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'
+                          }`}
+                        ></div>
                       </div>
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                        <span className="text-sm text-foreground">API Key</span>
-                        <div className="relative w-full">
-                          <input
-                            placeholder=""
-                            value={llmApiKeyApproved ? '•'.repeat(llmApiKey.length) : llmApiKey}
-                            onChange={(e) => setLlmApiKey(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (llmApiKeyApproved) {
-                                setLlmApiKeyApproved(false);
-                                setLlmApiKey(e.key.length === 1 ? e.key : '');
-                                e.preventDefault();
-                              } else if (e.key === 'Enter' && llmApiKey.length > 0) {
-                                setLlmApiKeyApproved(true);
-                                e.preventDefault();
-                              }
-                            }}
-                            className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
-                            type="text"
-                            data-testid="llm-api-key-input"
-                          />
-                          {llmApiKeyApproved && llmApiKey.length > 0 && (
-                            <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none" aria-hidden />
-                          )}
+                      <span className="text-sm text-foreground">Advanced</span>
+                    </label>
+
+                    {!advancedLLM ? (
+                      <>
+                        <div className="flex flex-col gap-6 w-full max-w-[680px]">
+                          <fieldset className="flex flex-col gap-2.5 w-full">
+                            <label className="text-sm text-foreground">LLM Provider</label>
+                            <div className="relative w-full">
+                              <select
+                                className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                                data-testid="llm-provider-input"
+                                aria-label="LLM Provider"
+                                value={llmProvider}
+                                onChange={(e) => {
+                                  setLlmProvider(e.target.value);
+                                  setLlmApiKey('');
+                                  setLlmApiKeyApproved(false);
+                                }}
+                              >
+                                <option value="">Select a provider</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="litellm">LiteLLM</option>
+                              </select>
+                              <ChevronDown
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none"
+                                aria-hidden
+                              />
+                            </div>
+                          </fieldset>
+                          <fieldset className="flex flex-col gap-2.5 w-full">
+                            <label className="text-sm text-foreground">LLM Model</label>
+                            <div className="relative w-full">
+                              <select
+                                className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                                data-testid="llm-model-input"
+                                aria-label="LLM Model"
+                                defaultValue=""
+                              >
+                                <option value="">Select a model</option>
+                                <option value="claude-opus">Claude Opus</option>
+                                <option value="gpt-4o">GPT-4o</option>
+                              </select>
+                              <ChevronDown
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none"
+                                aria-hidden
+                              />
+                            </div>
+                          </fieldset>
                         </div>
-                      </label>
-                      <p className="text-xs text-muted-foreground" data-testid="llm-api-key-help-anchor">
-                        Don't know your API key?{' '}
-                        <a
-                          href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                          className="underline underline-offset-2 text-white hover:text-gray-300"
-                        >
-                          Click here for instructions
-                        </a>
-                      </p>
-                      {llmProvider === 'openai' && (
-                        <div className="flex flex-col gap-4 w-full max-w-[680px]">
-                          <div className="flex items-center gap-3 w-full">
-                            <span className="flex-1 h-px bg-border" aria-hidden />
-                            <span className="text-sm text-muted-foreground uppercase tracking-wide">OR</span>
-                            <span className="flex-1 h-px bg-border" aria-hidden />
-                          </div>
-                          <button
-                            type="button"
-                            disabled={openaiConnecting}
-                            onClick={async () => {
-                              setOpenaiConnecting(true);
-                              await new Promise((r) => setTimeout(r, 1500));
-                              setOpenaiConnecting(false);
-                              setLlmApiKey('•'.repeat(20));
-                              setLlmApiKeyApproved(true);
-                            }}
-                            className="h-10 w-full rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {openaiConnecting ? (
-                              <Spinner className="w-5 h-5 shrink-0" color="border-t-primary-foreground" />
-                            ) : (
-                              'Connect with OpenAI'
+                        <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                          <span className="text-sm text-foreground">API Key</span>
+                          <div className="relative w-full">
+                            <input
+                              placeholder=""
+                              value={llmApiKeyApproved ? '•'.repeat(llmApiKey.length) : llmApiKey}
+                              onChange={(e) => setLlmApiKey(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (llmApiKeyApproved) {
+                                  setLlmApiKeyApproved(false);
+                                  setLlmApiKey(e.key.length === 1 ? e.key : '');
+                                  e.preventDefault();
+                                } else if (e.key === 'Enter' && llmApiKey.length > 0) {
+                                  setLlmApiKeyApproved(true);
+                                  e.preventDefault();
+                                }
+                              }}
+                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                              type="text"
+                              data-testid="llm-api-key-input"
+                            />
+                            {llmApiKeyApproved && llmApiKey.length > 0 && (
+                              <CheckCircle
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none"
+                                aria-hidden
+                              />
                             )}
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                        <span className="text-sm text-foreground">Custom Model</span>
-                        <input
-                          placeholder="openhands/claude-opus-4-5-20251101"
-                          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
-                          type="text"
-                          defaultValue="litellm_proxy/prod/claude-opus-4-5-20251101"
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                        <span className="text-sm text-foreground">Base URL</span>
-                        <input
-                          placeholder="https://api.openai.com"
-                          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
-                          type="text"
-                          defaultValue="https://llm-proxy.app.all-hands.dev"
-                        />
-                      </label>
-
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                        <span className="text-sm text-foreground">API Key</span>
-                        <div className="relative w-full">
-                          <input
-                            placeholder="••••••••••"
-                            className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
-                            type="password"
-                          />
-                          <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none" aria-hidden />
-                        </div>
-                      </label>
-
-                      <p className="text-xs text-muted-foreground">
-                        Don't know your API key?{' '}
-                        <a
-                          href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                          className="underline underline-offset-2 text-white hover:text-gray-300"
-                        >
-                          Click here for instructions
-                        </a>
-                      </p>
-
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
-                        <span className="text-sm text-foreground">Memory condenser max history size</span>
-                        <input
-                          min={20}
-                          step={1}
-                          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
-                          type="number"
-                          defaultValue="240"
-                        />
-                        <p className="text-xs text-muted-foreground mt-2">After this many events, the condenser will summarize history. Minimum 20.</p>
-                      </label>
-
-                      <label className="flex items-center gap-2 w-fit cursor-pointer">
-                        <input
-                          hidden
-                          type="checkbox"
-                          checked={enableCondenser}
-                          onChange={(e) => setEnableCondenser(e.target.checked)}
-                        />
-                        <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableCondenser ? 'bg-white' : 'bg-muted border border-border'}`}>
-                          <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableCondenser ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                        </div>
-                        <span className="text-sm text-foreground">Enable memory condensation</span>
-                      </label>
-
-                      <label className="flex items-center gap-2 w-fit cursor-pointer">
-                        <input
-                          hidden
-                          type="checkbox"
-                          checked={enableConfirmation}
-                          onChange={(e) => setEnableConfirmation(e.target.checked)}
-                        />
-                        <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableConfirmation ? 'bg-white' : 'bg-muted border border-border'}`}>
-                          <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableConfirmation ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-foreground">Enable Confirmation Mode</span>
-                          <span className="text-[11px] leading-4 text-black font-medium tracking-tighter bg-white px-1 rounded-full">Beta</span>
-                        </div>
-                      </label>
-                    </>
-                  )}
-                </div>
-                <div className="flex gap-6 py-6 pr-6 justify-start">
-                  <button
-                    disabled
-                    type="submit"
-                    className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
+                          </div>
+                        </label>
+                        <p className="text-xs text-muted-foreground" data-testid="llm-api-key-help-anchor">
+                          Don't know your API key?{' '}
+                          <a
+                            href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
+                            rel="noreferrer noopener"
+                            target="_blank"
+                            className="underline underline-offset-2 text-white hover:text-gray-300"
+                          >
+                            Click here for instructions
+                          </a>
+                        </p>
+                        {chatGPTConnectSection}
+                      </>
+                    ) : (
+                      <AdvancedLlmForm
+                        model={advancedModel}
+                        baseUrl={advancedBaseUrl}
+                        onModelChange={setAdvancedModel}
+                        onBaseUrlChange={setAdvancedBaseUrl}
+                        isValidModelName={isValidModelName}
+                        isValidBaseUrl={isValidBaseUrl}
+                        enableCondenser={enableCondenser}
+                        onEnableCondenserChange={setEnableCondenser}
+                        enableConfirmation={enableConfirmation}
+                        onEnableConfirmationChange={setEnableConfirmation}
+                        footerContent={chatGPTConnectSection}
+                      />
+                    )}
+                  </div>
+                  <div className="flex gap-6 py-6 pr-6 justify-start">
+                    <button
+                      disabled
+                      type="submit"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           )}
 

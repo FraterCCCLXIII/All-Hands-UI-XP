@@ -13,6 +13,7 @@ interface AgentPanelProps {
   onClose: () => void;
   onCreateConversation: (cardId: string, skillId?: string, skillName?: string) => string;
   onSendMessage: (cardId: string, conversationId: string, message: string) => void;
+  showConversationFooter?: boolean;
 }
 
 const formatTimeAgo = (dateString?: string) => {
@@ -28,7 +29,14 @@ const formatTimeAgo = (dateString?: string) => {
   return `${diffDays}d ago`;
 };
 
-export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSendMessage: _onSendMessage }: AgentPanelProps) {
+export function AgentPanel({
+  card,
+  isOpen,
+  onClose,
+  onCreateConversation,
+  onSendMessage: _onSendMessage,
+  showConversationFooter = true,
+}: AgentPanelProps) {
   const [showInactive, setShowInactive] = useState(false);
   const conversations = card?.conversations ?? [];
   const activeConversations = useMemo(
@@ -122,13 +130,13 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 bg-green-500" />
-                      <div>
-                        <h4 className="font-medium text-foreground">{conversation.name}</h4>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full mt-0.5 self-start shrink-0 bg-green-500" />
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-medium text-foreground">{conversation.name}</h4>
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
                           <span className="gradient-flow">{conversation.activity}</span>
                         </p>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{formatTimeAgo(conversation.updatedAt)}</span>
                           <span>•</span>
                           <div className="flex items-center gap-1">
@@ -163,38 +171,40 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
                       </button>
                     </div>
                   </div>
-                  <div className="border-t border-border pt-2 mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
-                      aria-label="Pull"
-                    >
-                      <ArrowDown className="w-3 h-3" />
-                      <span>Pull</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
-                      aria-label="Push"
-                    >
-                      <ArrowUp className="w-3 h-3" />
-                      <span>Push</span>
-                    </button>
-                    <span className="flex items-center gap-1 text-xs">
-                      <GitBranch className="w-3 h-3 text-muted-foreground" />
-                      Up to date
-                    </span>
-                    <div className="flex items-center gap-3 shrink-0 ml-auto">
+                  {showConversationFooter && (
+                    <div className="border-t border-border pt-2 mt-3 flex flex-wrap items-center gap-2 text-muted-foreground">
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                        aria-label="Pull"
+                      >
+                        <ArrowDown className="w-3 h-3" />
+                        <span>Pull</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
+                        aria-label="Push"
+                      >
+                        <ArrowUp className="w-3 h-3" />
+                        <span>Push</span>
+                      </button>
                       <span className="flex items-center gap-1 text-xs">
-                        <Plus className="w-3 h-3 text-success" />
-                        <span className="text-success">{card.additions}</span>
+                        <GitBranch className="w-3 h-3 text-muted-foreground" />
+                        Up to date
                       </span>
-                      <span className="flex items-center gap-1 text-xs">
-                        <Minus className="w-3 h-3 text-destructive" />
-                        <span className="text-destructive">{card.deletions}</span>
-                      </span>
+                      <div className="flex items-center gap-3 shrink-0 ml-auto">
+                        <span className="flex items-center gap-1 text-xs">
+                          <Plus className="w-3 h-3 text-success" />
+                          <span className="text-success">{card.additions}</span>
+                        </span>
+                        <span className="flex items-center gap-1 text-xs">
+                          <Minus className="w-3 h-3 text-destructive" />
+                          <span className="text-destructive">{card.deletions}</span>
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))
             )}
@@ -227,10 +237,10 @@ export function AgentPanel({ card, isOpen, onClose, onCreateConversation, onSend
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3">
-                            <div className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 bg-muted-foreground" />
-                            <div>
-                              <h4 className="font-medium text-foreground">{conversation.name}</h4>
-                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <div className="w-2 h-2 rounded-full mt-0.5 self-start shrink-0 bg-muted-foreground" />
+                            <div className="space-y-2">
+                              <h4 className="text-xs font-medium text-foreground">{conversation.name}</h4>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <span>{formatTimeAgo(conversation.updatedAt)}</span>
                               </div>
                             </div>

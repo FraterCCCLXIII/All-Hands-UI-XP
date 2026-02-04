@@ -1,9 +1,15 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Bot, CheckCircle, Github, GitPullRequest, MessageSquare, Plus, XCircle } from 'lucide-react';
+import { Bot, CheckCircle, ChevronDown, Github, GitPullRequest, Menu, MessageSquare, Plus, XCircle } from 'lucide-react';
 import { DashboardHeader, type DashboardTabId } from '../components/dashboard/DashboardHeader';
 import { KanbanBoard } from '../components/dashboard/KanbanBoard';
 import { RepositorySection } from '../components/dashboard/RepositorySection';
 import { NewConversationDialog } from '../components/dashboard/NewConversationDialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { cn } from '../lib/utils';
 import { insightsPullRequests, insightsRepositories, insightsRepoData } from '../data/insightsData';
@@ -23,6 +29,50 @@ export function DashboardScreen() {
   const [selectedInsightRepo, setSelectedInsightRepo] = useState<string | null>(insightsRepositories[0]?.id ?? null);
   const [reviewFilter, setReviewFilter] = useState<'open' | 'closed'>('open');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  const RepositorySidebar = ({
+    repositories: repoList,
+    isOpen,
+  }: {
+    repositories: string[];
+    isOpen: boolean;
+  }) => (
+    <aside
+      className={cn(
+        'shrink-0 bg-sidebar text-sidebar-foreground h-full transition-[width] duration-200 overflow-hidden',
+        isOpen ? 'w-64' : 'w-0 border-0'
+      )}
+      aria-hidden={!isOpen}
+    >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-4">
+        <h3 className="shrink-0 whitespace-nowrap px-2 mb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Active Repositories
+        </h3>
+        <nav className="min-w-0 space-y-1 whitespace-nowrap">
+          {repoList.map((repo) => {
+            const repoId = repo === 'View all' ? 'all' : repo;
+            const isActive = activeRepo === repoId;
+            return (
+              <button
+                key={repoId}
+                type="button"
+                onClick={() => setActiveRepo(repoId)}
+                className={`w-full min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left ${
+                  isActive
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                }`}
+                aria-pressed={isActive}
+              >
+                <Github className="w-4 h-4 shrink-0" />
+                <span className="min-w-0 truncate">{repo}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    </aside>
+  );
 
   const createSectionKey = useCallback((name: string) => name.replace(/[^\w-]/g, '-').toLowerCase(), []);
   const scrollToSection = useCallback(
@@ -46,7 +96,38 @@ export function DashboardScreen() {
     };
 
     return (
-      <div className="border border-border bg-card rounded-xl overflow-hidden">
+      <>
+        <div className="flex items-center justify-between px-4 pb-3 gap-2 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <button
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 w-10 shrink-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              aria-label="Show repository list"
+              aria-expanded="false"
+            >
+              <Menu className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">All</h2>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 rounded-md px-3"
+                  aria-label="Filter pull requests"
+                  type="button"
+                >
+                  All PRs
+                  <ChevronDown className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem>All PRs</DropdownMenuItem>
+                <DropdownMenuItem>PRs opened by me</DropdownMenuItem>
+                <DropdownMenuItem>PRs assigned to me</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center gap-2" />
+        </div>
+        <div className="border border-border bg-card rounded-xl overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3 rounded-t-xl">
           <div className="flex gap-2 text-xs text-muted-foreground">
             {(['open', 'closed'] as const).map((option) => (
@@ -153,7 +234,8 @@ export function DashboardScreen() {
             </article>
           ))}
         </div>
-      </div>
+        </div>
+      </>
     );
   }, [reviewFilter, scrollToSection, setActiveView]);
 
@@ -163,41 +245,7 @@ export function DashboardScreen() {
       <div className="flex min-h-0 h-full">
         {activeView === 'kanban' ? (
           <>
-            <aside
-              className={cn(
-                'shrink-0 bg-sidebar text-sidebar-foreground h-full transition-[width] duration-200 overflow-hidden',
-                isRepoListOpen ? 'w-64' : 'w-0 border-0'
-              )}
-              aria-hidden={!isRepoListOpen}
-            >
-              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-4">
-                <h3 className="shrink-0 whitespace-nowrap px-2 mb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  Active Repositories
-                </h3>
-                <nav className="min-w-0 space-y-1 whitespace-nowrap">
-                  {repositories.map((repo) => {
-                    const repoId = repo === 'View all' ? 'all' : repo;
-                    const isActive = activeRepo === repoId;
-                    return (
-                      <button
-                        key={repoId}
-                        type="button"
-                        onClick={() => setActiveRepo(repoId)}
-                        className={`w-full min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left ${
-                          isActive
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-                        }`}
-                        aria-pressed={isActive}
-                      >
-                        <Github className="w-4 h-4 shrink-0" />
-                        <span className="min-w-0 truncate">{repo}</span>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </div>
-            </aside>
+            <RepositorySidebar repositories={repositories} isOpen={isRepoListOpen} />
             <main className="flex flex-col flex-1 min-w-0 min-h-0 bg-sidebar text-sidebar-foreground">
               <div className="px-4 mb-6 shrink-0" />
               <div className="flex flex-1 min-h-0 flex-col pb-12">
@@ -242,6 +290,7 @@ export function DashboardScreen() {
                 </div>
               </aside>
             )}
+            {activeView === 'reviews' && <RepositorySidebar repositories={repositories} isOpen />}
             <main className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-full overflow-y-auto">
               <div className="max-w-7xl mx-auto">
                 <div className="space-y-6 mt-6 px-4 pb-6">

@@ -1,6 +1,7 @@
 import { Check, Circle, Minus, X } from 'lucide-react';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -50,40 +51,60 @@ export function CiChecksDialog({ count, trigger }: CiChecksDialogProps) {
       </DialogTrigger>
 
       <DialogContent className="max-w-xl p-0 gap-0">
-        <DialogHeader className="text-left space-y-2 px-6 pt-6 pb-4">
-          <DialogTitle className="text-2xl">CI Checks</DialogTitle>
-          <div className="flex flex-wrap gap-2">
-            {statusFilters.map((status) => (
-              <span
-                key={status.id}
-                className="inline-flex items-center gap-1 rounded-[4px] border border-border px-3 py-1 text-xs text-muted-foreground"
-              >
-                {status.icon}
-                {status.label}
-              </span>
-            ))}
-          </div>
-        </DialogHeader>
+        <div className="flex min-h-0 max-h-[80vh] flex-col">
+          <DialogHeader className="text-left space-y-2 px-6 pt-6 pb-4">
+            <DialogTitle className="text-2xl">CI Checks</DialogTitle>
+            <div className="flex flex-wrap gap-2">
+              {statusFilters.map((status) => (
+                <span
+                  key={status.id}
+                  className="inline-flex items-center gap-1 rounded-[4px] border border-border px-3 py-1 text-xs text-muted-foreground"
+                >
+                  {status.icon}
+                  {status.label}
+                </span>
+              ))}
+            </div>
+          </DialogHeader>
 
-        <div className="repo-dropdown-scroll max-h-[300px] overflow-y-auto border-y border-border bg-muted/60 pl-6 pr-3 py-3 shadow-inner">
-          <div className="divide-border divide-y">
-            {checks.map((check, index) => (
-              <article
-                key={check.id}
-                className={`flex items-center justify-between gap-3 py-3 ${index === checks.length - 1 ? 'pb-0' : ''}`}
+          <div className="repo-dropdown-scroll flex-1 overflow-y-auto border-y border-border bg-muted/60 pl-6 pr-3 py-3 shadow-inner min-h-0">
+            <div className="divide-border divide-y">
+              {checks.map((check, index) => (
+                <article
+                  key={check.id}
+                  className={`flex items-center justify-between gap-3 py-3 ${index === checks.length - 1 ? 'pb-0' : ''}`}
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3 text-sm text-foreground">
+                    {check.status === 'failing' && <X className="h-4 w-4 shrink-0 text-destructive" />}
+                    {check.status === 'in-progress' && <Circle className="h-4 w-4 shrink-0 text-foreground" />}
+                    {check.status === 'skipped' && <Minus className="h-4 w-4 shrink-0 text-warning" />}
+                    {check.status === 'successful' && <Check className="h-4 w-4 shrink-0 text-accent" />}
+                    <span>{check.label}</span>
+                  </div>
+                  <button className="shrink-0 rounded-[4px] border border-transparent bg-accent/10 px-3 py-1 text-[11px] font-semibold text-accent hover:bg-accent/20">
+                    Fix
+                  </button>
+                </article>
+              ))}
+            </div>
+          </div>
+          <div className="border-t border-border px-6 py-4 flex items-center justify-start gap-2 bg-black">
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
-                <div className="flex min-w-0 flex-1 items-center gap-3 text-sm text-foreground">
-                  {check.status === 'failing' && <X className="h-4 w-4 shrink-0 text-destructive" />}
-                  {check.status === 'in-progress' && <Circle className="h-4 w-4 shrink-0 text-foreground" />}
-                  {check.status === 'skipped' && <Minus className="h-4 w-4 shrink-0 text-warning" />}
-                  {check.status === 'successful' && <Check className="h-4 w-4 shrink-0 text-accent" />}
-                  <span>{check.label}</span>
-                </div>
-                <button className="shrink-0 rounded-[4px] border border-transparent bg-accent/10 px-3 py-1 text-[11px] font-semibold text-accent hover:bg-accent/20">
-                  Fix
-                </button>
-              </article>
-            ))}
+                Fix all
+              </button>
+            </DialogClose>
+            <DialogClose asChild>
+              <button
+                type="button"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors"
+              >
+                Close
+              </button>
+            </DialogClose>
           </div>
         </div>
       </DialogContent>

@@ -1173,17 +1173,22 @@ export function ComponentLibraryScreen() {
             name: 'ConversationCard',
             path: 'components/dashboard/ConversationCard.tsx',
             description: 'Conversation summary card.',
-            usage: `<ConversationCard conversation={...} />`,
-            preview: <ConversationCard conversation={sampleConversation} />,
+            usage: `<ConversationCard conversation={...} showFooter={false} />`,
+            preview: <ConversationCard conversation={sampleConversation} showFooter={false} />,
           },
           {
             id: 'dashboard-conversation-list',
             name: 'ConversationList',
             path: 'components/dashboard/ConversationCard.tsx',
             description: 'List of conversations with optional collapse.',
-            usage: `<ConversationList conversations={...} title="Recent" />`,
+            usage: `<ConversationList conversations={...} title="Recent" showFooter={false} />`,
             preview: (
-              <ConversationList conversations={[sampleConversation]} title="Recent Conversations" collapsible />
+              <ConversationList
+                conversations={[sampleConversation]}
+                title="Recent Conversations"
+                collapsible
+                showFooter={false}
+              />
             ),
           },
           {
@@ -1201,7 +1206,7 @@ export function ComponentLibraryScreen() {
             name: 'AgentPanel',
             path: 'components/dashboard/AgentPanel.tsx',
             description: 'Side panel showing agent conversations.',
-            usage: `<AgentPanel card={card} isOpen={open} />`,
+            usage: `<AgentPanel card={card} isOpen={open} showConversationFooter={false} />`,
             preview: (
               <div className="flex items-center gap-3">
                 <Button variant="outline" onClick={() => setAgentPanelOpen(true)}>
@@ -1213,6 +1218,7 @@ export function ComponentLibraryScreen() {
                   onClose={() => setAgentPanelOpen(false)}
                   onCreateConversation={() => 'conv-1'}
                   onSendMessage={() => {}}
+                  showConversationFooter={false}
                 />
               </div>
             ),

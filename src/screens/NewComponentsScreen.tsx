@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { InfoCard } from '../components/common/InfoCard';
+import { ConversationCard } from '../components/dashboard/ConversationCard';
 import { cn } from '../lib/utils';
 
 type ComponentItem = {
@@ -77,6 +78,40 @@ export function NewComponentsScreen() {
         id: 'new-components',
         title: 'New Components',
         items: [
+              {
+                id: 'conversation-card',
+                name: 'Conversation Card',
+                description:
+                  'Conversation status card with agent controls, quick actions, and sync status.',
+                usage: `<ConversationCard
+  conversation={{
+    id: 'conv-1',
+    name: 'Conversation 1',
+    description: 'Initializing...',
+    timestamp: '1 min ago',
+    agentStatus: 'active',
+    isActive: true,
+    commitStatus: 'Up to date',
+  }}
+  showFooter={false}
+/>`,
+                preview: (
+                  <div className="max-w-lg">
+                    <ConversationCard
+                      conversation={{
+                        id: 'conv-1',
+                        name: 'Conversation 1',
+                        description: 'Initializing...',
+                        timestamp: '1 min ago',
+                        agentStatus: 'active',
+                        isActive: true,
+                        commitStatus: 'Up to date',
+                      }}
+                      showFooter={false}
+                    />
+                  </div>
+                ),
+              },
               {
                 id: 'copyable-code-panel',
                 name: 'Copyable Code Panel',
