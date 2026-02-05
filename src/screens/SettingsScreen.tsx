@@ -13,6 +13,7 @@ import {
   Shield,
   User,
   Users,
+  Trash2,
 } from 'lucide-react';
 import { AdvancedLlmForm } from '../components/settings/AdvancedLlmForm';
 import { ChatGPTConnectSection } from '../components/settings/ChatGPTConnectSection';
@@ -20,8 +21,79 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
+
+type OrgRole = 'Member' | 'Admin' | 'Owner';
+type PermissionKey =
+  | 'manage_secrets'
+  | 'manage_mcp'
+  | 'manage_integrations'
+  | 'manage_application_settings'
+  | 'manage_api_keys'
+  | 'view_llm_settings'
+  | 'edit_llm_settings'
+  | 'view_billing'
+  | 'invite_user_to_organization'
+  | 'change_user_role:member'
+  | 'change_user_role:admin'
+  | 'change_user_role:owner'
+  | 'change_organization_name'
+  | 'delete_organization'
+  | 'add_credits';
+
+const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
+  Member: new Set([
+    'manage_secrets',
+    'manage_mcp',
+    'manage_integrations',
+    'manage_application_settings',
+    'manage_api_keys',
+    'view_llm_settings',
+  ]),
+  Admin: new Set([
+    'manage_secrets',
+    'manage_mcp',
+    'manage_integrations',
+    'manage_application_settings',
+    'manage_api_keys',
+    'view_llm_settings',
+    'edit_llm_settings',
+    'view_billing',
+    'invite_user_to_organization',
+    'change_user_role:member',
+    'change_user_role:admin',
+    'add_credits',
+  ]),
+  Owner: new Set([
+    'manage_secrets',
+    'manage_mcp',
+    'manage_integrations',
+    'manage_application_settings',
+    'manage_api_keys',
+    'view_llm_settings',
+    'edit_llm_settings',
+    'view_billing',
+    'invite_user_to_organization',
+    'change_user_role:member',
+    'change_user_role:admin',
+    'change_user_role:owner',
+    'change_organization_name',
+    'delete_organization',
+    'add_credits',
+  ]),
+};
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
@@ -32,22 +104,33 @@ const settingsTabs = [
   { id: 'secrets', label: 'Secrets', icon: Shield },
   { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'mcp', label: 'MCP', icon: Cloud },
+  { id: 'manage-team', label: 'Organization Members', icon: Users },
 ];
 
 const settingsLinks = [
-  { id: 'manage-account', label: 'Manage Account', icon: CreditCard, tabId: 'billing' },
-  { id: 'manage-team', label: 'Manage Team', icon: Users, tabId: 'user' },
-  { id: 'integrations', label: 'Integrations', icon: Puzzle, tabId: 'integrations' },
-  { id: 'llm', label: 'Language Model (LLM)', icon: Cpu, tabId: 'llm' },
-  { id: 'api-keys', label: 'API Keys', icon: Key, tabId: 'api-keys' },
-  { id: 'secrets', label: 'Secrets', icon: Shield, tabId: 'secrets' },
-  { id: 'mcp', label: 'MCP', icon: Cloud, tabId: 'mcp' },
+  { id: 'manage-team', label: 'Manage Team', icon: Users, tabId: 'manage-team', requiredPermission: 'invite_user_to_organization' },
+  { id: 'integrations', label: 'Integrations', icon: Puzzle, tabId: 'integrations', requiredPermission: 'manage_integrations' },
+  { id: 'llm', label: 'Language Model (LLM)', icon: Cpu, tabId: 'llm', requiredPermission: 'view_llm_settings' },
+  { id: 'api-keys', label: 'API Keys', icon: Key, tabId: 'api-keys', requiredPermission: 'manage_api_keys' },
+  { id: 'secrets', label: 'Secrets', icon: Shield, tabId: 'secrets', requiredPermission: 'manage_secrets' },
+  { id: 'mcp', label: 'MCP', icon: Cloud, tabId: 'mcp', requiredPermission: 'manage_mcp' },
+  { id: 'billing', label: 'Billing', icon: CreditCard, tabId: 'billing', requiredPermission: 'view_billing' },
 ];
 
 const orgOptions = [
   { id: 'personal', name: 'Personal Account', role: null, type: 'personal' },
-  { id: 'acme-admin', name: 'Acme Inc', role: 'Admin', type: 'org' },
-  { id: 'starlight-user', name: 'Starlight Labs', role: 'User', type: 'org' },
+  { id: 'acme-owner', name: 'Acme Inc', role: 'Owner', type: 'org' },
+  { id: 'starlight-admin', name: 'Starlight Labs', role: 'Admin', type: 'org' },
+  { id: 'nova-member', name: 'Nova Group', role: 'Member', type: 'org' },
+];
+
+const roleOptionsForTeam: OrgRole[] = ['Member', 'Admin', 'Owner'];
+
+const initialTeamMembers = [
+  { id: 'alice', email: 'alice@acme.org', role: 'Owner', status: 'active' },
+  { id: 'bob', email: 'bob@acme.org', role: 'Owner', status: 'active' },
+  { id: 'some', email: 'some@email.com', role: 'Member', status: 'invited' },
+  { id: 'separate', email: 'separate@email.com', role: 'Member', status: 'invited' },
 ];
 
 export interface SettingsScreenProps {
@@ -97,6 +180,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [advancedModel, setAdvancedModel] = useState('litellm_proxy/prod/claude-opus-4-5-20251101');
   const [advancedBaseUrl, setAdvancedBaseUrl] = useState('https://llm-proxy.app.all-hands.dev');
   const [uncontrolledOrgId, setUncontrolledOrgId] = useState(orgOptions[0]?.id ?? 'personal');
+  const [teamMembers, setTeamMembers] = useState(initialTeamMembers);
+  const [memberDeleteTarget, setMemberDeleteTarget] = useState<(typeof initialTeamMembers)[number] | null>(
+    null,
+  );
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteInput, setInviteInput] = useState('');
+  const [inviteEmails, setInviteEmails] = useState<string[]>([]);
+  const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   useEffect(() => {
@@ -121,6 +214,92 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   })();
   const isValidModelName = advancedModel.trim().length > 0 && !advancedModel.includes(' ');
   const selectedOrg = orgOptions.find((org) => org.id === selectedOrgId) ?? orgOptions[0];
+  const effectiveRole: OrgRole =
+    selectedOrg?.type === 'personal' ? 'Owner' : (selectedOrg?.role as OrgRole) ?? 'Member';
+  const hasPermission = (permission: PermissionKey) => rolePermissions[effectiveRole].has(permission);
+  const visibleSettingsLinks = settingsLinks.filter((item) => {
+    if (selectedOrg?.type === 'personal' && item.id === 'manage-team') {
+      return false;
+    }
+    return !item.requiredPermission || hasPermission(item.requiredPermission);
+  });
+  const canInviteMembers = hasPermission('invite_user_to_organization');
+  const canChangeRoles =
+    hasPermission('change_user_role:member') ||
+    hasPermission('change_user_role:admin') ||
+    hasPermission('change_user_role:owner');
+  const canAssignOwner = hasPermission('change_user_role:owner');
+
+  const handleMemberRoleChange = (memberId: string, role: OrgRole) => {
+    setTeamMembers((prev) =>
+      prev.map((member) => (member.id === memberId ? { ...member, role } : member)),
+    );
+  };
+
+  const handleMemberDelete = () => {
+    if (!memberDeleteTarget) return;
+    setTeamMembers((prev) => prev.filter((member) => member.id !== memberDeleteTarget.id));
+    setMemberDeleteTarget(null);
+  };
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
+  const addInviteEmail = (rawValue: string) => {
+    const normalized = rawValue.trim().replace(/,+$/, '');
+    if (!normalized) return;
+    setInviteEmails((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
+  };
+
+  const handleInviteInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' || event.key === ',' || event.key === ' ') {
+      event.preventDefault();
+      addInviteEmail(inviteInput);
+      setInviteInput('');
+    }
+  };
+
+  const handleInviteInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    if (value.includes(',') || value.includes(' ')) {
+      const tokens = value.split(/[,\s]+/).filter(Boolean);
+      tokens.forEach((token) => addInviteEmail(token));
+      setInviteInput('');
+      return;
+    }
+    setInviteInput(value);
+  };
+
+  const handleSendInvites = () => {
+    const pending = inviteInput.trim();
+    const combined = [...inviteEmails, ...(pending ? [pending] : [])];
+    const uniqueEmails = Array.from(new Set(combined.map((email) => email.trim()).filter(Boolean)));
+    if (uniqueEmails.length === 0) return;
+    setTeamMembers((prev) => {
+      const existing = new Set(prev.map((member) => member.email.toLowerCase()));
+      const newMembers = uniqueEmails
+        .filter((email) => !existing.has(email.toLowerCase()))
+        .map((email, index) => ({
+          id: `invite-${Date.now()}-${index}`,
+          email,
+          role: 'Member' as OrgRole,
+          status: 'invited' as const,
+        }));
+      return [...prev, ...newMembers];
+    });
+    setInviteInput('');
+    setInviteEmails([]);
+    setInviteModalOpen(false);
+    showToast(`Invites sent to ${uniqueEmails.length} email${uniqueEmails.length === 1 ? '' : 's'}.`);
+  };
+
+  useEffect(() => {
+    if (!toastVisible) return;
+    const timer = window.setTimeout(() => setToastVisible(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toastVisible]);
   const handleOrgChange = (orgId: string) => {
     if (controlledOrgId === undefined) {
       setUncontrolledOrgId(orgId);
@@ -210,20 +389,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
         <div className="flex flex-col gap-2">
-          {settingsLinks.map((item) => {
+          {visibleSettingsLinks.map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
                 onClick={() => handleTabClick(item.tabId)}
-                className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
+                className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
                   activeTab === item.tabId
                     ? 'bg-muted/60'
                     : 'hover:bg-muted/40'
                 }`}
               >
-                <Icon className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+                <Icon
+                  className={`w-5 h-5 ${
+                    activeTab === item.tabId
+                      ? 'text-white'
+                      : 'text-muted-foreground group-hover:text-white'
+                  }`}
+                />
+                <span
+                  className={`text-sm font-normal whitespace-nowrap ${
+                    activeTab === item.tabId
+                      ? 'text-white'
+                      : 'text-muted-foreground group-hover:text-white'
+                  }`}
+                >
                   {item.label}
                 </span>
               </button>
@@ -234,33 +425,53 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <div className="flex flex-col gap-2">
           <button
             onClick={() => handleTabClick('user')}
-            className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
+            className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
               activeTab === 'user'
                 ? 'bg-muted/60'
                 : 'hover:bg-muted/40'
             }`}
           >
-            <User className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+            <User
+              className={`w-5 h-5 ${
+                activeTab === 'user' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+              }`}
+            />
+            <span
+              className={`text-sm font-normal whitespace-nowrap ${
+                activeTab === 'user' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+              }`}
+            >
               User
             </span>
           </button>
           <button
             onClick={() => handleTabClick('app')}
-            className={`flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
+            className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
               activeTab === 'app'
                 ? 'bg-muted/60'
                 : 'hover:bg-muted/40'
             }`}
           >
-            <SettingsIcon className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+            <SettingsIcon
+              className={`w-5 h-5 ${
+                activeTab === 'app' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+              }`}
+            />
+            <span
+              className={`text-sm font-normal whitespace-nowrap ${
+                activeTab === 'app' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+              }`}
+            >
               Application
             </span>
           </button>
-          <button className="flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/40">
-            <Plus className="w-5 h-5 text-muted-foreground" />
-            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap">
+          <button
+            type="button"
+            onClick={() => setCreateOrgModalOpen(true)}
+            className="group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/40"
+          >
+            <Plus className="w-5 h-5 text-muted-foreground group-hover:text-white" />
+            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap group-hover:text-white">
               Create New Organization
             </span>
           </button>
@@ -270,7 +481,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {/* Main Content */}
       <main className={mainContentScrollable ? 'flex-1 overflow-auto' : 'flex-1'}>
         <div className="flex flex-col gap-6 h-full">
-          {activeTabLabel && (
+          {activeTabLabel && activeTab !== 'manage-team' && (
             <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
           )}
 
@@ -300,6 +511,87 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Manage Team Content */}
+          {activeTab === 'manage-team' && (
+            <div className="flex-1 overflow-auto">
+              <div className="flex flex-col gap-6 w-full">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold leading-6 text-foreground">
+                      Organization Members
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Manage access and roles for your organization.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!canInviteMembers}
+                    onClick={() => setInviteModalOpen(true)}
+                    className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Invite Organization Member
+                  </button>
+                </div>
+
+                <div className="rounded-lg border border-border bg-card divide-y divide-border">
+                  {teamMembers.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-foreground">{member.email}</span>
+                        {member.status === 'invited' && (
+                          <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                            Invited
+                          </span>
+                        )}
+                      </div>
+                      {member.role === 'Owner' ? (
+                        <span className="text-xs text-muted-foreground">Owner</span>
+                      ) : canChangeRoles ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                              aria-label={`Change role for ${member.email}`}
+                            >
+                              {member.role}
+                              <ChevronDown className="h-3.5 w-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuRadioGroup
+                              value={member.role}
+                              onValueChange={(value) => handleMemberRoleChange(member.id, value as OrgRole)}
+                            >
+                              {roleOptionsForTeam
+                                .filter((role) => (role === 'Owner' ? canAssignOwner : true))
+                                .map((role) => (
+                                  <DropdownMenuRadioItem key={role} value={role}>
+                                    {role}
+                                  </DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => setMemberDeleteTarget(member)}
+                              className="gap-2 text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Delete user
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">{member.role}</span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -870,6 +1162,193 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           )}
         </div>
       </main>
+  <Dialog
+    open={Boolean(memberDeleteTarget)}
+    onOpenChange={(open) => !open && setMemberDeleteTarget(null)}
+  >
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Delete member</DialogTitle>
+        <DialogDescription>
+          Remove {memberDeleteTarget?.email} from this organization? This action cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+        <button
+          type="button"
+          onClick={() => setMemberDeleteTarget(null)}
+          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleMemberDelete}
+          className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Delete
+        </button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog
+    open={inviteModalOpen}
+    onOpenChange={(open) => {
+      setInviteModalOpen(open);
+      if (!open) {
+        setInviteInput('');
+        setInviteEmails([]);
+      }
+    }}
+  >
+    <DialogContent className="sm:max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Invite organization members</DialogTitle>
+        <DialogDescription>
+          Add one or more email addresses. Press space or comma to add multiple.
+        </DialogDescription>
+      </DialogHeader>
+      <div className="space-y-3">
+        <label className="text-sm text-foreground" htmlFor="invite-emails-input">
+          Email addresses
+        </label>
+        <div className="min-h-[44px] rounded-md border border-border bg-muted/40 px-2 py-2 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+          <div className="flex flex-wrap gap-2">
+            {inviteEmails.map((email) => (
+              <span
+                key={email}
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-xs text-foreground"
+              >
+                {email}
+                <button
+                  type="button"
+                  onClick={() => setInviteEmails((prev) => prev.filter((value) => value !== email))}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label={`Remove ${email}`}
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              </span>
+            ))}
+            <input
+              id="invite-emails-input"
+              type="text"
+              value={inviteInput}
+              onChange={handleInviteInputChange}
+              onKeyDown={handleInviteInputKeyDown}
+              placeholder={inviteEmails.length === 0 ? 'name@company.com' : ''}
+              className="flex-1 min-w-[160px] bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+        <button
+          type="button"
+          onClick={() => setInviteModalOpen(false)}
+          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleSendInvites}
+          disabled={inviteEmails.length === 0 && inviteInput.trim().length === 0}
+          className="h-9 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Send invites
+        </button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog open={createOrgModalOpen} onOpenChange={setCreateOrgModalOpen}>
+    <DialogContent className="sm:max-w-xl bg-card text-foreground border border-border">
+      <DialogHeader>
+        <div className="flex justify-start pb-4">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="96"
+            height="96"
+            viewBox="0 0 188 188"
+            fill="none"
+            aria-hidden="true"
+          >
+            <rect width="188" height="188" rx="16" fill="#2b2b2b" />
+            <path d="M94 36.2002L144 65.0595V122.778L94 151.637L44 122.778V65.0595L94 36.2002Z" fill="#2b2b2b" />
+            <path d="M144 65.0595L94 36.2002L44 65.0595M144 65.0595V122.778L94 151.637M144 65.0595L135.195 70.1417M94 151.637L44 122.778V65.0595M94 151.637V139.295M44 65.0595L52.805 70.1417M94 93.9188L83.5605 87.8933M94 93.9188L104.44 87.8933M94 93.9188V104.809M94 47.4535L52.805 70.1417M94 47.4535L135.195 70.1417M94 47.4535V59.0698M52.805 70.1417V116.425M135.195 70.1417V116.425M94 59.0698L62.7722 75.8946M94 59.0698L125.228 75.8946M62.7722 75.8946L73.121 81.8677M62.7722 75.8946V110.254M125.228 75.8946L114.879 81.8677M125.228 75.8946V110.254M94 70.1417L73.121 81.8677M94 70.1417L114.879 81.8677M94 70.1417V82.0302M73.121 81.8677V104.809M114.879 81.8677V104.809M94 82.0302L83.5605 87.8933M94 82.0302L104.44 87.8933M83.5605 87.8933V98.4565M104.44 87.8933V98.4565M94 139.295L135.195 116.425M94 139.295L52.805 116.425M135.195 116.425L125.228 110.254M94 127.497L125.228 110.254M94 127.497V116.425M94 127.497L62.7722 110.254M94 116.425L114.879 104.809M94 116.425L73.121 104.809M114.879 104.809L104.44 98.4565M73.121 104.809L83.5605 98.4565M62.7722 110.254L52.805 116.425M83.5605 98.4565L94 104.809M104.44 98.4565L94 104.809" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <DialogTitle className="text-xl font-semibold leading-6 text-foreground">
+          Enterprise control meets open-source innovation
+        </DialogTitle>
+        <DialogDescription className="text-sm text-muted-foreground mb-12">
+          OpenHands Enterprise gives you the power of autonomous coding agents with the governance,
+          security, and compliance your organization demands.
+        </DialogDescription>
+        <div className="h-3" aria-hidden="true" />
+        <div className="rounded-lg border border-border bg-muted/20 p-4 mb-3">
+          <div className="grid gap-3 text-sm text-muted-foreground">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <span>Containerized sandbox runtime for safe autonomy</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <span>Secure enterprise platform with fine-grained access control</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <span>Self-host or private-cloud deployment</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <span>
+                Bring your own LLM via Anthropic, OpenAI, Bedrock, or any other model provider
+              </span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <span>Integrations with enterprise ecosystems</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
+              <span>Dedicated technical and account-level support</span>
+            </div>
+          </div>
+        </div>
+      </DialogHeader>
+      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-start sm:space-x-2">
+        <a
+          href="https://openhands.dev/contact"
+          target="_blank"
+          rel="noreferrer noopener"
+          className="h-9 inline-flex items-center justify-center px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors"
+        >
+          Contact Sales
+        </a>
+        <button
+          type="button"
+          onClick={() => setCreateOrgModalOpen(false)}
+          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+        >
+          Close
+        </button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  {toastMessage && (
+    <div
+      className={`fixed bottom-6 right-6 z-50 transition-all ${
+        toastVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+      }`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="rounded-md border border-blue-500/40 bg-blue-500/15 px-4 py-3 text-blue-100 shadow-lg">
+        <div className="text-sm text-blue-100">{toastMessage}</div>
+      </div>
+    </div>
+  )}
     </div>
   );
 };

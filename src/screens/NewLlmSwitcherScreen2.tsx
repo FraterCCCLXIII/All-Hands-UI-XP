@@ -21,13 +21,14 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 
-const roleOptions = ['Personal', 'Org User', 'Org Admin'] as const;
+const roleOptions = ['Personal', 'Org Member', 'Org Admin', 'Org Owner'] as const;
 type RoleOption = (typeof roleOptions)[number];
 
 const orgOptions = [
   { id: 'personal', name: 'Personal Account', role: null, type: 'personal' },
-  { id: 'acme-admin', name: 'Acme Inc', role: 'Admin', type: 'org' },
-  { id: 'starlight-user', name: 'Starlight Labs', role: 'User', type: 'org' },
+  { id: 'acme-owner', name: 'Acme Inc', role: 'Owner', type: 'org' },
+  { id: 'starlight-admin', name: 'Starlight Labs', role: 'Admin', type: 'org' },
+  { id: 'nova-member', name: 'Nova Group', role: 'Member', type: 'org' },
 ] as const;
 
 const defaultProfiles = [
@@ -124,7 +125,15 @@ export function NewLlmSwitcherScreen2() {
       setSelectedRole('Personal');
       return;
     }
-    setSelectedRole(org.role === 'Admin' ? 'Org Admin' : 'Org User');
+    if (org.role === 'Owner') {
+      setSelectedRole('Org Owner');
+      return;
+    }
+    if (org.role === 'Admin') {
+      setSelectedRole('Org Admin');
+      return;
+    }
+    setSelectedRole('Org Member');
   };
 
   const handleEditProfile = (profile: (typeof defaultProfiles)[number]) => {
@@ -154,7 +163,7 @@ export function NewLlmSwitcherScreen2() {
         <div className="space-y-1">
           <h3 className="text-lg font-semibold text-foreground">Available Models</h3>
         </div>
-        {selectedRole !== 'Org User' && (
+        {selectedRole !== 'Org Member' && (
           <button
             type="button"
             onClick={handleStartAdd}
@@ -179,7 +188,7 @@ export function NewLlmSwitcherScreen2() {
                 </span>
               )}
             </div>
-            {selectedRole !== 'Org User' && (
+            {selectedRole !== 'Org Member' && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

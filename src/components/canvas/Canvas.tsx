@@ -5,7 +5,7 @@ import { TerminalDrawer } from './TerminalDrawer';
 import { MessageType } from '../../types/message';
 import { ThemeElement } from '../../types/theme';
 import { Gripper } from '../common/Gripper';
-import { Protip } from './Protip';
+import { Protip, type ProtipVariant } from './Protip';
 import { cn } from '../../lib/utils';
 
 export type CanvasContentType = 'preview' | 'code' | 'docs' | 'share' | 'run';
@@ -15,6 +15,8 @@ interface CanvasLayoutProps {
   getThemeClasses: (element: ThemeElement) => string;
   children: React.ReactNode;
   showTip?: boolean;
+  tipVariant?: ProtipVariant;
+  onTipDismiss?: () => void;
 }
 
 interface CanvasContentProps {
@@ -30,6 +32,8 @@ interface CanvasContentProps {
   minWidth?: number;
   maxWidth?: number;
   showTip?: boolean;
+  tipVariant?: ProtipVariant;
+  onTipDismiss?: () => void;
 }
 
 interface CanvasContentTypeProps {
@@ -41,6 +45,8 @@ interface CanvasContentTypeProps {
   minWidth?: number;
   maxWidth?: number;
   showTip?: boolean;
+  tipVariant?: ProtipVariant;
+  onTipDismiss?: () => void;
 }
 
 interface CanvasErrorProps {
@@ -48,6 +54,8 @@ interface CanvasErrorProps {
   getThemeClasses: (element: ThemeElement) => string;
   error: string;
   showTip?: boolean;
+  tipVariant?: ProtipVariant;
+  onTipDismiss?: () => void;
 }
 
 const contentTypeToView: Record<CanvasContentType, 'changes' | 'code' | 'terminal' | 'browser' | 'preview'> = {
@@ -66,6 +74,8 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasCon
 
   const contentType = 'contentType' in props ? props.contentType : null;
   const showTip = props.showTip ?? false;
+  const tipVariant = props.tipVariant ?? 'protip';
+  const onTipDismiss = props.onTipDismiss;
 
   useEffect(() => {
     if (contentType) {
@@ -199,7 +209,7 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasCon
           )}
         >
           <div className="pointer-events-auto w-full max-w-2xl">
-            <Protip getThemeClasses={props.getThemeClasses} />
+            <Protip variant={tipVariant} onDismiss={onTipDismiss} />
           </div>
         </div>
         {'onResize' in props && props.onResize && (

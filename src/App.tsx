@@ -25,6 +25,7 @@ import { Gripper } from './components/common/Gripper';
 import { InspectorOverlay } from './components/common/InspectorOverlay';
 import { conversationSummaries } from './data/conversations';
 import { ChatWindowTabId } from './components/chat/ChatWindowTabs';
+import type { ProtipVariant } from './components/canvas/Protip';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -128,6 +129,8 @@ const themeClasses: ThemeClassMap = {
   },
 };
 
+type CanvasTipVariant = 'none' | ProtipVariant;
+
 const actionSlugs: Record<string, string> = {
   code: 'chat',
   dashboard: 'dashboard',
@@ -150,7 +153,7 @@ function App() {
   const [canvasVisible, setCanvasVisible] = useState(false);
   const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
   const [showRefreshNotification, setShowRefreshNotification] = useState(false);
-  const [showCanvasTip, setShowCanvasTip] = useState(false);
+  const [canvasTipVariant, setCanvasTipVariant] = useState<CanvasTipVariant>('none');
   const [showCanvasLoading, setShowCanvasLoading] = useState(true);
   const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
@@ -174,6 +177,7 @@ function App() {
   const [isActiveChatView, setIsActiveChatView] = useState(false);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
+  const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
@@ -449,8 +453,8 @@ function App() {
                       getThemeClasses={getThemeClasses}
                       showRefreshNotification={showRefreshNotification}
                       onToggleRefreshNotification={() => setShowRefreshNotification((prev) => !prev)}
-                      showCanvasTip={showCanvasTip}
-                      onToggleCanvasTip={() => setShowCanvasTip((prev) => !prev)}
+                      canvasTipVariant={canvasTipVariant}
+                      onCanvasTipVariantChange={setCanvasTipVariant}
                       showCanvasLoading={showCanvasLoading}
                       onToggleCanvasLoading={() => setShowCanvasLoading((prev) => !prev)}
                       chatContentMode={chatContentMode}
@@ -566,6 +570,8 @@ function App() {
                             getThemeClasses={getThemeClasses}
                             contentType={canvasContentType}
                             showTip={showCanvasTip}
+                            tipVariant={canvasTipVariant === 'none' ? 'protip' : canvasTipVariant}
+                            onTipDismiss={() => setCanvasTipVariant('none')}
                             onResize={handleCanvasResize}
                             initialWidth={canvasWidth}
                             minWidth={minCanvasWidth}

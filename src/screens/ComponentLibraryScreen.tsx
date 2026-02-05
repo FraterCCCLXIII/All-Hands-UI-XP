@@ -1053,8 +1053,8 @@ export function ComponentLibraryScreen() {
             name: 'Protip',
             path: 'components/canvas/Protip.tsx',
             description: 'Informational tip card.',
-            usage: `<Protip getThemeClasses={...} />`,
-            preview: <Protip getThemeClasses={previewThemeClasses} />,
+            usage: `<Protip />`,
+            preview: <Protip />,
           },
           {
             id: 'canvas-terminal-drawer',

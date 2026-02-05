@@ -45,7 +45,7 @@ import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
-import { Protip } from '../components/canvas/Protip';
+import { Protip, type ProtipVariant } from '../components/canvas/Protip';
 import { ChatStartScreen } from '../components/chat/ChatStartScreen';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
@@ -65,8 +65,8 @@ interface ActiveChatScreenProps {
   getThemeClasses: (element: ThemeElement) => string;
   showRefreshNotification: boolean;
   onToggleRefreshNotification: () => void;
-  showCanvasTip: boolean;
-  onToggleCanvasTip: () => void;
+  canvasTipVariant: 'none' | ProtipVariant;
+  onCanvasTipVariantChange: (variant: 'none' | ProtipVariant) => void;
   showCanvasLoading: boolean;
   onToggleCanvasLoading: () => void;
   chatContentMode: 'skeleton' | 'conversation' | 'start';
@@ -95,6 +95,11 @@ const LLM_MODELS = ['Claude 3.5 Sonnet', 'Claude 3 Opus', 'GPT-4o', 'GPT-4o mini
 const CHAT_STATUS_MESSAGES = ['Starting', 'Connecting...', 'Loading...', 'Ready'] as const;
 const CHAT_STATUS_CYCLE_MS = 500;
 const COMMAND_LIST_ID = 'chat-command-list';
+const CANVAS_TIP_OPTIONS: Array<{ id: 'none' | ProtipVariant; label: string }> = [
+  { id: 'none', label: 'None' },
+  { id: 'protip', label: 'Protip 1' },
+  { id: 'cli', label: 'CLI' },
+];
 
 type CommandItem = {
   id: string;
@@ -116,8 +121,8 @@ export function ActiveChatScreen({
   getThemeClasses,
   showRefreshNotification,
   onToggleRefreshNotification,
-  showCanvasTip,
-  onToggleCanvasTip,
+  canvasTipVariant,
+  onCanvasTipVariantChange,
   showCanvasLoading,
   onToggleCanvasLoading,
   chatContentMode,
@@ -157,6 +162,8 @@ export function ActiveChatScreen({
   const blurTimeoutRef = useRef<number | null>(null);
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const showCanvasTip = canvasTipVariant !== 'none';
+  const canvasTipLabel = CANVAS_TIP_OPTIONS.find((option) => option.id === canvasTipVariant)?.label ?? 'None';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -1489,9 +1496,14 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               : 'animate-out fade-out-0 zoom-out-95 slide-out-to-bottom-2 max-h-0 opacity-0 mb-0 pointer-events-none'
                           )}
                         >
-                          <div className="w-full max-w-2xl">
-                            <Protip getThemeClasses={getThemeClasses} />
-                          </div>
+                          {showCanvasTip && (
+                            <div className="w-full max-w-2xl">
+                              <Protip
+                                variant={canvasTipVariant === 'none' ? 'protip' : canvasTipVariant}
+                                onDismiss={() => onCanvasTipVariantChange('none')}
+                              />
+                            </div>
+                          )}
                         </div>
                         <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden />
                         <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
@@ -1531,23 +1543,29 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
           </div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Canvas Tip</div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={showCanvasTip}
-              onClick={onToggleCanvasTip}
-              className={cn(
-                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
-                showCanvasTip ? 'bg-foreground/80' : 'bg-muted/60'
-              )}
-            >
-              <span
-                className={cn(
-                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
-                  showCanvasTip ? 'translate-x-4' : 'translate-x-0'
-                )}
-              />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
+                  aria-label="Canvas tip"
+                >
+                  <span className="whitespace-nowrap">{canvasTipLabel}</span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+                {CANVAS_TIP_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    className="cursor-pointer"
+                    onSelect={() => onCanvasTipVariantChange(option.id)}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Canvas Loading</div>
