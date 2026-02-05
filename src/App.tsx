@@ -163,6 +163,7 @@ function App() {
   const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
   const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
   const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('code');
+  const [isEnterpriseCtaVisible, setIsEnterpriseCtaVisible] = useState(true);
   // Canvas resizing state
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
   const minCanvasWidth = 30; // Minimum 30% width
@@ -461,28 +462,37 @@ function App() {
                     />
                   </div>
                 )}
-                {!activeFlowPrototype && showClaimCreditsPrompt && (
-                  <div className="fixed bottom-6 right-6 z-50">
-                    <div className="relative flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-lg">
-                      <button
-                        type="button"
-                        onClick={() => setShowClaimCreditsPrompt(false)}
-                        className="absolute right-0 top-0 inline-flex h-7 w-7 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors"
-                        aria-label="Dismiss claim free credits"
-                      >
-                        ×
-                      </button>
-                      <span className="text-sm font-medium text-foreground">Claim Free Credits</span>
-                      <button
-                        type="button"
-                        onClick={handleClaimCreditsOpen}
-                        className="h-8 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-                      >
-                        Claim now
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <AnimatePresence>
+                  {!activeFlowPrototype && showClaimCreditsPrompt && (
+                    <motion.div
+                      className="fixed right-6 z-50"
+                      style={{ bottom: isEnterpriseCtaVisible ? 'calc(1.5rem + 220px + 12px)' : '1.5rem' }}
+                      initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                    >
+                      <div className="relative flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => setShowClaimCreditsPrompt(false)}
+                          className="absolute right-0 top-0 inline-flex h-7 w-7 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors"
+                          aria-label="Dismiss claim free credits"
+                        >
+                          ×
+                        </button>
+                        <span className="text-sm font-medium text-foreground">Claim Free Credits</span>
+                        <button
+                          type="button"
+                          onClick={handleClaimCreditsOpen}
+                          className="h-8 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
+                        >
+                          Claim now
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 {isDashboardView && <DashboardScreen />}
                 {isSkillsView && <SkillsScreen />}
                 {isComponentsView && <ComponentLibraryScreen />}
@@ -526,6 +536,7 @@ function App() {
                         onBranchSelect={handleBranchSelect}
                         onCreateNewRepo={handleCreateNewRepo}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
+                        onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />

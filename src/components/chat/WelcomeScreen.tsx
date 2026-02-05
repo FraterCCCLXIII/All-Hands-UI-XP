@@ -54,6 +54,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [repoInput, setRepoInput] = useState('');
   const [branchInput, setBranchInput] = useState('');
   const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
+  const [showGettingStarted, setShowGettingStarted] = useState(true);
 
   const filteredRecentRepos = useMemo(
     () =>
@@ -110,7 +111,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       <span className="sr-only">{theme}</span>
       <div className="px-0 pt-4 bg-transparent min-h-screen flex flex-col pt-[35px] rounded-xl lg:px-[42px] lg:pt-[42px] pb-8">
         <header className="flex flex-col items-center gap-12">
-          <div className="w-fit flex flex-col md:flex-row items-start md:items-center justify-center gap-1 rounded-[12px] bg-muted text-foreground text-sm font-normal m-1 md:h-9.5 px-4 pb-1 md:px-[15px] md:py-0 border border-border">
+          <div
+            className={`relative w-fit flex flex-col md:flex-row items-start md:items-center justify-center gap-1 rounded-lg border border-border bg-card px-4 py-3 text-foreground text-sm font-normal shadow-lg pr-10 transition-opacity duration-200 ease-out ${
+              showGettingStarted ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+            aria-hidden={!showGettingStarted}
+          >
             <span>New around here? Not sure where to start?</span>
             <a
               href="https://docs.all-hands.dev/usage/getting-started"
@@ -121,6 +127,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               Click here
               <ExternalLink className="w-3 h-3" />
             </a>
+            <button
+              type="button"
+              onClick={() => setShowGettingStarted(false)}
+              className="absolute right-0 top-0 inline-flex h-7 w-7 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors"
+              aria-label="Dismiss getting started prompt"
+            >
+              ×
+            </button>
           </div>
           <div className="h-[80px] flex items-center">
             <h1 className="text-[32px] text-foreground font-bold leading-5 tracking-[-1px]">Let&apos;s Start Building!</h1>

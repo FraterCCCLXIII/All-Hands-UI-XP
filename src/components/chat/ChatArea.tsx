@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Message } from './Message';
 import { MessageInputPanel } from './MessageInputPanel';
 import { GitControls } from '../git/GitControls';
+import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 import { WelcomeScreen } from './WelcomeScreen';
 import { DrawerTabs, DrawerTab } from './DrawerTabs';
 import { TaskList, Task } from './TaskList';
@@ -30,6 +32,7 @@ interface ChatAreaProps {
   activeChatWindowTab: ChatWindowTabId;
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
   disableAutoScroll?: boolean;
+  onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -52,11 +55,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   activeChatWindowTab: _activeChatWindowTab,
   onChatWindowTabChange: _onChatWindowTabChange,
   disableAutoScroll = false,
+  onEnterpriseCtaVisibilityChange,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
   const [drawerActiveTab, setDrawerActiveTab] = useState<DrawerTab['id']>('tasks');
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
+  const [showEnterpriseCta, setShowEnterpriseCta] = useState(true);
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: 'analyze_css_modules',
@@ -135,6 +140,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     onWelcomeScreenChange?.(showWelcomeScreen);
   }, [showWelcomeScreen, onWelcomeScreenChange]);
 
+  useEffect(() => {
+    onEnterpriseCtaVisibilityChange?.(showEnterpriseCta);
+  }, [showEnterpriseCta, onEnterpriseCtaVisibilityChange]);
+
   const handleWelcomeScreenClose = () => {
     setShowWelcomeScreen(false);
   };
@@ -172,7 +181,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
 
   if (showWelcomeScreen) {
     return (
-      <div className={`flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
+      <div className={`relative flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
         <WelcomeScreen
           theme={theme}
           getThemeClasses={getThemeClasses}
@@ -182,12 +191,25 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           onCreateNewRepo={onCreateNewRepo}
           onClose={handleWelcomeScreenClose}
         />
+        <AnimatePresence>
+          {showEnterpriseCta && (
+            <motion.div
+              className="pointer-events-none fixed bottom-6 right-6 z-50 w-[320px] max-w-[90vw]"
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <EnterpriseCtaCard className="pointer-events-auto" onDismiss={() => setShowEnterpriseCta(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     );
   }
 
   return (
-    <div className={`flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
+    <div className={`relative flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
       <div className="flex items-center justify-end px-2 pt-2">
         <span className="sr-only">Chat window tabs (now in the top bar)</span>
       </div>
@@ -207,6 +229,19 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         ))}
         <div ref={messagesEndRef} />
       </div>
+      <AnimatePresence>
+        {showEnterpriseCta && (
+          <motion.div
+            className="pointer-events-none fixed bottom-6 right-6 z-50 w-[320px] max-w-[90vw]"
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <EnterpriseCtaCard className="pointer-events-auto" onDismiss={() => setShowEnterpriseCta(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div>
         <div className="flex-shrink-0 w-full flex justify-center">
           <div
