@@ -18,6 +18,13 @@ import {
   NewLlmSwitcherScreen,
   NewLlmSwitcherScreen2,
   SaasCreditCardFlow,
+  NewUserExperienceFlowchart,
+  SaasCreditCardFlowchart,
+  UserJourneyCtaFlowchart,
+  ComponentLibraryFlowchart,
+  NewComponentsFlowchart,
+  NewLlmSwitcherFlowchart,
+  NewLlmSwitcher2Flowchart,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -173,10 +180,12 @@ function App() {
   const maxCanvasWidth = 70; // Maximum 70% width
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
+  const [activeFlowchart, setActiveFlowchart] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<string | null>(null);
   const [isActiveChatView, setIsActiveChatView] = useState(false);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
+  const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
   const isSkillsView = activeNavItem === 'skills';
@@ -185,6 +194,9 @@ function App() {
   const isNewComponentsView = activeNavItem === 'new-components';
   const isNewLlmSwitcherView = activeNavItem === 'new-llm-switcher';
   const isNewLlmSwitcherView2 = activeNavItem === 'new-llm-switcher-2';
+  const showFlowchartView = Boolean(activeFlowchart);
+  const showStandaloneFlow = Boolean(activeFlowPrototype);
+  const showMainApp = !showFlowchartView && !showStandaloneFlow;
   const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView && !isNewLlmSwitcherView2;
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
@@ -280,6 +292,7 @@ function App() {
   const handleNavItemClick = useCallback(
     (action: string) => {
       setActiveFlowPrototype(null);
+      setActiveFlowchart(null);
       if (action === 'conversations') {
         setIsConversationDrawerOpen((prev) => {
           const next = !prev;
@@ -305,18 +318,15 @@ function App() {
   }, []);
 
   const handleFlowPrototypeClick = useCallback((flowId: string) => {
-    setActiveFlowPrototype(flowId);
-    if (flowId === 'new-user-experience') {
-      window.location.hash = '#/new-user-experience';
-      return;
-    }
-    if (flowId === 'saas-credit-card') {
-      window.location.hash = '#/saas-credit-card';
-    }
+    setActiveFlowPrototype(null);
+    setActiveFlowchart(flowId);
+    setIsConversationDrawerOpen(false);
+    window.location.hash = `#/flows/${flowId}`;
   }, []);
 
   const handleExitFlowPrototype = useCallback(() => {
     setActiveFlowPrototype(null);
+    setActiveFlowchart(null);
     window.location.hash = actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
   }, [lastNonDrawerNavItem]);
 
@@ -344,17 +354,29 @@ function App() {
   useEffect(() => {
     const syncFromHash = () => {
       const hash = window.location.hash.replace(/^#\/?/, '');
+      if (hash.startsWith('flows/')) {
+        const flowId = hash.split('/')[1] ?? null;
+        setActiveFlowchart(flowId);
+        setActiveFlowPrototype(null);
+        setIsActiveChatView(false);
+        setIsConversationDrawerOpen(false);
+        setSettingsTab(null);
+        return;
+      }
       if (hash === 'new-user-experience') {
         setActiveFlowPrototype('new-user-experience');
+        setActiveFlowchart(null);
         setIsActiveChatView(false);
         return;
       }
       if (hash === 'saas-credit-card') {
         setActiveFlowPrototype('saas-credit-card');
+        setActiveFlowchart(null);
         setIsActiveChatView(false);
         return;
       }
       setActiveFlowPrototype(null);
+      setActiveFlowchart(null);
       if (hash === 'chat-active') {
         setIsActiveChatView(true);
         setActiveNavItem('code');
@@ -400,7 +422,7 @@ function App() {
             exit={{ opacity: 0 }}
             className="flex-1 flex relative overflow-hidden"
           >
-            {!activeFlowPrototype && (
+            {!isEmbedded && (
               <LeftNav
                 theme={theme}
                 getThemeClasses={getThemeClasses}
@@ -415,20 +437,48 @@ function App() {
               />
             )}
             <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype ? '' : 'ml-16'}`}
+              className={`flex-1 flex flex-col transition-all duration-200 ${isEmbedded ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
-              <InspectorOverlay
-                enabled={isInspectorEnabled}
-                onRequestDisable={() => setIsInspectorEnabled(false)}
-              />
-              {activeFlowPrototype === 'new-user-experience' ? (
-                <LoginScreen onBack={handleExitFlowPrototype} />
-              ) : activeFlowPrototype === 'saas-credit-card' ? (
-                <SaasCreditCardFlow onSkip={handleClaimCreditsSkip} onComplete={handleClaimCreditsComplete} />
+              {showMainApp && !isEmbedded && (
+                <InspectorOverlay
+                  enabled={isInspectorEnabled}
+                  onRequestDisable={() => setIsInspectorEnabled(false)}
+                />
+              )}
+              {showFlowchartView ? (
+                <>
+                  {activeFlowchart === 'new-user-experience' && (
+                    <NewUserExperienceFlowchart onExit={handleExitFlowPrototype} />
+                  )}
+                  {activeFlowchart === 'saas-credit-card' && (
+                    <SaasCreditCardFlowchart onExit={handleExitFlowPrototype} />
+                  )}
+                  {activeFlowchart === 'user-journey-cta' && (
+                    <UserJourneyCtaFlowchart onExit={handleExitFlowPrototype} />
+                  )}
+                  {activeFlowchart === 'component-library' && (
+                    <ComponentLibraryFlowchart onExit={handleExitFlowPrototype} />
+                  )}
+                  {activeFlowchart === 'new-components' && (
+                    <NewComponentsFlowchart onExit={handleExitFlowPrototype} />
+                  )}
+                  {activeFlowchart === 'new-llm-switcher' && (
+                    <NewLlmSwitcherFlowchart onExit={handleExitFlowPrototype} />
+                  )}
+                  {activeFlowchart === 'new-llm-switcher-2' && (
+                    <NewLlmSwitcher2Flowchart onExit={handleExitFlowPrototype} />
+                  )}
+                </>
+              ) : showStandaloneFlow ? (
+                activeFlowPrototype === 'new-user-experience' ? (
+                  <LoginScreen onBack={handleExitFlowPrototype} />
+                ) : (
+                  <SaasCreditCardFlow onSkip={handleClaimCreditsSkip} onComplete={handleClaimCreditsComplete} />
+                )
               ) : (
                 <>
-              {showChatView && !isWelcomeScreenActive && !isActiveChatView && (
+              {showChatView && !isWelcomeScreenActive && !isActiveChatView && !isEmbedded && (
                     <TopBar
                   theme={theme}
                   getThemeClasses={getThemeClasses}
@@ -588,7 +638,7 @@ function App() {
                   </div>
                 )}
               </div>
-              {showChatView && showSharePreview && (
+              {showChatView && showSharePreview && !isEmbedded && (
                 <SharePreview
                   shareUrl={window.location.href}
                   onClose={() => setShowSharePreview(false)}

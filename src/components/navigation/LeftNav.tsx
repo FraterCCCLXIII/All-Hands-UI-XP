@@ -96,12 +96,12 @@ const flowPrototypes = [
   {
     id: 'user-journey-cta',
     label: 'User Journey - Create in-app call-to-actions (CTAs)',
-    navAction: 'code',
+    flowId: 'user-journey-cta',
   },
-  { id: 'component-library', label: 'Component Library', navAction: 'components' },
-  { id: 'new-components', label: 'New Components', navAction: 'new-components' },
-  { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
-  { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', navAction: 'new-llm-switcher-2' },
+  { id: 'component-library', label: 'Component Library', flowId: 'component-library' },
+  { id: 'new-components', label: 'New Components', flowId: 'new-components' },
+  { id: 'new-llm-switcher', label: 'New LLM Switcher', flowId: 'new-llm-switcher' },
+  { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', flowId: 'new-llm-switcher-2' },
 ];
 
 export const LeftNav: React.FC<LeftNavProps> = ({
@@ -195,13 +195,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
         })}
       </div>
       <div className="mt-auto px-2 space-y-2">
-        {/* New flow prototypes */}
+        {/* Flowchart entry points */}
         <Popover>
           <PopoverTrigger asChild>
             <button
               type="button"
               className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
-              aria-label="New flow prototypes"
+              aria-label="Flowchart library"
             >
               <Box className="w-5 h-5" />
             </button>
@@ -213,17 +213,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-56 p-3"
           >
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-              New flow prototypes
+              Flowcharts
             </div>
             {flowPrototypes.map((flow) => (
               <button
                 key={flow.id}
                 type="button"
                 onClick={() => {
-                  if (flow.navAction) {
-                    onNavItemClick(flow.navAction);
-                    return;
-                  }
                   onFlowPrototypeClick?.(flow.flowId ?? flow.id);
                 }}
                 className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
