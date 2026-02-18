@@ -54,6 +54,7 @@ export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
             </motion.button>
             <input
               type="text"
+              data-tour-id="chat.message-input"
               className={`w-full ${getThemeClasses('input-bg')} ${getThemeClasses('text')} pl-3 pr-10 py-2 rounded-md focus:outline-none text-sm ${getThemeClasses('placeholder-text')}`}
               placeholder="What do you want to build?"
               value={newMessage}

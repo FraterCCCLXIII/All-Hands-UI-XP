@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlowchartLayout, FlowchartNode, FlowchartEdge } from '../../components/flowchart/FlowchartLayout';
+import { flowchartLinks } from './flowchartRegistry';
 
 const nodes: FlowchartNode[] = [
   {
@@ -60,6 +61,11 @@ export const SaasCreditCardFlowchart: React.FC<{ onExit: () => void }> = ({ onEx
     description="Show the journey from credit card collection to usage monitoring."
     nodes={nodes}
     edges={edges}
+    flows={flowchartLinks}
+    activeFlowId="saas-credit-card"
     onExit={onExit}
+    onFlowSelect={(flowId) => {
+      window.location.hash = `#/flows/${flowId}`;
+    }}
   />
 );

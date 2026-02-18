@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlowchartLayout, FlowchartNode, FlowchartEdge } from '../../components/flowchart/FlowchartLayout';
+import { flowchartLinks } from './flowchartRegistry';
 
 const nodes: FlowchartNode[] = [
   {
@@ -60,6 +61,11 @@ export const ComponentLibraryFlowchart: React.FC<{ onExit: () => void }> = ({ on
     description="Connect the library entry point to the newest component prototypes."
     nodes={nodes}
     edges={edges}
+    flows={flowchartLinks}
+    activeFlowId="component-library"
     onExit={onExit}
+    onFlowSelect={(flowId) => {
+      window.location.hash = `#/flows/${flowId}`;
+    }}
   />
 );

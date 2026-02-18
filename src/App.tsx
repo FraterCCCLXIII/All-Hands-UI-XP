@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
 import { ConversationDrawer } from './components/chat/ConversationDrawer';
@@ -33,6 +33,10 @@ import { InspectorOverlay } from './components/common/InspectorOverlay';
 import { conversationSummaries } from './data/conversations';
 import { ChatWindowTabId } from './components/chat/ChatWindowTabs';
 import type { ProtipVariant } from './components/canvas/Protip';
+import { UxTourOverlay } from './features/ux-tours/UxTourOverlay';
+import { useUxTourController } from './features/ux-tours/useUxTourController';
+import { uxTourDefinitions, uxTourLinks } from './features/ux-tours/uxTourRegistry';
+import type { UxTourAction } from './features/ux-tours/uxTourTypes';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -151,6 +155,11 @@ const actionSlugs: Record<string, string> = {
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
+const normalizeHash = (hash: string) => {
+  if (hash.startsWith('#/')) return hash;
+  if (hash.startsWith('#')) return `#/${hash.replace(/^#+/, '')}`;
+  return `#/${hash.replace(/^\/+/, '')}`;
+};
 
 function App() {
   const [theme] = useState<Theme>('dark');
@@ -185,6 +194,8 @@ function App() {
   const [isActiveChatView, setIsActiveChatView] = useState(false);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
+  const [isFlowchartLibraryOpen, setIsFlowchartLibraryOpen] = useState(false);
+  const [isUxFlowMenuOpen, setIsUxFlowMenuOpen] = useState(false);
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
@@ -198,6 +209,7 @@ function App() {
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showMainApp = !showFlowchartView && !showStandaloneFlow;
   const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView && !isNewLlmSwitcherView2;
+  const showLeftNav = activeFlowPrototype !== 'new-user-experience';
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -293,6 +305,18 @@ function App() {
     (action: string) => {
       setActiveFlowPrototype(null);
       setActiveFlowchart(null);
+      if (action === 'new-user-experience') {
+        setActiveFlowPrototype('new-user-experience');
+        setIsConversationDrawerOpen(false);
+        window.location.hash = '#/new-user-experience';
+        return;
+      }
+      if (action === 'saas-credit-card') {
+        setActiveFlowPrototype('saas-credit-card');
+        setIsConversationDrawerOpen(false);
+        window.location.hash = '#/saas-credit-card';
+        return;
+      }
       if (action === 'conversations') {
         setIsConversationDrawerOpen((prev) => {
           const next = !prev;
@@ -321,6 +345,7 @@ function App() {
     setActiveFlowPrototype(null);
     setActiveFlowchart(flowId);
     setIsConversationDrawerOpen(false);
+    setIsFlowchartLibraryOpen(false);
     window.location.hash = `#/flows/${flowId}`;
   }, []);
 
@@ -345,6 +370,40 @@ function App() {
     setActiveFlowPrototype('saas-credit-card');
     window.location.hash = '#/saas-credit-card';
   }, []);
+
+  const handleUxTourAction = useCallback(async (action: Extract<UxTourAction, { type: 'navigate' | 'set-state' }>) => {
+    if (action.type === 'navigate') {
+      window.location.hash = normalizeHash(action.hash);
+      return;
+    }
+
+    switch (action.key) {
+      case 'leftNav.flowchartLibrary.open':
+        setIsFlowchartLibraryOpen(Boolean(action.value));
+        return;
+      case 'leftNav.uxFlows.open':
+        setIsUxFlowMenuOpen(Boolean(action.value));
+        return;
+      case 'claimCreditsPrompt.visible':
+        setShowClaimCreditsPrompt(Boolean(action.value));
+        return;
+      case 'conversationsDrawer.open':
+        setIsConversationDrawerOpen(Boolean(action.value));
+        return;
+      default:
+        return;
+    }
+  }, []);
+
+  const uxTours = useMemo(() => uxTourDefinitions, []);
+  const uxTourController = useUxTourController({
+    tours: uxTours,
+    runAction: handleUxTourAction,
+    onStop: () => {
+      setIsFlowchartLibraryOpen(false);
+      setIsUxFlowMenuOpen(false);
+    },
+  });
 
 
   const handleCanvasResize = useCallback((percentage: number) => {
@@ -422,7 +481,7 @@ function App() {
             exit={{ opacity: 0 }}
             className="flex-1 flex relative overflow-hidden"
           >
-            {!isEmbedded && (
+            {showLeftNav && (
               <LeftNav
                 theme={theme}
                 getThemeClasses={getThemeClasses}
@@ -434,10 +493,16 @@ function App() {
                 isConversationDrawerOpen={isConversationDrawerOpen}
                 isInspectorEnabled={isInspectorEnabled}
                 onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
+                onStartUxTour={uxTourController.startTour}
+                uxTourLinks={uxTourLinks}
+                isFlowchartLibraryOpen={isFlowchartLibraryOpen}
+                onFlowchartLibraryOpenChange={setIsFlowchartLibraryOpen}
+                isUxFlowMenuOpen={isUxFlowMenuOpen}
+                onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
               />
             )}
             <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${isEmbedded ? '' : 'ml-16'}`}
+              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
               {showMainApp && !isEmbedded && (
@@ -539,6 +604,7 @@ function App() {
                         <button
                           type="button"
                           onClick={handleClaimCreditsOpen}
+                          data-tour-id="claim-credits.cta"
                           className="h-8 rounded-md bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
                         >
                           Claim now
@@ -647,6 +713,18 @@ function App() {
                 </>
               )}
             </div>
+            <UxTourOverlay
+              isActive={uxTourController.isActive}
+              step={uxTourController.activeStep}
+              stepIndex={uxTourController.stepIndex}
+              totalSteps={uxTourController.totalSteps}
+              isBusy={uxTourController.isBusy}
+              onBack={uxTourController.previousStep}
+              onNext={() => {
+                void uxTourController.nextStep();
+              }}
+              onClose={uxTourController.stopTour}
+            />
           </motion.div>
         )}
       </AnimatePresence>

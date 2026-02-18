@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Box, LayoutDashboard, List, Plus, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown } from 'lucide-react';
+import { Bot, Box, LayoutDashboard, List, Plus, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Theme, ThemeElement } from '../../types/theme';
 
@@ -88,20 +88,27 @@ export interface LeftNavProps {
   isConversationDrawerOpen: boolean;
   isInspectorEnabled: boolean;
   onInspectorToggle: () => void;
+  onStartUxTour?: (tourId: string) => void;
+  uxTourLinks?: Array<{ id: string; label: string }>;
+  isFlowchartLibraryOpen?: boolean;
+  onFlowchartLibraryOpenChange?: (open: boolean) => void;
+  isUxFlowMenuOpen?: boolean;
+  onUxFlowMenuOpenChange?: (open: boolean) => void;
 }
 
 const flowPrototypes = [
-  { id: 'new-user-experience', label: 'New User Experience', flowId: 'new-user-experience' },
-  { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', flowId: 'saas-credit-card' },
+  { id: 'flowcharts-home', label: 'Flowcharts', flowId: 'new-user-experience' },
+  { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
+  { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
   {
     id: 'user-journey-cta',
     label: 'User Journey - Create in-app call-to-actions (CTAs)',
-    flowId: 'user-journey-cta',
+    navAction: 'code',
   },
-  { id: 'component-library', label: 'Component Library', flowId: 'component-library' },
-  { id: 'new-components', label: 'New Components', flowId: 'new-components' },
-  { id: 'new-llm-switcher', label: 'New LLM Switcher', flowId: 'new-llm-switcher' },
-  { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', flowId: 'new-llm-switcher-2' },
+  { id: 'component-library', label: 'Component Library', navAction: 'components' },
+  { id: 'new-components', label: 'New Components', navAction: 'new-components' },
+  { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
+  { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', navAction: 'new-llm-switcher-2' },
 ];
 
 export const LeftNav: React.FC<LeftNavProps> = ({
@@ -111,6 +118,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   isConversationDrawerOpen,
   isInspectorEnabled,
   onInspectorToggle,
+  onStartUxTour,
+  uxTourLinks = [],
+  isFlowchartLibraryOpen,
+  onFlowchartLibraryOpenChange,
+  isUxFlowMenuOpen,
+  onUxFlowMenuOpenChange,
 }) => (
   <aside className="fixed left-0 top-0 z-50 h-screen w-16 flex bg-sidebar pointer-events-auto">
     <div className="flex h-full flex-col w-16 px-2 py-4 text-sidebar-foreground">
@@ -195,13 +208,56 @@ export const LeftNav: React.FC<LeftNavProps> = ({
         })}
       </div>
       <div className="mt-auto px-2 space-y-2">
+        {/* UX tours entry points */}
+        <Popover open={isUxFlowMenuOpen} onOpenChange={onUxFlowMenuOpenChange}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
+              aria-label="UX flow tutorials"
+              data-tour-id="left-nav.ux-flow-icon"
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="right"
+            align="end"
+            sideOffset={8}
+            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-56 p-3"
+          >
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+              UX Flows
+            </div>
+            {uxTourLinks.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-muted-foreground">
+                No UX tours available yet.
+              </div>
+            ) : (
+              uxTourLinks.map((tour) => (
+                <button
+                  key={tour.id}
+                  type="button"
+                  onClick={() => {
+                    onUxFlowMenuOpenChange?.(false);
+                    onStartUxTour?.(tour.id);
+                  }}
+                  className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
+                >
+                  {tour.label}
+                </button>
+              ))
+            )}
+          </PopoverContent>
+        </Popover>
         {/* Flowchart entry points */}
-        <Popover>
+        <Popover open={isFlowchartLibraryOpen} onOpenChange={onFlowchartLibraryOpenChange}>
           <PopoverTrigger asChild>
             <button
               type="button"
               className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
               aria-label="Flowchart library"
+              data-tour-id="left-nav.flowchart-library"
             >
               <Box className="w-5 h-5" />
             </button>
@@ -220,6 +276,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 key={flow.id}
                 type="button"
                 onClick={() => {
+                  if (flow.navAction) {
+                    onNavItemClick(flow.navAction);
+                    return;
+                  }
                   onFlowPrototypeClick?.(flow.flowId ?? flow.id);
                 }}
                 className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
@@ -242,6 +302,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   role="switch"
                   aria-checked={isInspectorEnabled}
                   data-testid="inspector-toggle"
+                  data-tour-id="left-nav.inspector-toggle"
                   onClick={onInspectorToggle}
                   className={`h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors ${
                     isInspectorEnabled ? 'bg-foreground/80' : 'bg-muted/60'

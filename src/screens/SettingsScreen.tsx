@@ -349,6 +349,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
+              data-tour-id="settings.org-selector"
               className="w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/40 transition-colors"
               aria-label="Select organization"
             >

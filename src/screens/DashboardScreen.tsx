@@ -240,7 +240,7 @@ export function DashboardScreen() {
   }, [reviewFilter, scrollToSection, setActiveView]);
 
   return (
-    <div className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-screen">
+    <div className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-screen" data-tour-id="dashboard.root">
       <DashboardHeader activeTab={activeView} onSelectTab={setActiveView} />
       <div className="flex min-h-0 h-full">
         {activeView === 'kanban' ? (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlowchartLayout, FlowchartNode, FlowchartEdge } from '../../components/flowchart/FlowchartLayout';
+import { flowchartLinks } from './flowchartRegistry';
 
 const nodes: FlowchartNode[] = [
   {
@@ -60,6 +61,11 @@ export const NewLlmSwitcherFlowchart: React.FC<{ onExit: () => void }> = ({ onEx
     description="Track how users compare models and save their selection."
     nodes={nodes}
     edges={edges}
+    flows={flowchartLinks}
+    activeFlowId="new-llm-switcher"
     onExit={onExit}
+    onFlowSelect={(flowId) => {
+      window.location.hash = `#/flows/${flowId}`;
+    }}
   />
 );

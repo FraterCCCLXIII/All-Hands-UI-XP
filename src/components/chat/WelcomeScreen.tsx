@@ -130,6 +130,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             <button
               type="button"
               onClick={() => setShowGettingStarted(false)}
+              data-tour-id="welcome.dismiss-getting-started"
               className="absolute right-0 top-0 inline-flex h-7 w-7 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors"
               aria-label="Dismiss getting started prompt"
             >
