@@ -28,6 +28,8 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
+  Copy,
+  Check,
   ListTodo,
   Circle,
   Settings,
@@ -159,6 +161,8 @@ export function ActiveChatScreen({
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [commandActiveIndex, setCommandActiveIndex] = useState(0);
+  const [isCliCommandVisible, setIsCliCommandVisible] = useState(false);
+  const [isCliCommandCopied, setIsCliCommandCopied] = useState(false);
   const blurTimeoutRef = useRef<number | null>(null);
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -202,6 +206,8 @@ export function ActiveChatScreen({
 
   const rightPanelWidth = 100 - leftPanelWidth;
   const hasInput = !!chatInput.trim();
+  const conversationTitle = 'Run Code Request';
+  const openConversationCliCommand = `openhands --open-conversation "${conversationTitle}"`;
   const filteredCommands = useMemo(() => {
     const query = commandQuery.trim().toLowerCase();
     if (!query) return CHAT_COMMANDS;
@@ -254,6 +260,12 @@ export function ActiveChatScreen({
       // Could wire to parent or local messages state here
     }
   }, [chatInput]);
+
+  const handleCopyCliCommand = useCallback(() => {
+    void navigator.clipboard.writeText(openConversationCliCommand);
+    setIsCliCommandCopied(true);
+    window.setTimeout(() => setIsCliCommandCopied(false), 1500);
+  }, [openConversationCliCommand]);
 
   const updateCommandMenuState = useCallback((value: string) => {
     const match = value.match(/(?:^|\s)\/([^\s]*)$/);
@@ -400,8 +412,8 @@ export function ActiveChatScreen({
                 )}
               </div>
               <div className="flex items-center gap-2 h-[22px] text-base font-normal text-left pl-0 lg:pl-1" data-testid="conversation-name">
-                <div className="text-foreground leading-5 w-fit max-w-fit truncate" data-testid="conversation-name-title" title="Run Code Request">
-                  Run Code Request
+                <div className="text-foreground leading-5 w-fit max-w-fit truncate" data-testid="conversation-name-title" title={conversationTitle}>
+                  {conversationTitle}
                 </div>
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 cursor-help lowercase bg-muted text-muted-foreground">
                   V1
@@ -1094,6 +1106,39 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   </div>
                                 </div>
                               )}
+                              {isCliCommandVisible && (
+                                <div className="absolute left-0 right-0 bottom-full mb-3 z-20" data-testid="cli-open-command-panel">
+                                  <div className="w-full rounded-xl border border-border bg-popover text-popover-foreground shadow-lg px-3 py-2">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-medium text-foreground">Open Conversation in CLI</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">Copy and run this command in your terminal.</p>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                                        aria-label="Close CLI command panel"
+                                        data-testid="close-cli-command-panel"
+                                        onClick={() => setIsCliCommandVisible(false)}
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-background/60 px-2 py-1.5">
+                                      <code className="flex-1 min-w-0 truncate text-xs text-foreground">{openConversationCliCommand}</code>
+                                      <button
+                                        type="button"
+                                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                                        aria-label="Copy CLI command"
+                                        data-testid="copy-cli-command-button"
+                                        onClick={handleCopyCliCommand}
+                                      >
+                                        {isCliCommandCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                               <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20 group" id="resize-grip">
                                 <div className="absolute top-1 left-0 w-full h-[3px] bg-white cursor-ns-resize z-10 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ userSelect: 'none' }} />
                               </div>
@@ -1233,6 +1278,17 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                             </DropdownMenuItem>
                                           </DropdownMenuSubContent>
                                         </DropdownMenuSub>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          className="gap-2 cursor-pointer"
+                                          onSelect={() => {
+                                            setIsCliCommandVisible(true);
+                                            setIsCliCommandCopied(false);
+                                          }}
+                                        >
+                                          <Terminal className="h-4 w-4" />
+                                          Open Conversation in CLI
+                                        </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                           className="gap-2 cursor-pointer"
