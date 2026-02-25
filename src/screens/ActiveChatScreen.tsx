@@ -1555,7 +1555,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           {showCanvasTip && (
                             <div className="w-full max-w-2xl">
                               <Protip
-                                variant={canvasTipVariant === 'none' ? 'protip' : canvasTipVariant}
+                                variant={canvasTipVariant}
                                 onDismiss={() => onCanvasTipVariantChange('none')}
                               />
                             </div>

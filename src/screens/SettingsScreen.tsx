@@ -107,7 +107,13 @@ const settingsTabs = [
   { id: 'manage-team', label: 'Organization Members', icon: Users },
 ];
 
-const settingsLinks = [
+const settingsLinks: Array<{
+  id: string;
+  label: string;
+  icon: typeof Users;
+  tabId: string;
+  requiredPermission: PermissionKey;
+}> = [
   { id: 'manage-team', label: 'Manage Team', icon: Users, tabId: 'manage-team', requiredPermission: 'invite_user_to_organization' },
   { id: 'integrations', label: 'Integrations', icon: Puzzle, tabId: 'integrations', requiredPermission: 'manage_integrations' },
   { id: 'llm', label: 'Language Model (LLM)', icon: Cpu, tabId: 'llm', requiredPermission: 'view_llm_settings' },
