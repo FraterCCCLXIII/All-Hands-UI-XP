@@ -2,6 +2,7 @@ import React from 'react';
 import { Bot, Box, LayoutDashboard, List, Plus, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Theme, ThemeElement } from '../../types/theme';
+import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 
 const highlightCards = [
   {
@@ -336,86 +337,99 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             side="right"
             align="start"
             sideOffset={8}
-            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-80 p-6 -translate-y-12"
+            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-[600px] p-6 -translate-y-12"
           >
-            <div className="text-lg font-semibold mb-4">Account</div>
-            
-            {/* Organization Selector */}
-            <button className="w-full h-10 flex items-center justify-between px-4 mb-3 rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors text-left">
-              <span className="text-sm text-sidebar-foreground">Acme Inc.</span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
-            </button>
+            <div className="grid grid-cols-[1fr_1.15fr] gap-4 min-h-[320px]">
+              {/* Left column: Account menu */}
+              <div className="flex flex-col min-w-0">
+                <div className="text-lg font-semibold mb-4">Account</div>
+                
+                {/* Organization Selector */}
+                <button className="w-full h-10 flex items-center justify-between px-4 mb-3 rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors text-left">
+                  <span className="text-sm text-sidebar-foreground">Acme Inc.</span>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </button>
 
-            {/* Invite Team */}
-            <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
-              <UserCircle2 className="w-4 h-4" />
-              Invite Team
-            </button>
+                {/* Invite Team */}
+                <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
+                  <UserCircle2 className="w-4 h-4" />
+                  Invite Team
+                </button>
 
-            <div className="border-t border-sidebar-border my-3"></div>
+                <div className="border-t border-sidebar-border my-3"></div>
 
-            {/* Account Management Section */}
-            <div className="space-y-0.5">
-              <button 
-                onClick={() => onNavItemClick('settings')}
-                className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-              >
-                <CreditCard className="w-4 h-4" />
-                Manage Account
-              </button>
-              <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                <Users className="w-4 h-4" />
-                Manage Team
-              </button>
-              <button 
-                onClick={() => onNavItemClick('settings')}
-                className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-              >
-                <Cloud className="w-4 h-4" />
-                Integrations
-              </button>
-              <button 
-                onClick={() => onNavItemClick('settings')}
-                className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-              >
-                <Key className="w-4 h-4" />
-                API Keys
-              </button>
-              <button 
-                onClick={() => onNavItemClick('settings')}
-                className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-              >
-                <Shield className="w-4 h-4" />
-                Secrets
-              </button>
-            </div>
+                {/* Account Management Section */}
+                <div className="space-y-0.5">
+                  <button 
+                    onClick={() => onNavItemClick('settings')}
+                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    Manage Account
+                  </button>
+                  <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <Users className="w-4 h-4" />
+                    Manage Team
+                  </button>
+                  <button 
+                    onClick={() => onNavItemClick('settings')}
+                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    <Cloud className="w-4 h-4" />
+                    Integrations
+                  </button>
+                  <button 
+                    onClick={() => onNavItemClick('settings')}
+                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    <Key className="w-4 h-4" />
+                    API Keys
+                  </button>
+                  <button 
+                    onClick={() => onNavItemClick('settings')}
+                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Secrets
+                  </button>
+                </div>
 
-            <div className="border-t border-sidebar-border my-3"></div>
+                <div className="border-t border-sidebar-border my-3"></div>
 
-            {/* Settings Section */}
-            <div className="space-y-0.5">
-              <button 
-                onClick={() => onNavItemClick('settings')}
-                className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-              >
-                <UserCircle2 className="w-4 h-4" />
-                User Settings
-              </button>
-              <button 
-                onClick={() => onNavItemClick('settings')}
-                className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-              >
-                <Settings className="w-4 h-4" />
-                Application Settings
-              </button>
-              <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                <Plus className="w-4 h-4" />
-                Create New Organization
-              </button>
-              <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                <LogOut className="w-4 h-4" />
-                Log Out
-              </button>
+                {/* Settings Section */}
+                <div className="space-y-0.5">
+                  <button 
+                    onClick={() => onNavItemClick('settings')}
+                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    <UserCircle2 className="w-4 h-4" />
+                    User Settings
+                  </button>
+                  <button 
+                    onClick={() => onNavItemClick('settings')}
+                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    Application Settings
+                  </button>
+                  <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <Plus className="w-4 h-4" />
+                    Create New Organization
+                  </button>
+                  <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <LogOut className="w-4 h-4" />
+                    Log Out
+                  </button>
+                </div>
+              </div>
+
+              {/* Right column: OpenHands Enterprise CTA */}
+              <div className="flex flex-col min-h-0 justify-end">
+                <EnterpriseCtaCard
+                  showIcon
+                  className="h-full min-h-[280px] pointer-events-auto rounded-lg flex flex-col justify-end"
+                />
+              </div>
             </div>
           </PopoverContent>
         </Popover>

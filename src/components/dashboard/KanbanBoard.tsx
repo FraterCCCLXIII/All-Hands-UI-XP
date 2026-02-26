@@ -3,6 +3,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { KanbanColumn as KanbanColumnType, PRCard, AgentMessage, Conversation } from '../../types/pr';
 import { KanbanColumn } from './KanbanColumn';
 import { AgentPanel } from './AgentPanel';
+import { NewTaskDialog } from './NewTaskDialog';
 import { availablePullRequests, initialColumns } from '../../data/mockData';
 import { Button } from '../ui/button';
 import {
@@ -19,11 +20,17 @@ interface KanbanBoardProps {
   onToggleRepoList?: () => void;
 }
 
+const TASK_MODEL_OPTIONS = [
+  'Claude Opus',
+  'GPT-4o',
+  'GPT-5',
+  'Gemini 2.5 Pro',
+];
+
 export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoList }: KanbanBoardProps) {
   const [columns, setColumns] = useState<KanbanColumnType[]>(initialColumns);
   const [selectedCard, setSelectedCard] = useState<PRCard | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [isAddPrOpen, setIsAddPrOpen] = useState(false);
   const [prFilter, setPrFilter] = useState<'all' | 'created' | 'assigned'>('all');
   const prFilterLabel =
     prFilter === 'all'
@@ -39,13 +46,34 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
       cards: column.cards.filter((card) => card.repo === activeRepo),
     }));
   }, [columns, activeRepo, isFiltered]);
-  const existingIds = useMemo(() => new Set(columns.flatMap((column) => column.cards.map((card) => card.id))), [columns]);
-  const selectablePullRequests = useMemo(() => {
-    const repoMatches = activeRepo === 'all'
-      ? availablePullRequests
-      : availablePullRequests.filter((pr) => pr.repo === activeRepo);
-    return repoMatches.filter((pr) => !existingIds.has(pr.id));
-  }, [activeRepo, existingIds]);
+  const allPullRequests = useMemo(() => {
+    const byId = new Map<string, PRCard>();
+    columns.flatMap((column) => column.cards).forEach((card) => {
+      byId.set(card.id, card);
+    });
+    availablePullRequests.forEach((pr) => {
+      if (!byId.has(pr.id)) {
+        byId.set(pr.id, pr);
+      }
+    });
+    return Array.from(byId.values());
+  }, [columns]);
+  const branchOptions = useMemo(() => {
+    const branchSet = new Set<string>(['main']);
+    allPullRequests.forEach((pr) => {
+      if (pr.branch) {
+        branchSet.add(pr.branch);
+      }
+    });
+    return Array.from(branchSet);
+  }, [allPullRequests]);
+  const taskPullRequests = useMemo(
+    () =>
+      (activeRepo === 'all' ? allPullRequests : allPullRequests.filter((pr) => pr.repo === activeRepo)).filter(
+        (pr) => pr.sourceType !== 'task'
+      ),
+    [activeRepo, allPullRequests]
+  );
 
   const handleDragEnd = useCallback(
     (result: DropResult) => {
@@ -141,20 +169,181 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
     };
     setColumns((prev) => [...prev, newColumn]);
   }, []);
-  const handleAddPr = useCallback(
-    (card: PRCard) => {
+  const handleCreateTask = useCallback(
+    ({
+      prompt,
+      model,
+      branch,
+      linkedPrIds,
+    }: {
+      prompt: string;
+      model: string;
+      branch: string;
+      linkedPrIds: string[];
+    }) => {
+      const linkedPrs = linkedPrIds
+        .map((prId) => allPullRequests.find((pr) => pr.id === prId && pr.sourceType !== 'task') ?? null)
+        .filter((pr): pr is PRCard => Boolean(pr));
+      const primaryLinkedPr = linkedPrs[0] ?? null;
+      const now = new Date().toISOString();
+      const generatedTitle = primaryLinkedPr
+        ? `${primaryLinkedPr.title} Task`
+        : prompt.trim().split('\n')[0].slice(0, 80) || 'New Task';
+      const maxPrNumber = Math.max(
+        0,
+        ...columns.flatMap((column) => column.cards.map((card) => card.number)),
+        ...availablePullRequests.map((pr) => pr.number)
+      );
+      const generatedPrNumber = maxPrNumber + 1;
+
+      const taskCard: PRCard = {
+        id: `task-${Date.now()}`,
+        number: primaryLinkedPr?.number ?? generatedPrNumber,
+        title: generatedTitle,
+        repo: primaryLinkedPr?.repo ?? (activeRepo === 'all' ? 'No Repository' : activeRepo),
+        sourceType: 'task',
+        linkedPrId: primaryLinkedPr?.id ?? null,
+        linkedPrIds: linkedPrs.map((pr) => pr.id),
+        author: {
+          name: 'you',
+          avatar: 'Y',
+        },
+        labels: [
+          { name: 'task', color: 'info' },
+          ...linkedPrs.slice(0, 2).map((pr) => ({ name: `linked #${pr.number}`, color: 'muted' as const })),
+        ],
+        additions: 0,
+        deletions: 0,
+        comments: 0,
+        createdAt: now,
+        updatedAt: now,
+        branch,
+        baseBranch: primaryLinkedPr?.baseBranch ?? 'main',
+        status: 'open',
+        conversations: [
+          {
+            id: `conv-task-${Date.now()}`,
+            name: 'Task Kickoff',
+            activity: `Queued on ${model}`,
+            createdAt: now,
+            updatedAt: now,
+            messages: [
+              {
+                id: `msg-task-${Date.now()}`,
+                role: 'user',
+                content: prompt,
+                timestamp: now,
+              },
+              {
+                id: `msg-task-${Date.now() + 1}`,
+                role: 'agent',
+                content: linkedPrs.length > 0
+                  ? `Starting "${generatedTitle}" on ${branch} with ${model}. Linked to ${linkedPrs.length} PR${linkedPrs.length > 1 ? 's' : ''}.`
+                  : `Starting "${generatedTitle}" on ${branch} with ${model}.`,
+                timestamp: now,
+              },
+            ],
+          },
+        ],
+      };
+
       setColumns((prev) => {
-        if (prev.length === 0) return prev;
-        if (prev[0].cards.some((existing) => existing.id === card.id)) return prev;
-        const updatedFirst = {
-          ...prev[0],
-          cards: [card, ...prev[0].cards],
-        };
-        return [updatedFirst, ...prev.slice(1)];
+        if (prev.length === 0) {
+          return prev;
+        }
+        const todoColumnIndex = prev.findIndex((column) => column.id === 'todo');
+        const insertColumnIndex = todoColumnIndex === -1 ? 0 : todoColumnIndex;
+        return prev.map((column, index) =>
+          index === insertColumnIndex
+            ? {
+                ...column,
+                cards: [taskCard, ...column.cards],
+              }
+            : column
+        );
       });
-      setIsAddPrOpen(false);
     },
-    []
+    [activeRepo, allPullRequests, columns]
+  );
+  const handleUpdateCardLinkedPrs = useCallback(
+    (cardId: string, linkedPrIds: string[]) => {
+      const linkedPrs = linkedPrIds
+        .map((prId) => allPullRequests.find((pr) => pr.id === prId && pr.sourceType !== 'task') ?? null)
+        .filter((pr): pr is PRCard => Boolean(pr));
+      const primaryLinkedPr = linkedPrs[0] ?? null;
+      const timestamp = new Date().toISOString();
+
+      setColumns((prev) =>
+        prev.map((column) => ({
+          ...column,
+          cards: column.cards.map((card) => {
+            if (card.id !== cardId) {
+              return card;
+            }
+
+            if (card.sourceType !== 'task') {
+              const relatedLinkedPrIds = linkedPrs
+                .map((pr) => pr.id)
+                .filter((prId) => prId !== card.id);
+              return {
+                ...card,
+                linkedPrIds: relatedLinkedPrIds,
+                updatedAt: timestamp,
+              };
+            }
+
+            const retainedLabels = card.labels.filter((label) => !label.name.toLowerCase().startsWith('linked #'));
+            const nextLabels = [
+              ...retainedLabels,
+              ...linkedPrs.slice(0, 2).map((pr) => ({ name: `linked #${pr.number}`, color: 'muted' as const })),
+            ];
+
+            return {
+              ...card,
+              linkedPrId: primaryLinkedPr?.id ?? null,
+              linkedPrIds: linkedPrs.map((pr) => pr.id),
+              repo: primaryLinkedPr?.repo ?? 'No Repository',
+              baseBranch: primaryLinkedPr?.baseBranch ?? 'main',
+              labels: nextLabels,
+              updatedAt: timestamp,
+            };
+          }),
+        }))
+      );
+
+      setSelectedCard((previous) => {
+        if (!previous || previous.id !== cardId) {
+          return previous;
+        }
+
+        if (previous.sourceType !== 'task') {
+          const relatedLinkedPrIds = linkedPrs
+            .map((pr) => pr.id)
+            .filter((prId) => prId !== previous.id);
+          return {
+            ...previous,
+            linkedPrIds: relatedLinkedPrIds,
+            updatedAt: timestamp,
+          };
+        }
+
+        const retainedLabels = previous.labels.filter((label) => !label.name.toLowerCase().startsWith('linked #'));
+        const nextLabels = [
+          ...retainedLabels,
+          ...linkedPrs.slice(0, 2).map((pr) => ({ name: `linked #${pr.number}`, color: 'muted' as const })),
+        ];
+        return {
+          ...previous,
+          linkedPrId: primaryLinkedPr?.id ?? null,
+          linkedPrIds: linkedPrs.map((pr) => pr.id),
+          repo: primaryLinkedPr?.repo ?? 'No Repository',
+          baseBranch: primaryLinkedPr?.baseBranch ?? 'main',
+          labels: nextLabels,
+          updatedAt: timestamp,
+        };
+      });
+    },
+    [allPullRequests]
   );
 
   const handleRenameColumn = useCallback((columnId: string, title: string) => {
@@ -332,41 +521,12 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
             </DropdownMenu>
           </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddPrOpen((prev) => !prev)}
-                aria-label="Add PR"
-              >
-                Add PR
-              </Button>
-            {isAddPrOpen && (
-              <div className="absolute right-0 mt-2 w-80 rounded-lg border border-border bg-popover shadow-lg z-20">
-                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Select PR
-                </div>
-                <div className="max-h-72 overflow-y-auto">
-                  {selectablePullRequests.length === 0 ? (
-                    <div className="px-3 py-3 text-sm text-muted-foreground">No PRs available.</div>
-                  ) : (
-                    selectablePullRequests.map((pr) => (
-                      <button
-                        key={pr.id}
-                        type="button"
-                        onClick={() => handleAddPr(pr)}
-                        className="w-full text-left px-3 py-2 hover:bg-accent transition-colors"
-                      >
-                        <div className="text-sm text-foreground truncate">{pr.title}</div>
-                        <div className="text-xs text-muted-foreground font-mono truncate">
-                          {pr.repo} #{pr.number}
-                        </div>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-            </div>
+            <NewTaskDialog
+              pullRequests={taskPullRequests}
+              branches={branchOptions}
+              modelOptions={TASK_MODEL_OPTIONS}
+              onCreateTask={handleCreateTask}
+            />
             <Button size="icon" variant="outline" onClick={handleAddColumn} aria-label="Add column">
               <Plus className="w-4 h-4" />
             </Button>
@@ -408,6 +568,8 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         onCreateConversation={handleCreateConversation}
         onSendMessage={handleSendMessage}
         showConversationFooter={false}
+        availablePullRequests={allPullRequests.filter((pr) => pr.sourceType !== 'task')}
+        onUpdateCardLinkedPrs={handleUpdateCardLinkedPrs}
       />
     </div>
   );

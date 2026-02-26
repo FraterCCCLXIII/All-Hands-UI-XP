@@ -17,6 +17,9 @@ export interface PRCard {
   number: number;
   title: string;
   repo: string;
+  sourceType?: 'pr' | 'task';
+  linkedPrId?: string | null;
+  linkedPrIds?: string[];
   author: {
     name: string;
     avatar: string;

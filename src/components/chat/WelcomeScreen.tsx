@@ -1,8 +1,34 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ChevronDown, ExternalLink, Folder, GitBranch, Github, Plus } from 'lucide-react';
+import {
+  BookOpen,
+  Bot,
+  ChevronDown,
+  Code2,
+  ExternalLink,
+  FlaskConical,
+  Folder,
+  GitBranch,
+  Github,
+  Plus,
+  ShieldCheck,
+  Wrench,
+} from 'lucide-react';
 import { ThemeElement } from '../../types/theme';
 import { conversationSummaries } from '../../data/conversations';
+import { marketplaceSkills } from '../../data/skillsPageData';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import type { LucideIcon } from 'lucide-react';
+
+const SKILL_ICONS: Record<string, LucideIcon> = {
+  'marketplace-code-review': Code2,
+  'marketplace-docs': BookOpen,
+  'marketplace-security': ShieldCheck,
+  'marketplace-test-gen': FlaskConical,
+  'marketplace-refactor': Wrench,
+  'marketplace-migrate': GitBranch,
+};
+
+const getSkillIcon = (skillId: string): LucideIcon => SKILL_ICONS[skillId] ?? Bot;
 
 interface WelcomeScreenProps {
   theme: string;
@@ -91,6 +117,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     []
   );
 
+  const featuredSkills = useMemo(() => marketplaceSkills.slice(0, 6), []);
+
+  const handleNavigateToSkills = useCallback(() => {
+    window.location.hash = '#/skills';
+  }, []);
+
   const handleLaunch = () => {
     const repo = repoInput.trim();
     const branch = branchInput.trim();
@@ -143,7 +175,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </header>
 
         <div className="pt-[25px] flex justify-center">
-          <div className="flex flex-col gap-5 px-6 sm:max-w-full sm:min-w-full md:flex-row lg:px-0 lg:max-w-[960px] lg:min-w-[960px]">
+          <div className="flex flex-col gap-5 px-6 sm:max-w-full sm:min-w-full md:flex-row lg:px-0 lg:max-w-[1200px] lg:min-w-[1200px]">
+            <div className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-card relative gap-[10px] overflow-visible">
+              <div className="flex items-center gap-[10px] text-base font-bold text-foreground leading-5">
+                <Bot className="w-4 h-4" />
+                <span className="flex items-center">Start a conversation with a skill</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                Use specialized skills to accelerate your workflow.
+              </span>
+              <button
+                type="button"
+                onClick={handleNavigateToSkills}
+                className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
+              >
+                Browse all
+              </button>
+            </div>
+
             <section className="w-full flex flex-col gap-6 rounded-[12px] p-[24px] border border-border bg-card relative overflow-visible">
               <div className="flex flex-col">
                 <div className="flex items-center justify-between">
@@ -335,13 +384,46 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
         </div>
 
         <div className="pt-4 flex sm:justify-start md:justify-center">
-          <div className="flex flex-col gap-5 px-6 md:flex-row min-w-full md:max-w-full lg:px-0 lg:max-w-[960px] lg:min-w-[960px]">
+          <div className="flex flex-col gap-5 px-6 md:flex-row min-w-full md:max-w-full lg:px-0 lg:max-w-[1200px] lg:min-w-[1200px]">
+            <section className="flex flex-1 min-w-0 flex-col">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Skills</h3>
+              </div>
+              <div className="flex flex-col min-h-0">
+                <div className="transition-all duration-300 ease-in-out overflow-y-auto custom-scrollbar max-h-[calc(100vh-420px)]">
+                  <div className="flex flex-col">
+                    {featuredSkills.map((skill) => {
+                      const Icon = getSkillIcon(skill.id);
+                      return (
+                        <button
+                          key={skill.id}
+                          type="button"
+                          onClick={handleNavigateToSkills}
+                          className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                        >
+                          <div className="flex items-center gap-2 pl-1">
+                            <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
+                          <span className="text-xs text-foreground leading-6 font-normal truncate">
+                            {skill.skillName ?? skill.title}
+                          </span>
+                        </div>
+                        <span className="text-xs text-muted-foreground leading-4 font-normal pl-5 line-clamp-2">
+                          {skill.description}
+                        </span>
+                      </button>
+                    );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="flex flex-1 min-w-0 flex-col">
               <div className="flex items-center gap-2">
                 <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Recent Conversations</h3>
               </div>
-              <div className="flex flex-col">
-                <div className="transition-all duration-300 ease-in-out overflow-y-auto hide-scrollbar">
+              <div className="flex flex-col min-h-0">
+                <div className="transition-all duration-300 ease-in-out overflow-y-auto custom-scrollbar max-h-[calc(100vh-420px)]">
                   <div className="flex flex-col">
                     {conversationSummaries.map((conversation) => (
                       <button
@@ -391,8 +473,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   Suggested Tasks
                 </h3>
               </div>
-              <div className="flex flex-col">
-                <div className="transition-all duration-300 ease-in-out overflow-y-auto hide-scrollbar">
+              <div className="flex flex-col min-h-0">
+                <div className="transition-all duration-300 ease-in-out overflow-y-auto custom-scrollbar max-h-[calc(100vh-420px)]">
                   <div className="flex flex-col">
                     <div className="text-muted-foreground px-[14px]">
                       <div className="flex items-center gap-2 border-b border-border mb-2">

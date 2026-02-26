@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Bot, CheckCircle, ChevronDown, Github, GitPullRequest, Menu, MessageSquare, Plus, XCircle } from 'lucide-react';
-import { DashboardHeader, type DashboardTabId } from '../components/dashboard/DashboardHeader';
+import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { KanbanBoard } from '../components/dashboard/KanbanBoard';
 import { RepositorySection } from '../components/dashboard/RepositorySection';
 import { NewConversationDialog } from '../components/dashboard/NewConversationDialog';
+import { NewWorkspaceDialog } from '../components/dashboard/NewWorkspaceDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,26 +16,63 @@ import { cn } from '../lib/utils';
 import { insightsPullRequests, insightsRepositories, insightsRepoData } from '../data/insightsData';
 import { initialColumns } from '../data/mockData';
 
+type DashboardTabId = 'kanban' | 'active' | 'reviews';
+
+interface WorkspaceItem {
+  id: string;
+  label: string;
+  repoKey: string;
+}
+
 export function DashboardScreen() {
   const [activeView, setActiveView] = useState<DashboardTabId>('kanban');
   const [activeRepo, setActiveRepo] = useState('all');
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState('all');
   const [isRepoListOpen, setIsRepoListOpen] = useState(true);
-  const repositories = useMemo(() => {
+  const [customWorkspaces, setCustomWorkspaces] = useState<WorkspaceItem[]>([]);
+
+  const repositoryOptions = useMemo(() => {
     const repoSet = new Set<string>();
     initialColumns.forEach((column) => {
       column.cards.forEach((card) => repoSet.add(card.repo));
     });
-    return ['View all', ...Array.from(repoSet), 'No Repository'];
+    return Array.from(repoSet);
   }, []);
+
+  const workspaceRepositoryOptions = useMemo(() => ['View all', ...repositoryOptions, 'No Repository'], [repositoryOptions]);
+  const defaultWorkspaces = useMemo<WorkspaceItem[]>(
+    () => [
+      { id: 'all', label: 'View all', repoKey: 'all' },
+      ...repositoryOptions.map((repo) => ({ id: repo, label: repo, repoKey: repo })),
+      { id: 'no-repository', label: 'No Repository', repoKey: 'No Repository' },
+    ],
+    [repositoryOptions]
+  );
+  const workspaces = useMemo(() => [...defaultWorkspaces, ...customWorkspaces], [customWorkspaces, defaultWorkspaces]);
+
+  const handleCreateWorkspace = useCallback((workspaceName: string, repositoryName: string) => {
+    const workspaceId = `${workspaceName.trim().toLowerCase().replace(/[^\w-]/g, '-')}-${Date.now()}`;
+    const repoKey = repositoryName === 'View all' ? 'all' : repositoryName;
+    const newWorkspace = {
+      id: workspaceId,
+      label: workspaceName.trim(),
+      repoKey,
+    };
+
+    setCustomWorkspaces((previous) => [...previous, newWorkspace]);
+    setActiveWorkspaceId(workspaceId);
+    setActiveRepo(repoKey);
+  }, []);
+
   const [selectedInsightRepo, setSelectedInsightRepo] = useState<string | null>(insightsRepositories[0]?.id ?? null);
   const [reviewFilter, setReviewFilter] = useState<'open' | 'closed'>('open');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const RepositorySidebar = ({
-    repositories: repoList,
+    workspaceList,
     isOpen,
   }: {
-    repositories: string[];
+    workspaceList: WorkspaceItem[];
     isOpen: boolean;
   }) => (
     <aside
@@ -45,18 +83,23 @@ export function DashboardScreen() {
       aria-hidden={!isOpen}
     >
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-4">
-        <h3 className="shrink-0 whitespace-nowrap px-2 mb-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Active Repositories
-        </h3>
+        <div className="mb-3 flex items-center justify-between gap-2 px-2">
+          <h3 className="shrink-0 whitespace-nowrap text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            Workspaces
+          </h3>
+          <NewWorkspaceDialog repositories={workspaceRepositoryOptions} onCreateWorkspace={handleCreateWorkspace} />
+        </div>
         <nav className="min-w-0 space-y-1 whitespace-nowrap">
-          {repoList.map((repo) => {
-            const repoId = repo === 'View all' ? 'all' : repo;
-            const isActive = activeRepo === repoId;
+          {workspaceList.map((workspace) => {
+            const isActive = activeWorkspaceId === workspace.id;
             return (
               <button
-                key={repoId}
+                key={workspace.id}
                 type="button"
-                onClick={() => setActiveRepo(repoId)}
+                onClick={() => {
+                  setActiveWorkspaceId(workspace.id);
+                  setActiveRepo(workspace.repoKey);
+                }}
                 className={`w-full min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left ${
                   isActive
                     ? 'bg-sidebar-accent text-sidebar-accent-foreground'
@@ -65,7 +108,7 @@ export function DashboardScreen() {
                 aria-pressed={isActive}
               >
                 <Github className="w-4 h-4 shrink-0" />
-                <span className="min-w-0 truncate">{repo}</span>
+                <span className="min-w-0 truncate">{workspace.label}</span>
               </button>
             );
           })}
@@ -241,11 +284,11 @@ export function DashboardScreen() {
 
   return (
     <div className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-screen" data-tour-id="dashboard.root">
-      <DashboardHeader activeTab={activeView} onSelectTab={setActiveView} />
+      <DashboardHeader />
       <div className="flex min-h-0 h-full">
         {activeView === 'kanban' ? (
           <>
-            <RepositorySidebar repositories={repositories} isOpen={isRepoListOpen} />
+            <RepositorySidebar workspaceList={workspaces} isOpen={isRepoListOpen} />
             <main className="flex flex-col flex-1 min-w-0 min-h-0 bg-sidebar text-sidebar-foreground">
               <div className="px-4 mb-6 shrink-0" />
               <div className="flex flex-1 min-h-0 flex-col pb-12">
@@ -262,9 +305,21 @@ export function DashboardScreen() {
             {activeView === 'active' && (
               <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground h-full">
                 <div className="flex-1 px-3 py-4 overflow-y-auto">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-2">
-                    Active Repositories
-                  </h3>
+                  <div className="mb-3 flex items-center justify-between gap-2 px-2">
+                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Workspaces</h3>
+                    <NewWorkspaceDialog
+                      repositories={insightsRepositories.map((repo) => repo.name)}
+                      onCreateWorkspace={(_, repositoryName) => {
+                        const matchingRepository = insightsRepositories.find((repo) => repo.name === repositoryName);
+                        if (!matchingRepository) {
+                          return;
+                        }
+
+                        setSelectedInsightRepo(matchingRepository.id);
+                        scrollToSection(matchingRepository.name);
+                      }}
+                    />
+                  </div>
                   <nav className="space-y-1">
                     {insightsRepositories.map((repo) => (
                       <button
@@ -290,7 +345,7 @@ export function DashboardScreen() {
                 </div>
               </aside>
             )}
-            {activeView === 'reviews' && <RepositorySidebar repositories={repositories} isOpen />}
+            {activeView === 'reviews' && <RepositorySidebar workspaceList={workspaces} isOpen />}
             <main className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-full overflow-y-auto">
               <div className="max-w-7xl mx-auto">
                 <div className="space-y-6 mt-6 px-4 pb-6">

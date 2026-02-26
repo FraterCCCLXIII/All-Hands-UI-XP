@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PRCard } from '../../types/pr';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
@@ -14,6 +14,8 @@ interface AgentPanelProps {
   onCreateConversation: (cardId: string, skillId?: string, skillName?: string) => string;
   onSendMessage: (cardId: string, conversationId: string, message: string) => void;
   showConversationFooter?: boolean;
+  availablePullRequests?: PRCard[];
+  onUpdateCardLinkedPrs?: (cardId: string, linkedPrIds: string[]) => void;
 }
 
 const formatTimeAgo = (dateString?: string) => {
@@ -36,8 +38,12 @@ export function AgentPanel({
   onCreateConversation,
   onSendMessage: _onSendMessage,
   showConversationFooter = true,
+  availablePullRequests = [],
+  onUpdateCardLinkedPrs,
 }: AgentPanelProps) {
   const [showInactive, setShowInactive] = useState(false);
+  const [isPrLinkEditorOpen, setIsPrLinkEditorOpen] = useState(false);
+  const [draftLinkedPrIds, setDraftLinkedPrIds] = useState<string[]>([]);
   const conversations = card?.conversations ?? [];
   const activeConversations = useMemo(
     () => conversations.filter((conversation) => Boolean(conversation.activity)),
@@ -53,26 +59,46 @@ export function AgentPanel({
     onCreateConversation(card.id);
   };
 
+  const isPrimaryPrCard = card?.sourceType !== 'task';
+  const linkedPrIds = card?.linkedPrIds ?? (card?.linkedPrId ? [card.linkedPrId] : []);
+  const associatedPrIds = isPrimaryPrCard && card ? Array.from(new Set([card.id, ...linkedPrIds])) : linkedPrIds;
+  const isTaskCard =
+    card?.sourceType === 'task' ||
+    card?.linkedPrId === null ||
+    Boolean(card?.labels.some((label) => label.name.trim().toLowerCase() === 'task'));
+  const pullRequestById = useMemo(
+    () => new Map(availablePullRequests.map((pullRequest) => [pullRequest.id, pullRequest])),
+    [availablePullRequests]
+  );
+  const selectedPullRequests = associatedPrIds
+    .map((id) => pullRequestById.get(id))
+    .filter((pullRequest): pullRequest is PRCard => Boolean(pullRequest));
+
+  useEffect(() => {
+    setDraftLinkedPrIds(associatedPrIds);
+    setIsPrLinkEditorOpen(false);
+  }, [associatedPrIds, card?.id, card?.linkedPrId, card?.linkedPrIds]);
+
+  const toggleDraftLinkedPr = (prId: string) => {
+    setDraftLinkedPrIds((previous) =>
+      previous.includes(prId) ? previous.filter((id) => id !== prId) : [...previous, prId]
+    );
+  };
+
+  const applyLinkedPrs = () => {
+    if (!card || !onUpdateCardLinkedPrs) return;
+    onUpdateCardLinkedPrs(card.id, draftLinkedPrIds);
+    setIsPrLinkEditorOpen(false);
+  };
+
   if (!card) return null;
-  const labelStatus = getPrLabelStatus(card);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-xl bg-background p-0 flex flex-col">
         <SheetHeader className="px-4 pt-4 pb-2">
-          <div className="flex items-start gap-3 pr-10">
-            <GitPullRequest className="w-5 h-5 text-green-500 mt-0.5" />
-            <div className="min-w-0">
-              <SheetTitle className="text-left text-base font-medium leading-tight">{card.title}</SheetTitle>
-              <p className="text-sm text-muted-foreground font-mono mt-1">
-                {card.repo} #{card.number}
-              </p>
-              {labelStatus && (
-                <div className="mt-2">
-                  <PrLabel status={labelStatus} />
-                </div>
-              )}
-            </div>
+          <div className="min-w-0 pr-10">
+            <SheetTitle className="text-left text-base font-medium leading-tight">{card.title}</SheetTitle>
           </div>
         </SheetHeader>
 
@@ -109,6 +135,100 @@ export function AgentPanel({
                 }
               />
             </div>
+          </div>
+        </div>
+
+        <div className="px-4 pb-4 pt-0">
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Associated PRs
+              </h3>
+              {onUpdateCardLinkedPrs && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-[11px]"
+                  onClick={() => setIsPrLinkEditorOpen((previous) => !previous)}
+                >
+                  {isPrLinkEditorOpen ? 'Close' : 'Add PRs'}
+                </Button>
+              )}
+            </div>
+
+              {selectedPullRequests.length > 0 ? (
+                <div className="space-y-2">
+                  {selectedPullRequests.map((pullRequest) => {
+                    const pullRequestStatus = getPrLabelStatus(pullRequest);
+                    return (
+                      <div
+                        key={pullRequest.id}
+                        className="rounded-md border border-border bg-muted/30 px-2.5 py-2"
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          <GitPullRequest className="h-4 w-4 shrink-0 text-green-500" aria-hidden="true" />
+                          <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground font-mono">
+                            {pullRequest.repo} #{pullRequest.number}
+                          </p>
+                          {pullRequestStatus && <PrLabel status={pullRequestStatus} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">No associated PRs yet.</p>
+              )}
+
+              {isPrLinkEditorOpen && onUpdateCardLinkedPrs && (
+                <div className="mt-3 space-y-2 border-t border-border pt-3">
+                  <div className="max-h-36 space-y-1 overflow-y-auto pr-1">
+                    {availablePullRequests.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No PRs available.</p>
+                    ) : (
+                      availablePullRequests.map((pullRequest) => {
+                        const isCurrentPr = isPrimaryPrCard && pullRequest.id === card.id;
+                        return (
+                          <label
+                            key={pullRequest.id}
+                            className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-xs text-foreground transition-colors hover:bg-muted/60"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={draftLinkedPrIds.includes(pullRequest.id)}
+                              onChange={() => toggleDraftLinkedPr(pullRequest.id)}
+                              className="mt-0.5 h-3.5 w-3.5 rounded border-border bg-transparent"
+                              disabled={isCurrentPr}
+                            />
+                            <span className="truncate">
+                              {pullRequest.repo} #{pullRequest.number} - {pullRequest.title}
+                              {isCurrentPr ? ' (Current)' : ''}
+                            </span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => {
+                        setDraftLinkedPrIds(associatedPrIds);
+                        setIsPrLinkEditorOpen(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="button" size="sm" className="h-7 px-2 text-[11px]" onClick={applyLinkedPrs}>
+                      Save PRs
+                    </Button>
+                  </div>
+                </div>
+              )}
           </div>
         </div>
 
@@ -193,16 +313,18 @@ export function AgentPanel({
                         <GitBranch className="w-3 h-3 text-muted-foreground" />
                         Up to date
                       </span>
-                      <div className="flex items-center gap-3 shrink-0 ml-auto">
-                        <span className="flex items-center gap-1 text-xs">
-                          <Plus className="w-3 h-3 text-success" />
-                          <span className="text-success">{card.additions}</span>
-                        </span>
-                        <span className="flex items-center gap-1 text-xs">
-                          <Minus className="w-3 h-3 text-destructive" />
-                          <span className="text-destructive">{card.deletions}</span>
-                        </span>
-                      </div>
+                      {!isTaskCard && (
+                        <div className="flex items-center gap-3 shrink-0 ml-auto">
+                          <span className="flex items-center gap-1 text-xs">
+                            <Plus className="w-3 h-3 text-success" />
+                            <span className="text-success">{card.additions}</span>
+                          </span>
+                          <span className="flex items-center gap-1 text-xs">
+                            <Minus className="w-3 h-3 text-destructive" />
+                            <span className="text-destructive">{card.deletions}</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

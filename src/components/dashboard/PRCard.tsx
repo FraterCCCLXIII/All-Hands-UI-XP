@@ -1,5 +1,5 @@
 import { PRCard as PRCardType } from '../../types/pr';
-import { Bot, Check, Clock, GitPullRequest, MessageSquare, Minus, Plus } from 'lucide-react';
+import { Bot, Check, Clock, GitPullRequest, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { CommentsDialog } from './CommentsDialog';
@@ -26,7 +26,18 @@ function formatTimeAgo(dateString: string): string {
 
 export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
   const conversationCount = card.conversations?.length ?? 0;
-  const labelStatus = getPrLabelStatus(card);
+  const linkedPrIds = card.linkedPrIds ?? (card.linkedPrId ? [card.linkedPrId] : []);
+  const hasAssociatedPr = card.sourceType !== 'task' || linkedPrIds.length > 0;
+  const labelStatus = hasAssociatedPr ? getPrLabelStatus(card) : null;
+  const isTaskCard =
+    card.sourceType === 'task' ||
+    card.linkedPrId === null ||
+    card.labels.some((label) => label.name.trim().toLowerCase() === 'task');
+  const cardMetaText = isTaskCard
+    ? linkedPrIds.length > 0
+      ? `${card.repo} - ${linkedPrIds.length} linked PR${linkedPrIds.length > 1 ? 's' : ''}`
+      : `${card.repo} - No linked PR`
+    : `${card.repo} #${card.number}`;
 
   return (
     <motion.div
@@ -39,21 +50,23 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="flex flex-wrap items-start gap-2 mb-2">
-        <GitPullRequest className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-500" />
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-            {card.title}
-          </h3>
-          <p className="text-xs text-muted-foreground font-mono mt-1">
-            {card.repo} #{card.number}
-          </p>
+      <div className="mb-2">
+        <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+          {card.title}
+        </h3>
+      </div>
+
+      <div className="mb-2 rounded-md border border-border bg-muted/30 px-2.5 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <GitPullRequest
+            className={cn(
+              'w-4 h-4 flex-shrink-0',
+              hasAssociatedPr ? 'text-green-500' : 'text-muted-foreground'
+            )}
+          />
+          <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground font-mono">{cardMetaText}</p>
+          {labelStatus && <PrLabel status={labelStatus} />}
         </div>
-        {labelStatus && (
-          <div className="w-full pt-1 sm:w-auto sm:pt-0 sm:ml-auto">
-            <PrLabel status={labelStatus} />
-          </div>
-        )}
       </div>
 
       {(card.conversations ?? []).some((conversation) => conversation.activity) && (
@@ -104,14 +117,6 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
               </button>
             }
           />
-          <span className="flex items-center gap-1">
-            <Plus className="w-3 h-3 text-success" />
-            <span className="text-success">{card.additions}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <Minus className="w-3 h-3 text-destructive" />
-            <span className="text-destructive">{card.deletions}</span>
-          </span>
         </div>
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
