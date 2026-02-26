@@ -22,6 +22,7 @@
 
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 55%;
+    --muted-hover: 0 0% 18%;
 
     --accent: 0 0% 100%;
     --accent-foreground: 0 0% 0%;
@@ -74,6 +75,7 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 55%;
+    --muted-hover: 0 0% 18%;
     --accent: 0 0% 100%;
     --accent-foreground: 0 0% 0%;
     --destructive: 0 72% 51%;
@@ -203,6 +205,22 @@ input[type="search"]::-webkit-search-results-decoration {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+/* Restore hover state for list items globally */
+[role="menuitem"]:hover,
+[role="menuitem"][data-highlighted],
+[role="option"]:hover,
+[role="option"][data-highlighted] {
+  background-color: hsl(var(--muted) / 0.6);
+}
+
+/* Restore hover for muted/neutral buttons in sidebar/popover contexts (e.g. Account menu).
+   Only target muted buttons so colored buttons (primary, destructive, success, etc.) keep their
+   custom darker-on-hover states. Exclude flowchart layout. */
+.bg-sidebar:not([data-flowchart]) button[class*="bg-muted"]:hover:not(:disabled),
+.bg-sidebar:not([data-flowchart]) [role="button"][class*="bg-muted"]:hover:not([aria-disabled="true"]) {
+  background-color: hsl(var(--muted) / 0.6);
 }
 
 @layer base {

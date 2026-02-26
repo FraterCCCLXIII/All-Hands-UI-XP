@@ -33,6 +33,7 @@ interface ChatAreaProps {
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
   disableAutoScroll?: boolean;
   onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
+  welcomeScreenVariant?: 'default' | 'cards';
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -56,6 +57,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onChatWindowTabChange: _onChatWindowTabChange,
   disableAutoScroll = false,
   onEnterpriseCtaVisibilityChange,
+  welcomeScreenVariant = 'default',
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
@@ -190,6 +192,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           onBranchSelect={onBranchSelect}
           onCreateNewRepo={onCreateNewRepo}
           onClose={handleWelcomeScreenClose}
+          variant={welcomeScreenVariant}
         />
         <AnimatePresence>
           {showEnterpriseCta && (

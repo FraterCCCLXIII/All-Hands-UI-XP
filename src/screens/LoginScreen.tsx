@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Github, Mail, AlertTriangle } from 'lucide-react';
+import { Github, Mail, AlertTriangle, User, Cloud, Server } from 'lucide-react';
 import { Logo } from '../components/common/Logo';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -79,17 +79,50 @@ const socialLogins = [
   { id: 'github', label: 'Sign in with Github', icon: Github, className: 'bg-[#9E28B0] hover:bg-[#8a2399] text-white border-0' },
   { id: 'gitlab', label: 'Sign in with Gitlab', icon: GitLabIcon, className: 'bg-[#FC6B0E] hover:bg-[#e55f0c] text-white border-0' },
   { id: 'bitbucket', label: 'Sign in with Bitbucket', icon: BitbucketIcon, className: 'bg-[#2684FF] hover:bg-[#1a6ce6] text-white border-0' },
-  { id: 'google', label: 'Sign in with Google', icon: GoogleIcon, className: 'bg-white hover:bg-gray-100 text-gray-800 border border-border' },
-  { id: 'chatgpt', label: 'Sign in with ChatGPT', icon: ChatGPTIcon, className: 'bg-white hover:bg-gray-100 text-black border border-border', iconClassName: 'w-5 h-5' },
+  { id: 'google', label: 'Sign in with Google', icon: GoogleIcon, className: 'bg-white hover:bg-gray-200 text-gray-800 border border-border' },
+  { id: 'chatgpt', label: 'Sign in with ChatGPT', icon: ChatGPTIcon, className: 'bg-white hover:bg-gray-200 text-black border border-border', iconClassName: 'w-5 h-5' },
+];
+
+type PrimaryUseOption = 'personal' | 'saas' | 'self-hosted';
+
+const PRIMARY_USE_OPTIONS: { id: PrimaryUseOption; title: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  {
+    id: 'personal',
+    title: 'Personal',
+    description: 'Use OpenHands for your own projects. Perfect for individual developers who want AI-assisted coding.',
+    icon: User,
+  },
+  {
+    id: 'saas',
+    title: 'SaaS',
+    description: 'Access OpenHands in the cloud. No setup required—start coding with your team from anywhere.',
+    icon: Cloud,
+  },
+  {
+    id: 'self-hosted',
+    title: 'Self-hosted',
+    description: 'Deploy OpenHands on your own infrastructure. Full control over data and compliance for enterprises.',
+    icon: Server,
+  },
 ];
 
 export function LoginScreen({ onBack }: LoginScreenProps) {
-  const [view, setView] = useState<'options' | 'email' | 'otp' | 'onboarding'>('options');
+  const [view, setView] = useState<'options' | 'email' | 'otp' | 'onboarding' | 'primary-use' | 'llm-starter' | 'llm-upgrade-otp' | 'self-hosted-form'>('options');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [otpError, setOtpError] = useState(false);
   const [onboardingStep, setOnboardingStep] = useState(0);
   const [onboardingAnswers, setOnboardingAnswers] = useState<Record<number, string>>({});
+  const [primaryUse, setPrimaryUse] = useState<PrimaryUseOption | null>(null);
+  const [selfHostedForm, setSelfHostedForm] = useState({ name: '', company: '', email: '', message: '' });
+  const [cameFromSocialLogin, setCameFromSocialLogin] = useState(false);
+  const [showLlmUpgradeForm, setShowLlmUpgradeForm] = useState(false);
+  const [businessEmail, setBusinessEmail] = useState('');
+  const [businessEmailVerified, setBusinessEmailVerified] = useState(false);
+  const [businessEmailError, setBusinessEmailError] = useState<string | null>(null);
+  const [llmUpgradeOtp, setLlmUpgradeOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+  const [llmUpgradeOtpError, setLlmUpgradeOtpError] = useState(false);
+  const llmUpgradeOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleVerify = () => {
@@ -141,6 +174,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
       return;
     }
     setOtpError(false);
+    setCameFromSocialLogin(false);
     setView('onboarding');
     setOnboardingStep(0);
     setOnboardingAnswers({});
@@ -153,8 +187,8 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
   const handleOnboardingNext = () => {
     if (!selectedAnswer) return;
     if (isLastOnboardingStep) {
-      console.log('Onboarding complete:', onboardingAnswers);
-      onBack?.();
+      setView('primary-use');
+      setPrimaryUse(null);
       return;
     }
     setOnboardingStep((s) => s + 1);
@@ -162,11 +196,438 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
 
   const handleOnboardingBack = () => {
     if (onboardingStep === 0) {
-      setView('otp');
+      setView(cameFromSocialLogin ? 'options' : 'otp');
     } else {
       setOnboardingStep((s) => s - 1);
     }
   };
+
+  const handlePrimaryUseSelect = (option: PrimaryUseOption) => {
+    setPrimaryUse(option);
+    if (option === 'self-hosted') {
+      setView('self-hosted-form');
+      setSelfHostedForm({ name: '', company: '', email: '', message: '' });
+    } else {
+      setView('llm-starter');
+      setShowLlmUpgradeForm(false);
+      setBusinessEmail('');
+      setBusinessEmailVerified(false);
+    }
+  };
+
+  const handleLlmStarterContinue = () => {
+    console.log('Onboarding complete:', { ...onboardingAnswers, primaryUse, businessEmail: showLlmUpgradeForm ? businessEmail : null, verified: businessEmailVerified });
+    onBack?.();
+  };
+
+  const handleGet30DaysFree = () => {
+    const email = businessEmail.trim().toLowerCase();
+    if (!email || !email.includes('@')) return;
+    setBusinessEmailError(null);
+    if (email.includes('gmail')) {
+      setBusinessEmailError('Please use a business email address.');
+    } else {
+      setView('llm-upgrade-otp');
+      setLlmUpgradeOtp(Array(OTP_LENGTH).fill(''));
+      setLlmUpgradeOtpError(false);
+    }
+  };
+
+  const handleLlmUpgradeOtpChange = useCallback((index: number, value: string) => {
+    setLlmUpgradeOtpError(false);
+    const char = value.slice(-1);
+    if (char && !/^\d$/.test(char)) return;
+    setLlmUpgradeOtp((prev) => {
+      const next = [...prev];
+      next[index] = char;
+      return next;
+    });
+    if (char && index < OTP_LENGTH - 1) {
+      llmUpgradeOtpRefs.current[index + 1]?.focus();
+    }
+  }, []);
+
+  const handleLlmUpgradeOtpKeyDown = useCallback((index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !llmUpgradeOtp[index] && index > 0) {
+      llmUpgradeOtpRefs.current[index - 1]?.focus();
+    }
+  }, [llmUpgradeOtp]);
+
+  const handleLlmUpgradeOtpPaste = useCallback((e: React.ClipboardEvent) => {
+    e.preventDefault();
+    setLlmUpgradeOtpError(false);
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH);
+    if (!pasted) return;
+    setLlmUpgradeOtp((prev) => {
+      const next = [...prev];
+      pasted.split('').forEach((char, i) => { next[i] = char; });
+      return next;
+    });
+    const focusIndex = Math.min(pasted.length, OTP_LENGTH) - 1;
+    setTimeout(() => llmUpgradeOtpRefs.current[focusIndex]?.focus(), 0);
+  }, []);
+
+  const handleLlmUpgradeOtpNext = () => {
+    const code = llmUpgradeOtp.join('');
+    if (code.length !== OTP_LENGTH) {
+      setLlmUpgradeOtpError(true);
+      return;
+    }
+    setLlmUpgradeOtpError(false);
+    setBusinessEmailVerified(true);
+    handleLlmStarterContinue();
+  };
+
+  const handleSelfHostedNext = () => {
+    setView('llm-starter');
+    setShowLlmUpgradeForm(false);
+    setBusinessEmail('');
+    setBusinessEmailVerified(false);
+  };
+
+  if (view === 'llm-starter') {
+    const handleLlmBack = () => {
+      if (primaryUse === 'self-hosted') {
+        setView('self-hosted-form');
+      } else {
+        setView('primary-use');
+      }
+    };
+
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 bg-background text-foreground px-6 py-12">
+        <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+          <button
+            type="button"
+            onClick={handleLlmBack}
+            className="absolute top-4 left-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Back"
+          >
+            ← Back
+          </button>
+          <div className="flex flex-col items-center gap-4">
+            <Logo className="w-14 h-14 text-foreground" />
+            <h1 className="text-2xl font-semibold text-foreground text-center leading-tight">
+              Your starter LLM
+            </h1>
+          </div>
+          <div className="w-full grid gap-5 sm:grid-cols-2">
+            <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl px-8 py-8 text-left shadow-lg transition-all duration-300 ease-in-out hover:border-border/80 hover:scale-[1.02] supports-[backdrop-filter]:bg-card/50 min-h-[200px] flex flex-col">
+              <div
+                className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
+                style={{ background: 'var(--gradient-card-hover)' }}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
+              <div className="relative z-10 flex flex-col gap-3 flex-1">
+                <h3 className="text-lg font-semibold text-foreground">Get 7 days free of Minimax M2.5 and M2.1</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                  Start building with our free trial models. Upgrade to access models from the top providers or you can bring your own keys.
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleLlmStarterContinue}
+                  className="w-full h-10 rounded-md mt-auto"
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
+            <div className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl px-8 py-8 text-left shadow-lg transition-all duration-300 ease-in-out hover:border-border/80 hover:scale-[1.02] supports-[backdrop-filter]:bg-card/50 min-h-[200px] flex flex-col">
+              <div
+                className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
+                style={{ background: 'var(--gradient-card-hover)' }}
+              />
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
+              <div className="relative z-10 flex flex-col gap-3 flex-1">
+                <h3 className="text-lg font-semibold text-foreground">Upgrade to 30 days free with a verified business email</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+                  Verify your work email to extend your trial.
+                </p>
+                {!showLlmUpgradeForm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowLlmUpgradeForm(true)}
+                    className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-white text-black hover:bg-gray-300 transition-colors w-full sm:w-auto mt-auto"
+                  >
+                    Upgrade
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-3 mt-auto">
+                    <div>
+                      <div className="flex gap-2">
+                        <Input
+                          id="llm-business-email"
+                          type="email"
+                          placeholder="Business email"
+                          value={businessEmail}
+                          onChange={(e) => {
+                            setBusinessEmail(e.target.value);
+                            setBusinessEmailVerified(false);
+                            setBusinessEmailError(null);
+                          }}
+                          className="h-10 rounded-md flex-1"
+                          autoComplete="email"
+                          disabled={businessEmailVerified}
+                          aria-label="Business email"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleGet30DaysFree}
+                          disabled={!businessEmail.trim()}
+                          className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-white text-black hover:bg-gray-300 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Get 30 Days Free
+                        </button>
+                      </div>
+                      {businessEmailError && (
+                        <p className="text-xs text-destructive mt-1.5">{businessEmailError}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'llm-upgrade-otp') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 bg-background text-foreground px-6 py-12">
+        <div className="w-full max-w-sm flex flex-col items-center gap-8">
+          <button
+            type="button"
+            onClick={() => setView('llm-starter')}
+            className="absolute top-4 left-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Back"
+          >
+            ← Back
+          </button>
+          <div className="flex flex-col items-center gap-4">
+            <Logo className="w-16 h-16 text-foreground" />
+            <h1 className="text-[40px] font-semibold text-foreground text-center leading-tight tracking-tight">
+              Enter code
+            </h1>
+          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            An OTP code has been sent to {businessEmail}. Enter that code here. Didn&apos;t receive it?{' '}
+            <button
+              type="button"
+              onClick={() => {}}
+              className="text-primary underline underline-offset-2 hover:no-underline font-medium"
+            >
+              Resend Code
+            </button>
+          </p>
+          <div
+            className="flex gap-2 justify-center"
+            onPaste={handleLlmUpgradeOtpPaste}
+          >
+            {llmUpgradeOtp.map((digit, index) => (
+              <Input
+                key={index}
+                ref={(el) => { llmUpgradeOtpRefs.current[index] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleLlmUpgradeOtpChange(index, e.target.value)}
+                onKeyDown={(e) => handleLlmUpgradeOtpKeyDown(index, e)}
+                className="h-12 w-12 rounded-md text-center text-lg font-medium p-0"
+                aria-label={`Digit ${index + 1} of ${OTP_LENGTH}`}
+                aria-invalid={llmUpgradeOtpError}
+              />
+            ))}
+          </div>
+          {llmUpgradeOtpError && (
+            <div
+              role="alert"
+              className="w-full flex items-center gap-3 rounded-md border border-red-600 bg-red-950/95 px-4 py-3 text-white text-sm"
+            >
+              <AlertTriangle className="h-5 w-5 shrink-0 text-white" aria-hidden />
+              <span>That code was invalid, please try again.</span>
+            </div>
+          )}
+          <div className="flex gap-3 w-full">
+            <Button
+              type="button"
+              onClick={handleLlmUpgradeOtpNext}
+              className="flex-1 h-10 rounded-md"
+            >
+              Next
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setView('llm-starter')}
+              className="flex-1 h-10 rounded-md"
+            >
+              Back
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'self-hosted-form') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 bg-background text-foreground px-6 py-12">
+        <div className="w-full max-w-4xl flex flex-col gap-8">
+          <button
+            type="button"
+            onClick={() => setView('primary-use')}
+            className="absolute top-4 left-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Back"
+          >
+            ← Back
+          </button>
+          <div className="flex flex-col items-center gap-4">
+            <Logo className="w-14 h-14 text-foreground" />
+            <h1 className="text-2xl font-semibold text-foreground text-center leading-tight">
+              Learn more about Self-hosted
+            </h1>
+            <p className="text-sm text-muted-foreground text-center">
+              Tell us about your needs and we&apos;ll be in touch.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-8 items-stretch">
+            <div className="flex-1 flex flex-col gap-4 w-full min-w-0">
+              <div>
+                <label htmlFor="self-hosted-name" className="block text-sm font-medium text-foreground mb-1.5">
+                  Name
+                </label>
+                <Input
+                  id="self-hosted-name"
+                  type="text"
+                  placeholder="Your name"
+                  value={selfHostedForm.name}
+                  onChange={(e) => setSelfHostedForm((prev) => ({ ...prev, name: e.target.value }))}
+                  className="h-10 rounded-md"
+                />
+              </div>
+              <div>
+                <label htmlFor="self-hosted-company" className="block text-sm font-medium text-foreground mb-1.5">
+                  Company name
+                </label>
+                <Input
+                  id="self-hosted-company"
+                  type="text"
+                  placeholder="Your company"
+                  value={selfHostedForm.company}
+                  onChange={(e) => setSelfHostedForm((prev) => ({ ...prev, company: e.target.value }))}
+                  className="h-10 rounded-md"
+                />
+              </div>
+              <div>
+                <label htmlFor="self-hosted-email" className="block text-sm font-medium text-foreground mb-1.5">
+                  Email address
+                </label>
+                <Input
+                  id="self-hosted-email"
+                  type="email"
+                  placeholder="name@company.com"
+                  value={selfHostedForm.email}
+                  onChange={(e) => setSelfHostedForm((prev) => ({ ...prev, email: e.target.value }))}
+                  className="h-10 rounded-md"
+                  autoComplete="email"
+                />
+              </div>
+              <div>
+                <label htmlFor="self-hosted-message" className="block text-sm font-medium text-foreground mb-1.5">
+                  Custom message
+                </label>
+                <textarea
+                  id="self-hosted-message"
+                  placeholder="Tell us about your deployment needs..."
+                  value={selfHostedForm.message}
+                  onChange={(e) => setSelfHostedForm((prev) => ({ ...prev, message: e.target.value }))}
+                  rows={4}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setView('primary-use')}
+                  className="flex-1 h-10 rounded-md"
+                >
+                  Back
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleSelfHostedNext}
+                  className="flex-1 h-10 rounded-md"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+            <aside className="sm:w-80 shrink-0 w-full">
+              <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl p-6 shadow-lg supports-[backdrop-filter]:bg-card/50 h-full min-h-[280px]">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
+                <div className="relative z-10 flex flex-col items-start text-left gap-4">
+                  <Server className="w-10 h-10 text-muted-foreground" aria-hidden />
+                  <h2 className="text-xl font-semibold text-foreground">Self-hosted</h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Deploy OpenHands on your own infrastructure. Full control over your data, compliance, and security. Ideal for enterprises that require on-premises or private cloud deployment.
+                  </p>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'primary-use') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center min-h-0 bg-background text-foreground px-6 py-12">
+        <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+          <button
+            type="button"
+            onClick={() => setView('onboarding')}
+            className="absolute top-4 left-6 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Back"
+          >
+            ← Back
+          </button>
+          <div className="flex flex-col items-center gap-4">
+            <Logo className="w-14 h-14 text-foreground" />
+            <h1 className="text-2xl font-semibold text-foreground text-center leading-tight">
+              What&apos;s your primary use-case?
+            </h1>
+          </div>
+          <div className="w-full grid gap-5 sm:grid-cols-3">
+            {PRIMARY_USE_OPTIONS.map(({ id, title, description, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => handlePrimaryUseSelect(id)}
+                className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl px-8 py-8 text-left shadow-lg transition-all duration-300 ease-in-out hover:border-border/80 hover:scale-[1.02] supports-[backdrop-filter]:bg-card/50 min-h-[160px]"
+              >
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"
+                  style={{ background: 'var(--gradient-card-hover)' }}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.08),_transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
+                <div className="relative z-10 flex flex-col gap-3">
+                  <Icon className="w-8 h-8 text-muted-foreground shrink-0" aria-hidden />
+                  <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (view === 'onboarding') {
     return (
@@ -213,7 +674,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
               disabled={!selectedAnswer}
               className="flex-1 h-10 rounded-md"
             >
-              {isLastOnboardingStep ? 'Finish' : 'Next'}
+              {'Next'}
             </Button>
             <Button
               type="button"
@@ -402,6 +863,12 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
             <button
               key={id}
               type="button"
+              onClick={() => {
+                setCameFromSocialLogin(true);
+                setView('onboarding');
+                setOnboardingStep(0);
+                setOnboardingAnswers({});
+              }}
               className={`h-10 w-full flex items-center justify-center gap-2 rounded-md text-sm font-medium border transition-colors ${className}`}
             >
               <Icon className={iconClassName ?? 'w-5 h-5 shrink-0'} />

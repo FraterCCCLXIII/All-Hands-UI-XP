@@ -167,7 +167,7 @@ export function NewLlmSwitcherScreen2() {
           <button
             type="button"
             onClick={handleStartAdd}
-            className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors"
+            className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors"
           >
             Add LLM Profile
           </button>
@@ -491,7 +491,7 @@ export function NewLlmSwitcherScreen2() {
         <button
           disabled
           type="submit"
-          className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           Save Profile
         </button>
@@ -667,7 +667,7 @@ export function NewLlmSwitcherScreen2() {
         <button
           disabled={!isEditDirty}
           type="submit"
-          className="h-10 flex items-center justify-center w-fit px-6 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="h-10 flex items-center justify-center w-fit px-6 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           Save
         </button>

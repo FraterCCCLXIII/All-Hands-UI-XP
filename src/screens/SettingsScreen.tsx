@@ -512,7 +512,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <button
                         type="button"
                         disabled
-                        className="h-10 flex items-center justify-center px-4 rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="h-10 flex items-center justify-center px-4 rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       >
                         Save
                       </button>
@@ -540,7 +540,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     type="button"
                     disabled={!canInviteMembers}
                     onClick={() => setInviteModalOpen(true)}
-                    className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     Invite Organization Member
                   </button>
@@ -618,7 +618,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                   >
                     Configure Github Repositories
                   </button>
@@ -662,7 +662,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                   >
                     Install OpenHands Slack App
                   </button>
@@ -678,7 +678,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                   >
                     Configure
                   </button>
@@ -787,7 +787,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <button
                   disabled
                   type="submit"
-                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Save Changes
                 </button>
@@ -934,7 +934,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <button
                       disabled
                       type="submit"
-                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       Save Changes
                     </button>
@@ -961,7 +961,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </div>
                     <button
                       type="button"
-                      className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                      className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                     >
                       Manage Credits
                     </button>
@@ -983,7 +983,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <button
                       disabled
                       type="submit"
-                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       Add credit
                     </button>
@@ -1005,7 +1005,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-5">
                 <button
                   type="button"
-                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                 >
                   Add a new secret
                 </button>
@@ -1035,7 +1035,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                     >
                       Refresh API Key
                     </button>
@@ -1079,7 +1079,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
-                    className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                   >
                     Create API Key
                   </button>
@@ -1157,7 +1157,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-5">
                 <button
                   type="button"
-                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-200 cursor-pointer transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                 >
                   Add Server
                 </button>
@@ -1261,7 +1261,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           type="button"
           onClick={handleSendInvites}
           disabled={inviteEmails.length === 0 && inviteInput.trim().length === 0}
-          className="h-9 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="h-9 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Send invites
         </button>
@@ -1329,7 +1329,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           href="https://openhands.dev/contact"
           target="_blank"
           rel="noreferrer noopener"
-          className="h-9 inline-flex items-center justify-center px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-200 transition-colors"
+          className="h-9 inline-flex items-center justify-center px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors"
         >
           Contact Sales
         </a>

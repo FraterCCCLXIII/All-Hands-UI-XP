@@ -144,6 +144,7 @@ type CanvasTipVariant = 'none' | ProtipVariant;
 
 const actionSlugs: Record<string, string> = {
   code: 'chat',
+  'chat-cards': 'chat-cards',
   dashboard: 'dashboard',
   skills: 'skills',
   components: 'components',
@@ -657,6 +658,7 @@ function App() {
                         onCreateNewRepo={handleCreateNewRepo}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
+                        welcomeScreenVariant={activeNavItem === 'chat-cards' ? 'cards' : 'default'}
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />

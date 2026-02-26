@@ -296,7 +296,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
   };
 
   return (
-    <div className="flex-1 min-h-0 min-w-0 flex bg-sidebar text-foreground">
+    <div className="flex-1 min-h-0 min-w-0 flex bg-sidebar text-foreground" data-flowchart="true">
       {flows.length > 0 && (
         <aside
           className={`shrink-0 border-r border-border bg-sidebar/80 px-4 py-6 overflow-y-auto transition-all duration-200 ${
@@ -311,7 +311,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
               type="button"
               onClick={() => setIsFlowNavOpen((prev) => !prev)}
               aria-label={isFlowNavOpen ? 'Collapse flowcharts' : 'Expand flowcharts'}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-muted text-foreground hover:bg-muted/70 transition-colors"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-muted text-foreground hover:bg-muted-hover transition-colors"
             >
               {isFlowNavOpen ? '«' : '»'}
             </button>
@@ -328,7 +328,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                     className={`w-full rounded-md border px-3 py-2 text-left text-sm font-medium transition ${
                       isActive
                         ? 'border-border bg-muted text-foreground'
-                        : 'border-transparent bg-muted/40 text-foreground hover:border-border hover:bg-muted'
+                        : 'border-transparent bg-muted/40 text-foreground hover:border-border hover:bg-muted-hover'
                     }`}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -348,7 +348,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
               key={node.id}
               type="button"
               onClick={() => handleFocusNode(node.id)}
-              className="w-full rounded-md border border-transparent bg-muted/40 px-3 py-2 text-left text-sm font-medium text-foreground transition hover:border-border hover:bg-muted"
+              className="w-full rounded-md border border-transparent bg-muted/40 px-3 py-2 text-left text-sm font-medium text-foreground transition hover:border-border hover:bg-muted-hover"
             >
               {node.title}
               {node.subtitle && (
@@ -368,7 +368,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
             <button
               type="button"
               onClick={onExit}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/70 transition-colors"
+              className="inline-flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2 text-sm font-medium text-foreground hover:bg-muted-hover transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -384,7 +384,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
             <button
               type="button"
               onClick={() => handleZoomChange(zoom - 0.1)}
-              className="h-7 w-7 rounded-md border border-border bg-muted text-sm font-semibold text-foreground hover:bg-muted/70"
+              className="h-7 w-7 rounded-md border border-border bg-muted text-sm font-semibold text-foreground hover:bg-muted-hover"
               aria-label="Zoom out"
             >
               −
@@ -402,7 +402,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
             <button
               type="button"
               onClick={() => handleZoomChange(zoom + 0.1)}
-              className="h-7 w-7 rounded-md border border-border bg-muted text-sm font-semibold text-foreground hover:bg-muted/70"
+              className="h-7 w-7 rounded-md border border-border bg-muted text-sm font-semibold text-foreground hover:bg-muted-hover"
               aria-label="Zoom in"
             >
               +
@@ -498,7 +498,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                             onClick={() =>
                               setOpenNotes((prev) => ({ ...prev, [node.id]: !prev[node.id] }))
                             }
-                            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/70"
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-1 text-xs font-medium text-foreground hover:bg-muted-hover"
                           >
                             <StickyNote className="h-3.5 w-3.5" />
                             Notes

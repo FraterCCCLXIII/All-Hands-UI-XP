@@ -99,6 +99,7 @@ export interface LeftNavProps {
 
 const flowPrototypes = [
   { id: 'flowcharts-home', label: 'Flowcharts', flowId: 'new-user-experience' },
+  { id: 'chat-cards', label: 'Chat - Card-based', navAction: 'chat-cards' },
   { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
   { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
   {
