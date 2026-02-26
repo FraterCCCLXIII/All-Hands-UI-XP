@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Box, LayoutDashboard, List, Plus, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles } from 'lucide-react';
+import { Bot, Box, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
@@ -75,7 +75,7 @@ const navItems = [
   { icon: Plus, label: 'Create repository', action: 'new-project' },
   { icon: List, label: 'Conversations', action: 'conversations' },
   { icon: Bot, label: 'Robot assistant', action: 'skills' },
-  { icon: LayoutDashboard, label: 'Dashboard view', action: 'dashboard' },
+  { icon: SquareKanban, label: 'Kanban view', action: 'dashboard' },
 ];
 
 export interface LeftNavProps {

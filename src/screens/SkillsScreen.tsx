@@ -1,21 +1,25 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  Bot,
   BookOpen,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
+  Code2,
   Copy,
   ExternalLink,
+  FlaskConical,
+  GitBranch,
   GitFork,
   Package,
   Github,
   MessageSquare,
+  MoreHorizontal,
   MoreVertical,
+  ShieldCheck,
   Star,
   Wrench,
 } from 'lucide-react';
 import { InfoCard } from '../components/common/InfoCard';
-import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { SearchInput } from '../components/ui/search-input';
 import {
@@ -37,10 +41,23 @@ import {
   marketplaceSkills,
   skillRepositoryMetadata,
   skillRepositoryItems,
-  type SkillRepositoryLink,
   type SkillRepositoryItem,
 } from '../data/skillsPageData';
 import { cn } from '../lib/utils';
+import type { LucideIcon } from 'lucide-react';
+
+const SKILL_ICONS: Record<string, LucideIcon> = {
+  'marketplace-code-review': Code2,
+  'marketplace-docs': BookOpen,
+  'marketplace-security': ShieldCheck,
+  'marketplace-test-gen': FlaskConical,
+  'marketplace-refactor': Wrench,
+  'marketplace-migrate': GitBranch,
+};
+
+function getSkillIcon(skillId: string): LucideIcon {
+  return SKILL_ICONS[skillId] ?? Bot;
+}
 
 function groupSkillsByRepo(items: SkillRepositoryItem[]) {
   const byRepo = new Map<string, SkillRepositoryItem[]>();
@@ -50,21 +67,6 @@ function groupSkillsByRepo(items: SkillRepositoryItem[]) {
     byRepo.set(item.repo, list);
   }
   return Array.from(byRepo.entries()).map(([repo, skills]) => ({ repo, skills }));
-}
-
-function getRepoLinkIcon(type: SkillRepositoryLink['type']) {
-  switch (type) {
-    case 'repo':
-      return Github;
-    case 'docs':
-      return BookOpen;
-    case 'issues':
-      return MessageSquare;
-    case 'homepage':
-      return ExternalLink;
-    default:
-      return ExternalLink;
-  }
 }
 
 function highlightJson(content: string) {
@@ -266,11 +268,55 @@ export function SkillsScreen() {
   const [marketplaceSearchQuery, setMarketplaceSearchQuery] = useState('');
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SkillRepositoryItem | null>(null);
-  const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set());
   const [addToRepoModalOpen, setAddToRepoModalOpen] = useState(false);
   const [addSkillModalOpen, setAddSkillModalOpen] = useState(false);
   const [addSkillTargetRepo, setAddSkillTargetRepo] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [visibleCategoryCount, setVisibleCategoryCount] = useState(marketplaceCategories.length);
+  const categoryTabsRef = useRef<HTMLDivElement>(null);
+  const categoryTabsWrapperRef = useRef<HTMLDivElement>(null);
+  const categoryTabsMeasureRef = useRef<HTMLDivElement>(null);
+
+  const isMarketplaceView = viewMode === 'marketplace' && !selectedItem;
+
+  useLayoutEffect(() => {
+    const wrapper = categoryTabsWrapperRef.current;
+    const measureContainer = categoryTabsMeasureRef.current;
+    if (!wrapper || !measureContainer || !isMarketplaceView) return;
+
+    const MENU_SLOT_WIDTH = 44;
+    const GAP = 8;
+
+    const updateVisibleCount = () => {
+      const availableWidth = wrapper.offsetWidth - MENU_SLOT_WIDTH - GAP;
+      const tabs = measureContainer.querySelectorAll<HTMLElement>('[role="tab"]');
+      if (tabs.length === 0) return;
+
+      let totalWidth = 0;
+      let visibleCount = 0;
+      for (let i = 0; i < tabs.length; i++) {
+        const w = tabs[i].offsetWidth + (i > 0 ? GAP : 0);
+        if (totalWidth + w > availableWidth) break;
+        totalWidth += w;
+        visibleCount = i + 1;
+      }
+      setVisibleCategoryCount(visibleCount);
+    };
+
+    const ro = new ResizeObserver(updateVisibleCount);
+    ro.observe(wrapper);
+    updateVisibleCount();
+    return () => ro.disconnect();
+  }, [isMarketplaceView]);
+
+  const overflowCategories = useMemo(
+    () => marketplaceCategories.slice(visibleCategoryCount - 1),
+    [visibleCategoryCount]
+  );
+  const visibleCategories = useMemo(
+    () => marketplaceCategories.slice(0, visibleCategoryCount - 1),
+    [visibleCategoryCount]
+  );
 
   const repoMetadataMap = useMemo(
     () => new Map(skillRepositoryMetadata.map((meta) => [meta.repo, meta])),
@@ -340,13 +386,6 @@ export function SkillsScreen() {
     [repoGroups]
   );
   const displayItem = selectedItem;
-  const selectedRepoConversations = useMemo(() => {
-    if (!selectedRepoGroup) return 0;
-    return selectedRepoGroup.skills.reduce(
-      (total, skill) => total + (skill.conversationCount ?? 0),
-      0
-    );
-  }, [selectedRepoGroup]);
   const displayItemConversations = displayItem?.conversationCount ?? 0;
   const skillFileContent = useMemo(() => {
     if (!displayItem) return '';
@@ -360,15 +399,6 @@ export function SkillsScreen() {
     };
     return JSON.stringify(payload, null, 2);
   }, [displayItem]);
-
-  const handleToggleRepo = useCallback((repo: string) => {
-    setExpandedRepos((prev) => {
-      const next = new Set(prev);
-      if (next.has(repo)) next.delete(repo);
-      else next.add(repo);
-      return next;
-    });
-  }, []);
 
   const handleSelectRepo = useCallback((repo: string) => {
     setViewMode('repos');
@@ -495,18 +525,6 @@ export function SkillsScreen() {
                   >
                     <button
                       type="button"
-                      onClick={() => handleToggleRepo(personalRepoGroup.repo)}
-                      className="flex h-4 w-4 items-center justify-center"
-                      aria-label={`Toggle ${personalRepoGroup.repo} skills`}
-                    >
-                      {expandedRepos.has(personalRepoGroup.repo) ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => handleSelectRepo(personalRepoGroup.repo)}
                       className="flex min-w-0 flex-1 items-center gap-2 text-left"
                       aria-current={selectedRepo === personalRepoGroup.repo}
@@ -518,28 +536,6 @@ export function SkillsScreen() {
                       {personalRepoGroup.skills.length}
                     </span>
                   </div>
-                  {expandedRepos.has(personalRepoGroup.repo) && (
-                    <ul className="list-none space-y-1">
-                      {personalRepoGroup.skills.map((skill) => (
-                        <li key={skill.id}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectSkill(skill)}
-                            className={cn(
-                              'flex w-full items-center gap-2 rounded-md py-1.5 pl-6 pr-2 text-left text-sm transition-colors',
-                              selectedItem?.id === skill.id
-                                ? 'bg-muted/80 text-foreground'
-                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                            )}
-                          >
-                            <span className="min-w-0 flex-1 truncate">
-                              {skill.skillName ?? skill.title}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </li>
               ) : (
                 <li className="px-2 py-1.5 text-xs text-muted-foreground">
@@ -552,9 +548,7 @@ export function SkillsScreen() {
             All Repositories
           </h3>
           <ul className="list-none space-y-1">
-            {nonPersonalRepoGroups.slice(0, 10).map(({ repo, skills }) => {
-              const isRepoExpanded = expandedRepos.has(repo);
-              return (
+            {nonPersonalRepoGroups.slice(0, 10).map(({ repo, skills }) => (
                 <li key={repo}>
                   <div
                     className={cn(
@@ -564,18 +558,6 @@ export function SkillsScreen() {
                         : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                     )}
                   >
-                    <button
-                      type="button"
-                      onClick={() => handleToggleRepo(repo)}
-                      className="flex h-4 w-4 items-center justify-center"
-                      aria-label={`Toggle ${repo} skills`}
-                    >
-                      {isRepoExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </button>
                     <button
                       type="button"
                       onClick={() => handleSelectRepo(repo)}
@@ -589,31 +571,8 @@ export function SkillsScreen() {
                       {skills.length}
                     </span>
                   </div>
-                  {isRepoExpanded && (
-                    <ul className="list-none space-y-1">
-                      {skills.map((skill) => (
-                        <li key={skill.id}>
-                          <button
-                            type="button"
-                            onClick={() => handleSelectSkill(skill)}
-                            className={cn(
-                              'flex w-full items-center gap-2 rounded-md py-1.5 pl-4 pr-2 text-left text-sm transition-colors',
-                              selectedItem?.id === skill.id
-                                ? 'bg-muted/80 text-foreground'
-                                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                            )}
-                          >
-                            <span className="min-w-0 flex-1 truncate">
-                              {skill.skillName ?? skill.title}
-                            </span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
                 </li>
-              );
-            })}
+            ))}
           </ul>
           <div className="mt-4 border-t border-border pt-4">
             <ul className="list-none space-y-1">
@@ -634,9 +593,6 @@ export function SkillsScreen() {
                     type="button"
                     className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
                   >
-                    <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
-                      <ChevronRight className="h-4 w-4" />
-                    </span>
                     <Github className="h-4 w-4 flex-shrink-0" />
                     <span className="min-w-0 flex-1 truncate">{repo}</span>
                   </button>
@@ -675,23 +631,18 @@ export function SkillsScreen() {
                       />
                     </div>
                   </div>
-                  <div className="mt-6 w-full">
+                  <div className="relative mt-6 w-full overflow-hidden">
+                    {/* Hidden measurement container - all tabs for accurate width calculation on resize */}
                     <div
-                      className="flex flex-wrap gap-2 rounded-lg p-2"
-                      role="tablist"
-                      aria-label="Category"
+                      ref={categoryTabsMeasureRef}
+                      className="pointer-events-none invisible absolute left-0 top-0 z-[-1] flex flex-nowrap items-center gap-2"
+                      aria-hidden="true"
                     >
                       <button
                         type="button"
                         role="tab"
-                        aria-selected={selectedCategory === null}
-                        onClick={() => setSelectedCategory(null)}
-                        className={cn(
-                          'rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
-                          selectedCategory === null
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                        )}
+                        tabIndex={-1}
+                        className="shrink-0 rounded-md px-4 py-2.5 text-sm font-medium"
                       >
                         All
                       </button>
@@ -700,60 +651,118 @@ export function SkillsScreen() {
                           key={cat.slug}
                           type="button"
                           role="tab"
-                          aria-selected={selectedCategory === cat.slug}
-                          onClick={() => setSelectedCategory(cat.slug)}
-                          className={cn(
-                            'inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
-                            selectedCategory === cat.slug
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                          )}
+                          tabIndex={-1}
+                          className="inline-flex shrink-0 items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium"
                         >
                           <span>{cat.name}</span>
-                          <span className={cn('tabular-nums', selectedCategory === cat.slug ? 'opacity-90' : 'text-muted-foreground/80')} aria-label={`${cat.exports.toLocaleString()} skills`}>
+                          <span className="tabular-nums text-muted-foreground/80">
                             {cat.exports.toLocaleString()}
                           </span>
                         </button>
                       ))}
                     </div>
+                    <div
+                      ref={categoryTabsWrapperRef}
+                      className="flex items-center gap-2 rounded-lg p-2"
+                    >
+                      <div
+                        ref={categoryTabsRef}
+                        className="flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden"
+                        role="tablist"
+                        aria-label="Category"
+                      >
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={selectedCategory === null}
+                          onClick={() => setSelectedCategory(null)}
+                          className={cn(
+                            'shrink-0 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
+                            selectedCategory === null
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                          )}
+                        >
+                          All
+                        </button>
+                        {visibleCategories.map((cat) => (
+                          <button
+                            key={cat.slug}
+                            type="button"
+                            role="tab"
+                            aria-selected={selectedCategory === cat.slug}
+                            onClick={() => setSelectedCategory(cat.slug)}
+                            className={cn(
+                              'inline-flex shrink-0 items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
+                              selectedCategory === cat.slug
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                            )}
+                          >
+                            <span>{cat.name}</span>
+                            <span className={cn('tabular-nums', selectedCategory === cat.slug ? 'opacity-90' : 'text-muted-foreground/80')} aria-label={`${cat.exports.toLocaleString()} skills`}>
+                              {cat.exports.toLocaleString()}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="h-9 w-9 shrink-0 flex items-center justify-center">
+                        {overflowCategories.length > 0 ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                                aria-label="More categories"
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {overflowCategories.map((cat) => (
+                                <DropdownMenuItem
+                                  key={cat.slug}
+                                  onClick={() => setSelectedCategory(cat.slug)}
+                                >
+                                  {cat.name} ({cat.exports.toLocaleString()})
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : (
+                          <span className="h-9 w-9" aria-hidden="true" />
+                        )}
+                      </div>
+                    </div>
                   </div>
               <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {filteredMarketplaceSkills.map((skill) => (
-                  <button
-                    key={skill.id}
-                    type="button"
-                    onClick={() => setSelectedItem(skill)}
-                    className="flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/50 hover:border-muted-foreground/20"
-                  >
-                    <div className="flex flex-1 flex-col p-6">
-                      <span className="text-base font-medium text-foreground">
-                        {skill.skillName ?? skill.title}
-                      </span>
-                      <p className="mt-2 line-clamp-3 flex-1 text-sm text-muted-foreground">
-                        {skill.description}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 border-t border-border px-6 py-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5" />
-                        {skill.stars ?? 0}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MessageSquare className="h-3.5 w-3.5" />
-                        {skill.reviews ?? 0} Reviews
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <GitFork className="h-3.5 w-3.5" />
-                        {skill.forks ?? 0}
-                      </span>
-                      {skill.updatedAt && (
-                        <span>
-                          Updated {new Date(skill.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                ))}
+                {filteredMarketplaceSkills.map((skill) => {
+                  const IconComponent = getSkillIcon(skill.id);
+                  return (
+                    <button
+                      key={skill.id}
+                      type="button"
+                      onClick={() => setSelectedItem(skill)}
+                      className="flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/50 hover:border-muted-foreground/20"
+                    >
+                      <div className="flex flex-1 flex-col p-6">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+                            <IconComponent className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-base font-medium text-foreground">
+                              {skill.skillName ?? skill.title}
+                            </span>
+                            <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                              {skill.description}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </>
           ) : displayItem ? (
@@ -875,58 +884,19 @@ export function SkillsScreen() {
                           {selectedRepoMeta.description}
                         </p>
                       )}
-                      {selectedRepoMeta.links.length > 0 && (
-                        <div className="mt-4 flex flex-wrap items-center gap-2">
-                          {selectedRepoMeta.links.map((link) => {
-                            const LinkIcon = getRepoLinkIcon(link.type);
-                            return (
-                              <a
-                                key={link.label}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-                              >
-                                <LinkIcon className="h-4 w-4" />
-                                <span>{link.label}</span>
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </a>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {selectedRepoMeta.visibility && (
-                        <Badge variant="outline">
-                          {selectedRepoMeta.visibility === 'public' ? 'Public' : 'Private'}
-                        </Badge>
-                      )}
-                      {selectedRepoMeta.primaryLanguage && (
-                        <Badge variant="outline">{selectedRepoMeta.primaryLanguage}</Badge>
-                      )}
-                      {selectedRepoMeta.defaultBranch && (
-                        <Badge variant="outline">
-                          Branch {selectedRepoMeta.defaultBranch}
-                        </Badge>
-                      )}
-                      {selectedRepoMeta.lastUpdated && (
-                        <Badge variant="outline">
-                          Updated{' '}
-                          {new Date(selectedRepoMeta.lastUpdated).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
-                        </Badge>
-                      )}
-                      <Badge variant="secondary">
-                        {selectedRepoGroup.skills.length} Skills
-                      </Badge>
-                      {selectedRepoConversations > 0 && (
-                        <Badge variant="secondary">
-                          {selectedRepoConversations} Conversations
-                        </Badge>
+                      {selectedRepoMeta.repoUrl && (
+                        <a
+                          href={selectedRepoMeta.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                        >
+                          <Github className="h-4 w-4" />
+                          <span className="font-mono">
+                            {selectedRepoMeta.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                          </span>
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
                       )}
                     </div>
                   </div>

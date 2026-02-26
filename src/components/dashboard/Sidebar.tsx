@@ -1,4 +1,4 @@
-import { Bot, LayoutDashboard, List, Plus } from 'lucide-react';
+import { Bot, List, Plus, SquareKanban } from 'lucide-react';
 
 export function Sidebar() {
   return (
@@ -46,8 +46,8 @@ export function Sidebar() {
           <button type="button" aria-label="Robot assistant" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
             <Bot className="w-5 h-5" />
           </button>
-          <button type="button" aria-label="Dashboard view" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
-            <LayoutDashboard className="w-5 h-5" />
+          <button type="button" aria-label="Kanban view" className="p-2 rounded-md hover:bg-sidebar-accent transition-colors">
+            <SquareKanban className="w-5 h-5" />
           </button>
         </div>
         <div className="mt-auto px-2">

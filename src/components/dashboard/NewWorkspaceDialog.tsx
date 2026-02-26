@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 
 interface NewWorkspaceDialogProps {
   repositories: string[];
@@ -22,7 +21,6 @@ const DEFAULT_REPO = 'all';
 
 export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorkspaceDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [workspaceName, setWorkspaceName] = useState('');
   const [selectedRepository, setSelectedRepository] = useState(DEFAULT_REPO);
 
   const repositoryOptions = useMemo(
@@ -31,10 +29,9 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
     [repositories]
   );
 
-  const canCreate = workspaceName.trim().length > 0 && selectedRepository.trim().length > 0;
+  const canCreate = selectedRepository.trim().length > 0;
 
   const resetForm = () => {
-    setWorkspaceName('');
     setSelectedRepository(DEFAULT_REPO);
   };
 
@@ -51,7 +48,8 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
       return;
     }
 
-    onCreateWorkspace(workspaceName.trim(), selectedRepository);
+    const workspaceName = selectedRepository === DEFAULT_REPO ? 'View all' : selectedRepository;
+    onCreateWorkspace(workspaceName, selectedRepository);
     handleOpenChange(false);
   };
 
@@ -70,20 +68,6 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
         </DialogHeader>
 
         <form className="space-y-4" onSubmit={handleCreate}>
-          <div className="space-y-2">
-            <label htmlFor="workspace-name" className="text-sm font-medium text-muted-foreground">
-              Workspace name
-            </label>
-            <Input
-              id="workspace-name"
-              value={workspaceName}
-              onChange={(event) => setWorkspaceName(event.target.value)}
-              placeholder="ex. Payments Team"
-              autoComplete="off"
-              required
-            />
-          </div>
-
           <div className="space-y-2">
             <label htmlFor="workspace-repo" className="text-sm font-medium text-muted-foreground">
               Base repository
