@@ -18,8 +18,8 @@ export function KanbanColumn({
   column,
   onCardClick,
   onRenameColumn,
-  onDeleteColumn,
-  dragHandleProps,
+  onDeleteColumn: _onDeleteColumn,
+  dragHandleProps: _dragHandleProps,
   isDragDisabled = false,
 }: KanbanColumnProps) {
   const [isEditing, setIsEditing] = useState(false);

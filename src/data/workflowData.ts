@@ -50,7 +50,6 @@ export const SKILL_OPTIONS = [
 ];
 
 const NODE_WIDTH = 300;
-const NODE_HEIGHT = 120;
 
 export function createWorkflowFromWizardData(data: NewWorkflowData): { nodes: Node[]; edges: Edge[] } {
   const baseY = 120;

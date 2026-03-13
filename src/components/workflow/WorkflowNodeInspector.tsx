@@ -21,7 +21,7 @@ function getNodeKind(nodeId: string, data?: WorkflowNodeData): NodeKind {
   return 'repo';
 }
 
-function toEditableData(data: WorkflowNodeData, kind: NodeKind): Record<string, string | boolean> {
+function toEditableData(data: WorkflowNodeData): Record<string, string | boolean> {
   const base: Record<string, string | boolean> = {
     title: data.title ?? '',
     type: data.type ?? '',
@@ -187,7 +187,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
 
   useEffect(() => {
     if (data) {
-      setForm(toEditableData(data, kind!));
+      setForm(toEditableData(data));
     }
   }, [node?.id, data, kind]);
 
@@ -352,7 +352,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                   ) : (
                     <input
                       type="time"
-                      value={/^\d{1,2}:\d{2}$/.test(String(form.scheduleTime)) ? form.scheduleTime : '09:00'}
+                      value={/^\d{1,2}:\d{2}$/.test(String(form.scheduleTime)) ? String(form.scheduleTime) : '09:00'}
                       onChange={(e) => handleChange('scheduleTime', e.target.value)}
                       className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />

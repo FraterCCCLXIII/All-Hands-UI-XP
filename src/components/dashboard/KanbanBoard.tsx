@@ -130,14 +130,6 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
     setIsPanelOpen(false);
   }, []);
 
-  const handleAddColumn = useCallback(() => {
-    const newColumn: KanbanColumnType = {
-      id: `column-${Date.now()}`,
-      title: 'New Column',
-      cards: [],
-    };
-    setColumns((prev) => [...prev, newColumn]);
-  }, []);
   const handleCreateTask = useCallback(
     ({ prompt, model, branch }: { prompt: string; model: string; branch: string }) => {
       const now = new Date().toISOString();

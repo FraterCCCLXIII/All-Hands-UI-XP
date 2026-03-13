@@ -9,14 +9,11 @@ import {
   ExternalLink,
   FlaskConical,
   GitBranch,
-  GitFork,
   Package,
   Github,
-  MessageSquare,
   MoreHorizontal,
   MoreVertical,
   ShieldCheck,
-  Star,
   Wrench,
 } from 'lucide-react';
 import { InfoCard } from '../components/common/InfoCard';
@@ -272,7 +269,7 @@ export function SkillsScreen() {
   const [addSkillModalOpen, setAddSkillModalOpen] = useState(false);
   const [addSkillTargetRepo, setAddSkillTargetRepo] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [visibleCategoryCount, setVisibleCategoryCount] = useState(marketplaceCategories.length);
+  const [visibleCategoryCount, setVisibleCategoryCount] = useState<number>(marketplaceCategories.length);
   const categoryTabsRef = useRef<HTMLDivElement>(null);
   const categoryTabsWrapperRef = useRef<HTMLDivElement>(null);
   const categoryTabsMeasureRef = useRef<HTMLDivElement>(null);
