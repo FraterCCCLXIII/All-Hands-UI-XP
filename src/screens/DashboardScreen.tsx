@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Bot, CheckCircle, ChevronDown, Github, GitPullRequest, Menu, MessageSquare, Plus, XCircle } from 'lucide-react';
-import { DashboardHeader } from '../components/dashboard/DashboardHeader';
 import { KanbanBoard } from '../components/dashboard/KanbanBoard';
 import { RepositorySection } from '../components/dashboard/RepositorySection';
 import { NewConversationDialog } from '../components/dashboard/NewConversationDialog';
@@ -34,7 +33,9 @@ export function DashboardScreen() {
   const repositoryOptions = useMemo(() => {
     const repoSet = new Set<string>();
     initialColumns.forEach((column) => {
-      column.cards.forEach((card) => repoSet.add(card.repo));
+      column.cards.forEach((card) => {
+        if (card.repo !== 'No Repository') repoSet.add(card.repo);
+      });
     });
     return Array.from(repoSet);
   }, []);
@@ -284,14 +285,13 @@ export function DashboardScreen() {
 
   return (
     <div className="flex-1 min-w-0 bg-sidebar text-sidebar-foreground h-screen" data-tour-id="dashboard.root">
-      <DashboardHeader />
       <div className="flex min-h-0 h-full">
         {activeView === 'kanban' ? (
           <>
             <RepositorySidebar workspaceList={workspaces} isOpen={isRepoListOpen} />
             <main className="flex flex-col flex-1 min-w-0 min-h-0 bg-sidebar text-sidebar-foreground">
               <div className="px-4 mb-6 shrink-0" />
-              <div className="flex flex-1 min-h-0 flex-col pb-12">
+              <div className="flex flex-1 min-h-0 flex-col">
                 <KanbanBoard
                 activeRepo={activeRepo}
                 isRepoListOpen={isRepoListOpen}

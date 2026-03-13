@@ -6,13 +6,7 @@ import { AgentPanel } from './AgentPanel';
 import { NewTaskDialog } from './NewTaskDialog';
 import { availablePullRequests, initialColumns } from '../../data/mockData';
 import { Button } from '../ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { ChevronDown, Menu, Plus } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
 interface KanbanBoardProps {
   activeRepo: string;
@@ -31,13 +25,6 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
   const [columns, setColumns] = useState<KanbanColumnType[]>(initialColumns);
   const [selectedCard, setSelectedCard] = useState<PRCard | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
-  const [prFilter, setPrFilter] = useState<'all' | 'created' | 'assigned'>('all');
-  const prFilterLabel =
-    prFilter === 'all'
-      ? 'All PRs'
-      : prFilter === 'created'
-        ? 'PRs created by me'
-        : 'PRs assigned to me';
   const isFiltered = activeRepo !== 'all';
   const visibleColumns = useMemo(() => {
     if (!isFiltered) return columns;
@@ -67,30 +54,12 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
     });
     return Array.from(branchSet);
   }, [allPullRequests]);
-  const taskPullRequests = useMemo(
-    () =>
-      (activeRepo === 'all' ? allPullRequests : allPullRequests.filter((pr) => pr.repo === activeRepo)).filter(
-        (pr) => pr.sourceType !== 'task'
-      ),
-    [activeRepo, allPullRequests]
-  );
-
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       const { destination, source } = result;
 
       if (!destination) return;
       if (destination.droppableId === source.droppableId && destination.index === source.index) {
-        return;
-      }
-
-      if (result.type === 'COLUMN') {
-        setColumns((prev) => {
-          const newColumns = [...prev];
-          const [moved] = newColumns.splice(source.index, 1);
-          newColumns.splice(destination.index, 0, moved);
-          return newColumns;
-        });
         return;
       }
 
@@ -170,25 +139,9 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
     setColumns((prev) => [...prev, newColumn]);
   }, []);
   const handleCreateTask = useCallback(
-    ({
-      prompt,
-      model,
-      branch,
-      linkedPrIds,
-    }: {
-      prompt: string;
-      model: string;
-      branch: string;
-      linkedPrIds: string[];
-    }) => {
-      const linkedPrs = linkedPrIds
-        .map((prId) => allPullRequests.find((pr) => pr.id === prId && pr.sourceType !== 'task') ?? null)
-        .filter((pr): pr is PRCard => Boolean(pr));
-      const primaryLinkedPr = linkedPrs[0] ?? null;
+    ({ prompt, model, branch }: { prompt: string; model: string; branch: string }) => {
       const now = new Date().toISOString();
-      const generatedTitle = primaryLinkedPr
-        ? `${primaryLinkedPr.title} Task`
-        : prompt.trim().split('\n')[0].slice(0, 80) || 'New Task';
+      const generatedTitle = prompt.trim().split('\n')[0].slice(0, 80) || 'New Task';
       const maxPrNumber = Math.max(
         0,
         ...columns.flatMap((column) => column.cards.map((card) => card.number)),
@@ -198,27 +151,25 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
 
       const taskCard: PRCard = {
         id: `task-${Date.now()}`,
-        number: primaryLinkedPr?.number ?? generatedPrNumber,
+        number: generatedPrNumber,
         title: generatedTitle,
-        repo: primaryLinkedPr?.repo ?? (activeRepo === 'all' ? 'No Repository' : activeRepo),
+        repo: activeRepo === 'all' ? 'No Repository' : activeRepo,
         sourceType: 'task',
-        linkedPrId: primaryLinkedPr?.id ?? null,
-        linkedPrIds: linkedPrs.map((pr) => pr.id),
+        linkedPrId: null,
+        linkedPrIds: [],
+        linkedIssueId: null,
         author: {
           name: 'you',
           avatar: 'Y',
         },
-        labels: [
-          { name: 'task', color: 'info' },
-          ...linkedPrs.slice(0, 2).map((pr) => ({ name: `linked #${pr.number}`, color: 'muted' as const })),
-        ],
+        labels: [{ name: 'task', color: 'info' }],
         additions: 0,
         deletions: 0,
         comments: 0,
         createdAt: now,
         updatedAt: now,
         branch,
-        baseBranch: primaryLinkedPr?.baseBranch ?? 'main',
+        baseBranch: 'main',
         status: 'open',
         conversations: [
           {
@@ -237,9 +188,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
               {
                 id: `msg-task-${Date.now() + 1}`,
                 role: 'agent',
-                content: linkedPrs.length > 0
-                  ? `Starting "${generatedTitle}" on ${branch} with ${model}. Linked to ${linkedPrs.length} PR${linkedPrs.length > 1 ? 's' : ''}.`
-                  : `Starting "${generatedTitle}" on ${branch} with ${model}.`,
+                content: `Starting "${generatedTitle}" on ${branch} with ${model}.`,
                 timestamp: now,
               },
             ],
@@ -263,87 +212,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         );
       });
     },
-    [activeRepo, allPullRequests, columns]
-  );
-  const handleUpdateCardLinkedPrs = useCallback(
-    (cardId: string, linkedPrIds: string[]) => {
-      const linkedPrs = linkedPrIds
-        .map((prId) => allPullRequests.find((pr) => pr.id === prId && pr.sourceType !== 'task') ?? null)
-        .filter((pr): pr is PRCard => Boolean(pr));
-      const primaryLinkedPr = linkedPrs[0] ?? null;
-      const timestamp = new Date().toISOString();
-
-      setColumns((prev) =>
-        prev.map((column) => ({
-          ...column,
-          cards: column.cards.map((card) => {
-            if (card.id !== cardId) {
-              return card;
-            }
-
-            if (card.sourceType !== 'task') {
-              const relatedLinkedPrIds = linkedPrs
-                .map((pr) => pr.id)
-                .filter((prId) => prId !== card.id);
-              return {
-                ...card,
-                linkedPrIds: relatedLinkedPrIds,
-                updatedAt: timestamp,
-              };
-            }
-
-            const retainedLabels = card.labels.filter((label) => !label.name.toLowerCase().startsWith('linked #'));
-            const nextLabels = [
-              ...retainedLabels,
-              ...linkedPrs.slice(0, 2).map((pr) => ({ name: `linked #${pr.number}`, color: 'muted' as const })),
-            ];
-
-            return {
-              ...card,
-              linkedPrId: primaryLinkedPr?.id ?? null,
-              linkedPrIds: linkedPrs.map((pr) => pr.id),
-              repo: primaryLinkedPr?.repo ?? 'No Repository',
-              baseBranch: primaryLinkedPr?.baseBranch ?? 'main',
-              labels: nextLabels,
-              updatedAt: timestamp,
-            };
-          }),
-        }))
-      );
-
-      setSelectedCard((previous) => {
-        if (!previous || previous.id !== cardId) {
-          return previous;
-        }
-
-        if (previous.sourceType !== 'task') {
-          const relatedLinkedPrIds = linkedPrs
-            .map((pr) => pr.id)
-            .filter((prId) => prId !== previous.id);
-          return {
-            ...previous,
-            linkedPrIds: relatedLinkedPrIds,
-            updatedAt: timestamp,
-          };
-        }
-
-        const retainedLabels = previous.labels.filter((label) => !label.name.toLowerCase().startsWith('linked #'));
-        const nextLabels = [
-          ...retainedLabels,
-          ...linkedPrs.slice(0, 2).map((pr) => ({ name: `linked #${pr.number}`, color: 'muted' as const })),
-        ];
-        return {
-          ...previous,
-          linkedPrId: primaryLinkedPr?.id ?? null,
-          linkedPrIds: linkedPrs.map((pr) => pr.id),
-          repo: primaryLinkedPr?.repo ?? 'No Repository',
-          baseBranch: primaryLinkedPr?.baseBranch ?? 'main',
-          labels: nextLabels,
-          updatedAt: timestamp,
-        };
-      });
-    },
-    [allPullRequests]
+    [activeRepo, columns, availablePullRequests]
   );
 
   const handleRenameColumn = useCallback((columnId: string, title: string) => {
@@ -500,43 +369,26 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
             <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">
               {activeRepo === 'all' ? 'All' : activeRepo}
             </h2>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" aria-label="Filter pull requests">
-                  {prFilterLabel}
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => setPrFilter('all')}>
-                  All PRs
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPrFilter('created')}>
-                  PRs created by me
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPrFilter('assigned')}>
-                  PRs assigned to me
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden items-center gap-6 text-sm md:flex">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                <span className="text-muted-foreground">3 agents online</span>
+              </div>
+            </div>
             <NewTaskDialog
-              pullRequests={taskPullRequests}
               branches={branchOptions}
               modelOptions={TASK_MODEL_OPTIONS}
               onCreateTask={handleCreateTask}
             />
-            <Button size="icon" variant="outline" onClick={handleAddColumn} aria-label="Add column">
-              <Plus className="w-4 h-4" />
-            </Button>
           </div>
         </div>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-1 min-h-0 gap-4 overflow-x-auto pb-8 px-4 hide-scrollbar items-stretch">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-1 min-h-0 gap-4 overflow-x-auto px-4 hide-scrollbar items-stretch">
               {visibleColumns.map((column, index) => (
-                <Draggable key={column.id} draggableId={column.id} index={index}>
+                <Draggable key={column.id} draggableId={column.id} index={index} isDragDisabled>
                   {(provided) => (
                     <div ref={provided.innerRef} {...provided.draggableProps} className="flex h-full">
                       <KanbanColumn
@@ -544,7 +396,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
                         onCardClick={handleCardClick}
                         onRenameColumn={handleRenameColumn}
                         onDeleteColumn={handleDeleteColumn}
-                        dragHandleProps={provided.dragHandleProps}
+                        dragHandleProps={null}
                         isDragDisabled={false}
                       />
                     </div>
@@ -569,7 +421,6 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         onSendMessage={handleSendMessage}
         showConversationFooter={false}
         availablePullRequests={allPullRequests.filter((pr) => pr.sourceType !== 'task')}
-        onUpdateCardLinkedPrs={handleUpdateCardLinkedPrs}
       />
     </div>
   );

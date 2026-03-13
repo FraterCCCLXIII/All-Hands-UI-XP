@@ -7,6 +7,7 @@ import {
   CheckCircle,
   ChevronDown,
   Key,
+  MoreVertical,
   Plus,
   Puzzle,
   Settings as SettingsIcon,
@@ -139,6 +140,60 @@ const initialTeamMembers = [
   { id: 'separate', email: 'separate@email.com', role: 'Member', status: 'invited' },
 ];
 
+type GitSourceId = 'github' | 'gitlab' | 'bitbucket';
+type GitConnectionStatus = 'connected' | 'disconnected' | 'connecting';
+
+const gitSourceDefinitions: Array<{
+  id: GitSourceId;
+  name: string;
+  connectLabel: string;
+  icon: React.ReactNode;
+}> = [
+  {
+    id: 'github',
+    name: 'GitHub',
+    connectLabel: 'Connect GitHub',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'gitlab',
+    name: 'GitLab',
+    connectLabel: 'Connect GitLab',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path d="M23.955 13.587l-1.342-4.135-2.664-8.189a.455.455 0 0 0-.867 0L16.418 9.45H7.582L4.918 1.263a.455.455 0 0 0-.867 0L1.387 9.452.045 13.587a.924.924 0 0 0 .331 1.023L12 23.054l11.624-8.443a.92.92 0 0 0 .331-1.024" fill="#E24329"/>
+        <path d="M12 23.054l4.418-13.604H7.582z" fill="#FC6D26"/>
+        <path d="M12 23.054l-4.418-13.604H1.387z" fill="#FCA326"/>
+        <path d="M1.387 9.451L.045 13.587a.924.924 0 0 0 .331 1.023L12 23.054z" fill="#E24329"/>
+        <path d="M1.387 9.451h6.195L4.918 1.262a.455.455 0 0 0-.867 0z" fill="#FC6D26"/>
+        <path d="M12 23.054l4.418-13.604h6.195z" fill="#FCA326"/>
+        <path d="M22.613 9.451l1.342 4.136a.924.924 0 0 1-.331 1.023L12 23.054z" fill="#E24329"/>
+        <path d="M22.613 9.451h-6.195l2.664-8.189a.455.455 0 0 1 .867 0z" fill="#FC6D26"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'bitbucket',
+    name: 'Bitbucket',
+    connectLabel: 'Connect Bitbucket',
+    icon: (
+      <svg className="w-6 h-6" viewBox="0 0 14 14" fill="none" aria-hidden>
+        <path d="M13.5508 0.555664C13.8304 0.555669 14.04 0.794414 13.9941 1.08105L13.3906 4.8584H4.78516L5.55469 9.08887H8.46875L8.99902 5.98438H13.2109L12.082 13.0566C12.0353 13.2715 11.8489 13.4385 11.6387 13.4385H2.50098C2.19793 13.4385 1.94217 13.2238 1.89551 12.9131L0.00683594 1.05762C-0.0392224 0.794892 0.169738 0.531535 0.449219 0.53125L13.5508 0.555664Z" fill="#2684FF"/>
+      </svg>
+    ),
+  },
+];
+
+const initialGitSourceStatus: Record<GitSourceId, GitConnectionStatus> = {
+  github: 'connected',
+  gitlab: 'disconnected',
+  bitbucket: 'disconnected',
+};
+
 export interface SettingsScreenProps {
   /** Initial tab from route (e.g. llm for #/settings/llm) */
   initialTab?: string;
@@ -196,6 +251,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastVisible, setToastVisible] = useState(false);
+  const [gitSourceStatus, setGitSourceStatus] = useState<Record<GitSourceId, GitConnectionStatus>>(
+    initialGitSourceStatus,
+  );
+  const [gitSourceDisconnectTarget, setGitSourceDisconnectTarget] = useState<GitSourceId | null>(null);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   useEffect(() => {
@@ -311,6 +370,29 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       setUncontrolledOrgId(orgId);
     }
     onOrgChange?.(orgId);
+  };
+
+  const handleGitSourceConnect = async (sourceId: GitSourceId) => {
+    setGitSourceStatus((prev) => ({ ...prev, [sourceId]: 'connecting' }));
+    await new Promise((resolve) => window.setTimeout(resolve, 700));
+    setGitSourceStatus((prev) => ({ ...prev, [sourceId]: 'connected' }));
+    const sourceName = gitSourceDefinitions.find((source) => source.id === sourceId)?.name ?? sourceId;
+    showToast(`${sourceName} connected. Continue sign-in to proceed with the demo.`);
+  };
+
+  const handleGitSourceDisconnect = () => {
+    if (!gitSourceDisconnectTarget) return;
+    const sourceName =
+      gitSourceDefinitions.find((source) => source.id === gitSourceDisconnectTarget)?.name ??
+      gitSourceDisconnectTarget;
+    setGitSourceStatus((prev) => ({ ...prev, [gitSourceDisconnectTarget]: 'disconnected' }));
+    setGitSourceDisconnectTarget(null);
+    showToast(`${sourceName} disconnected.`);
+  };
+
+  const handleGitSourceConfigure = (sourceId: GitSourceId) => {
+    const sourceName = gitSourceDefinitions.find((source) => source.id === sourceId)?.name ?? sourceId;
+    showToast(`Configuring ${sourceName} repositories...`);
   };
 
   const handleChatGPTConnect = async () => {
@@ -608,44 +690,78 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {activeTab === 'integrations' && (
             <div className="flex-1 overflow-auto">
               <div className="flex flex-col gap-4">
-                {/* GitHub */}
-                <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                    </svg>
-                    <h3 className="text-base font-medium text-foreground">GitHub</h3>
-                  </div>
-                  <button
-                    type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
-                  >
-                    Configure Github Repositories
-                  </button>
-                </div>
-
-                {/* GitLab */}
-                <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                      <path d="M23.955 13.587l-1.342-4.135-2.664-8.189a.455.455 0 0 0-.867 0L16.418 9.45H7.582L4.918 1.263a.455.455 0 0 0-.867 0L1.387 9.452.045 13.587a.924.924 0 0 0 .331 1.023L12 23.054l11.624-8.443a.92.92 0 0 0 .331-1.024" fill="#E24329"/>
-                      <path d="M12 23.054l4.418-13.604H7.582z" fill="#FC6D26"/>
-                      <path d="M12 23.054l-4.418-13.604H1.387z" fill="#FCA326"/>
-                      <path d="M1.387 9.451L.045 13.587a.924.924 0 0 0 .331 1.023L12 23.054z" fill="#E24329"/>
-                      <path d="M1.387 9.451h6.195L4.918 1.262a.455.455 0 0 0-.867 0z" fill="#FC6D26"/>
-                      <path d="M12 23.054l4.418-13.604h6.195z" fill="#FCA326"/>
-                      <path d="M22.613 9.451l1.342 4.136a.924.924 0 0 1-.331 1.023L12 23.054z" fill="#E24329"/>
-                      <path d="M22.613 9.451h-6.195l2.664-8.189a.455.455 0 0 1 .867 0z" fill="#FC6D26"/>
-                    </svg>
-                    <h3 className="text-base font-medium text-foreground">GitLab</h3>
-                  </div>
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" className="w-[18px] h-[18px] shrink-0" color="#FF684E">
-                      <path d="M15 12C15 12.7956 14.6839 13.5587 14.1213 14.1213C13.5587 14.6839 12.7956 15 12 15C11.2044 15 10.4413 14.6839 9.87868 14.1213C9.31607 13.5587 9 12.7956 9 12C9 11.2044 9.31607 10.4413 9.87868 9.87868C10.4413 9.31607 11.2044 9 12 9C12.7956 9 13.5587 9.31607 14.1213 9.87868C14.6839 10.4413 15 11.2044 15 12Z" fill="currentColor"></path>
-                    </svg>
-                    <span className="font-normal text-xs text-muted-foreground">Not Connected</span>
-                  </div>
-                </div>
+                {gitSourceDefinitions.map((source) => {
+                  const status = gitSourceStatus[source.id];
+                  const isConnected = status === 'connected';
+                  const isConnecting = status === 'connecting';
+                  return (
+                    <div key={source.id} className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                      <div className="mb-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          {source.icon}
+                          <h3 className="text-base font-medium text-foreground">{source.name}</h3>
+                        </div>
+                        {isConnected && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="h-8 w-8 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors flex items-center justify-center"
+                                aria-label={`Open actions for ${source.name}`}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                onClick={() => setGitSourceDisconnectTarget(source.id)}
+                                className="gap-2 text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Disconnect
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
+                          <span
+                            className={`h-2 w-2 rounded-full ${
+                              isConnected
+                                ? 'bg-emerald-400'
+                                : isConnecting
+                                ? 'bg-amber-400 animate-pulse'
+                                : 'bg-[#FF684E]'
+                            }`}
+                            aria-hidden
+                          />
+                          <span className="font-normal text-xs text-muted-foreground">
+                            {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
+                          </span>
+                        </div>
+                        {isConnected ? (
+                          <button
+                            type="button"
+                            onClick={() => handleGitSourceConfigure(source.id)}
+                            className="h-10 flex items-center justify-center px-4 text-sm rounded-md border border-border bg-background text-foreground hover:bg-muted/60 transition-colors"
+                          >
+                            Configure Repositories
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => void handleGitSourceConnect(source.id)}
+                            disabled={isConnecting}
+                            className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {isConnecting ? 'Connecting...' : source.connectLabel}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
 
                 {/* Slack */}
                 <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
@@ -678,7 +794,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md border border-border bg-background text-foreground hover:bg-muted/60 transition-colors"
                   >
                     Configure
                   </button>
@@ -1194,6 +1310,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Delete
+        </button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog
+    open={Boolean(gitSourceDisconnectTarget)}
+    onOpenChange={(open) => !open && setGitSourceDisconnectTarget(null)}
+  >
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Disconnect git source</DialogTitle>
+        <DialogDescription>
+          Disconnect{' '}
+          {gitSourceDefinitions.find((source) => source.id === gitSourceDisconnectTarget)?.name ??
+            'this source'}
+          ? You can reconnect later from Integrations.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+        <button
+          type="button"
+          onClick={() => setGitSourceDisconnectTarget(null)}
+          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleGitSourceDisconnect}
+          className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Disconnect
         </button>
       </DialogFooter>
     </DialogContent>

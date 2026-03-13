@@ -18,6 +18,8 @@ import {
   NewLlmSwitcherScreen,
   NewLlmSwitcherScreen2,
   SaasCreditCardFlow,
+  EnterpriseLearnMoreScreen,
+  SignInWithAdScreen,
   NewUserExperienceFlowchart,
   SaasCreditCardFlowchart,
   UserJourneyCtaFlowchart,
@@ -25,6 +27,7 @@ import {
   NewComponentsFlowchart,
   NewLlmSwitcherFlowchart,
   NewLlmSwitcher2Flowchart,
+  WorkflowsScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -153,6 +156,7 @@ const actionSlugs: Record<string, string> = {
   'new-llm-switcher-2': 'new-llm-switcher-2',
   conversations: 'conversations',
   settings: 'settings',
+  workflows: 'workflows',
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
@@ -165,7 +169,9 @@ const normalizeHash = (hash: string) => {
 function App() {
   const [theme] = useState<Theme>('dark');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    return sessionStorage.getItem('hasShownLoadingScreen') !== 'true';
+  });
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
   const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
@@ -206,11 +212,12 @@ function App() {
   const isNewComponentsView = activeNavItem === 'new-components';
   const isNewLlmSwitcherView = activeNavItem === 'new-llm-switcher';
   const isNewLlmSwitcherView2 = activeNavItem === 'new-llm-switcher-2';
+  const isWorkflowsView = activeNavItem === 'workflows';
   const showFlowchartView = Boolean(activeFlowchart);
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showMainApp = !showFlowchartView && !showStandaloneFlow;
-  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView && !isNewLlmSwitcherView2;
-  const showLeftNav = activeFlowPrototype !== 'new-user-experience';
+  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView && !isNewLlmSwitcherView2 && !isWorkflowsView;
+  const showLeftNav = activeFlowPrototype !== 'new-user-experience' && activeFlowPrototype !== 'enterprise-learn-more' && activeFlowPrototype !== 'sign-in-with-ad';
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -219,16 +226,19 @@ function App() {
   const handleLoadingComplete = useCallback(() => {
     setTimeout(() => {
       setIsLoading(false);
+      sessionStorage.setItem('hasShownLoadingScreen', 'true');
     }, 500);
   }, []);
 
   useEffect(() => {
+    if (!isLoading) return;
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // Show loading screen for 2 seconds
+      sessionStorage.setItem('hasShownLoadingScreen', 'true');
+    }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isLoading]);
 
   const handleSendMessage = useCallback((message: string) => {
     const userMessage: Message = {
@@ -304,6 +314,11 @@ function App() {
 
   const handleNavItemClick = useCallback(
     (action: string) => {
+      if (action === 'loading-screen') {
+        setIsFlowchartLibraryOpen(false);
+        setIsLoading(true);
+        return;
+      }
       setActiveFlowPrototype(null);
       setActiveFlowchart(null);
       if (action === 'new-user-experience') {
@@ -316,6 +331,13 @@ function App() {
         setActiveFlowPrototype('saas-credit-card');
         setIsConversationDrawerOpen(false);
         window.location.hash = '#/saas-credit-card';
+        return;
+      }
+      if (action === 'sign-in-with-ad') {
+        setActiveFlowPrototype('sign-in-with-ad');
+        setIsConversationDrawerOpen(false);
+        setIsFlowchartLibraryOpen(false);
+        window.location.hash = '#/sign-in-with-ad';
         return;
       }
       if (action === 'conversations') {
@@ -372,6 +394,13 @@ function App() {
     window.location.hash = '#/saas-credit-card';
   }, []);
 
+  const handleEnterpriseLearnMoreClick = useCallback(() => {
+    setActiveFlowPrototype('enterprise-learn-more');
+    setActiveFlowchart(null);
+    setIsConversationDrawerOpen(false);
+    window.location.hash = '#/enterprise-learn-more';
+  }, []);
+
   const handleUxTourAction = useCallback(async (action: Extract<UxTourAction, { type: 'navigate' | 'set-state' }>) => {
     if (action.type === 'navigate') {
       window.location.hash = normalizeHash(action.hash);
@@ -413,7 +442,13 @@ function App() {
 
   useEffect(() => {
     const syncFromHash = () => {
-      const hash = window.location.hash.replace(/^#\/?/, '');
+      const rawHash = window.location.hash.replace(/^#\/?/, '');
+      const captureRoute = new URLSearchParams(window.location.search).get('captureRoute');
+      const normalizedCaptureRoute = captureRoute?.replace(/^\/+/, '') ?? '';
+      // During Figma capture, route via query param so `#figmacapture=...` remains intact.
+      const hash = rawHash.startsWith('figmacapture=') && normalizedCaptureRoute
+        ? normalizedCaptureRoute
+        : rawHash.split(/[?&]/)[0];
       if (hash.startsWith('flows/')) {
         const flowId = hash.split('/')[1] ?? null;
         setActiveFlowchart(flowId);
@@ -435,6 +470,18 @@ function App() {
         setIsActiveChatView(false);
         return;
       }
+      if (hash === 'enterprise-learn-more') {
+        setActiveFlowPrototype('enterprise-learn-more');
+        setActiveFlowchart(null);
+        setIsActiveChatView(false);
+        return;
+      }
+      if (hash === 'sign-in-with-ad') {
+        setActiveFlowPrototype('sign-in-with-ad');
+        setActiveFlowchart(null);
+        setIsActiveChatView(false);
+        return;
+      }
       setActiveFlowPrototype(null);
       setActiveFlowchart(null);
       if (hash === 'chat-active') {
@@ -451,6 +498,13 @@ function App() {
         setLastNonDrawerNavItem('settings');
         setIsConversationDrawerOpen(false);
         setSettingsTab(hash === 'settings' ? null : hash.split('/')[1] ?? null);
+        return;
+      }
+      if (hash === 'workflows') {
+        setActiveNavItem('workflows');
+        setLastNonDrawerNavItem('workflows');
+        setIsConversationDrawerOpen(false);
+        setSettingsTab(null);
         return;
       }
       setSettingsTab(null);
@@ -500,6 +554,7 @@ function App() {
                 onFlowchartLibraryOpenChange={setIsFlowchartLibraryOpen}
                 isUxFlowMenuOpen={isUxFlowMenuOpen}
                 onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
+                onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
               />
             )}
             <div 
@@ -539,6 +594,10 @@ function App() {
               ) : showStandaloneFlow ? (
                 activeFlowPrototype === 'new-user-experience' ? (
                   <LoginScreen onBack={handleExitFlowPrototype} />
+                ) :                 activeFlowPrototype === 'enterprise-learn-more' ? (
+                  <EnterpriseLearnMoreScreen onBack={handleExitFlowPrototype} />
+                ) : activeFlowPrototype === 'sign-in-with-ad' ? (
+                  <SignInWithAdScreen onBack={handleExitFlowPrototype} />
                 ) : (
                   <SaasCreditCardFlow onSkip={handleClaimCreditsSkip} onComplete={handleClaimCreditsComplete} />
                 )
@@ -628,6 +687,7 @@ function App() {
                     }}
                   />
                 )}
+                {isWorkflowsView && <WorkflowsScreen />}
                 {showChatView && !isActiveChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
@@ -659,6 +719,7 @@ function App() {
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
                         welcomeScreenVariant={activeNavItem === 'chat-cards' ? 'cards' : 'default'}
+                        onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />

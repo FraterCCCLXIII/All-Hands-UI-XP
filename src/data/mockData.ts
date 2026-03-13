@@ -1,4 +1,4 @@
-import { KanbanColumn, Skill } from '../types/pr';
+import { KanbanColumn, Skill, type Issue } from '../types/pr';
 
 export const availableSkills: Skill[] = [
   {
@@ -135,6 +135,16 @@ export const initialColumns: KanbanColumn[] = [
         branch: 'feat/oauth2-flow',
         baseBranch: 'main',
         status: 'open',
+        conversations: [
+          {
+            id: 'conv-pr-1',
+            name: 'Code Review',
+            activity: 'Ready for review',
+            createdAt: '2024-01-15T10:30:00Z',
+            updatedAt: '2024-01-15T14:22:00Z',
+            messages: [],
+          },
+        ],
       },
       {
         id: 'pr-2',
@@ -157,6 +167,16 @@ export const initialColumns: KanbanColumn[] = [
         branch: 'fix/ws-memory-leak',
         baseBranch: 'main',
         status: 'changes-requested',
+        conversations: [
+          {
+            id: 'conv-pr-2',
+            name: 'Code Review',
+            activity: 'Changes requested',
+            createdAt: '2024-01-15T09:15:00Z',
+            updatedAt: '2024-01-15T16:45:00Z',
+            messages: [],
+          },
+        ],
       },
     ],
   },
@@ -317,10 +337,35 @@ export const initialColumns: KanbanColumn[] = [
         branch: 'feat/rate-limiting',
         baseBranch: 'main',
         status: 'merged',
+        conversations: [
+          {
+            id: 'conv-pr-5',
+            name: 'Code Review',
+            activity: 'Merged',
+            createdAt: '2024-01-12T10:00:00Z',
+            updatedAt: '2024-01-14T16:00:00Z',
+            messages: [],
+          },
+        ],
       },
     ],
   },
 ];
+
+const defaultConversation = (
+  id: string,
+  name: string,
+  activity: string,
+  createdAt: string,
+  updatedAt: string
+): { id: string; name: string; activity: string; createdAt: string; updatedAt: string; messages: [] } => ({
+  id,
+  name,
+  activity,
+  createdAt,
+  updatedAt,
+  messages: [],
+});
 
 export const availablePullRequests: KanbanColumn['cards'] = [
   {
@@ -341,6 +386,7 @@ export const availablePullRequests: KanbanColumn['cards'] = [
     branch: 'chore/lint-config',
     baseBranch: 'main',
     status: 'open',
+    conversations: [defaultConversation('conv-pr-6', 'Code Review', 'Ready for review', '2024-01-16T09:00:00Z', '2024-01-16T10:15:00Z')],
   },
   {
     id: 'pr-7',
@@ -360,6 +406,7 @@ export const availablePullRequests: KanbanColumn['cards'] = [
     branch: 'feat/realtime-alerts',
     baseBranch: 'main',
     status: 'open',
+    conversations: [defaultConversation('conv-pr-7', 'Code Review', 'Ready for review', '2024-01-16T11:00:00Z', '2024-01-16T12:40:00Z')],
   },
   {
     id: 'pr-8',
@@ -379,6 +426,7 @@ export const availablePullRequests: KanbanColumn['cards'] = [
     branch: 'refactor/state-hooks',
     baseBranch: 'develop',
     status: 'open',
+    conversations: [defaultConversation('conv-pr-8', 'Code Review', 'Ready for review', '2024-01-16T13:20:00Z', '2024-01-16T14:10:00Z')],
   },
   {
     id: 'pr-9',
@@ -398,6 +446,7 @@ export const availablePullRequests: KanbanColumn['cards'] = [
     branch: 'docs/deploy-checklist',
     baseBranch: 'main',
     status: 'open',
+    conversations: [defaultConversation('conv-pr-9', 'Docs Summary', 'Ready for review', '2024-01-16T15:00:00Z', '2024-01-16T15:30:00Z')],
   },
   {
     id: 'pr-10',
@@ -417,5 +466,14 @@ export const availablePullRequests: KanbanColumn['cards'] = [
     branch: 'fix/auth-redirect',
     baseBranch: 'main',
     status: 'open',
+    conversations: [defaultConversation('conv-pr-10', 'Code Review', 'Ready for review', '2024-01-16T16:00:00Z', '2024-01-16T16:10:00Z')],
   },
+];
+
+export const availableIssues: Issue[] = [
+  { id: 'issue-1', number: 42, title: 'Improve error handling in auth flow', repo: 'acme/backend-api', author: { name: 'linus_dev', avatar: 'L' }, labels: [{ name: 'bug', color: 'destructive' }], comments: 3, createdAt: '2024-01-14T10:00:00Z', updatedAt: '2024-01-16T09:00:00Z', status: 'open' },
+  { id: 'issue-2', number: 58, title: 'Add dark mode support', repo: 'acme/frontend-app', author: { name: 'lena_ui', avatar: 'L' }, labels: [{ name: 'enhancement', color: 'primary' }], comments: 12, createdAt: '2024-01-13T14:00:00Z', updatedAt: '2024-01-16T11:00:00Z', status: 'open' },
+  { id: 'issue-3', number: 31, title: 'Document API rate limits', repo: 'acme/docs', author: { name: 'doc_writer', avatar: 'D' }, labels: [{ name: 'documentation', color: 'muted' }], comments: 1, createdAt: '2024-01-15T08:00:00Z', updatedAt: '2024-01-15T08:30:00Z', status: 'open' },
+  { id: 'issue-4', number: 19, title: 'WebSocket connection drops under load', repo: 'acme/realtime-service', author: { name: 'michelle_ops', avatar: 'M' }, labels: [{ name: 'bug', color: 'destructive' }, { name: 'performance', color: 'info' }], comments: 7, createdAt: '2024-01-12T16:00:00Z', updatedAt: '2024-01-16T14:00:00Z', status: 'open' },
+  { id: 'issue-5', number: 8, title: 'Migrate to TypeScript 5', repo: 'acme/frontend-app', author: { name: 'lena_ui', avatar: 'L' }, labels: [{ name: 'chore', color: 'muted' }], comments: 0, createdAt: '2024-01-10T09:00:00Z', updatedAt: '2024-01-10T09:00:00Z', status: 'closed' },
 ];

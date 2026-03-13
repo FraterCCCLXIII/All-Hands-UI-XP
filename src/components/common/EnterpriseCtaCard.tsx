@@ -13,10 +13,8 @@ const OpenHandsIcon = () => (
 interface EnterpriseCtaCardProps {
   title?: string;
   description?: string;
-  primaryLabel?: string;
-  secondaryLabel?: string;
-  onPrimaryClick?: () => void;
-  onSecondaryClick?: () => void;
+  learnMoreLabel?: string;
+  onLearnMoreClick?: () => void;
   onDismiss?: () => void;
   showIcon?: boolean;
   className?: string;
@@ -25,10 +23,8 @@ interface EnterpriseCtaCardProps {
 export function EnterpriseCtaCard({
   title = 'Get OpenHands for Enterprise',
   description = 'Cloud allows you to access OpenHands anywhere and coordinate with your team like never before',
-  primaryLabel = 'Sign Up',
-  secondaryLabel = 'Learn More',
-  onPrimaryClick,
-  onSecondaryClick,
+  learnMoreLabel = 'Learn More',
+  onLearnMoreClick,
   onDismiss,
   showIcon = false,
   className,
@@ -71,11 +67,8 @@ export function EnterpriseCtaCard({
           </p>
         </div>
         <div className="flex flex-nowrap items-center gap-3">
-          <Button type="button" onClick={onPrimaryClick} className="h-10">
-            {primaryLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={onSecondaryClick} className="h-10">
-            {secondaryLabel}
+          <Button type="button" variant="outline" onClick={onLearnMoreClick} className="h-10">
+            {learnMoreLabel}
           </Button>
         </div>
       </div>

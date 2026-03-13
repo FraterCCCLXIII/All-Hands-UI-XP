@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Bot, ChevronDown, GitBranch, GitPullRequest, Github, MessageSquare, Minus } from 'lucide-react';
+import { Bot, GitBranch, GitPullRequest, Github, Minus } from 'lucide-react';
 import { PrLabel, type PrLabelStatus } from './PrLabel';
 import { CiChecksDialog } from './CiChecksDialog';
 import { CommentsDialog } from './CommentsDialog';
 import { ConversationCard } from './ConversationCard';
 import { NewConversationDialog } from './NewConversationDialog';
-import { cn } from '../../lib/utils';
 
 interface Conversation {
   id: string;
@@ -39,18 +38,11 @@ interface RepositorySectionProps {
 
 export function RepositorySection({ name, branches, stats }: RepositorySectionProps) {
   const [expandedBranches, setExpandedBranches] = useState<string[]>([branches[0]?.name]);
-  const [expandedInactiveBranches, setExpandedInactiveBranches] = useState<string[]>([]);
 
   const HeaderIcon = name === 'No Repository' ? Minus : Github;
 
   const toggleBranch = (branchName: string) => {
     setExpandedBranches((prev) =>
-      prev.includes(branchName) ? prev.filter((b) => b !== branchName) : [...prev, branchName]
-    );
-  };
-
-  const toggleInactiveBranch = (branchName: string) => {
-    setExpandedInactiveBranches((prev) =>
       prev.includes(branchName) ? prev.filter((b) => b !== branchName) : [...prev, branchName]
     );
   };
@@ -83,9 +75,7 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
       <div className="divide-y divide-border">
         {branches.map((branch) => {
           const isExpanded = expandedBranches.includes(branch.name);
-          const isInactiveExpanded = expandedInactiveBranches.includes(branch.name);
           const activeConversations = branch.conversations.filter((c) => c.isActive);
-          const inactiveConversations = branch.conversations.filter((c) => !c.isActive);
           const branchId = `${name}-${branch.name}`.replace(/\s+/g, '-').toLowerCase();
           const branchContentId = `${branchId}-content`;
 
@@ -145,38 +135,6 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
                           showFooter={false}
                         />
                       ))}
-                    </div>
-                  )}
-
-                  {inactiveConversations.length > 0 && (
-                    <div className="px-4 pb-3">
-                      <button
-                        type="button"
-                        onClick={() => toggleInactiveBranch(branch.name)}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
-                      >
-                        <ChevronDown
-                          className={cn('w-4 h-4 transition-transform', !isInactiveExpanded && '-rotate-90')}
-                        />
-                        <span>Inactive Conversations</span>
-                        <span className="flex items-center gap-1 text-xs">
-                          <MessageSquare className="w-3 h-3" />
-                          {inactiveConversations.length}
-                        </span>
-                      </button>
-                      {isInactiveExpanded && (
-                        <div className="space-y-2">
-                          {inactiveConversations.map((conv) => (
-                            <ConversationCard
-                              key={conv.id}
-                              conversation={conv}
-                              isCompact
-                              showBranchActions={!branch.prNumber}
-                              showFooter={false}
-                            />
-                          ))}
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>

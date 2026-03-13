@@ -3,14 +3,7 @@ import { Droppable, Draggable, type DraggableProvidedDragHandleProps } from '@he
 import { KanbanColumn as KanbanColumnType } from '../../types/pr';
 import { PRCardComponent } from './PRCard';
 import { cn } from '../../lib/utils';
-import { GripVertical, MoreHorizontal, Trash2 } from 'lucide-react';
 import { Input } from '../ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
 
 interface KanbanColumnProps {
   column: KanbanColumnType;
@@ -47,19 +40,8 @@ export function KanbanColumn({
 
   return (
     <div className="flex flex-col w-[22rem] flex-shrink-0 h-full min-h-0">
-      <div className="flex items-center justify-between mb-3 px-2 group">
+      <div className="flex items-center justify-between mb-3 px-2">
         <div className="flex items-center gap-2 relative">
-          <button
-            type="button"
-            aria-label="Move column"
-            className={cn(
-              'absolute -left-6 rounded p-1 text-muted-foreground transition-opacity',
-              'opacity-0 group-hover:opacity-100 hover:text-foreground'
-            )}
-            {...dragHandleProps}
-          >
-            <GripVertical className="w-4 h-4" />
-          </button>
           {isEditing ? (
             <Input
               value={titleValue}
@@ -86,26 +68,6 @@ export function KanbanColumn({
             {column.cards.length}
           </span>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              aria-label="Column options"
-              className={cn(
-                'rounded p-1 text-muted-foreground transition-opacity',
-                'opacity-0 group-hover:opacity-100 hover:text-foreground'
-              )}
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onDeleteColumn(column.id)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete column
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       <Droppable droppableId={column.id} isDropDisabled={isDragDisabled}>
@@ -114,7 +76,7 @@ export function KanbanColumn({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              'flex-1 min-h-0 space-y-2 p-2 pb-6 rounded-lg transition-colors duration-200 overflow-y-auto',
+              'flex-1 min-h-0 space-y-2 p-2 pb-6 mb-4 rounded-lg transition-colors duration-200 overflow-y-auto',
               'bg-card border-0',
               snapshot.isDraggingOver && 'ring-1 ring-foreground/20 bg-background'
             )}

@@ -34,6 +34,7 @@ interface ChatAreaProps {
   disableAutoScroll?: boolean;
   onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
   welcomeScreenVariant?: 'default' | 'cards';
+  onEnterpriseLearnMoreClick?: () => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -58,6 +59,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   disableAutoScroll = false,
   onEnterpriseCtaVisibilityChange,
   welcomeScreenVariant = 'default',
+  onEnterpriseLearnMoreClick,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
@@ -203,7 +205,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
               exit={{ opacity: 0, y: 12, scale: 0.98 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
             >
-              <EnterpriseCtaCard className="pointer-events-auto" onDismiss={() => setShowEnterpriseCta(false)} />
+              <EnterpriseCtaCard className="pointer-events-auto" onDismiss={() => setShowEnterpriseCta(false)} onLearnMoreClick={onEnterpriseLearnMoreClick} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -241,7 +243,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
           >
-            <EnterpriseCtaCard className="pointer-events-auto" onDismiss={() => setShowEnterpriseCta(false)} />
+            <EnterpriseCtaCard className="pointer-events-auto" onDismiss={() => setShowEnterpriseCta(false)} onLearnMoreClick={onEnterpriseLearnMoreClick} />
           </motion.div>
         )}
       </AnimatePresence>

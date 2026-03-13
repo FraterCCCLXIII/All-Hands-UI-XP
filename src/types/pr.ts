@@ -12,6 +12,19 @@ export interface Skill {
   description: string;
 }
 
+export interface Issue {
+  id: string;
+  number: number;
+  title: string;
+  repo: string;
+  author: { name: string; avatar: string };
+  labels: PRLabel[];
+  comments: number;
+  createdAt: string;
+  updatedAt: string;
+  status: 'open' | 'closed';
+}
+
 export interface PRCard {
   id: string;
   number: number;
@@ -20,6 +33,7 @@ export interface PRCard {
   sourceType?: 'pr' | 'task';
   linkedPrId?: string | null;
   linkedPrIds?: string[];
+  linkedIssueId?: string | null;
   author: {
     name: string;
     avatar: string;

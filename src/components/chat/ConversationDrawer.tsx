@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Download, GitBranch, Github, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { Download, GitBranch, Github, List, MoreVertical, Pencil, Trash } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,11 +25,19 @@ export function ConversationDrawer({ open, onOpenChange, conversations }: Conver
         side="left"
         overlayClassName="bg-transparent pointer-events-none left-16 right-0"
         hideClose
-        className="p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-40"
+        className="p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-40 flex flex-row"
       >
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="flex w-12 shrink-0 flex-col items-center justify-center gap-1 border-r border-border bg-sidebar-accent/50 py-4 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
+          aria-label="Close conversations"
+        >
+          <List className="w-5 h-5" />
+        </button>
         <div
           data-testid="conversation-panel"
-          className="w-full h-full bg-card overflow-y-auto hide-scrollbar"
+          className="flex-1 min-w-0 h-full bg-card overflow-y-auto hide-scrollbar"
         >
           {items.map((conversation) => (
             <div

@@ -1,4 +1,4 @@
-import { Bot, List, Plus, SquareKanban } from 'lucide-react';
+import { Bot, List, Plus, SquareKanban, User } from 'lucide-react';
 
 export function Sidebar() {
   return (
@@ -51,12 +51,8 @@ export function Sidebar() {
           </button>
         </div>
         <div className="mt-auto px-2">
-          <div className="w-8 h-8 rounded-full bg-sidebar-accent overflow-hidden">
-            <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
-              alt="User"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center text-sidebar-foreground">
+            <User className="w-4 h-4" aria-hidden="true" />
           </div>
         </div>
       </div>
