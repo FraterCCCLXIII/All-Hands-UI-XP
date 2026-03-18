@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from 'react';
-import { Github, Plus } from 'lucide-react';
+import { ChevronDown, Github, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -28,6 +28,9 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
       repositories.filter((repo) => repo !== 'View all' && repo !== 'No Repository').map((repo) => ({ label: repo, value: repo })),
     [repositories]
   );
+  const selectedRepositoryLabel = selectedRepository === DEFAULT_REPO
+    ? 'View all'
+    : repositoryOptions.find((repo) => repo.value === selectedRepository)?.label ?? selectedRepository;
 
   const canCreate = selectedRepository.trim().length > 0;
 
@@ -72,11 +75,13 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
             <label htmlFor="workspace-repo" className="text-sm font-medium text-muted-foreground">
               Base repository
             </label>
-            <div className="h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
+            <div className="relative h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
               <Github className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span className="block flex-1 truncate text-sm text-foreground">{selectedRepositoryLabel}</span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <select
                 id="workspace-repo"
-                className="w-full bg-transparent text-sm text-foreground outline-none"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 value={selectedRepository}
                 onChange={(event) => setSelectedRepository(event.target.value)}
                 required

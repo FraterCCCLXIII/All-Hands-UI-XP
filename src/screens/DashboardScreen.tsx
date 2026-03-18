@@ -1,5 +1,17 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Bot, CheckCircle, ChevronDown, Github, GitPullRequest, Menu, MessageSquare, Plus, XCircle } from 'lucide-react';
+import {
+  Bot,
+  CheckCircle,
+  ChevronDown,
+  FolderX,
+  Github,
+  GitPullRequest,
+  Layers3,
+  Menu,
+  MessageSquare,
+  Plus,
+  XCircle,
+} from 'lucide-react';
 import { KanbanBoard } from '../components/dashboard/KanbanBoard';
 import { RepositorySection } from '../components/dashboard/RepositorySection';
 import { NewConversationDialog } from '../components/dashboard/NewConversationDialog';
@@ -22,6 +34,12 @@ interface WorkspaceItem {
   label: string;
   repoKey: string;
 }
+
+const getWorkspaceIcon = (workspace: WorkspaceItem) => {
+  if (workspace.repoKey === 'all') return Layers3;
+  if (workspace.repoKey === 'No Repository') return FolderX;
+  return Github;
+};
 
 export function DashboardScreen() {
   const [activeView, setActiveView] = useState<DashboardTabId>('kanban');
@@ -93,6 +111,7 @@ export function DashboardScreen() {
         <nav className="min-w-0 space-y-1 whitespace-nowrap">
           {workspaceList.map((workspace) => {
             const isActive = activeWorkspaceId === workspace.id;
+            const WorkspaceIcon = getWorkspaceIcon(workspace);
             return (
               <button
                 key={workspace.id}
@@ -108,7 +127,7 @@ export function DashboardScreen() {
                 }`}
                 aria-pressed={isActive}
               >
-                <Github className="w-4 h-4 shrink-0" />
+                <WorkspaceIcon className="w-4 h-4 shrink-0" />
                 <span className="min-w-0 truncate">{workspace.label}</span>
               </button>
             );

@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
+import { navigateAppRoute } from '../lib/captureNavigation';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Protip, type ProtipVariant } from '../components/canvas/Protip';
@@ -1392,7 +1393,9 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                           className="gap-2 cursor-pointer"
-                                          onSelect={() => { window.location.hash = '#/settings/llm'; }}
+                                          onSelect={() => {
+                                            navigateAppRoute('#/settings/llm');
+                                          }}
                                         >
                                           <Settings className="h-4 w-4" />
                                           LLM Settings

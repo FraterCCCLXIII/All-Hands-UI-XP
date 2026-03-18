@@ -54,6 +54,16 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
     });
     return Array.from(branchSet);
   }, [allPullRequests]);
+  const repositoryOptions = useMemo(() => {
+    const repositorySet = new Set<string>();
+    allPullRequests.forEach((pr) => {
+      if (pr.repo) {
+        repositorySet.add(pr.repo);
+      }
+    });
+    repositorySet.add('No Repository');
+    return Array.from(repositorySet);
+  }, [allPullRequests]);
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       const { destination, source } = result;
@@ -131,7 +141,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
   }, []);
 
   const handleCreateTask = useCallback(
-    ({ prompt, model, branch }: { prompt: string; model: string; branch: string }) => {
+    ({ prompt, model, repo, branch }: { prompt: string; model: string; repo: string; branch: string }) => {
       const now = new Date().toISOString();
       const generatedTitle = prompt.trim().split('\n')[0].slice(0, 80) || 'New Task';
       const maxPrNumber = Math.max(
@@ -145,7 +155,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         id: `task-${Date.now()}`,
         number: generatedPrNumber,
         title: generatedTitle,
-        repo: activeRepo === 'all' ? 'No Repository' : activeRepo,
+        repo,
         sourceType: 'task',
         linkedPrId: null,
         linkedPrIds: [],
@@ -192,8 +202,8 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         if (prev.length === 0) {
           return prev;
         }
-        const todoColumnIndex = prev.findIndex((column) => column.id === 'todo');
-        const insertColumnIndex = todoColumnIndex === -1 ? 0 : todoColumnIndex;
+        const inProgressColumnIndex = prev.findIndex((column) => column.id === 'in-progress');
+        const insertColumnIndex = inProgressColumnIndex === -1 ? 0 : inProgressColumnIndex;
         return prev.map((column, index) =>
           index === insertColumnIndex
             ? {
@@ -370,8 +380,10 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
               </div>
             </div>
             <NewTaskDialog
+              activeRepo={activeRepo}
               branches={branchOptions}
               modelOptions={TASK_MODEL_OPTIONS}
+              repositories={repositoryOptions}
               onCreateTask={handleCreateTask}
             />
           </div>

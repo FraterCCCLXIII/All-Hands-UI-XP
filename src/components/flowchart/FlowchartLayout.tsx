@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, StickyNote } from 'lucide-react';
+import { navigateAppRoute } from '../../lib/captureNavigation';
 
 export interface FlowchartNote {
   id: string;
@@ -129,7 +130,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
         onFlowSelect(flowId);
         return;
       }
-      window.location.hash = `#/flows/${flowId}`;
+      navigateAppRoute(`#/flows/${flowId}`);
     },
     [onFlowSelect]
   );

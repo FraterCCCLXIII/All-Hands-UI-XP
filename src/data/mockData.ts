@@ -29,8 +29,11 @@ export const availableSkills: Skill[] = [
 
 export const initialColumns: KanbanColumn[] = [
   {
-    id: 'todo',
-    title: 'Todo',
+    id: 'in-progress',
+    title: 'In Progress',
+    description:
+      'STARTING, WORKING, WAITING_FOR_SANDBOX, PREPARING_REPOSITORY, SETTING_UP_SKILLS, running, idle',
+    icon: 'in-progress',
     cards: [
       {
         id: 'task-example-no-pr',
@@ -72,49 +75,6 @@ export const initialColumns: KanbanColumn[] = [
         ],
       },
       {
-        id: 'task-example-with-prs',
-        number: 9002,
-        title: 'Coordinate release readiness checks',
-        repo: 'acme/docs',
-        sourceType: 'task',
-        linkedPrId: 'pr-4',
-        linkedPrIds: ['pr-4', 'pr-1'],
-        author: {
-          name: 'you',
-          avatar: 'Y',
-        },
-        labels: [
-          { name: 'task', color: 'info' },
-          { name: 'linked #1228', color: 'muted' },
-          { name: 'linked #1234', color: 'muted' },
-        ],
-        additions: 0,
-        deletions: 0,
-        comments: 0,
-        createdAt: '2024-01-15T09:10:00Z',
-        updatedAt: '2024-01-15T09:20:00Z',
-        branch: 'main',
-        baseBranch: 'main',
-        status: 'open',
-        conversations: [
-          {
-            id: 'conv-task-example-with-prs',
-            name: 'Task Kickoff',
-            activity: 'Queued on GPT-4o',
-            createdAt: '2024-01-15T09:10:00Z',
-            updatedAt: '2024-01-15T09:20:00Z',
-            messages: [
-              {
-                id: 'msg-task-example-with-prs',
-                role: 'user',
-                content: 'Review release PRs and prepare the launch checklist.',
-                timestamp: '2024-01-15T09:10:00Z',
-              },
-            ],
-          },
-        ],
-      },
-      {
         id: 'pr-1',
         number: 1234,
         title: 'feat: Add OAuth2 authentication flow',
@@ -146,44 +106,6 @@ export const initialColumns: KanbanColumn[] = [
           },
         ],
       },
-      {
-        id: 'pr-2',
-        number: 1235,
-        title: 'fix: Memory leak in websocket handler',
-        repo: 'acme/realtime-service',
-        author: {
-          name: 'mike_ops',
-          avatar: 'M',
-        },
-        labels: [
-          { name: 'bug', color: 'destructive' },
-          { name: 'urgent', color: 'warning' },
-        ],
-        additions: 23,
-        deletions: 89,
-        comments: 7,
-        createdAt: '2024-01-15T09:15:00Z',
-        updatedAt: '2024-01-15T16:45:00Z',
-        branch: 'fix/ws-memory-leak',
-        baseBranch: 'main',
-        status: 'changes-requested',
-        conversations: [
-          {
-            id: 'conv-pr-2',
-            name: 'Code Review',
-            activity: 'Changes requested',
-            createdAt: '2024-01-15T09:15:00Z',
-            updatedAt: '2024-01-15T16:45:00Z',
-            messages: [],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'in-progress',
-    title: 'In Progress',
-    cards: [
       {
         id: 'pr-3',
         number: 1230,
@@ -259,18 +181,61 @@ export const initialColumns: KanbanColumn[] = [
     ],
   },
   {
-    id: 'blocked',
-    title: 'Blocked',
-    cards: [],
+    id: 'waiting',
+    title: 'Waiting',
+    description: 'waiting_for_confirmation, PAUSED, paused',
+    icon: 'waiting',
+    cards: [
+      {
+        id: 'task-example-with-prs',
+        number: 9002,
+        title: 'Coordinate release readiness checks',
+        repo: 'acme/docs',
+        sourceType: 'task',
+        linkedPrId: 'pr-4',
+        linkedPrIds: ['pr-4', 'pr-1'],
+        author: {
+          name: 'you',
+          avatar: 'Y',
+        },
+        labels: [
+          { name: 'task', color: 'info' },
+          { name: 'linked #1228', color: 'muted' },
+          { name: 'linked #1234', color: 'muted' },
+        ],
+        additions: 0,
+        deletions: 0,
+        comments: 0,
+        createdAt: '2024-01-15T09:10:00Z',
+        updatedAt: '2024-01-15T09:20:00Z',
+        branch: 'main',
+        baseBranch: 'main',
+        status: 'open',
+        conversations: [
+          {
+            id: 'conv-task-example-with-prs',
+            name: 'Task Kickoff',
+            activity: 'Queued on GPT-4o',
+            createdAt: '2024-01-15T09:10:00Z',
+            updatedAt: '2024-01-15T09:20:00Z',
+            messages: [
+              {
+                id: 'msg-task-example-with-prs',
+                role: 'user',
+                content: 'Review release PRs and prepare the launch checklist.',
+                timestamp: '2024-01-15T09:10:00Z',
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
-    id: 'needs-review',
-    title: 'Needs Review',
-    cards: [],
-  },
-  {
-    id: 'ready-to-merge',
-    title: 'Ready to Merge',
+    id: 'done',
+    title: 'Done',
+    description: 'finished',
+    icon: 'done',
     cards: [
       {
         id: 'pr-4',
@@ -313,8 +278,50 @@ export const initialColumns: KanbanColumn[] = [
     ],
   },
   {
-    id: 'done',
-    title: 'Done',
+    id: 'failed',
+    title: 'Failed',
+    description: 'error, stuck, ERROR, MISSING',
+    icon: 'failed',
+    cards: [
+      {
+        id: 'pr-2',
+        number: 1235,
+        title: 'fix: Memory leak in websocket handler',
+        repo: 'acme/realtime-service',
+        author: {
+          name: 'mike_ops',
+          avatar: 'M',
+        },
+        labels: [
+          { name: 'bug', color: 'destructive' },
+          { name: 'urgent', color: 'warning' },
+        ],
+        additions: 23,
+        deletions: 89,
+        comments: 7,
+        createdAt: '2024-01-15T09:15:00Z',
+        updatedAt: '2024-01-15T16:45:00Z',
+        branch: 'fix/ws-memory-leak',
+        baseBranch: 'main',
+        status: 'changes-requested',
+        conversations: [
+          {
+            id: 'conv-pr-2',
+            name: 'Code Review',
+            activity: 'Stuck on requested changes',
+            createdAt: '2024-01-15T09:15:00Z',
+            updatedAt: '2024-01-15T16:45:00Z',
+            messages: [],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'archived',
+    title: 'Archived',
+    description: 'Reviewed and closed by user action',
+    icon: 'archived',
     cards: [
       {
         id: 'pr-5',

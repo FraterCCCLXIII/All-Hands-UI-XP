@@ -34,9 +34,12 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
       transition={{ duration: 0.15 }}
     >
       <div className="mb-2">
-        <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-          {card.title}
-        </h3>
+        <div className="flex items-start gap-2">
+          <div className="mt-[0.32rem] h-2 w-2 shrink-0 rounded-full bg-success" />
+          <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+            {card.title}
+          </h3>
+        </div>
       </div>
 
       {(() => {
@@ -53,6 +56,10 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
       })()}
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <span className="font-medium text-success">+{card.additions}</span>
+          <span className="font-medium text-destructive">-{card.deletions}</span>
+        </div>
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {formatTimeAgo(card.updatedAt)}

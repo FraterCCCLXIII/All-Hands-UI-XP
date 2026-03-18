@@ -3,7 +3,7 @@ import { PRCard } from '../../types/pr';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import {
   ArrowDown, ArrowUp, ChevronDown, Circle, CircleCheckBig,
-  ExternalLink, GitBranch, GitPullRequest, ListTodo,
+  Clock, ExternalLink, GitBranch, GitPullRequest, ListTodo,
   Minus, Plus, X,
 } from 'lucide-react';
 import { ChatInputBox } from '../common/ChatInputBox';
@@ -21,6 +21,18 @@ interface ThreadMessage {
   link?: string;
   warnings?: string[];
   tasks?: string[];
+}
+
+function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) return `${diffDays}d ago`;
+  if (diffHours > 0) return `${diffHours}h ago`;
+  return 'just now';
 }
 
 const MOCK_THREAD: ThreadMessage[] = [
@@ -72,27 +84,28 @@ export function AgentPanel({
   availablePullRequests = [],
 }: AgentPanelProps) {
   const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({});
+  const showGitActions = card?.sourceType !== 'task';
 
-  const isPrimaryPrCard = card?.sourceType !== 'task';
   const pullRequestById = useMemo(
     () => new Map(availablePullRequests.map((pr) => [pr.id, pr])),
     [availablePullRequests]
   );
   const prDetails = useMemo(() => {
     if (!card) return null;
-    if (isPrimaryPrCard) return card;
+    if (card.sourceType !== 'task') return card;
     if (card.linkedPrId) {
       const linked = pullRequestById.get(card.linkedPrId);
       if (linked) return linked;
     }
     return card;
-  }, [card, isPrimaryPrCard, pullRequestById]);
+  }, [card, pullRequestById]);
 
   const toggleStep = (key: string) =>
     setExpandedSteps((prev) => ({ ...prev, [key]: !prev[key] }));
 
   if (!card) return null;
 
+  const metadataCard = prDetails ?? card;
   const repoUrl = `https://github.com/FraterCCCLXIII/${card.repo.split('/').pop() ?? 'repo'}`;
   const branchUrl = `${repoUrl}/tree/${prDetails?.branch ?? 'main'}`;
 
@@ -119,26 +132,27 @@ export function AgentPanel({
           </div>
         </SheetHeader>
 
-        {/* Stats row - only for non-task cards */}
-        {isPrimaryPrCard && (
-          <div className="px-4 pb-2 pt-0 shrink-0">
-            <div className="flex items-center justify-end text-xs text-muted-foreground">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
-                  <Plus className="w-3 h-3 text-success" aria-hidden="true" />
-                  <span className="text-success">{card.additions}</span>
-                </span>
-                <span className="flex items-center gap-1">
-                  <Minus className="w-3 h-3 text-destructive" aria-hidden="true" />
-                  <span className="text-destructive">{card.deletions}</span>
-                </span>
-              </div>
+        <div className="px-4 pb-2 pt-0 shrink-0 border-b border-border">
+          <div className="flex items-center justify-between text-xs text-muted-foreground pb-2">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1">
+                <Plus className="w-3 h-3 text-success" aria-hidden="true" />
+                <span className="text-success">{metadataCard.additions}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <Minus className="w-3 h-3 text-destructive" aria-hidden="true" />
+                <span className="text-destructive">{metadataCard.deletions}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" aria-hidden="true" />
+              <span>{formatTimeAgo(metadataCard.updatedAt)}</span>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Chat thread */}
-        <div className="scrollbar-on-hover flex-1 overflow-y-auto px-4 pt-2 pb-2 flex flex-col gap-2 min-h-0">
+        <div className="scrollbar-on-hover flex-1 overflow-y-auto px-4 pt-3 pb-2 flex flex-col gap-2 min-h-0">
           {MOCK_THREAD.map((msg, msgIdx) => {
             if (msg.role === 'user') {
               return (
@@ -261,7 +275,7 @@ export function AgentPanel({
         <div className="shrink-0 px-4 pb-4 pt-1 flex flex-col gap-3">
           <ChatInputBox />
 
-          {isPrimaryPrCard && (
+          {showGitActions && (
             <div className="flex flex-row gap-2 items-center overflow-x-auto flex-wrap">
               <a
                 href={repoUrl}
@@ -316,4 +330,3 @@ export function AgentPanel({
     </Sheet>
   );
 }
-

@@ -1,4 +1,5 @@
 import { LogoDropdownContent } from '../components/navigation/LogoDropdownContent';
+import { navigateAppRoute } from '../lib/captureNavigation';
 
 interface SignInWithAdScreenProps {
   onBack?: () => void;
@@ -26,10 +27,10 @@ export function SignInWithAdScreen({ onBack }: SignInWithAdScreenProps) {
         </button>
         <LogoDropdownContent
           onNavToNewUserExperience={() => {
-            window.location.hash = '#/new-user-experience';
+            navigateAppRoute('#/new-user-experience');
           }}
           onEnterpriseLearnMoreClick={() => {
-            window.location.hash = '#/enterprise-learn-more';
+            navigateAppRoute('#/enterprise-learn-more');
           }}
         />
       </div>

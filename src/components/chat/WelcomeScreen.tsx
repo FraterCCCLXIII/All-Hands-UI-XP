@@ -16,6 +16,7 @@ import {
 import { ThemeElement } from '../../types/theme';
 import { conversationSummaries } from '../../data/conversations';
 import { marketplaceSkills } from '../../data/skillsPageData';
+import { navigateAppRoute } from '../../lib/captureNavigation';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   Dialog,
@@ -129,7 +130,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const featuredSkills = useMemo(() => marketplaceSkills.slice(0, 5), []);
 
   const handleNavigateToSkills = useCallback(() => {
-    window.location.hash = '#/skills';
+    navigateAppRoute('#/skills');
   }, []);
 
   const handleLaunch = () => {
@@ -611,7 +612,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         key={conversation.id}
                         type="button"
                         onClick={() => {
-                          window.location.hash = '#/chat-active';
+                          navigateAppRoute('#/chat-active');
                           if (conversation.repo !== 'No Repository') {
                             onRepoSelect(conversation.repo);
                             if (conversation.branch) onBranchSelect(conversation.branch);

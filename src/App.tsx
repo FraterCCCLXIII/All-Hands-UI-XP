@@ -33,6 +33,14 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { Gripper } from './components/common/Gripper';
 import { InspectorOverlay } from './components/common/InspectorOverlay';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './components/ui/dialog';
 import { conversationSummaries } from './data/conversations';
 import { ChatWindowTabId } from './components/chat/ChatWindowTabs';
 import type { ProtipVariant } from './components/canvas/Protip';
@@ -40,6 +48,7 @@ import { UxTourOverlay } from './features/ux-tours/UxTourOverlay';
 import { useUxTourController } from './features/ux-tours/useUxTourController';
 import { uxTourDefinitions, uxTourLinks } from './features/ux-tours/uxTourRegistry';
 import type { UxTourAction } from './features/ux-tours/uxTourTypes';
+import { APP_ROUTE_EVENT, isFigmaCaptureActive, navigateAppRoute, normalizeAppRoute } from './lib/captureNavigation';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -203,6 +212,8 @@ function App() {
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
   const [isFlowchartLibraryOpen, setIsFlowchartLibraryOpen] = useState(false);
   const [isUxFlowMenuOpen, setIsUxFlowMenuOpen] = useState(false);
+  const [enterpriseRequestSubmitted, setEnterpriseRequestSubmitted] = useState(false);
+  const [figmaExportRoute, setFigmaExportRoute] = useState<string | null>(null);
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
@@ -215,9 +226,15 @@ function App() {
   const isWorkflowsView = activeNavItem === 'workflows';
   const showFlowchartView = Boolean(activeFlowchart);
   const showStandaloneFlow = Boolean(activeFlowPrototype);
-  const showMainApp = !showFlowchartView && !showStandaloneFlow;
+  const showFigmaExportView = figmaExportRoute !== null;
+  const isFigmaCaptureSession = isFigmaCaptureActive();
+  const showMainApp = !showFlowchartView && !showStandaloneFlow && !showFigmaExportView;
   const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView && !isNewLlmSwitcherView2 && !isWorkflowsView;
-  const showLeftNav = activeFlowPrototype !== 'new-user-experience' && activeFlowPrototype !== 'enterprise-learn-more' && activeFlowPrototype !== 'sign-in-with-ad';
+  const showLeftNav =
+    !showFigmaExportView &&
+    activeFlowPrototype !== 'new-user-experience' &&
+    activeFlowPrototype !== 'enterprise-learn-more' &&
+    activeFlowPrototype !== 'sign-in-with-ad';
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -307,7 +324,7 @@ function App() {
   const handleConversationDrawerChange = useCallback(
     (open: boolean) => {
       setIsConversationDrawerOpen(open);
-      window.location.hash = open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+      navigateAppRoute(open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
     },
     [lastNonDrawerNavItem]
   );
@@ -324,26 +341,26 @@ function App() {
       if (action === 'new-user-experience') {
         setActiveFlowPrototype('new-user-experience');
         setIsConversationDrawerOpen(false);
-        window.location.hash = '#/new-user-experience';
+        navigateAppRoute('#/new-user-experience');
         return;
       }
       if (action === 'saas-credit-card') {
         setActiveFlowPrototype('saas-credit-card');
         setIsConversationDrawerOpen(false);
-        window.location.hash = '#/saas-credit-card';
+        navigateAppRoute('#/saas-credit-card');
         return;
       }
       if (action === 'sign-in-with-ad') {
         setActiveFlowPrototype('sign-in-with-ad');
         setIsConversationDrawerOpen(false);
         setIsFlowchartLibraryOpen(false);
-        window.location.hash = '#/sign-in-with-ad';
+        navigateAppRoute('#/sign-in-with-ad');
         return;
       }
       if (action === 'conversations') {
         setIsConversationDrawerOpen((prev) => {
           const next = !prev;
-          window.location.hash = next ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+          navigateAppRoute(next ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
           return next;
         });
         return;
@@ -352,7 +369,7 @@ function App() {
       setActiveNavItem(action);
       setLastNonDrawerNavItem(action);
       setIsConversationDrawerOpen(false);
-      window.location.hash = action === 'settings' ? '#/settings' : (actionSlugs[action] ?? actionSlugs.code);
+      navigateAppRoute(action === 'settings' ? '#/settings' : (actionSlugs[action] ?? actionSlugs.code));
       if (action === 'tetris') {
       const tetrisMessage: Message = {
         role: 'ai',
@@ -369,13 +386,13 @@ function App() {
     setActiveFlowchart(flowId);
     setIsConversationDrawerOpen(false);
     setIsFlowchartLibraryOpen(false);
-    window.location.hash = `#/flows/${flowId}`;
+    navigateAppRoute(`#/flows/${flowId}`);
   }, []);
 
   const handleExitFlowPrototype = useCallback(() => {
     setActiveFlowPrototype(null);
     setActiveFlowchart(null);
-    window.location.hash = actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code;
+    navigateAppRoute(actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
   }, [lastNonDrawerNavItem]);
 
   const handleClaimCreditsSkip = useCallback(() => {
@@ -391,19 +408,24 @@ function App() {
   const handleClaimCreditsOpen = useCallback(() => {
     setShowClaimCreditsPrompt(false);
     setActiveFlowPrototype('saas-credit-card');
-    window.location.hash = '#/saas-credit-card';
+    navigateAppRoute('#/saas-credit-card');
   }, []);
 
   const handleEnterpriseLearnMoreClick = useCallback(() => {
     setActiveFlowPrototype('enterprise-learn-more');
     setActiveFlowchart(null);
     setIsConversationDrawerOpen(false);
-    window.location.hash = '#/enterprise-learn-more';
+    navigateAppRoute('#/enterprise-learn-more');
   }, []);
+
+  const handleEnterpriseRequestSubmitted = useCallback(() => {
+    setEnterpriseRequestSubmitted(true);
+    handleExitFlowPrototype();
+  }, [handleExitFlowPrototype]);
 
   const handleUxTourAction = useCallback(async (action: Extract<UxTourAction, { type: 'navigate' | 'set-state' }>) => {
     if (action.type === 'navigate') {
-      window.location.hash = normalizeHash(action.hash);
+      navigateAppRoute(normalizeHash(action.hash));
       return;
     }
 
@@ -449,6 +471,16 @@ function App() {
       const hash = rawHash.startsWith('figmacapture=') && normalizedCaptureRoute
         ? normalizedCaptureRoute
         : rawHash.split(/[?&]/)[0];
+      if (hash === 'figma' || hash.startsWith('figma/')) {
+        setFigmaExportRoute(hash === 'figma' ? '__index__' : decodeURIComponent(hash.split('/').slice(1).join('/')));
+        setActiveFlowchart(null);
+        setActiveFlowPrototype(null);
+        setIsActiveChatView(false);
+        setIsConversationDrawerOpen(false);
+        setSettingsTab(null);
+        return;
+      }
+      setFigmaExportRoute(null);
       if (hash.startsWith('flows/')) {
         const flowId = hash.split('/')[1] ?? null;
         setActiveFlowchart(flowId);
@@ -520,12 +552,61 @@ function App() {
 
     syncFromHash();
     window.addEventListener('hashchange', syncFromHash);
-    return () => window.removeEventListener('hashchange', syncFromHash);
+    window.addEventListener(APP_ROUTE_EVENT, syncFromHash);
+    return () => {
+      window.removeEventListener('hashchange', syncFromHash);
+      window.removeEventListener(APP_ROUTE_EVENT, syncFromHash);
+    };
   }, []);
+
+  useEffect(() => {
+    const handleCaptureAnchorNavigation = (event: MouseEvent) => {
+      if (!isFigmaCaptureActive()) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest('a[href^="#/"]') as HTMLAnchorElement | null;
+      if (!anchor) {
+        return;
+      }
+
+      event.preventDefault();
+      navigateAppRoute(normalizeAppRoute(anchor.getAttribute('href') ?? 'code'));
+    };
+
+    document.addEventListener('click', handleCaptureAnchorNavigation);
+    return () => document.removeEventListener('click', handleCaptureAnchorNavigation);
+  }, []);
+
+  useEffect(() => {
+    document.body.toggleAttribute('data-figma-fixed-canvas', isFigmaCaptureSession);
+    const rootElement = document.getElementById('root');
+    rootElement?.toggleAttribute('data-figma-fixed-canvas', isFigmaCaptureSession);
+
+    return () => {
+      document.body.removeAttribute('data-figma-fixed-canvas');
+      rootElement?.removeAttribute('data-figma-fixed-canvas');
+    };
+  }, [isFigmaCaptureSession]);
 
 
   return (
-    <div className={`h-screen flex flex-col ${getThemeClasses('bg')} ${getThemeClasses('text')}`}>
+    <div
+      className={`flex flex-col ${isFigmaCaptureSession ? 'h-full' : 'h-screen'} ${getThemeClasses('bg')} ${getThemeClasses('text')}`}
+      style={
+        isFigmaCaptureSession
+          ? {
+              width: '1440px',
+              minWidth: '1440px',
+              maxWidth: '1440px',
+              height: '900px',
+              minHeight: '900px',
+              maxHeight: '900px',
+            }
+          : undefined
+      }
+    >
       <AnimatePresence>
         {isLoading ? (
           <LoadingScreen theme={theme} getThemeClasses={getThemeClasses} onLoadingComplete={handleLoadingComplete} />
@@ -558,7 +639,7 @@ function App() {
               />
             )}
             <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype ? '' : 'ml-16'}`}
+              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype || showFigmaExportView ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
               {showMainApp && !isEmbedded && (
@@ -567,7 +648,13 @@ function App() {
                   onRequestDisable={() => setIsInspectorEnabled(false)}
                 />
               )}
-              {showFlowchartView ? (
+              {showFigmaExportView ? (
+                <ComponentLibraryScreen
+                  key={`figma-export-${figmaExportRoute}`}
+                  mode="figma"
+                  exportItemId={figmaExportRoute === '__index__' ? null : figmaExportRoute}
+                />
+              ) : showFlowchartView ? (
                 <>
                   {activeFlowchart === 'new-user-experience' && (
                     <NewUserExperienceFlowchart onExit={handleExitFlowPrototype} />
@@ -595,7 +682,10 @@ function App() {
                 activeFlowPrototype === 'new-user-experience' ? (
                   <LoginScreen onBack={handleExitFlowPrototype} />
                 ) :                 activeFlowPrototype === 'enterprise-learn-more' ? (
-                  <EnterpriseLearnMoreScreen onBack={handleExitFlowPrototype} />
+                  <EnterpriseLearnMoreScreen
+                    onBack={handleExitFlowPrototype}
+                    onSubmitComplete={handleEnterpriseRequestSubmitted}
+                  />
                 ) : activeFlowPrototype === 'sign-in-with-ad' ? (
                   <SignInWithAdScreen onBack={handleExitFlowPrototype} />
                 ) : (
@@ -683,7 +773,7 @@ function App() {
                   <SettingsScreen
                     initialTab={settingsTab ?? undefined}
                     onTabChange={(tab) => {
-                      window.location.hash = `#/settings/${tab}`;
+                      navigateAppRoute(`#/settings/${tab}`);
                     }}
                   />
                 )}
@@ -788,6 +878,25 @@ function App() {
               }}
               onClose={uxTourController.stopTour}
             />
+            <Dialog open={enterpriseRequestSubmitted} onOpenChange={setEnterpriseRequestSubmitted}>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Request submitted</DialogTitle>
+                  <DialogDescription>
+                    Your request has been submitted. We will follow up with next steps shortly.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => setEnterpriseRequestSubmitted(false)}
+                    className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black hover:bg-gray-300 transition-colors"
+                  >
+                    Done
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </motion.div>
         )}
       </AnimatePresence>

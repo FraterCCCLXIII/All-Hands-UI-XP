@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlowchartLayout, FlowchartNode, FlowchartEdge } from '../../components/flowchart/FlowchartLayout';
+import { navigateAppRoute } from '../../lib/captureNavigation';
 import { flowchartLinks } from './flowchartRegistry';
 
 const nodes: FlowchartNode[] = [
@@ -81,7 +82,7 @@ export const UserJourneyCtaFlowchart: React.FC<{ onExit: () => void }> = ({ onEx
     activeFlowId="user-journey-cta"
     onExit={onExit}
     onFlowSelect={(flowId) => {
-      window.location.hash = `#/flows/${flowId}`;
+      navigateAppRoute(`#/flows/${flowId}`);
     }}
   />
 );

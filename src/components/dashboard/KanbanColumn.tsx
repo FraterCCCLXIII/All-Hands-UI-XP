@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Droppable, Draggable, type DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
+import { Archive, CheckCircle2, CircleDashed, Clock3, TriangleAlert } from 'lucide-react';
 import { KanbanColumn as KanbanColumnType } from '../../types/pr';
 import { PRCardComponent } from './PRCard';
 import { cn } from '../../lib/utils';
@@ -38,35 +39,50 @@ export function KanbanColumn({
     }
   };
 
+  const Icon = {
+    'in-progress': CircleDashed,
+    waiting: Clock3,
+    done: CheckCircle2,
+    failed: TriangleAlert,
+    archived: Archive,
+  }[column.icon ?? 'in-progress'];
+
   return (
     <div className="flex flex-col w-[22rem] flex-shrink-0 h-full min-h-0">
-      <div className="flex items-center justify-between mb-3 px-2">
-        <div className="flex items-center gap-2 relative">
-          {isEditing ? (
-            <Input
-              value={titleValue}
-              onChange={(event) => setTitleValue(event.target.value)}
-              onBlur={commitRename}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  commitRename();
-                }
-                if (event.key === 'Escape') {
-                  setTitleValue(column.title);
-                  setIsEditing(false);
-                }
-              }}
-              className="h-7 w-44 text-sm"
-              autoFocus
-            />
-          ) : (
-            <h2 className="text-sm font-medium text-foreground" onDoubleClick={() => setIsEditing(true)}>
-              {column.title}
-            </h2>
-          )}
-          <span className="px-2 py-0.5 text-xs font-mono text-muted-foreground bg-muted rounded">
-            {column.cards.length}
-          </span>
+      <div className="mb-3 px-2">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-2.5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 relative">
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                {isEditing ? (
+                  <Input
+                    value={titleValue}
+                    onChange={(event) => setTitleValue(event.target.value)}
+                    onBlur={commitRename}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        commitRename();
+                      }
+                      if (event.key === 'Escape') {
+                        setTitleValue(column.title);
+                        setIsEditing(false);
+                      }
+                    }}
+                    className="h-7 w-44 text-sm"
+                    autoFocus
+                  />
+                ) : (
+                  <h2 className="text-sm font-medium text-foreground" onDoubleClick={() => setIsEditing(true)}>
+                    {column.title}
+                  </h2>
+                )}
+                <span className="px-2 py-0.5 text-xs font-mono text-muted-foreground bg-muted rounded">
+                  {column.cards.length}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

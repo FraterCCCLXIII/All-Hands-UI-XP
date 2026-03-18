@@ -1,5 +1,5 @@
-import { FormEvent, useState } from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { FormEvent, useMemo, useState } from 'react';
+import { ChevronDown, FolderX, Github, Plus, Sparkles } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -13,35 +13,52 @@ import {
 import { Button } from '../ui/button';
 
 interface NewTaskDialogProps {
+  activeRepo: string;
   branches: string[];
   modelOptions: string[];
+  repositories: string[];
   onCreateTask: (payload: {
     prompt: string;
     model: string;
+    repo: string;
     branch: string;
   }) => void;
 }
 
-export function NewTaskDialog({ branches, modelOptions, onCreateTask }: NewTaskDialogProps) {
+export function NewTaskDialog({ activeRepo, branches, modelOptions, repositories, onCreateTask }: NewTaskDialogProps) {
+  const resolvedRepositories = useMemo(
+    () => Array.from(new Set(repositories.length > 0 ? repositories : ['No Repository'])),
+    [repositories]
+  );
+  const isWorkspaceScoped = activeRepo !== 'all';
+  const initialRepo = isWorkspaceScoped ? activeRepo : (resolvedRepositories[0] ?? 'No Repository');
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState(modelOptions[0] ?? '');
+  const [repo, setRepo] = useState(initialRepo);
   const [branch, setBranch] = useState(branches[0] ?? 'main');
 
   const canCreate =
     prompt.trim().length > 0 &&
     model.trim().length > 0 &&
+    repo.trim().length > 0 &&
     branch.trim().length > 0;
+  const selectedRepoLabel = repo;
+  const selectedModelLabel = model;
+  const selectedBranchLabel = branch;
 
   const reset = () => {
     setPrompt('');
     setModel(modelOptions[0] ?? '');
+    setRepo(isWorkspaceScoped ? activeRepo : (resolvedRepositories[0] ?? 'No Repository'));
     setBranch(branches[0] ?? 'main');
   };
 
   const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
+    if (open) {
+      setRepo(isWorkspaceScoped ? activeRepo : (resolvedRepositories[0] ?? 'No Repository'));
+    } else {
       reset();
     }
   };
@@ -53,6 +70,7 @@ export function NewTaskDialog({ branches, modelOptions, onCreateTask }: NewTaskD
     onCreateTask({
       prompt: prompt.trim(),
       model,
+      repo,
       branch,
     });
     handleOpenChange(false);
@@ -70,7 +88,7 @@ export function NewTaskDialog({ branches, modelOptions, onCreateTask }: NewTaskD
         <DialogHeader className="space-y-2 text-left">
           <DialogTitle>Create Task</DialogTitle>
           <DialogDescription>
-            Start a new task with a prompt, model, and branch.
+            Start a new task with a prompt, repository, model, and branch.
           </DialogDescription>
         </DialogHeader>
 
@@ -90,16 +108,47 @@ export function NewTaskDialog({ branches, modelOptions, onCreateTask }: NewTaskD
             />
           </div>
 
+          <div className="space-y-2">
+            <label htmlFor="new-task-repo" className="text-sm font-medium text-muted-foreground">
+              Repository
+            </label>
+            <div className="relative h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60 has-[:disabled]:bg-muted/25 has-[:disabled]:text-muted-foreground has-[:disabled]:hover:bg-muted/25">
+              {repo === 'No Repository' ? (
+                <FolderX className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              ) : (
+                <Github className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              )}
+              <span className="block flex-1 truncate text-sm text-foreground">{selectedRepoLabel}</span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <select
+                id="new-task-repo"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+                value={repo}
+                onChange={(event) => setRepo(event.target.value)}
+                disabled={isWorkspaceScoped}
+                required
+              >
+                {resolvedRepositories.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <label htmlFor="new-task-model" className="text-sm font-medium text-muted-foreground">
                 Model
               </label>
-              <div className="h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
+              <div className="relative h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
                 <Sparkles className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                <span className="block flex-1 truncate text-sm text-foreground">{selectedModelLabel}</span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <select
                   id="new-task-model"
-                  className="w-full bg-transparent text-sm text-foreground outline-none"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   value={model}
                   onChange={(event) => setModel(event.target.value)}
                   required
@@ -117,10 +166,12 @@ export function NewTaskDialog({ branches, modelOptions, onCreateTask }: NewTaskD
               <label htmlFor="new-task-branch" className="text-sm font-medium text-muted-foreground">
                 Branch
               </label>
-              <div className="h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
+              <div className="relative h-10 flex items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
+                <span className="block flex-1 truncate text-sm text-foreground">{selectedBranchLabel}</span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 <select
                   id="new-task-branch"
-                  className="w-full bg-transparent text-sm text-foreground outline-none"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                   value={branch}
                   onChange={(event) => setBranch(event.target.value)}
                   required

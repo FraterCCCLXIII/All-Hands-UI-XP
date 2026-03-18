@@ -19,6 +19,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { navigateAppRoute } from '../../lib/captureNavigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -248,7 +249,9 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="gap-2 cursor-pointer"
-              onSelect={() => { window.location.hash = '#/settings/llm'; }}
+              onSelect={() => {
+                navigateAppRoute('#/settings/llm');
+              }}
             >
               <Settings className="h-4 w-4" />
               LLM Settings

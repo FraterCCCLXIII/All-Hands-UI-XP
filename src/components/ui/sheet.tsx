@@ -57,20 +57,66 @@ interface SheetContentProps
 }
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = 'right', className, children, overlayClassName, hideOverlay = false, hideClose = false, ...props }, ref) => (
-    <SheetPortal>
-      {!hideOverlay && <SheetOverlay className={overlayClassName} />}
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        {!hideClose && (
-          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </SheetPrimitive.Close>
-        )}
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  )
+  (
+    {
+      side = 'right',
+      className,
+      children,
+      overlayClassName,
+      hideOverlay = false,
+      hideClose = false,
+      onInteractOutside,
+      onPointerDownOutside,
+      onFocusOutside,
+      ...props
+    },
+    ref
+  ) => {
+    const isFigmaCaptureMode = () =>
+      typeof window !== 'undefined' && window.location.hash.includes('figmacapture=');
+
+    const isFigmaToolbarInteraction = (target: EventTarget | null) => {
+      if (!(target instanceof HTMLElement)) return false;
+      return Boolean(target.closest('#__figma_capture_toolbar_host__'));
+    };
+
+    return (
+      <SheetPortal>
+        {!hideOverlay && <SheetOverlay className={overlayClassName} />}
+        <SheetPrimitive.Content
+          ref={ref}
+          onInteractOutside={(event) => {
+            onInteractOutside?.(event);
+            if (!event.defaultPrevented && (isFigmaCaptureMode() || isFigmaToolbarInteraction(event.target))) {
+              event.preventDefault();
+            }
+          }}
+          onPointerDownOutside={(event) => {
+            onPointerDownOutside?.(event);
+            if (!event.defaultPrevented && (isFigmaCaptureMode() || isFigmaToolbarInteraction(event.target))) {
+              event.preventDefault();
+            }
+          }}
+          onFocusOutside={(event) => {
+            onFocusOutside?.(event);
+            if (!event.defaultPrevented && isFigmaCaptureMode()) {
+              event.preventDefault();
+            }
+          }}
+          className={cn(sheetVariants({ side }), className)}
+          {...props}
+        >
+          {children}
+          {!hideClose && (
+            <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </SheetPrimitive.Close>
+          )}
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  }
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 

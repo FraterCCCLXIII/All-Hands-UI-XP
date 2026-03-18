@@ -6,6 +6,7 @@ import { Input } from '../components/ui/input';
 
 interface EnterpriseLearnMoreScreenProps {
   onBack?: () => void;
+  onSubmitComplete?: () => void;
 }
 
 type View = 'options' | 'enterprise-saas-form' | 'self-hosted-form';
@@ -37,7 +38,7 @@ const ENTERPRISE_OPTIONS = [
   },
 ];
 
-export function EnterpriseLearnMoreScreen({ onBack }: EnterpriseLearnMoreScreenProps) {
+export function EnterpriseLearnMoreScreen({ onBack, onSubmitComplete }: EnterpriseLearnMoreScreenProps) {
   const [view, setView] = useState<View>('options');
   const [form, setForm] = useState({ name: '', company: '', email: '', message: '' });
 
@@ -59,7 +60,8 @@ export function EnterpriseLearnMoreScreen({ onBack }: EnterpriseLearnMoreScreenP
 
   const handleFormSubmit = () => {
     console.log('Enterprise form submitted:', { view, form });
-    handleBack();
+    setForm({ name: '', company: '', email: '', message: '' });
+    onSubmitComplete?.();
   };
 
   if (view === 'enterprise-saas-form' || view === 'self-hosted-form') {

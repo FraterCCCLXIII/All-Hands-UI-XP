@@ -700,6 +700,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <div className="flex items-center gap-3">
                           {source.icon}
                           <h3 className="text-base font-medium text-foreground">{source.name}</h3>
+                          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
+                            <span
+                              className={`h-2 w-2 rounded-full ${
+                                isConnected
+                                  ? 'bg-emerald-400'
+                                  : isConnecting
+                                  ? 'bg-amber-400 animate-pulse'
+                                  : 'bg-[#FF684E]'
+                              }`}
+                              aria-hidden
+                            />
+                            <span className="font-normal text-xs text-muted-foreground">
+                              {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
+                            </span>
+                          </div>
                         </div>
                         {isConnected && (
                           <DropdownMenu>
@@ -725,21 +740,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-3">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
-                          <span
-                            className={`h-2 w-2 rounded-full ${
-                              isConnected
-                                ? 'bg-emerald-400'
-                                : isConnecting
-                                ? 'bg-amber-400 animate-pulse'
-                                : 'bg-[#FF684E]'
-                            }`}
-                            aria-hidden
-                          />
-                          <span className="font-normal text-xs text-muted-foreground">
-                            {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
-                          </span>
-                        </div>
                         {isConnected ? (
                           <button
                             type="button"

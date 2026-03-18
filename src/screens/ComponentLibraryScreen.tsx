@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Children, isValidElement, useMemo, useState } from 'react';
+import { Check, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -38,6 +39,7 @@ import SharePreview from '../components/common/SharePreview';
 import UserSettings from '../components/common/UserSettings';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { InspectorOverlay } from '../components/common/InspectorOverlay';
+import { EnterpriseCtaCard } from '../components/common/EnterpriseCtaCard';
 import { ServerStatus, type ServerStatusType } from '../components/common/ServerStatus';
 import { TaskItem } from '../components/chat/TaskItem';
 import { TaskList, type Task } from '../components/chat/TaskList';
@@ -81,6 +83,7 @@ import type { ThemeElement } from '../types/theme';
 import type { Message as MessageModel } from '../types/message';
 import { conversationSummaries } from '../data/conversations';
 import type { PRCard } from '../types/pr';
+import { componentExportManifest } from './componentExportManifest';
 
 type ComponentCardProps = {
   title: string;
@@ -123,30 +126,79 @@ type ComponentSection = {
   items: ComponentItem[];
 };
 
-export function ComponentLibraryScreen() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+type ExportExample = {
+  label: string;
+  content: React.ReactNode;
+  span?: 'default' | 'wide' | 'full';
+};
+
+const formatLabel = (value: string) =>
+  value
+    .replace(/\.tsx$/, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
+const toKebabCase = (value: string) =>
+  value
+    .replace(/\.tsx$/, '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
+
+const extractNodeText = (node: React.ReactNode): string => {
+  if (typeof node === 'string' || typeof node === 'number') {
+    return String(node);
+  }
+
+  if (!isValidElement(node)) {
+    return '';
+  }
+
+  return Children.toArray(node.props.children)
+    .map((child) => extractNodeText(child))
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+type ComponentLibraryScreenProps = {
+  mode?: 'library' | 'figma';
+  exportItemId?: string | null;
+};
+
+export function ComponentLibraryScreen({
+  mode = 'library',
+  exportItemId = null,
+}: ComponentLibraryScreenProps) {
+  const isFigmaExport = mode === 'figma';
+  const [isDialogOpen, setIsDialogOpen] = useState(isFigmaExport && exportItemId === 'ui-dialog');
+  const [isSheetOpen, setIsSheetOpen] = useState(isFigmaExport && exportItemId === 'ui-sheet');
   const [searchValue, setSearchValue] = useState('');
   const [statusIndicatorStatus, setStatusIndicatorStatus] = useState<'active' | 'stopped' | 'thinking'>('active');
   const [serverStatus, setServerStatus] = useState<ServerStatusType>('active');
-  const [showInviteTeam, setShowInviteTeam] = useState(false);
-  const [showSharePreview, setShowSharePreview] = useState(false);
-  const [showUserSettings, setShowUserSettings] = useState(false);
-  const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
+  const [showInviteTeam, setShowInviteTeam] = useState(isFigmaExport && exportItemId === 'common-invite-team');
+  const [showSharePreview, setShowSharePreview] = useState(
+    isFigmaExport && (exportItemId === 'common-share-preview' || exportItemId === 'navigation-top-bar')
+  );
+  const [showUserSettings, setShowUserSettings] = useState(isFigmaExport && exportItemId === 'common-user-settings');
+  const [isInspectorEnabled, setIsInspectorEnabled] = useState(isFigmaExport && exportItemId === 'common-inspector-overlay');
   const [chatWindowTab, setChatWindowTab] = useState<ChatWindowTabId>('preview');
   const [messagePanelStatus, setMessagePanelStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [drawerTab, setDrawerTab] = useState<DrawerTab['id']>('tasks');
   const [drawerCollapsed, setDrawerCollapsed] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(isFigmaExport && exportItemId === 'chat-conversation-drawer');
+  const [showWelcome, setShowWelcome] = useState(isFigmaExport && exportItemId === 'chat-welcome-screen');
   const [canvasView, setCanvasView] = useState<'changes' | 'code' | 'terminal' | 'browser' | 'preview'>('preview');
   const [canvasContentType, setCanvasContentType] = useState<CanvasContentType>('preview');
-  const [showCanvasError, setShowCanvasError] = useState(false);
+  const [showCanvasError, setShowCanvasError] = useState(isFigmaExport && exportItemId === 'canvas-canvas-error-modal');
   const [canvasWidth, setCanvasWidth] = useState(180);
-  const [terminalVisible, setTerminalVisible] = useState(false);
+  const [terminalVisible, setTerminalVisible] = useState(isFigmaExport && exportItemId === 'canvas-terminal-drawer');
   const [terminalHeight, setTerminalHeight] = useState(200);
   const [dashboardTab, setDashboardTab] = useState<DashboardTabId>('kanban');
-  const [agentPanelOpen, setAgentPanelOpen] = useState(false);
+  const [agentPanelOpen, setAgentPanelOpen] = useState(isFigmaExport && exportItemId === 'dashboard-agent-panel');
   const [projectTitle, setProjectTitle] = useState('Component Library');
   const [isRunningPreview, setIsRunningPreview] = useState(false);
   const [isCanvasVisiblePreview, setIsCanvasVisiblePreview] = useState(false);
@@ -404,9 +456,11 @@ export function ComponentLibraryScreen() {
             usage: `<Dialog open={isOpen}>...</Dialog>`,
             preview: (
               <>
-                <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
-                  Open dialog
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
+                    Open dialog
+                  </Button>
+                )}
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
@@ -434,7 +488,7 @@ export function ComponentLibraryScreen() {
             description: 'Inline popovers for supporting context.',
             usage: `<Popover><PopoverTrigger>...</PopoverTrigger></Popover>`,
             preview: (
-              <Popover>
+              <Popover open={isFigmaExport && exportItemId === 'ui-popover' ? true : undefined}>
                 <PopoverTrigger asChild>
                   <Button variant="outline">Quick info</Button>
                 </PopoverTrigger>
@@ -454,7 +508,7 @@ export function ComponentLibraryScreen() {
             description: 'Compact menus for contextual actions.',
             usage: `<DropdownMenu><DropdownMenuTrigger>...</DropdownMenuTrigger></DropdownMenu>`,
             preview: (
-              <DropdownMenu>
+              <DropdownMenu open={isFigmaExport && exportItemId === 'ui-dropdown-menu' ? true : undefined}>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">More actions</Button>
                 </DropdownMenuTrigger>
@@ -464,6 +518,38 @@ export function ComponentLibraryScreen() {
                   <DropdownMenuItem>Archive</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ),
+          },
+          {
+            id: 'ui-llm-profile-menu',
+            name: 'LLM Profile Menu',
+            path: 'src/screens/NewLlmSwitcherScreen2.tsx',
+            description: 'Profile actions menu used in the LLM switcher settings flow.',
+            usage: `<DropdownMenuContent align="end" className="w-40">...</DropdownMenuContent>`,
+            preview: (
+              <div className="flex flex-wrap items-start gap-4">
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Open actions"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+                <div className="w-40 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                    Edit
+                  </div>
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                    <Check className="h-4 w-4 text-muted-foreground" />
+                    Set as default
+                  </div>
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </div>
+                </div>
+              </div>
             ),
           },
           {
@@ -481,9 +567,11 @@ export function ComponentLibraryScreen() {
             usage: `<Sheet><SheetTrigger>...</SheetTrigger></Sheet>`,
             preview: (
               <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline">Open sheet</Button>
-                </SheetTrigger>
+                {!isFigmaExport && (
+                  <SheetTrigger asChild>
+                    <Button variant="outline">Open sheet</Button>
+                  </SheetTrigger>
+                )}
                 <SheetContent>
                   <SheetHeader>
                     <SheetTitle>Preferences</SheetTitle>
@@ -506,6 +594,14 @@ export function ComponentLibraryScreen() {
             description: 'Credit balance pill with hover details.',
             usage: `<Credits credits={1200} />`,
             preview: <Credits credits={1200} />,
+          },
+          {
+            id: 'common-enterprise-cta-card',
+            name: 'EnterpriseCtaCard',
+            path: 'components/common/EnterpriseCtaCard.tsx',
+            description: 'Enterprise call-to-action card used in chat and navigation surfaces.',
+            usage: `<EnterpriseCtaCard onLearnMoreClick={...} />`,
+            preview: <EnterpriseCtaCard staticLayout onDismiss={() => {}} />,
           },
           {
             id: 'common-home-info',
@@ -542,9 +638,11 @@ export function ComponentLibraryScreen() {
             usage: `<InviteTeam organizations={['Acme']} currentOrg="Acme" onClose={...} />`,
             preview: (
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setShowInviteTeam(true)}>
-                  Open invite modal
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setShowInviteTeam(true)}>
+                    Open invite modal
+                  </Button>
+                )}
                 {showInviteTeam && (
                   <InviteTeam
                     organizations={['Acme Inc.', 'Design Lab', 'Ops Team']}
@@ -610,9 +708,11 @@ export function ComponentLibraryScreen() {
             usage: `<SharePreview shareUrl="..." onClose={...} />`,
             preview: (
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setShowSharePreview(true)}>
-                  Open share modal
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setShowSharePreview(true)}>
+                    Open share modal
+                  </Button>
+                )}
                 {showSharePreview && (
                   <SharePreview shareUrl={window.location.href} onClose={() => setShowSharePreview(false)} />
                 )}
@@ -648,9 +748,11 @@ export function ComponentLibraryScreen() {
             usage: `<UserSettings theme="dark" getThemeClasses={...} onClose={...} />`,
             preview: (
               <div className="relative min-h-[240px] w-full">
-                <Button variant="outline" onClick={() => setShowUserSettings(true)}>
-                  Open user settings
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setShowUserSettings(true)}>
+                    Open user settings
+                  </Button>
+                )}
                 {showUserSettings && (
                   <UserSettings
                     theme="dark"
@@ -830,7 +932,7 @@ export function ComponentLibraryScreen() {
             usage: `<WelcomeScreen theme="dark" userName="User" />`,
             preview: (
               <div className="relative h-[420px] w-full overflow-hidden rounded-lg border border-border bg-card">
-                {!showWelcome ? (
+                {!showWelcome && !isFigmaExport ? (
                   <Button variant="outline" onClick={() => setShowWelcome(true)}>
                     Open welcome screen
                   </Button>
@@ -856,9 +958,11 @@ export function ComponentLibraryScreen() {
             usage: `<ConversationDrawer open={open} onOpenChange={...} conversations={...} />`,
             preview: (
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setDrawerOpen(true)}>
-                  Open conversation drawer
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setDrawerOpen(true)}>
+                    Open conversation drawer
+                  </Button>
+                )}
                 <ConversationDrawer
                   open={drawerOpen}
                   onOpenChange={setDrawerOpen}
@@ -915,6 +1019,7 @@ export function ComponentLibraryScreen() {
                   activeChatWindowTab={chatWindowTab}
                   onChatWindowTabChange={setChatWindowTab}
                   disableAutoScroll
+                  enterpriseCtaPlacement={isFigmaExport ? 'inline' : 'fixed'}
                 />
               </div>
             ),
@@ -1016,9 +1121,11 @@ export function ComponentLibraryScreen() {
             usage: `<CanvasErrorModal showError onErrorClose={...} />`,
             preview: (
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setShowCanvasError(true)}>
-                  Trigger error modal
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setShowCanvasError(true)}>
+                    Trigger error modal
+                  </Button>
+                )}
                 <CanvasErrorModal
                   getThemeClasses={previewThemeClasses}
                   showError={showCanvasError}
@@ -1064,11 +1171,13 @@ export function ComponentLibraryScreen() {
             usage: `<TerminalDrawer isVisible height={200} />`,
             preview: (
               <div className="w-full rounded-lg border border-border overflow-hidden">
-                <div className="flex items-center gap-3 p-3">
-                  <Button variant="outline" onClick={() => setTerminalVisible(true)}>
-                    Open terminal
-                  </Button>
-                </div>
+                {!isFigmaExport && (
+                  <div className="flex items-center gap-3 p-3">
+                    <Button variant="outline" onClick={() => setTerminalVisible(true)}>
+                      Open terminal
+                    </Button>
+                  </div>
+                )}
                 <TerminalDrawer
                   getThemeClasses={previewThemeClasses}
                   isVisible={terminalVisible}
@@ -1209,9 +1318,11 @@ export function ComponentLibraryScreen() {
             usage: `<AgentPanel card={card} isOpen={open} showConversationFooter={false} />`,
             preview: (
               <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={() => setAgentPanelOpen(true)}>
-                  Open agent panel
-                </Button>
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setAgentPanelOpen(true)}>
+                    Open agent panel
+                  </Button>
+                )}
                 <AgentPanel
                   card={samplePRCard}
                   isOpen={agentPanelOpen}
@@ -1380,12 +1491,699 @@ export function ComponentLibraryScreen() {
       },
     ];
 
+  const allComponentSections = useMemo(() => {
+    const knownPaths = new Set(
+      componentSections.flatMap((section) => section.items.map((item) => item.path))
+    );
+    const mergedSections = new Map<string, ComponentSection>(
+      componentSections.map((section) => [
+        section.id,
+        {
+          ...section,
+          items: [...section.items],
+        },
+      ])
+    );
+
+    componentExportManifest.forEach((modulePath) => {
+      const relativePath = modulePath.replace(/^src\//, '');
+
+      if (knownPaths.has(relativePath)) {
+        return;
+      }
+
+      const segments = relativePath.split('/');
+      const sectionId = segments[1] ?? 'misc';
+      const fileName = segments[segments.length - 1] ?? relativePath;
+      const componentName = fileName.replace(/\.tsx$/, '');
+      const sectionTitle = formatLabel(sectionId);
+      const section = mergedSections.get(sectionId) ?? {
+        id: sectionId,
+        title: sectionTitle,
+        items: [],
+      };
+
+      section.items.push({
+        id: `${sectionId}-${toKebabCase(componentName)}`,
+        name: formatLabel(componentName),
+        path: relativePath,
+        description: `Standalone export route scaffold for ${formatLabel(componentName)}.`,
+      });
+
+      mergedSections.set(sectionId, section);
+    });
+
+    return Array.from(mergedSections.values()).map((section) => ({
+      ...section,
+      items: section.items.sort((a, b) => a.name.localeCompare(b.name)),
+    }));
+  }, [componentSections]);
+
   const handleScrollTo = (targetId: string) => {
     const element = document.getElementById(targetId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
+
+  const filteredSections = useMemo(() => {
+    if (!isFigmaExport || !exportItemId) {
+      return allComponentSections;
+    }
+
+    if (exportItemId === 'all-components') {
+      return componentSections;
+    }
+
+    return allComponentSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => item.id === exportItemId),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [allComponentSections, exportItemId, isFigmaExport]);
+
+  const selectedItem = exportItemId === 'all-components' ? null : filteredSections.flatMap((section) => section.items)[0] ?? null;
+
+  const buildExportExamples = (item: ComponentItem): ExportExample[] => {
+    if (!item) {
+      return [];
+    }
+
+    if (item.id === 'ui-button') {
+      const renderButtonState = (
+          stateLabel: string,
+          variant: React.ComponentProps<typeof Button>['variant'],
+          className?: string,
+          disabled?: boolean
+        ) => (
+          <div className="flex min-w-[120px] flex-col gap-3">
+            <div className="text-xs font-medium text-muted-foreground">{stateLabel}</div>
+          <Button variant={variant} className={className} disabled={disabled}>
+            {item.name}
+          </Button>
+          </div>
+        );
+
+      const buildButtonRow = (
+        label: string,
+        variant: React.ComponentProps<typeof Button>['variant'],
+        classes?: {
+          hover?: string;
+          focus?: string;
+          pressed?: string;
+        }
+      ): ExportExample => ({
+        label,
+        span: 'full',
+        content: (
+          <div className="flex w-full flex-wrap gap-6">
+            {renderButtonState('Default', variant)}
+            {renderButtonState('Hover', variant, classes?.hover)}
+            {renderButtonState('Focus', variant, classes?.focus ?? 'ring-2 ring-ring ring-offset-2')}
+            {renderButtonState('Pressed', variant, classes?.pressed)}
+            {renderButtonState('Disabled', variant, undefined, true)}
+          </div>
+        ),
+      });
+
+      return [
+        buildButtonRow('Primary', 'default', {
+          hover: 'bg-primary/90',
+          pressed: 'bg-primary/80',
+        }),
+        buildButtonRow('Secondary', 'secondary', {
+          hover: 'bg-secondary/80',
+          pressed: 'bg-secondary/70',
+        }),
+        buildButtonRow('Muted', 'muted', {
+          hover: 'bg-muted/80 text-muted-foreground',
+          pressed: 'bg-muted/70 text-muted-foreground',
+        }),
+        buildButtonRow('Outline', 'outline', {
+          hover: 'bg-accent text-accent-foreground',
+          pressed: 'bg-accent/80 text-accent-foreground',
+        }),
+        buildButtonRow('Ghost', 'ghost', {
+          hover: 'bg-accent text-accent-foreground',
+          pressed: 'bg-accent/80 text-accent-foreground',
+        }),
+      ];
+    }
+
+    if (item.id === 'ui-input') {
+      return [
+        { label: 'Input / Default', content: <Input className="w-56" placeholder="Project name" /> },
+        { label: 'Input / Hover', content: <Input className="w-56 bg-muted/60" placeholder="Project name" /> },
+        {
+          label: 'Input / Focus',
+          content: (
+            <Input
+              className="w-56 bg-muted/60 ring-2 ring-ring ring-offset-2"
+              value="Project Atlas"
+              readOnly
+            />
+          ),
+        },
+        { label: 'Input / Disabled', content: <Input className="w-56" value="Disabled" disabled readOnly /> },
+        {
+          label: 'Search / Default',
+          content: (
+            <SearchInput
+              className="w-56"
+              value=""
+              onValueChange={() => {}}
+              placeholder="Search components"
+            />
+          ),
+        },
+        {
+          label: 'Search / Focus',
+          content: (
+            <SearchInput
+              className="w-56 [&_input]:bg-muted/60 [&_input]:ring-2 [&_input]:ring-ring [&_input]:ring-offset-2"
+              value="Dialog"
+              onValueChange={() => {}}
+              placeholder="Search components"
+            />
+          ),
+        },
+        {
+          label: 'Search / Filled',
+          content: (
+            <SearchInput
+              className="w-56"
+              value="Dialog"
+              onValueChange={() => {}}
+              placeholder="Search components"
+            />
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-search-input') {
+      return [
+        {
+          label: 'Default',
+          content: (
+            <SearchInput
+              className="w-56"
+              value=""
+              onValueChange={() => {}}
+              placeholder="Search components"
+            />
+          ),
+        },
+        {
+          label: 'Hover',
+          content: (
+            <SearchInput
+              className="w-56 [&_input]:bg-muted/60"
+              value=""
+              onValueChange={() => {}}
+              placeholder="Search components"
+            />
+          ),
+        },
+        {
+          label: 'Focus',
+          content: (
+            <SearchInput
+              className="w-56 [&_input]:bg-muted/60 [&_input]:ring-2 [&_input]:ring-ring [&_input]:ring-offset-2"
+              value="Dialog"
+              onValueChange={() => {}}
+              placeholder="Search components"
+            />
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-dialog') {
+      return [
+        {
+          label: 'Open dialog',
+          span: 'wide',
+          content: (
+            <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-lg">
+              <div className="space-y-1.5">
+                <div className="text-lg font-semibold text-foreground">Share update</div>
+                <p className="text-sm text-muted-foreground">Invite teammates to review this draft.</p>
+              </div>
+              <div className="mt-4 flex items-center gap-2">
+                <Input placeholder="name@company.com" />
+                <Button size="sm">Send</Button>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button variant="outline" size="sm">Close</Button>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-sheet') {
+      return [
+        {
+          label: 'Open sheet',
+          span: 'wide',
+          content: (
+            <div className="w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-lg">
+              <div className="space-y-2">
+                <div className="text-lg font-semibold text-foreground">Preferences</div>
+                <p className="text-sm text-muted-foreground">Update notification settings and defaults.</p>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-popover') {
+      return [
+        {
+          label: 'Trigger + popover',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <Button variant="outline">Quick info</Button>
+              <div className="w-56 rounded-md border border-border bg-popover p-4 text-popover-foreground shadow-md">
+                <div className="text-sm font-medium text-foreground">Release checklist</div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Validate API keys, run smoke tests, and confirm approvals.
+                </p>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-dropdown-menu') {
+      return [
+        {
+          label: 'Trigger + menu',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <Button variant="outline">More actions</Button>
+              <div className="w-56 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="rounded-sm px-2 py-1.5 text-sm text-foreground">Duplicate</div>
+                <div className="rounded-sm px-2 py-1.5 text-sm text-foreground">Move to folder</div>
+                <div className="rounded-sm px-2 py-1.5 text-sm text-foreground">Archive</div>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-llm-profile-menu') {
+      return [
+        {
+          label: 'Open menu',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                aria-label="Open actions for Model 1"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-40 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                  Edit
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <Check className="h-4 w-4 text-muted-foreground" />
+                  Set as default
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'common-invite-team') {
+      return [
+        {
+          label: 'Open modal',
+          span: 'wide',
+          content: (
+            <div className="w-[512px] max-w-full rounded-xl border border-stone-700 bg-stone-900 p-8 shadow-xl">
+              <div className="text-2xl font-normal text-stone-200">Invite Team Members</div>
+              <p className="mt-2 text-sm text-stone-400">
+                Invite team members to your organization by entering their email addresses below.
+              </p>
+              <div className="mt-4 space-y-4">
+                <div>
+                  <div className="mb-1 text-xs text-stone-400">Organization</div>
+                  <div className="rounded bg-stone-800 p-2 text-stone-200">Acme Inc.</div>
+                </div>
+                <div>
+                  <div className="mb-1 text-xs text-stone-400">Email Addresses</div>
+                  <div className="min-h-[44px] rounded bg-stone-800 p-2 text-stone-400">Enter email and press Enter</div>
+                </div>
+                <button className="w-full rounded bg-yellow-500 py-2 text-lg font-normal text-stone-900">
+                  Send Invites
+                </button>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'common-share-preview') {
+      return [
+        {
+          label: 'Open modal',
+          span: 'wide',
+          content: (
+            <div className="w-[448px] max-w-full rounded-xl border border-stone-700 bg-stone-900 p-8 shadow-xl">
+              <div className="text-2xl font-normal text-stone-200">Share Preview</div>
+              <p className="mt-2 text-sm text-stone-400">Share this preview with your team or on social platforms.</p>
+              <div className="mt-4">
+                <div className="mb-1 text-xs text-stone-400">Share Link</div>
+                <div className="rounded bg-stone-800 px-3 py-2 text-sm text-stone-200">
+                  https://preview.openhands.dev/demo
+                </div>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-4">
+                {['Slack', 'GitHub', 'Email', 'WhatsApp', 'X', 'Facebook'].map((name) => (
+                  <div key={name} className="rounded-full bg-stone-700 px-4 py-2 text-xs text-stone-200">
+                    {name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'canvas-canvas-error-modal') {
+      return [
+        {
+          label: 'Error modal',
+          span: 'wide',
+          content: (
+            <div className="w-[512px] max-w-full rounded-xl border border-stone-700 bg-stone-900 p-6 shadow-xl">
+              <div className="text-lg font-semibold text-foreground">Canvas error</div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                The preview runtime hit an unexpected error. Open the console to inspect the failure.
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="outline" size="sm">Open console</Button>
+                <Button size="sm">Dismiss</Button>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'common-enterprise-cta-card') {
+      return [
+        {
+          label: 'Default',
+          content: (
+            <div className="w-[320px] max-w-full">
+              <EnterpriseCtaCard staticLayout onDismiss={() => {}} />
+            </div>
+          ),
+        },
+        {
+          label: 'With icon',
+          content: (
+            <div className="w-[320px] max-w-full">
+              <EnterpriseCtaCard staticLayout showIcon onDismiss={() => {}} />
+            </div>
+          ),
+        },
+      ];
+    }
+
+    const previewNodes = item.preview ? Children.toArray(item.preview) : [];
+    if (previewNodes.length === 0) {
+      return [
+        {
+          label: 'Default',
+          content: (
+            <div className="text-sm text-muted-foreground">
+              Preview coming soon. File: {item.path}
+            </div>
+          ),
+          span: 'wide',
+        },
+      ];
+    }
+
+    return previewNodes.map((node, index) => {
+      const extractedLabel = extractNodeText(node);
+      const label =
+        extractedLabel.length > 0
+          ? extractedLabel.slice(0, 48)
+          : previewNodes.length === 1
+            ? 'Default'
+            : `Example ${index + 1}`;
+
+      return {
+        label,
+        content: node,
+        span: previewNodes.length === 1 ? 'wide' : 'default',
+      };
+    });
+  };
+
+  const exportExamples = useMemo<ExportExample[]>(() => {
+    if (!selectedItem) {
+      return [];
+    }
+
+    return buildExportExamples(selectedItem);
+  }, [selectedItem]);
+
+  const aggregateExportSections = useMemo(
+    () =>
+      componentSections
+        .map((section) => ({
+          ...section,
+          items: section.items.filter((item) => item.preview || item.id === 'ui-search-input'),
+        }))
+        .filter((section) => section.items.length > 0),
+    [componentSections]
+  );
+
+  if (isFigmaExport) {
+    if (!exportItemId) {
+      return (
+        <div className="h-full overflow-y-auto bg-background px-8 py-10 text-foreground scrollbar-on-hover">
+          <div className="mx-auto max-w-6xl space-y-8">
+            <header className="space-y-3 rounded-2xl border border-border bg-card px-8 py-8">
+              <div className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                Figma Export Routes
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold">Component Export Index</h1>
+                <p className="max-w-3xl text-sm text-muted-foreground">
+                  Each route below renders one component family on a clean canvas so HTML-to-Figma capture produces
+                  isolated, editable frames instead of mixed product screens.
+                </p>
+              </div>
+              <div className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                Capture any entry with <span className="font-mono text-foreground">?captureRoute=figma/&lt;component-id&gt;</span>
+                {' '}while keeping the Figma capture hash intact.
+              </div>
+              <a
+                href="#/figma/all-components"
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+              >
+                Open All Components Page
+              </a>
+            </header>
+
+            <div className="grid gap-6">
+              {allComponentSections.map((section) => (
+                <section key={section.id} className="rounded-2xl border border-border bg-card px-6 py-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold">{section.title}</h2>
+                    <p className="text-sm text-muted-foreground">{section.items.length} export routes.</p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {section.items.map((item) => (
+                      <a
+                        key={item.id}
+                        href={`#/figma/${item.id}`}
+                        className="rounded-xl border border-border bg-background px-4 py-4 transition-colors hover:border-primary/60 hover:bg-muted/30"
+                      >
+                        <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">{item.description ?? item.path}</div>
+                        <div className="mt-3 text-[11px] font-mono text-muted-foreground">#/figma/{item.id}</div>
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (exportItemId === 'all-components') {
+      return (
+        <div className="h-full overflow-y-auto bg-background px-8 py-10 text-foreground scrollbar-on-hover">
+          <div className="mx-auto max-w-7xl space-y-10">
+            <header className="space-y-4 px-8 py-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <h1 className="text-3xl font-semibold">All Components</h1>
+                  <p className="max-w-3xl text-sm text-muted-foreground">
+                    One long export surface with the curated component set and visible states where available.
+                  </p>
+                </div>
+                <div className="space-y-2 text-right text-xs text-muted-foreground">
+                  <div className="font-mono">#/figma/all-components</div>
+                </div>
+              </div>
+            </header>
+
+            {aggregateExportSections.map((section) => (
+              <section key={section.id} className="space-y-6 px-8 py-2">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-semibold text-foreground">{section.title}</h2>
+                  <p className="text-sm text-muted-foreground">{section.items.length} components</p>
+                </div>
+
+                <div className="space-y-10">
+                  {section.items.map((item) => {
+                    const itemExamples = buildExportExamples(item);
+
+                    return (
+                      <article key={item.id} className="space-y-5 border-t border-border/60 pt-6 first:border-t-0 first:pt-0">
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-semibold text-foreground">{item.name}</h3>
+                            <p className="max-w-3xl text-sm text-muted-foreground">
+                              {item.description ?? item.path}
+                            </p>
+                          </div>
+                          <div className="space-y-1 text-right text-xs text-muted-foreground">
+                            <div className="font-mono text-foreground">{item.path}</div>
+                            <div className="font-mono">#/figma/{item.id}</div>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-x-10 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
+                          {itemExamples.map((example, index) => (
+                            <div
+                              key={`${item.id}-aggregate-example-${index}`}
+                              className={
+                                example.span === 'full'
+                                  ? 'md:col-span-2 xl:col-span-3'
+                                  : example.span === 'wide'
+                                    ? 'md:col-span-2'
+                                    : ''
+                              }
+                            >
+                              <div className="mb-3 text-xs font-medium text-muted-foreground">
+                                {example.label}
+                              </div>
+                              <div className="flex min-h-[72px] flex-wrap items-start gap-4">
+                                {example.content}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (!selectedItem) {
+      return (
+        <div className="flex h-full overflow-y-auto items-center justify-center bg-background px-6 text-center text-foreground scrollbar-on-hover">
+          <div className="max-w-md rounded-2xl border border-border bg-card px-8 py-8">
+            <h1 className="text-xl font-semibold">Component not found</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              No export page is registered for <span className="font-mono text-foreground">{exportItemId}</span>.
+            </p>
+            <a
+              href="#/figma"
+              className="mt-4 inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+            >
+              Back to export index
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="h-full overflow-y-auto bg-background px-8 py-10 text-foreground scrollbar-on-hover">
+        <div className="mx-auto max-w-7xl space-y-8">
+          <header className="space-y-4 px-8 py-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold">{selectedItem.name}</h1>
+                <p className="max-w-3xl text-sm text-muted-foreground">
+                  {selectedItem.description ?? 'Isolated component capture page for Figma migration.'}
+                </p>
+              </div>
+              <div className="space-y-2 text-right text-xs text-muted-foreground">
+                <div className="font-mono text-foreground">{selectedItem.path}</div>
+                <div className="font-mono">#/figma/{selectedItem.id}</div>
+              </div>
+            </div>
+          </header>
+
+          <section className="px-8 py-8">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground">{selectedItem.name} canvas</h2>
+            </div>
+            <div className="grid gap-x-10 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
+              {exportExamples.map((example, index) => (
+                <div
+                  key={`${selectedItem.id}-example-${index}`}
+                  className={
+                    example.span === 'full'
+                      ? 'md:col-span-2 xl:col-span-3'
+                      : example.span === 'wide'
+                        ? 'md:col-span-2'
+                        : ''
+                  }
+                >
+                  <div className="mb-3 text-xs font-medium text-muted-foreground">
+                    {example.label}
+                  </div>
+                  <div className="flex min-h-[72px] flex-wrap items-start gap-4">
+                    {example.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full w-full min-w-0 bg-background">
@@ -1404,7 +2202,7 @@ export function ComponentLibraryScreen() {
           className="mt-6 flex-1 space-y-5 overflow-y-auto pr-2 scrollbar-on-hover"
           aria-label="Component library navigation"
         >
-          {componentSections.map((section) => (
+          {allComponentSections.map((section) => (
             <div key={section.id}>
               <button
                 type="button"
@@ -1439,7 +2237,7 @@ export function ComponentLibraryScreen() {
         </header>
         <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth p-8 scrollbar-on-hover">
           <div className="min-h-full pb-12">
-            {componentSections.map((section) => (
+            {allComponentSections.map((section) => (
               <div key={section.id} id={`section-${section.id}`} className="mb-10 scroll-mt-6">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>

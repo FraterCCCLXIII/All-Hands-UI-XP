@@ -71,5 +71,7 @@ export interface Conversation {
 export interface KanbanColumn {
   id: string;
   title: string;
+  description?: string;
+  icon?: 'in-progress' | 'waiting' | 'done' | 'failed' | 'archived';
   cards: PRCard[];
 }
