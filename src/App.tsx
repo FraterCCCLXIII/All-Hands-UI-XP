@@ -9,6 +9,7 @@ import { Message } from './types/message';
 import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
 import {
   DashboardScreen,
+  AutomationsScreen,
   LoadingScreen,
   SkillsScreen,
   LoginScreen,
@@ -158,6 +159,7 @@ const actionSlugs: Record<string, string> = {
   code: 'chat',
   'chat-cards': 'chat-cards',
   dashboard: 'dashboard',
+  automations: 'automations',
   skills: 'skills',
   components: 'components',
   'new-components': 'new-components',
@@ -217,6 +219,7 @@ function App() {
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
+  const isAutomationsView = activeNavItem === 'automations';
   const isSkillsView = activeNavItem === 'skills';
   const isSettingsView = activeNavItem === 'settings';
   const isComponentsView = activeNavItem === 'components';
@@ -229,7 +232,16 @@ function App() {
   const showFigmaExportView = figmaExportRoute !== null;
   const isFigmaCaptureSession = isFigmaCaptureActive();
   const showMainApp = !showFlowchartView && !showStandaloneFlow && !showFigmaExportView;
-  const showChatView = !isDashboardView && !isSkillsView && !isSettingsView && !isComponentsView && !isNewComponentsView && !isNewLlmSwitcherView && !isNewLlmSwitcherView2 && !isWorkflowsView;
+  const showChatView =
+    !isDashboardView &&
+    !isAutomationsView &&
+    !isSkillsView &&
+    !isSettingsView &&
+    !isComponentsView &&
+    !isNewComponentsView &&
+    !isNewLlmSwitcherView &&
+    !isNewLlmSwitcherView2 &&
+    !isWorkflowsView;
   const showLeftNav =
     !showFigmaExportView &&
     activeFlowPrototype !== 'new-user-experience' &&
@@ -593,16 +605,15 @@ function App() {
 
   return (
     <div
-      className={`flex flex-col ${isFigmaCaptureSession ? 'h-full' : 'h-screen'} ${getThemeClasses('bg')} ${getThemeClasses('text')}`}
+      className={`flex w-full flex-col ${isFigmaCaptureSession ? 'min-h-[900px]' : 'h-screen'} ${getThemeClasses('bg')} ${getThemeClasses('text')}`}
       style={
         isFigmaCaptureSession
           ? {
               width: '1440px',
               minWidth: '1440px',
               maxWidth: '1440px',
-              height: '900px',
               minHeight: '900px',
-              maxHeight: '900px',
+              height: 'auto',
             }
           : undefined
       }
@@ -615,7 +626,7 @@ function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1 flex relative overflow-hidden"
+            className={`relative flex w-full flex-1 ${isFigmaCaptureSession ? 'overflow-visible' : 'overflow-hidden'}`}
           >
             {showLeftNav && (
               <LeftNav
@@ -764,6 +775,7 @@ function App() {
                   )}
                 </AnimatePresence>
                 {isDashboardView && <DashboardScreen />}
+                {isAutomationsView && <AutomationsScreen />}
                 {isSkillsView && <SkillsScreen />}
                 {isComponentsView && <ComponentLibraryScreen />}
                 {isNewComponentsView && <NewComponentsScreen />}

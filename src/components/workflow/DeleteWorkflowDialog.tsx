@@ -14,6 +14,7 @@ export interface DeleteWorkflowDialogProps {
   onOpenChange: (open: boolean) => void;
   workflowName: string;
   onConfirm: () => void;
+  entityLabel?: string;
 }
 
 export const DeleteWorkflowDialog: React.FC<DeleteWorkflowDialogProps> = ({
@@ -21,6 +22,7 @@ export const DeleteWorkflowDialog: React.FC<DeleteWorkflowDialogProps> = ({
   onOpenChange,
   workflowName,
   onConfirm,
+  entityLabel = 'workflow',
 }) => {
   const handleConfirm = () => {
     onConfirm();
@@ -31,7 +33,7 @@ export const DeleteWorkflowDialog: React.FC<DeleteWorkflowDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md bg-background text-foreground border-border sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Delete workflow</DialogTitle>
+          <DialogTitle>Delete {entityLabel}</DialogTitle>
           <DialogDescription>
             Delete &quot;{workflowName}&quot;? This cannot be undone.
           </DialogDescription>

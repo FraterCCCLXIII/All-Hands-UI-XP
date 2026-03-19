@@ -223,20 +223,20 @@ body[data-figma-fixed-canvas='true'] {
   width: 1440px;
   min-width: 1440px;
   max-width: 1440px;
-  height: 900px;
   min-height: 900px;
-  max-height: 900px;
-  overflow: hidden;
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 #root[data-figma-fixed-canvas='true'] {
   width: 1440px;
   min-width: 1440px;
   max-width: 1440px;
-  height: 900px;
   min-height: 900px;
-  max-height: 900px;
-  overflow: hidden;
+  height: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 /* Restore hover state for list items globally */
@@ -265,7 +265,7 @@ body[data-figma-fixed-canvas='true'] {
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply m-0 bg-background text-foreground antialiased;
   }
 
   button,

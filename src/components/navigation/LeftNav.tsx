@@ -12,11 +12,40 @@ const highlightCards = [
   { title: 'Careers', text: 'Learn more about our open roles.', url: 'https://jobs.ashbyhq.com/OpenHands', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M19.7422 18.3439C20.5329 17.2673 21 15.9382 21 14.5C21 10.9101 18.0899 8 14.5 8C10.9101 8 8 10.9101 8 14.5C8 18.0899 10.9101 21 14.5 21C15.9386 21 17.268 20.5327 18.3448 19.7415L18.3439 19.7422C18.3734 19.7822 18.4062 19.8204 18.4424 19.8566L22.2929 23.7071C22.6834 24.0976 23.3166 24.0976 23.7071 23.7071C24.0976 23.3166 24.0976 22.6834 23.7071 22.2929L19.8566 18.4424C19.8204 18.4062 19.7822 18.3734 19.7422 18.3439ZM20 14.5C20 17.5376 17.5376 20 14.5 20C11.4624 20 9 17.5376 9 14.5C9 11.4624 11.4624 9 14.5 9C17.5376 9 20 11.4624 20 14.5Z" fill="currentColor"/></svg> },
 ];
 
+function AutomationsIcon({ className }: { className?: string }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <g clipPath="url(#automations-icon-clip)">
+        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z" fill="currentColor" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+      </g>
+      <defs>
+        <clipPath id="automations-icon-clip">
+          <rect width="18" height="18" fill="white" transform="translate(1 1)"/>
+        </clipPath>
+      </defs>
+    </svg>
+  );
+}
+
 const navItems = [
   { icon: Plus, label: 'Create repository', action: 'new-project' },
   { icon: List, label: 'List view', action: 'conversations' },
   { icon: Bot, label: 'Robot assistant', action: 'skills' },
   { icon: Workflow, label: 'Workflow builder', action: 'workflows' },
+  { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
   { icon: SquareKanban, label: 'Dashboard view', action: 'dashboard' },
 ];
 

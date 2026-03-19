@@ -1,5 +1,5 @@
 import { Children, isValidElement, useMemo, useState } from 'react';
-import { Check, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Check, MoreVertical, Pencil, Power, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
@@ -543,6 +543,34 @@ export function ComponentLibraryScreen({
                   <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
                     <Check className="h-4 w-4 text-muted-foreground" />
                     Set as default
+                  </div>
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </div>
+                </div>
+              </div>
+            ),
+          },
+          {
+            id: 'ui-automation-actions-menu',
+            name: 'Automation Actions Menu',
+            path: 'src/screens/AutomationsScreen.tsx',
+            description: 'Actions menu used on automations for status toggling and deletion.',
+            usage: `<DropdownMenuContent align="end" className="w-44">...</DropdownMenuContent>`,
+            preview: (
+              <div className="flex flex-wrap items-start gap-4">
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                  aria-label="Open automation actions"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+                <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                  <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                    <Power className="h-4 w-4" />
+                    Turn off
                   </div>
                   <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
                     <Trash2 className="h-4 w-4" />
@@ -1824,6 +1852,161 @@ export function ComponentLibraryScreen({
                   Set as default
                 </div>
                 <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'ui-automation-actions-menu') {
+      return [
+        {
+          label: 'Active default',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                aria-label="Open actions for automation"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <Power className="h-4 w-4" />
+                  Turn off
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          label: 'Active hover Turn off',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground"
+                aria-label="Open actions for automation"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md bg-muted/60 px-2 py-1.5 text-sm text-popover-foreground">
+                  <Power className="h-4 w-4" />
+                  Turn off
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          label: 'Active hover Delete',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground"
+                aria-label="Open actions for automation"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <Power className="h-4 w-4" />
+                  Turn off
+                </div>
+                <div className="flex items-center gap-2 rounded-md bg-muted/60 px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          label: 'Inactive default',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground"
+                aria-label="Open actions for inactive automation"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <Power className="h-4 w-4" />
+                  Turn on
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          label: 'Inactive hover Turn on',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground"
+                aria-label="Open actions for inactive automation"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md bg-muted/60 px-2 py-1.5 text-sm text-popover-foreground">
+                  <Power className="h-4 w-4" />
+                  Turn on
+                </div>
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          label: 'Inactive hover Delete',
+          span: 'wide',
+          content: (
+            <div className="flex flex-wrap items-start gap-4">
+              <button
+                type="button"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground"
+                aria-label="Open actions for inactive automation"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              <div className="w-44 rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                <div className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <Power className="h-4 w-4" />
+                  Turn on
+                </div>
+                <div className="flex items-center gap-2 rounded-md bg-muted/60 px-2 py-1.5 text-sm text-destructive">
                   <Trash2 className="h-4 w-4" />
                   Delete
                 </div>

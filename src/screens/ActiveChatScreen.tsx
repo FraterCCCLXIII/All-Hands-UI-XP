@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Wrench,
   ArrowUp as ArrowUpIcon,
+  Bot,
   FileText,
   Sparkles,
   TestTube,
@@ -27,7 +28,6 @@ import {
   Package,
   ChevronDown,
   ChevronUp,
-  CheckCircle,
   Copy,
   Check,
   ListTodo,
@@ -42,6 +42,7 @@ import {
   MessageCircleQuestion,
   ListChecks,
   RefreshCw,
+  Box,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -61,6 +62,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '../components/ui/dropdown-menu';
 
 interface ActiveChatScreenProps {
@@ -111,6 +113,18 @@ type CommandItem = {
   command: string;
 };
 
+type ConversationCapability = {
+  id: string;
+  name: string;
+  type: 'skill' | 'plugin';
+  description: string;
+  repositoryUrl: string;
+  source: string;
+  pageUrl?: string;
+  initialPrompt?: string;
+  curlCommand?: string;
+};
+
 const CHAT_COMMANDS: CommandItem[] = [
   { id: 'summarize', label: 'Summarize thread', description: 'Recap the conversation so far.', command: '/summarize' },
   { id: 'explain', label: 'Explain selection', description: 'Explain highlighted code or output.', command: '/explain' },
@@ -118,6 +132,90 @@ const CHAT_COMMANDS: CommandItem[] = [
   { id: 'plan', label: 'Create a plan', description: 'Break the work into steps.', command: '/plan' },
   { id: 'optimize', label: 'Optimize performance', description: 'Identify and fix slow paths.', command: '/optimize' },
 ];
+
+const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
+  {
+    id: 'skill-pr-review',
+    name: 'PR review',
+    type: 'skill',
+    description: 'Summarizes code changes, flags risky diffs, and prepares reviewer-ready notes.',
+    repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
+    source: 'Loaded from the conversation skill registry.',
+    pageUrl: '#/skills',
+    initialPrompt: 'Review this pull request for risky changes, unclear logic, regressions, and missing test coverage.',
+    curlCommand: `curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "pr-review", "conversationId": "<conversation-id>"}'`,
+  },
+  {
+    id: 'skill-release-notes',
+    name: 'Release notes',
+    type: 'skill',
+    description: 'Builds concise release-note drafts from the current conversation and changes.',
+    repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
+    source: 'Loaded from the conversation skill registry.',
+    pageUrl: '#/skills',
+    initialPrompt: 'Draft release notes from the current conversation, grouped by user-facing changes, fixes, and operational impact.',
+    curlCommand: `curl -X POST https://api.example.com/skills/run \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer <token>" \\
+  -d '{"skillId": "release-notes", "conversationId": "<conversation-id>"}'`,
+  },
+];
+
+const LOADED_CONVERSATION_PLUGINS: ConversationCapability[] = [
+  {
+    id: 'plugin-github',
+    name: 'GitHub',
+    type: 'plugin',
+    description: 'Provides repository, pull request, branch, and issue context inside the conversation.',
+    repositoryUrl: 'https://github.com/integrations/github',
+    source: 'Connected plugin for this conversation.',
+  },
+  {
+    id: 'plugin-figma',
+    name: 'Figma',
+    type: 'plugin',
+    description: 'Provides design links, frame metadata, and export context for UI implementation work.',
+    repositoryUrl: 'https://www.figma.com/developers',
+    source: 'Connected plugin for this conversation.',
+  },
+];
+
+function CopyableBlock({
+  title,
+  value,
+  onCopy,
+  className,
+}: {
+  title: string;
+  value: string;
+  onCopy: () => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn('overflow-hidden rounded-xl border border-border bg-card', className)}>
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+        <span className="text-sm font-medium text-foreground">{title}</span>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label={`Copy ${title}`}
+        >
+          <Copy className="h-4 w-4" />
+        </button>
+      </div>
+      <textarea
+        readOnly
+        value={value}
+        rows={4}
+        className="custom-scrollbar w-full resize-none overflow-y-auto border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
+      />
+    </div>
+  );
+}
 
 export function ActiveChatScreen({
   theme,
@@ -164,6 +262,7 @@ export function ActiveChatScreen({
   const [commandActiveIndex, setCommandActiveIndex] = useState(0);
   const [isCliCommandVisible, setIsCliCommandVisible] = useState(false);
   const [isCliCommandCopied, setIsCliCommandCopied] = useState(false);
+  const [selectedCapability, setSelectedCapability] = useState<ConversationCapability | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -649,9 +748,6 @@ export function ActiveChatScreen({
                                       )}
                                     </button>
                                   </div>
-                                  <span className="flex-shrink-0">
-                                    <CheckCircle className="h-4 w-4 ml-2 inline text-success" data-testid="status-icon" />
-                                  </span>
                                 </div>
                                 {projectReadExpanded && (
                                   <div data-testid="markdown-renderer" className="mt-1">
@@ -703,9 +799,6 @@ export function ActiveChatScreen({
                                       )}
                                     </button>
                                   </div>
-                                  <span className="flex-shrink-0">
-                                    <CheckCircle className="h-4 w-4 ml-2 inline text-success" data-testid="status-icon" />
-                                  </span>
                                 </div>
                                 {packageJsonReadExpanded && (
                                   <div data-testid="markdown-renderer" className="mt-1">
@@ -755,9 +848,6 @@ export function ActiveChatScreen({
                                       )}
                                     </button>
                                   </div>
-                                  <span className="flex-shrink-0">
-                                    <CheckCircle className="h-4 w-4 ml-2 inline text-success" data-testid="status-icon" />
-                                  </span>
                                 </div>
                                 {ranCommandExpanded && (
                                   <div data-testid="markdown-renderer" className="mt-1 space-y-2">
@@ -1306,10 +1396,45 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           {changesDrawerVisible ? 'Hide Changes' : 'Show Changes'}
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="gap-2 cursor-pointer">
-                                          <Sparkles className="h-4 w-4" />
-                                          Show Available Skills
-                                        </DropdownMenuItem>
+                                        <DropdownMenuSub>
+                                          <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                                            <Sparkles className="h-4 w-4" />
+                                            Show Available Skills and Plugins
+                                          </DropdownMenuSubTrigger>
+                                          <DropdownMenuSubContent
+                                            sideOffset={6}
+                                            alignOffset={-136}
+                                            className="min-w-[240px] rounded-[6px]"
+                                          >
+                                            <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                              Loaded Skills
+                                            </DropdownMenuLabel>
+                                            {LOADED_CONVERSATION_SKILLS.map((skill) => (
+                                              <DropdownMenuItem
+                                                key={skill.id}
+                                                className="gap-2 cursor-pointer"
+                                                onSelect={() => setSelectedCapability(skill)}
+                                              >
+                                                <Bot className="h-4 w-4 shrink-0" />
+                                                {skill.name}
+                                              </DropdownMenuItem>
+                                            ))}
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuLabel className="text-xs text-muted-foreground">
+                                              Loaded Plugins
+                                            </DropdownMenuLabel>
+                                            {LOADED_CONVERSATION_PLUGINS.map((plugin) => (
+                                              <DropdownMenuItem
+                                                key={plugin.id}
+                                                className="gap-2 cursor-pointer"
+                                                onSelect={() => setSelectedCapability(plugin)}
+                                              >
+                                                <Box className="h-4 w-4 shrink-0" />
+                                                {plugin.name}
+                                              </DropdownMenuItem>
+                                            ))}
+                                          </DropdownMenuSubContent>
+                                        </DropdownMenuSub>
                                         <DropdownMenuItem className="gap-2 cursor-pointer">
                                           <Wrench className="h-4 w-4" />
                                           Show Agent Tools &amp; Metadata
@@ -1905,6 +2030,49 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               </Button>
             </DialogFooter>
           </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={selectedCapability !== null} onOpenChange={(open) => !open && setSelectedCapability(null)}>
+        <DialogContent className="max-w-2xl bg-popover text-popover-foreground">
+          {selectedCapability && (
+            <div className="space-y-4">
+              <DialogHeader className="space-y-3 text-left">
+                <DialogTitle>{selectedCapability.name}</DialogTitle>
+              </DialogHeader>
+              <p className="text-sm text-muted-foreground">{selectedCapability.description}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex w-fit items-center rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground">
+                  {selectedCapability.type === 'skill' ? 'Skill' : 'Plugin'}
+                </span>
+                <a
+                  href={selectedCapability.repositoryUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                >
+                  <span className="font-mono">
+                    {selectedCapability.repositoryUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+              {selectedCapability.type === 'skill' && selectedCapability.initialPrompt && selectedCapability.curlCommand && (
+                <div className="space-y-4 pt-2">
+                  <CopyableBlock
+                    title="Initial Prompt"
+                    value={selectedCapability.initialPrompt}
+                    onCopy={() => void navigator.clipboard.writeText(selectedCapability.initialPrompt ?? '')}
+                  />
+                  <CopyableBlock
+                    title="Curl Command"
+                    value={selectedCapability.curlCommand}
+                    onCopy={() => void navigator.clipboard.writeText(selectedCapability.curlCommand ?? '')}
+                    className="[&_textarea]:min-h-[100px]"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

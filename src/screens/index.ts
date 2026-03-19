@@ -1,5 +1,6 @@
 export { LoadingScreen } from './LoadingScreen';
 export { DashboardScreen } from './DashboardScreen';
+export { AutomationsScreen } from './AutomationsScreen';
 export { SkillsScreen } from './SkillsScreen';
 export { LoginScreen } from './LoginScreen';
 export { ActiveChatScreen } from './ActiveChatScreen';
