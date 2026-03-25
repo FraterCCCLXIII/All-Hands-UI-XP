@@ -4,18 +4,23 @@ import {
   Bot,
   BookOpen,
   CalendarClock,
+  CheckCircle2,
   Clock3,
   ChevronLeft,
   GitBranch,
   Github,
   History,
+  KeyRound,
+  MessageSquare,
   Package,
   PlayCircle,
   MoreVertical,
   Power,
   Repeat,
+  Server,
   Settings2,
   Trash2,
+  XCircle,
 } from 'lucide-react';
 import { SearchInput } from '../components/ui/search-input';
 import {
@@ -27,6 +32,19 @@ import {
 import { DeleteWorkflowDialog } from '../components/workflow/DeleteWorkflowDialog';
 
 type AutomationStatus = 'active' | 'inactive';
+type AutomationRunStatus = 'success' | 'failed';
+type AutomationTrigger = 'schedule' | 'event';
+
+type AutomationRunLogEntry = {
+  id: string;
+  ranAtIso: string;
+  status: AutomationRunStatus;
+};
+
+type RepositoryTarget = {
+  repository: string;
+  branch: string;
+};
 
 type AutomationItem = {
   id: string;
@@ -36,9 +54,10 @@ type AutomationItem = {
   status: AutomationStatus;
   repository: string;
   branch: string;
-  trigger: string;
-  schedule: string;
-  timezone: string;
+  trigger: AutomationTrigger;
+  schedule?: string;
+  timezone?: string;
+  event?: string;
   model: string;
   notification: string;
   owner: string;
@@ -48,6 +67,10 @@ type AutomationItem = {
   runsThisWeek: number;
   plugins: string[];
   skills: string[];
+  mcpServers: string[];
+  secrets: string[];
+  runHistory: AutomationRunLogEntry[];
+  repositoryTargets?: RepositoryTarget[];
 };
 
 const initialAutomations: AutomationItem[] = [
@@ -60,7 +83,7 @@ const initialAutomations: AutomationItem[] = [
     status: 'active',
     repository: 'acme/frontend-app',
     branch: 'main',
-    trigger: 'Cron',
+    trigger: 'schedule',
     schedule: 'Weekdays at 09:00',
     timezone: 'America/Los_Angeles',
     model: 'Claude Opus',
@@ -72,6 +95,52 @@ const initialAutomations: AutomationItem[] = [
     runsThisWeek: 5,
     plugins: ['GitHub', 'Slack', 'Linear'],
     skills: ['PR review', 'Risk analysis', 'Release notes'],
+    mcpServers: ['GitHub MCP', 'Slack MCP', 'Linear MCP'],
+    secrets: ['GITHUB_TOKEN', 'SLACK_BOT_TOKEN', 'LINEAR_API_KEY'],
+    runHistory: [
+      { id: 'run-pr-triage-1', ranAtIso: '2026-03-23T09:00:00-07:00', status: 'success' },
+      { id: 'run-pr-triage-2', ranAtIso: '2026-03-20T09:00:00-07:00', status: 'success' },
+      { id: 'run-pr-triage-3', ranAtIso: '2026-03-19T09:00:00-07:00', status: 'failed' },
+      { id: 'run-pr-triage-4', ranAtIso: '2026-03-18T09:00:00-07:00', status: 'success' },
+      { id: 'run-pr-triage-5', ranAtIso: '2026-03-17T09:00:00-07:00', status: 'success' },
+    ],
+  },
+  {
+    id: 'auto-cross-repo-release-readiness',
+    title: 'Cross-Repo Release Readiness',
+    description:
+      'Aggregate release risk across frontend, design system, and shared UI tokens before each production cut.',
+    prompt:
+      'Review open PRs, recent merges, and unresolved checks across acme/frontend-app, acme/design-system, and acme/ui-tokens. Generate a single release-readiness report with cross-repo dependency risks and recommended blockers.',
+    status: 'active',
+    repository: 'acme/frontend-app, acme/design-system, acme/ui-tokens',
+    branch: 'multiple',
+    trigger: 'schedule',
+    schedule: 'Weekdays at 08:30',
+    timezone: 'America/Los_Angeles',
+    model: 'GPT-5',
+    notification: 'Slack digest to #release-readiness',
+    owner: 'Release Engineering',
+    createdAt: 'Mar 2, 2026',
+    lastRun: 'Today, 8:30 AM',
+    nextRun: 'Tomorrow, 8:30 AM',
+    runsThisWeek: 5,
+    plugins: ['GitHub', 'Slack', 'Linear'],
+    skills: ['Risk analysis', 'Dependency mapping', 'Release checklist'],
+    mcpServers: ['GitHub MCP', 'Slack MCP', 'Linear MCP'],
+    secrets: ['GITHUB_TOKEN', 'SLACK_BOT_TOKEN', 'LINEAR_API_KEY'],
+    repositoryTargets: [
+      { repository: 'acme/frontend-app', branch: 'main' },
+      { repository: 'acme/design-system', branch: 'release/v3' },
+      { repository: 'acme/ui-tokens', branch: 'next' },
+    ],
+    runHistory: [
+      { id: 'run-cross-repo-1', ranAtIso: '2026-03-23T08:30:00-07:00', status: 'success' },
+      { id: 'run-cross-repo-2', ranAtIso: '2026-03-20T08:30:00-07:00', status: 'failed' },
+      { id: 'run-cross-repo-3', ranAtIso: '2026-03-19T08:30:00-07:00', status: 'success' },
+      { id: 'run-cross-repo-4', ranAtIso: '2026-03-18T08:30:00-07:00', status: 'success' },
+      { id: 'run-cross-repo-5', ranAtIso: '2026-03-17T08:30:00-07:00', status: 'success' },
+    ],
   },
   {
     id: 'auto-security-pass',
@@ -82,7 +151,7 @@ const initialAutomations: AutomationItem[] = [
     status: 'active',
     repository: 'acme/backend-api',
     branch: 'main',
-    trigger: 'Cron',
+    trigger: 'schedule',
     schedule: 'Daily at 01:30',
     timezone: 'UTC',
     model: 'GPT-5',
@@ -94,6 +163,15 @@ const initialAutomations: AutomationItem[] = [
     runsThisWeek: 7,
     plugins: ['GitHub', 'Snyk', 'PagerDuty'],
     skills: ['Security scan', 'Dependency audit', 'Incident summary'],
+    mcpServers: ['GitHub MCP', 'Snyk MCP', 'PagerDuty MCP'],
+    secrets: ['GITHUB_TOKEN', 'SNYK_TOKEN', 'PAGERDUTY_API_KEY'],
+    runHistory: [
+      { id: 'run-security-1', ranAtIso: '2026-03-23T01:30:00Z', status: 'success' },
+      { id: 'run-security-2', ranAtIso: '2026-03-22T01:30:00Z', status: 'success' },
+      { id: 'run-security-3', ranAtIso: '2026-03-21T01:30:00Z', status: 'failed' },
+      { id: 'run-security-4', ranAtIso: '2026-03-20T01:30:00Z', status: 'success' },
+      { id: 'run-security-5', ranAtIso: '2026-03-19T01:30:00Z', status: 'success' },
+    ],
   },
   {
     id: 'auto-docs-sync',
@@ -104,9 +182,8 @@ const initialAutomations: AutomationItem[] = [
     status: 'active',
     repository: 'acme/docs',
     branch: 'main',
-    trigger: 'On push',
-    schedule: 'Runs on every push',
-    timezone: 'UTC',
+    trigger: 'event',
+    event: 'On push',
     model: 'GPT-4o',
     notification: 'GitHub comment',
     owner: 'Docs Team',
@@ -116,6 +193,15 @@ const initialAutomations: AutomationItem[] = [
     runsThisWeek: 14,
     plugins: ['GitHub', 'Notion'],
     skills: ['Changelog draft', 'Docs sync'],
+    mcpServers: ['GitHub MCP', 'Notion MCP'],
+    secrets: ['GITHUB_TOKEN', 'NOTION_TOKEN'],
+    runHistory: [
+      { id: 'run-docs-1', ranAtIso: '2026-03-23T14:15:00Z', status: 'success' },
+      { id: 'run-docs-2', ranAtIso: '2026-03-23T11:08:00Z', status: 'success' },
+      { id: 'run-docs-3', ranAtIso: '2026-03-22T16:10:00Z', status: 'failed' },
+      { id: 'run-docs-4', ranAtIso: '2026-03-22T13:42:00Z', status: 'success' },
+      { id: 'run-docs-5', ranAtIso: '2026-03-22T10:08:00Z', status: 'success' },
+    ],
   },
   {
     id: 'auto-weekly-release',
@@ -126,7 +212,7 @@ const initialAutomations: AutomationItem[] = [
     status: 'inactive',
     repository: 'acme/realtime-service',
     branch: 'release',
-    trigger: 'Cron',
+    trigger: 'schedule',
     schedule: 'Fridays at 11:00',
     timezone: 'America/Los_Angeles',
     model: 'Gemini 2.5 Pro',
@@ -138,6 +224,13 @@ const initialAutomations: AutomationItem[] = [
     runsThisWeek: 0,
     plugins: ['Slack', 'Jira', 'GitHub'],
     skills: ['Release checklist', 'Blocker audit'],
+    mcpServers: ['Slack MCP', 'Jira MCP', 'GitHub MCP'],
+    secrets: ['SLACK_BOT_TOKEN', 'JIRA_API_TOKEN', 'GITHUB_TOKEN'],
+    runHistory: [
+      { id: 'run-release-1', ranAtIso: '2026-03-07T11:00:00-08:00', status: 'success' },
+      { id: 'run-release-2', ranAtIso: '2026-02-28T11:00:00-08:00', status: 'failed' },
+      { id: 'run-release-3', ranAtIso: '2026-02-21T11:00:00-08:00', status: 'success' },
+    ],
   },
   {
     id: 'auto-webhook-ops',
@@ -148,9 +241,8 @@ const initialAutomations: AutomationItem[] = [
     status: 'inactive',
     repository: 'acme/backend-api',
     branch: 'main',
-    trigger: 'Webhook',
-    schedule: 'Runs on incident.opened',
-    timezone: 'UTC',
+    trigger: 'event',
+    event: 'incident.opened',
     model: 'Claude Opus',
     notification: 'Internal incident channel',
     owner: 'Ops Team',
@@ -160,8 +252,54 @@ const initialAutomations: AutomationItem[] = [
     runsThisWeek: 0,
     plugins: ['PagerDuty', 'Slack'],
     skills: ['Incident triage', 'Postmortem draft'],
+    mcpServers: ['PagerDuty MCP', 'Slack MCP'],
+    secrets: ['PAGERDUTY_ROUTING_KEY', 'SLACK_BOT_TOKEN'],
+    runHistory: [
+      { id: 'run-incident-1', ranAtIso: '2026-02-27T18:45:00Z', status: 'success' },
+      { id: 'run-incident-2', ranAtIso: '2026-02-11T09:18:00Z', status: 'failed' },
+      { id: 'run-incident-3', ranAtIso: '2026-01-29T22:04:00Z', status: 'success' },
+    ],
   },
 ];
+
+const runDateFormatter = new Intl.DateTimeFormat('en-US', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+
+const getRepositoryTargets = (automation: AutomationItem): RepositoryTarget[] => {
+  if (automation.repositoryTargets && automation.repositoryTargets.length > 0) {
+    return automation.repositoryTargets.map((target) => ({
+      repository: target.repository.trim(),
+      branch: target.branch.trim() || 'main',
+    }));
+  }
+
+  const repositoryNames = automation.repository
+    .split(',')
+    .map((repository) => repository.trim())
+    .filter(Boolean);
+  const fallbackBranch = automation.branch.trim() || 'main';
+
+  return repositoryNames.map((repository) => ({
+    repository,
+    branch: fallbackBranch,
+  }));
+};
+
+const formatRepositories = (automation: AutomationItem): string =>
+  getRepositoryTargets(automation)
+    .map((target) => target.repository)
+    .join(', ');
+
+const formatBranches = (automation: AutomationItem): string =>
+  getRepositoryTargets(automation)
+    .map((target) => `${target.repository}: ${target.branch}`)
+    .join(' | ');
 
 const metadataSections: Array<{
   title: string;
@@ -171,20 +309,38 @@ const metadataSections: Array<{
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     value?: (automation: AutomationItem) => string;
+    shouldRender?: (automation: AutomationItem) => boolean;
   }>;
 }> = [
   {
     title: 'Configuration',
     icon: Settings2,
     fields: [
-      { key: 'repository', label: 'Repository', icon: Github },
-      { key: 'branch', label: 'Branch', icon: GitBranch },
-      { key: 'trigger', label: 'Trigger', icon: PlayCircle },
+      {
+        key: 'repository',
+        label: 'Repositories',
+        icon: Github,
+        value: (automation) => formatRepositories(automation),
+      },
+      {
+        key: 'trigger',
+        label: 'Trigger',
+        icon: PlayCircle,
+        value: (automation) => (automation.trigger === 'schedule' ? 'Schedule' : 'Event'),
+      },
       {
         key: 'schedule',
         label: 'Schedule',
         icon: CalendarClock,
         value: (automation) => `${automation.schedule} (${automation.timezone})`,
+        shouldRender: (automation) => automation.trigger === 'schedule',
+      },
+      {
+        key: 'event',
+        label: 'Event',
+        icon: PlayCircle,
+        value: (automation) => automation.event ?? 'N/A',
+        shouldRender: (automation) => automation.trigger === 'event',
       },
       { key: 'model', label: 'Model', icon: AutomationModelIcon },
       { key: 'notification', label: 'Notification', icon: Bell },
@@ -196,8 +352,6 @@ const metadataSections: Array<{
     fields: [
       { key: 'createdAt', label: 'Created', icon: History },
       { key: 'lastRun', label: 'Last run', icon: Clock3 },
-      { key: 'nextRun', label: 'Next run', icon: CalendarClock },
-      { key: 'runsThisWeek', label: 'Runs this week', icon: Repeat },
     ],
   },
 ];
@@ -238,12 +392,12 @@ function PromptSection({ prompt }: { prompt: string }) {
     <section className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <Bot className="h-4 w-4 text-muted-foreground" />
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
           <h3>Prompt</h3>
         </div>
       </div>
       <div className="px-5 py-4">
-        <div className="rounded-xl border border-border bg-background/40 p-4">
+        <div className="rounded-xl bg-background/40 p-4">
           <p className="text-sm leading-6 text-foreground">{prompt}</p>
         </div>
       </div>
@@ -272,6 +426,7 @@ function MetadataSection({
     label: string;
     icon: React.ComponentType<{ className?: string }>;
     value?: (automation: AutomationItem) => string;
+    shouldRender?: (automation: AutomationItem) => boolean;
   }>;
   automation: AutomationItem;
 }) {
@@ -284,9 +439,12 @@ function MetadataSection({
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 p-5 lg:grid-cols-2">
-        {fields.map((field) => {
+        {fields
+          .filter((field) => (field.shouldRender ? field.shouldRender(automation) : true))
+          .map((field) => {
           const Icon = field.icon;
           const value = field.value ? field.value(automation) : String(automation[field.key]);
+          const isRepositoriesField = field.key === 'repository';
 
           return (
             <div key={field.key} className="rounded-xl border border-border bg-background/40 p-4">
@@ -294,11 +452,62 @@ function MetadataSection({
                 <Icon className="h-3.5 w-3.5" />
                 <span>{field.label}</span>
               </div>
-              <div className="mt-2 text-sm text-foreground">{value}</div>
+              {isRepositoriesField ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-foreground">
+                  {getRepositoryTargets(automation).map((target) => (
+                    <React.Fragment key={`${target.repository}-${target.branch}`}>
+                      <span className="inline-flex items-center gap-1">
+                        <span>{target.repository}</span>
+                        <span className="inline-flex items-center rounded-full border border-border bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
+                          {target.branch}
+                        </span>
+                      </span>
+                    </React.Fragment>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-2 text-sm text-foreground">{value}</div>
+              )}
             </div>
           );
-        })}
+          })}
       </div>
+    </section>
+  );
+}
+
+function ActivityLogSection({ runHistory }: { runHistory: AutomationRunLogEntry[] }) {
+  return (
+    <section className="rounded-2xl border border-border bg-card">
+      <div className="border-b border-border px-5 py-4">
+        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+          <History className="h-4 w-4 text-muted-foreground" />
+          <h3>Activity Log</h3>
+        </div>
+      </div>
+      <ul className="divide-y divide-border">
+        {runHistory.map((run) => {
+          const isSuccess = run.status === 'success';
+          const runDateLabel = runDateFormatter.format(new Date(run.ranAtIso));
+
+          return (
+            <li
+              key={run.id}
+              className="flex items-center justify-between px-5 py-3"
+            >
+              <div className="text-sm text-foreground">{runDateLabel}</div>
+              <div
+                className={`inline-flex items-center gap-1 text-xs font-medium ${
+                  isSuccess ? 'text-emerald-300' : 'text-rose-300'
+                }`}
+              >
+                {isSuccess ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+                {isSuccess ? 'Successful' : 'Failed'}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -343,8 +552,11 @@ export const AutomationsScreen: React.FC = () => {
       [
         automation.title,
         automation.description,
-        automation.repository,
+        formatRepositories(automation),
+        formatBranches(automation),
         automation.trigger,
+        automation.schedule ?? '',
+        automation.event ?? '',
         automation.model,
         automation.owner,
       ]
@@ -399,11 +611,17 @@ export const AutomationsScreen: React.FC = () => {
           <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
               <Github className="h-3.5 w-3.5" />
-              {automation.repository}
+              {formatRepositories(automation)}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
-              <CalendarClock className="h-3.5 w-3.5" />
-              {automation.schedule}
+              {automation.trigger === 'schedule' ? (
+                <CalendarClock className="h-3.5 w-3.5" />
+              ) : (
+                <PlayCircle className="h-3.5 w-3.5" />
+              )}
+              {automation.trigger === 'schedule'
+                ? `${automation.schedule} (${automation.timezone})`
+                : (automation.event ?? 'Event')}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
               <AutomationModelIcon className="h-3.5 w-3.5" />
@@ -452,6 +670,7 @@ export const AutomationsScreen: React.FC = () => {
   if (selectedAutomation) {
     return (
       <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+        <div className="mx-auto w-full max-w-5xl">
         <button
           type="button"
           onClick={() => setSelectedAutomationId(null)}
@@ -520,24 +739,28 @@ export const AutomationsScreen: React.FC = () => {
             fields={metadataSections[0].fields}
             automation={selectedAutomation}
           />
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <AssociatedResources
-              title="Plugins"
-              icon={Package}
-              items={selectedAutomation.plugins}
-            />
-            <AssociatedResources
-              title="Skills"
-              icon={Bot}
-              items={selectedAutomation.skills}
-            />
-          </div>
+          <AssociatedResources
+            title="Plugins"
+            icon={Package}
+            items={selectedAutomation.plugins}
+          />
+          <AssociatedResources
+            title="MCP Servers"
+            icon={Server}
+            items={selectedAutomation.mcpServers}
+          />
+          <AssociatedResources
+            title="Secrets"
+            icon={KeyRound}
+            items={selectedAutomation.secrets}
+          />
           <MetadataSection
             title={metadataSections[1].title}
             icon={metadataSections[1].icon}
             fields={metadataSections[1].fields}
             automation={selectedAutomation}
           />
+          <ActivityLogSection runHistory={selectedAutomation.runHistory} />
         </div>
         <DeleteWorkflowDialog
           open={deleteTargetAutomation !== null}
@@ -552,12 +775,14 @@ export const AutomationsScreen: React.FC = () => {
             }
           }}
         />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+      <div className="mx-auto w-full max-w-5xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -635,6 +860,7 @@ export const AutomationsScreen: React.FC = () => {
           }
         }}
       />
+      </div>
     </div>
   );
 };

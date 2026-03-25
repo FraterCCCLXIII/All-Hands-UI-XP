@@ -23,7 +23,6 @@ import {
   FileText,
   Sparkles,
   TestTube,
-  Microchip,
   Merge,
   Package,
   ChevronDown,
@@ -38,9 +37,7 @@ import {
   DollarSign,
   X,
   Trash2,
-  Hammer,
   MessageCircleQuestion,
-  ListChecks,
   RefreshCw,
   Box,
 } from 'lucide-react';
@@ -182,6 +179,73 @@ const LOADED_CONVERSATION_PLUGINS: ConversationCapability[] = [
     source: 'Connected plugin for this conversation.',
   },
 ];
+
+function ModelChipIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 490.2 490.2"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M469.15,265.9c11.5,0,20.9-9.4,20.9-20.9s-9.4-20.9-20.9-20.9h-59.4V195h59.4c11.5,0,20.9-9.4,20.9-20.9
+        s-9.4-20.9-20.9-20.9h-59.4v-51.1c0-11.5-9.4-20.9-20.9-20.9h-52.1V20.9c0-11.5-9.4-20.9-20.9-20.9s-20.9,9.4-20.9,20.9v60.5h-29.2
+        V20.9c0-11.5-9.4-20.9-20.9-20.9c-11.5,0-20.9,9.4-20.9,20.9v60.5h-28.9V20.9c0-11.5-9.4-20.9-20.9-20.9s-20.9,9.4-20.9,20.9v60.5
+        h-49c-11.5,0-20.9,9.4-20.9,20.9v51.1h-62.4c-11.5,0-20.9,9.4-20.9,20.9s9.4,20.9,20.9,20.9h62.6v29.2h-62.6
+        c-11.5,0-20.9,9.4-20.9,20.9c0,11.5,9.4,20.9,20.9,20.9h62.6V294h-62.6c-11.5,0-20.9,9.4-20.9,20.9s9.4,20.9,20.9,20.9h62.6v51.1
+        c0,11.5,9.4,20.9,20.9,20.9h49v61.5c0,11.5,9.4,20.9,20.9,20.9s20.9-9.4,20.9-20.9v-61.5h29.2v61.5c0,11.5,9.4,20.9,20.9,20.9
+        c11.5,0,20.9-9.4,20.9-20.9v-61.5h28.8v61.5c0,11.5,9.4,20.9,20.9,20.9c10.4,0,19.8-9.4,20.9-20.9v-61.5h52.1
+        c11.5,0,20.9-8.3,20.9-20.9v-51.1h59.4c11.5,0,20.9-9.4,20.9-20.9s-9.4-20.9-20.9-20.9h-59.4v-28.1H469.15z M368.05,367h-244V123
+        h244V367z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function CodeModeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="257"
+      height="183"
+      viewBox="0 0 257 183"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M151.663 5.36257C158.763 -1.73743 170.363 -1.83743 177.563 5.36257L250.663 78.4626C257.763 85.5626 257.863 97.1626 250.663 104.363L177.563 177.463C170.363 184.563 158.863 184.563 151.663 177.463C144.563 170.263 144.563 158.763 151.663 151.563L211.863 91.3626L151.663 31.1626C144.563 24.1626 144.563 12.5626 151.663 5.36257ZM104.463 5.36257C97.3626 -1.73743 85.7626 -1.83743 78.5626 5.36257L5.36257 78.4626C-1.73743 85.5626 -1.83743 97.1626 5.36257 104.363L78.4626 177.463C85.6626 184.563 97.1626 184.563 104.363 177.463C111.463 170.263 111.463 158.763 104.363 151.563L44.1626 91.4626L104.363 31.2626C111.563 24.1626 111.563 12.5626 104.463 5.36257Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function PlanModeIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="109"
+      height="109"
+      viewBox="0 0 109 109"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M40.1979 21.8969L34.7311 17.832L25.2691 30.5574L20.2094 26.784L16.1367 32.2451L26.6653 40.0969L40.1979 21.8969Z" fill="currentColor" />
+      <path d="M90.8342 35.1983H50.4639V28.3858H90.8342V35.1983Z" fill="currentColor" />
+      <path d="M90.8342 57.9067H50.4638V51.0942H90.8342V57.9067Z" fill="currentColor" />
+      <path fillRule="evenodd" clipRule="evenodd" d="M27.2508 63.5837C32.2674 63.5837 36.3342 59.517 36.3342 54.5004C36.3342 49.4838 32.2674 45.4171 27.2508 45.4171C22.2342 45.4171 18.1675 49.4838 18.1675 54.5004C18.1675 59.517 22.2342 63.5837 27.2508 63.5837ZM27.2508 59.0421C29.7591 59.0421 31.7925 57.0087 31.7925 54.5004C31.7925 51.9921 29.7591 49.9587 27.2508 49.9587C24.7425 49.9587 22.7092 51.9921 22.7092 54.5004C22.7092 57.0087 24.7425 59.0421 27.2508 59.0421Z" fill="currentColor" />
+      <path fillRule="evenodd" clipRule="evenodd" d="M36.3342 77.2087C36.3342 82.2253 32.2674 86.2921 27.2508 86.2921C22.2342 86.2921 18.1675 82.2253 18.1675 77.2087C18.1675 72.1922 22.2342 68.1254 27.2508 68.1254C32.2674 68.1254 36.3342 72.1922 36.3342 77.2087ZM31.7925 77.2087C31.7925 79.717 29.7591 81.7504 27.2508 81.7504C24.7425 81.7504 22.7092 79.717 22.7092 77.2087C22.7092 74.7005 24.7425 72.6671 27.2508 72.6671C29.7591 72.6671 31.7925 74.7005 31.7925 77.2087Z" fill="currentColor" />
+      <path d="M50.4637 80.615H90.834V73.8025H50.4637V80.615Z" fill="currentColor" />
+    </svg>
+  );
+}
 
 function CopyableBlock({
   title,
@@ -1304,15 +1368,16 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <button
-                                          type="button"
-                                          className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
-                                          aria-label="Tools"
-                                          data-testid="tools-trigger"
-                                        >
-                                          <Wrench className="w-4 h-4 shrink-0" />
-                                          <span className="text-xs font-normal leading-4">Tools</span>
-                                        </button>
+                                    <button
+                                      type="button"
+                                      className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
+                                      aria-label="Tools"
+                                      data-testid="tools-trigger"
+                                    >
+                                      <Wrench className="w-4 h-4 shrink-0" />
+                                      <span className="text-xs font-normal leading-4">Tools</span>
+                                      <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+                                    </button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
                                         side="bottom"
@@ -1454,10 +1519,10 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           aria-label="Chat mode"
                                           data-testid="mode-pill"
                                         >
-                                          {chatMode === 'build' && <Hammer className="w-4 h-4 shrink-0" aria-hidden />}
+                                          {chatMode === 'build' && <CodeModeIcon className="w-3.5 h-3.5 shrink-0" />}
                                           {chatMode === 'ask' && <MessageCircleQuestion className="w-4 h-4 shrink-0" aria-hidden />}
-                                          {chatMode === 'plan' && <ListChecks className="w-4 h-4 shrink-0" aria-hidden />}
-                                          <span>{chatMode === 'build' ? 'Build' : chatMode === 'ask' ? 'Ask' : 'Plan'}</span>
+                                          {chatMode === 'plan' && <PlanModeIcon className="w-3.5 h-3.5 shrink-0" />}
+                                          <span>{chatMode === 'build' ? 'Code' : chatMode === 'ask' ? 'Ask' : 'Plan'}</span>
                                           <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
                                         </button>
                                       </DropdownMenuTrigger>
@@ -1465,20 +1530,53 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         side="bottom"
                                         align="start"
                                         sideOffset={8}
-                                        className="min-w-[8rem] rounded-[6px] py-[6px] px-1 z-[100]"
+                                        className="min-w-[195px] max-w-[195px] rounded-[6px] py-[6px] px-1 z-[100]"
                                         data-testid="mode-menu"
                                       >
-                                        <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => setChatMode('build')}>
-                                          <Hammer className="h-4 w-4 shrink-0" />
-                                          Build
+                                        <DropdownMenuItem
+                                          data-testid="code-option"
+                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
+                                          onSelect={() => setChatMode('build')}
+                                        >
+                                          <div className="flex w-full flex-col gap-1">
+                                            <div className="flex items-center gap-3">
+                                              <CodeModeIcon className="h-4 w-4 shrink-0" />
+                                              <span className="text-sm text-foreground">Code</span>
+                                            </div>
+                                            <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
+                                              Write, edit, and debug with AI assistance in real time.
+                                            </span>
+                                          </div>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => setChatMode('ask')}>
-                                          <MessageCircleQuestion className="h-4 w-4 shrink-0" />
-                                          Ask
+                                        <DropdownMenuItem
+                                          data-testid="ask-option"
+                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
+                                          onSelect={() => setChatMode('ask')}
+                                        >
+                                          <div className="flex w-full flex-col gap-1">
+                                            <div className="flex items-center gap-3">
+                                              <MessageCircleQuestion className="h-4 w-4 shrink-0" />
+                                              <span className="text-sm text-foreground">Ask</span>
+                                            </div>
+                                            <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
+                                              Explore ideas, ask questions, and get guidance before making changes.
+                                            </span>
+                                          </div>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => setChatMode('plan')}>
-                                          <ListChecks className="h-4 w-4 shrink-0" />
-                                          Plan
+                                        <DropdownMenuItem
+                                          data-testid="plan-option"
+                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
+                                          onSelect={() => setChatMode('plan')}
+                                        >
+                                          <div className="flex w-full flex-col gap-1">
+                                            <div className="flex items-center gap-3">
+                                              <PlanModeIcon className="h-4 w-4 shrink-0" />
+                                              <span className="text-sm text-foreground">Plan</span>
+                                            </div>
+                                            <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
+                                              Outline goals, structure tasks, and map your next steps.
+                                            </span>
+                                          </div>
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -1486,13 +1584,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
+                                          className="flex min-w-0 items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
                                           aria-label="Select model"
                                           title={selectedModel}
                                           data-testid="model-trigger"
                                         >
-                                          <Microchip className="w-4 h-4 shrink-0" aria-hidden />
-                                          <span className="text-xs font-normal leading-4 truncate">
+                                          <ModelChipIcon className="w-3.5 h-3.5 shrink-0" />
+                                          <span className="min-w-0 flex-1 truncate text-xs font-normal leading-4">
                                             {selectedModel}
                                           </span>
                                           <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" aria-hidden />
@@ -1508,11 +1606,11 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         {LLM_MODELS.map((model) => (
                                           <DropdownMenuItem
                                             key={model}
-                                            className="gap-2 cursor-pointer"
+                                            className="min-w-0 gap-2 cursor-pointer"
                                             onSelect={() => setSelectedModel(model)}
                                           >
-                                            <Microchip className="h-4 w-4 shrink-0" />
-                                            {model}
+                                            <ModelChipIcon className="h-3.5 w-3.5 shrink-0" />
+                                            <span className="truncate">{model}</span>
                                           </DropdownMenuItem>
                                         ))}
                                         <DropdownMenuSeparator />
@@ -1522,7 +1620,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                             navigateAppRoute('#/settings/llm');
                                           }}
                                         >
-                                          <Settings className="h-4 w-4" />
+                                          <Settings className="h-4 w-4 shrink-0" />
                                           LLM Settings
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
