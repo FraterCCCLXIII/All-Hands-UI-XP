@@ -602,6 +602,18 @@ function App() {
         return;
       }
       setSettingsTab(null);
+      if (hash === 'plugin-marketplace' || hash.startsWith('plugin-marketplace/')) {
+        setActiveNavItem('plugin-marketplace');
+        setLastNonDrawerNavItem('plugin-marketplace');
+        setIsConversationDrawerOpen(false);
+        return;
+      }
+      if (hash === 'skills' || hash.startsWith('skills/')) {
+        setActiveNavItem('skills');
+        setLastNonDrawerNavItem('skills');
+        setIsConversationDrawerOpen(false);
+        return;
+      }
       const action = slugToAction[hash] ?? 'code';
       if (action === 'conversations') {
         setIsConversationDrawerOpen(true);

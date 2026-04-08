@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bell,
   BookOpen,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   Github,
   History,
+  Info,
   MessageSquare,
   Package,
   Plus,
@@ -19,14 +21,27 @@ import {
   XCircle,
 } from 'lucide-react';
 import { SearchInput } from '../components/ui/search-input';
+import { PluginToggle } from '../components/ui/plugin-toggle';
 import { Spinner } from '../components/common/Spinner';
+import { Button } from '../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { DeleteWorkflowDialog } from '../components/workflow/DeleteWorkflowDialog';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { cn } from '../lib/utils';
 
 type AutomationStatus = 'active' | 'inactive';
 type AutomationRunStatus = 'success' | 'failed' | 'running';
@@ -299,6 +314,48 @@ const formatBranches = (automation: AutomationItem): string =>
     .map((target) => `${target.repository}: ${target.branch}`)
     .join(' | ');
 
+const automationRepositoryOptions = Array.from(
+  new Set(
+    initialAutomations.flatMap((automation) =>
+      getRepositoryTargets(automation).map((target) => target.repository)
+    )
+  )
+).sort((a, b) => a.localeCompare(b));
+
+const automationBranchOptions = Array.from(
+  new Set([
+    'main',
+    'develop',
+    'staging',
+    'release',
+    ...initialAutomations.flatMap((automation) =>
+      getRepositoryTargets(automation).map((target) => target.branch)
+    ),
+  ])
+).sort((a, b) => a.localeCompare(b));
+
+function automationTargetsToRepositoryFields(targets: RepositoryTarget[]): {
+  repository: string;
+  branch: string;
+} {
+  if (targets.length === 0) {
+    return { repository: '', branch: 'main' };
+  }
+  if (targets.length === 1) {
+    const t = targets[0];
+    return { repository: t.repository, branch: t.branch };
+  }
+  const branchSet = new Set(targets.map((t) => t.branch));
+  return {
+    repository: targets.map((t) => t.repository).join(', '),
+    branch: branchSet.size === 1 ? [...branchSet][0]! : 'multiple',
+  };
+}
+
+function repositoryTargetKey(target: RepositoryTarget): string {
+  return `${target.repository}\u0000${target.branch}`;
+}
+
 const metadataSections: Array<{
   title: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -338,7 +395,7 @@ const metadataSections: Array<{
         label: 'Event',
         icon: PlayCircle,
         value: (automation) => automation.event ?? 'N/A',
-        shouldRender: (automation) => automation.trigger === 'event',
+        shouldRender: (automation) => Boolean(automation.event?.trim()),
       },
       { key: 'model', label: 'Model', icon: AutomationModelIcon },
       { key: 'notification', label: 'Notification', icon: Bell },
@@ -348,7 +405,7 @@ const metadataSections: Array<{
 
 const configurationMetadataSection = metadataSections[0];
 
-const gitTriggerOptions = [
+const eventTriggerOptions = [
   'Pull request opened',
   'Pull request synchronized',
   'Pull request reopened',
@@ -362,75 +419,417 @@ const gitTriggerOptions = [
   'Workflow run completed',
 ];
 
+const SCHEDULE_TRIGGER_OPTION = 'Schedule';
+
+const scheduleDayChoices = [
+  'Daily',
+  'Weekdays',
+  'Weekends',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
+
+const scheduleTimezoneChoices = [
+  'America/Los_Angeles',
+  'America/Denver',
+  'America/Chicago',
+  'America/New_York',
+  'Europe/London',
+  'Europe/Paris',
+  'UTC',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+] as const;
+
+type NewAutomationScheduleConfig = {
+  days: string;
+  time: string;
+  timezone: string;
+};
+
+function formatTimeForScheduleSummary(time24: string): string {
+  const parts = time24.trim().split(':');
+  const h = parseInt(parts[0] ?? '0', 10);
+  const m = parseInt(parts[1] ?? '0', 10);
+  if (Number.isNaN(h) || Number.isNaN(m)) return time24.trim() || '—';
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function buildScheduleSummary(config: NewAutomationScheduleConfig): string {
+  return `${config.days} at ${formatTimeForScheduleSummary(config.time)}`;
+}
+
+type AutomationScheduleEntry = NewAutomationScheduleConfig & { id: string };
+
+function createAutomationScheduleId(): string {
+  return `sched-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 const automationPluginOptions = Array.from(
   new Set(initialAutomations.flatMap((automation) => automation.plugins))
 );
 
+const automationModelOptions = Array.from(
+  new Set(initialAutomations.map((automation) => automation.model))
+).sort((a, b) => a.localeCompare(b));
+
 function MultiSelectBubbleInput({
   label,
+  addActionLabel,
   options,
   selectedValues,
-  selectValue,
-  onSelectValueChange,
+  additionalItems,
+  onRemoveAdditional,
   onAdd,
   onRemove,
-  addButtonLabel,
+  menuSearchable = false,
+  menuSearchPlaceholder = 'Search…',
+  menuTriggerMode = false,
 }: {
   label: string;
+  addActionLabel: string;
   options: string[];
   selectedValues: string[];
-  selectValue: string;
-  onSelectValueChange: (value: string) => void;
-  onAdd: () => void;
+  additionalItems?: { id: string; label: string }[];
+  onRemoveAdditional?: (id: string) => void;
+  onAdd: (value: string) => void;
   onRemove: (value: string) => void;
-  addButtonLabel: string;
+  menuSearchable?: boolean;
+  menuSearchPlaceholder?: string;
+  /** Schedule on top + separator; git triggers stay visible but disabled when already added */
+  menuTriggerMode?: boolean;
+}) {
+  const menuSearchRef = useRef<HTMLInputElement>(null);
+  const [menuQuery, setMenuQuery] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const selectedSet = new Set(selectedValues);
+  const availableOptions = menuTriggerMode
+    ? options
+    : options.filter((opt) => !selectedSet.has(opt));
+
+  const filteredAvailableOptions = useMemo(() => {
+    const q = menuQuery.trim().toLowerCase();
+    if (!menuSearchable || !q) return availableOptions;
+    return availableOptions.filter((opt) => opt.toLowerCase().includes(q));
+  }, [availableOptions, menuQuery, menuSearchable]);
+
+  useEffect(() => {
+    if (menuOpen && menuSearchable) {
+      queueMicrotask(() => menuSearchRef.current?.focus());
+    }
+  }, [menuOpen, menuSearchable]);
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-foreground">{label}</label>
+      <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 p-2">
+        {additionalItems?.map(({ id, label: itemLabel }) => (
+          <span
+            key={id}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
+          >
+            {itemLabel}
+            <button
+              type="button"
+              onClick={() => onRemoveAdditional?.(id)}
+              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={`Remove ${itemLabel}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        {selectedValues.map((value) => (
+          <span
+            key={value}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
+          >
+            {value}
+            <button
+              type="button"
+              onClick={() => onRemove(value)}
+              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={`Remove ${value}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <DropdownMenu
+          open={menuOpen}
+          onOpenChange={(open) => {
+            setMenuOpen(open);
+            if (!open) setMenuQuery('');
+          }}
+        >
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={menuTriggerMode ? false : availableOptions.length === 0}
+              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
+              aria-label={addActionLabel}
+            >
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert" />
+              <span className="text-xs font-medium text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert">
+                {addActionLabel}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className={cn(
+              menuSearchable
+                ? 'flex max-h-72 min-w-[260px] w-[var(--radix-dropdown-menu-trigger-width)] flex-col overflow-hidden p-0'
+                : 'max-h-60'
+            )}
+          >
+            {menuSearchable ? (
+              <>
+                <div className="shrink-0 overflow-hidden rounded-t-md border-b border-border bg-popover p-0">
+                  <SearchInput
+                    ref={menuSearchRef}
+                    size="sm"
+                    placeholder={menuSearchPlaceholder}
+                    value={menuQuery}
+                    onValueChange={setMenuQuery}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    aria-label={menuSearchPlaceholder}
+                    className="w-full [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-muted/50 [&_input]:shadow-none focus-visible:[&_input]:ring-0 focus-visible:[&_input]:ring-offset-0"
+                  />
+                </div>
+                <div className="dropdown-scroll min-h-0 max-h-52 flex-1 overflow-y-auto p-1">
+                  {availableOptions.length === 0 ? (
+                    <div className="px-2 py-3 text-sm text-muted-foreground">All options selected</div>
+                  ) : filteredAvailableOptions.length === 0 ? (
+                    <div className="px-2 py-3 text-sm text-muted-foreground">No matches</div>
+                  ) : (
+                    filteredAvailableOptions.map((opt) => (
+                      <DropdownMenuItem key={opt} onSelect={() => onAdd(opt)}>
+                        {opt}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : menuTriggerMode ? (
+              <>
+                <DropdownMenuItem
+                  className="font-medium"
+                  onSelect={() => onAdd(SCHEDULE_TRIGGER_OPTION)}
+                >
+                  {SCHEDULE_TRIGGER_OPTION}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {options.map((opt) => {
+                  const taken = selectedValues.includes(opt);
+                  return (
+                    <DropdownMenuItem
+                      key={opt}
+                      disabled={taken}
+                      onSelect={() => {
+                        if (!taken) onAdd(opt);
+                      }}
+                      className={
+                        taken
+                          ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+                          : undefined
+                      }
+                    >
+                      {opt}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </>
+            ) : availableOptions.length === 0 ? (
+              <div className="px-2 py-3 text-sm text-muted-foreground">All options selected</div>
+            ) : (
+              availableOptions.map((opt) => (
+                <DropdownMenuItem key={opt} onSelect={() => onAdd(opt)}>
+                  {opt}
+                </DropdownMenuItem>
+              ))
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
+
+function AddAutomationRepositoryDialog({
+  open,
+  onOpenChange,
+  existingTargets,
+  onAdd,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  existingTargets: RepositoryTarget[];
+  onAdd: (target: RepositoryTarget) => void;
+}) {
+  const repoOptions =
+    automationRepositoryOptions.length > 0 ? automationRepositoryOptions : ['acme/frontend-app'];
+  const branchOptions =
+    automationBranchOptions.length > 0 ? automationBranchOptions : ['main'];
+
+  const [repo, setRepo] = useState(
+    () => repoOptions[0] ?? 'acme/frontend-app'
+  );
+  const [branch, setBranch] = useState(() => branchOptions[0] ?? 'main');
+
+  useEffect(() => {
+    if (open) {
+      setRepo(automationRepositoryOptions[0] ?? 'acme/frontend-app');
+      setBranch(automationBranchOptions[0] ?? 'main');
+    }
+  }, [open]);
+
+  const trimmedRepo = repo.trim();
+  const trimmedBranch = branch.trim();
+  const isDuplicate =
+    Boolean(trimmedRepo && trimmedBranch) &&
+    existingTargets.some(
+      (t) => t.repository === trimmedRepo && t.branch === trimmedBranch
+    );
+  const canAdd = Boolean(trimmedRepo && trimmedBranch) && !isDuplicate;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md border-border bg-background text-foreground sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add repository</DialogTitle>
+          <DialogDescription>
+            Choose a repository and branch for this automation. You can add more than one target.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <label htmlFor="automation-repo-select" className="text-sm font-medium text-muted-foreground">
+              Repository
+            </label>
+            <div className="relative flex h-10 items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
+              <Github className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <span className="block min-w-0 flex-1 truncate text-sm text-foreground">
+                {repo || 'Select repository'}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <select
+                id="automation-repo-select"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                value={repo}
+                onChange={(event) => setRepo(event.target.value)}
+              >
+                {repoOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="automation-branch-select" className="text-sm font-medium text-muted-foreground">
+              Branch
+            </label>
+            <div className="relative flex h-10 items-center rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60">
+              <span className="block min-w-0 flex-1 truncate text-sm text-foreground">
+                {branch || 'Select branch'}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <select
+                id="automation-branch-select"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                value={branch}
+                onChange={(event) => setBranch(event.target.value)}
+              >
+                {branchOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {isDuplicate && (
+            <p className="text-xs text-muted-foreground">This repository and branch are already added.</p>
+          )}
+        </div>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            disabled={!canAdd}
+            onClick={() => {
+              if (!canAdd) return;
+              onAdd({ repository: trimmedRepo, branch: trimmedBranch });
+              onOpenChange(false);
+            }}
+          >
+            Add repository
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RepositoryTargetsBubbleField({
+  targets,
+  onRemove,
+  onRequestAdd,
+}: {
+  targets: RepositoryTarget[];
+  onRemove: (target: RepositoryTarget) => void;
+  onRequestAdd: () => void;
 }) {
   return (
-    <div className="space-y-3">
-      <label className="text-sm font-medium text-foreground">{label}</label>
-      <div className="flex flex-wrap items-center gap-2">
-        <select
-          value={selectValue}
-          onChange={(event) => onSelectValueChange(event.target.value)}
-          className="h-10 min-w-[260px] rounded-md border border-border bg-background px-3 text-sm text-foreground"
-        >
-          <option value="">Select from list</option>
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={onAdd}
-          disabled={!selectValue}
-          className="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {addButtonLabel}
-        </button>
-      </div>
+    <div className="space-y-1.5">
+      <label className="text-sm font-medium text-foreground">Repositories</label>
       <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 p-2">
-        {selectedValues.length > 0 ? (
-          selectedValues.map((value) => (
-            <span
-              key={value}
-              className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
-            >
-              {value}
-              <button
-                type="button"
-                onClick={() => onRemove(value)}
-                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label={`Remove ${value}`}
-              >
-                <X className="h-3 w-3" />
-              </button>
+        {targets.map((target) => (
+          <span
+            key={repositoryTargetKey(target)}
+            className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
+          >
+            <Github className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="min-w-0 truncate">
+              {target.repository} · {target.branch}
             </span>
-          ))
-        ) : (
-          <span className="text-xs text-muted-foreground">No selections yet.</span>
-        )}
+            <button
+              type="button"
+              onClick={() => onRemove(target)}
+              className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={`Remove ${target.repository} ${target.branch}`}
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
+          aria-label="Add repository"
+          onClick={onRequestAdd}
+        >
+          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert" />
+          <span className="text-xs font-medium text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert">
+            Add repository
+          </span>
+        </Button>
       </div>
     </div>
   );
@@ -571,6 +970,11 @@ function ActivityLogSection({
           <h3>Activity Log</h3>
         </div>
       </div>
+      {runHistory.length === 0 ? (
+        <div className="px-5 py-3 text-sm text-muted-foreground">
+          No automations have run yet.
+        </div>
+      ) : (
       <ul className="divide-y divide-border">
         {runHistory.map((run) => {
           const isSuccess = run.status === 'success';
@@ -638,6 +1042,7 @@ function ActivityLogSection({
           );
         })}
       </ul>
+      )}
     </section>
   );
 }
@@ -651,32 +1056,6 @@ interface AutomationsScreenProps {
   onOpenConversation?: (conversationId: string) => void;
 }
 
-function StatusToggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors ${
-        checked ? 'border-emerald-400/50 bg-emerald-500/20' : 'border-border bg-muted/40'
-      }`}
-    >
-      <span
-        className={`absolute h-4 w-4 rounded-full transition-all ${
-          checked ? 'left-6 bg-emerald-400' : 'left-1 bg-muted-foreground'
-        }`}
-      />
-    </button>
-  );
-}
-
 export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   onRunNow,
   onOpenConversation,
@@ -688,14 +1067,19 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   const [isCreatingAutomation, setIsCreatingAutomation] = useState(false);
   const [newAutomationTitle, setNewAutomationTitle] = useState('');
   const [newAutomationPrompt, setNewAutomationPrompt] = useState('');
-  const [newAutomationRepository, setNewAutomationRepository] = useState('acme/frontend-app');
-  const [newAutomationBranch, setNewAutomationBranch] = useState('main');
+  const [newAutomationRepoTargets, setNewAutomationRepoTargets] = useState<RepositoryTarget[]>([]);
+  const [addRepoModalOpen, setAddRepoModalOpen] = useState(false);
   const [newAutomationModel, setNewAutomationModel] = useState('GPT-5');
-  const [newAutomationNotification, setNewAutomationNotification] = useState('Slack digest to #automations');
-  const [selectedTriggerOption, setSelectedTriggerOption] = useState('');
-  const [selectedPluginOption, setSelectedPluginOption] = useState('');
+  const [newAutomationNotification, setNewAutomationNotification] = useState('');
   const [selectedTriggerEvents, setSelectedTriggerEvents] = useState<string[]>([]);
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleDraft, setScheduleDraft] = useState<NewAutomationScheduleConfig>({
+    days: 'Weekdays',
+    time: '09:00',
+    timezone: 'America/Los_Angeles',
+  });
+  const [newAutomationSchedules, setNewAutomationSchedules] = useState<AutomationScheduleEntry[]>([]);
 
   const filteredAutomations = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -747,20 +1131,26 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   const resetCreateForm = () => {
     setNewAutomationTitle('');
     setNewAutomationPrompt('');
-    setNewAutomationRepository('acme/frontend-app');
-    setNewAutomationBranch('main');
+    setNewAutomationRepoTargets([]);
+    setAddRepoModalOpen(false);
     setNewAutomationModel('GPT-5');
-    setNewAutomationNotification('Slack digest to #automations');
-    setSelectedTriggerOption('');
-    setSelectedPluginOption('');
+    setNewAutomationNotification('');
     setSelectedTriggerEvents([]);
     setSelectedPlugins([]);
+    setScheduleModalOpen(false);
+    setNewAutomationSchedules([]);
+    setScheduleDraft({
+      days: 'Weekdays',
+      time: '09:00',
+      timezone: 'America/Los_Angeles',
+    });
   };
 
   const handleCreateAutomation = () => {
     const title = newAutomationTitle.trim();
     const prompt = newAutomationPrompt.trim();
     if (!title || !prompt) return;
+    if (newAutomationRepoTargets.length === 0) return;
 
     const now = new Date();
     const createdAt = new Intl.DateTimeFormat('en-US', {
@@ -769,8 +1159,22 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       year: 'numeric',
     }).format(now);
 
-    const normalizedRepository = newAutomationRepository.trim() || 'acme/frontend-app';
-    const normalizedBranch = newAutomationBranch.trim() || 'main';
+    const { repository: normalizedRepository, branch: normalizedBranch } =
+      automationTargetsToRepositoryFields(newAutomationRepoTargets);
+
+    const hasSchedule = newAutomationSchedules.length > 0;
+    const scheduleSummary = hasSchedule
+      ? newAutomationSchedules.map((entry) => buildScheduleSummary(entry)).join('; ')
+      : undefined;
+    const scheduleTimezoneSet = new Set(newAutomationSchedules.map((entry) => entry.timezone));
+    const scheduleTimezone =
+      hasSchedule && scheduleTimezoneSet.size === 1
+        ? [...scheduleTimezoneSet][0]!
+        : hasSchedule
+          ? [...scheduleTimezoneSet].join(', ')
+          : undefined;
+    const eventFromTriggers =
+      selectedTriggerEvents.length > 0 ? selectedTriggerEvents.join(', ') : undefined;
 
     const createdAutomation: AutomationItem = {
       id: `auto-${now.getTime()}`,
@@ -780,21 +1184,26 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       status: 'active',
       repository: normalizedRepository,
       branch: normalizedBranch,
-      trigger: 'event',
-      event: selectedTriggerEvents.join(', ') || 'Push to branch',
+      trigger: hasSchedule ? 'schedule' : 'event',
+      schedule: scheduleSummary,
+      timezone: scheduleTimezone,
+      event: eventFromTriggers ?? (!hasSchedule ? 'Push to branch' : undefined),
       model: newAutomationModel.trim() || 'GPT-5',
-      notification: newAutomationNotification.trim() || 'Slack digest to #automations',
+      notification: newAutomationNotification.trim(),
       owner: '',
       createdAt,
       lastRun: 'Not run yet',
-      nextRun: 'On matching event',
+      nextRun: hasSchedule ? 'Pending first run' : 'On matching event',
       runsThisWeek: 0,
       plugins: selectedPlugins.length > 0 ? selectedPlugins : ['GitHub'],
       skills: ['Custom workflow'],
       mcpServers: ['GitHub MCP'],
       secrets: ['GITHUB_TOKEN'],
       runHistory: [],
-      repositoryTargets: [{ repository: normalizedRepository, branch: normalizedBranch }],
+      repositoryTargets: newAutomationRepoTargets.map((target) => ({
+        repository: target.repository,
+        branch: target.branch,
+      })),
     };
 
     setAutomations((prev) => [createdAutomation, ...prev]);
@@ -875,9 +1284,10 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         </button>
 
         <div className="flex items-center gap-3">
-          <StatusToggle
+          <PluginToggle
             checked={automation.status === 'active'}
-            onChange={() => handleToggle(automation.id)}
+            onCheckedChange={() => handleToggle(automation.id)}
+            aria-label={`${automation.status === 'active' ? 'Deactivate' : 'Activate'} ${automation.title}`}
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -940,9 +1350,10 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <StatusToggle
+            <PluginToggle
               checked={selectedAutomation.status === 'active'}
-              onChange={() => handleToggle(selectedAutomation.id)}
+              onCheckedChange={() => handleToggle(selectedAutomation.id)}
+              aria-label={`${selectedAutomation.status === 'active' ? 'Deactivate' : 'Activate'} ${selectedAutomation.title}`}
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1021,27 +1432,28 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
 
   if (isCreatingAutomation) {
     return (
-      <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
-        <div className="mx-auto w-full max-w-5xl">
-          <button
-            type="button"
-            onClick={() => {
-              setIsCreatingAutomation(false);
-              resetCreateForm();
-            }}
-            className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Back to Automations</span>
-          </button>
+      <>
+        <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+          <div className="mx-auto w-full max-w-5xl">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCreatingAutomation(false);
+                resetCreateForm();
+              }}
+              className="mb-5 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Back to Automations</span>
+            </button>
 
-          <div className="rounded-2xl border border-border bg-card p-6">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-foreground">Create Automation</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Configure an automation with Git triggers and plugin dependencies.
-              </p>
-            </div>
+            <div className="rounded-2xl border border-border bg-card p-6">
+              <div className="mb-5 space-y-2">
+                <h2 className="text-xl font-semibold text-foreground">Create Automation</h2>
+                <p className="text-sm text-muted-foreground">
+                  Configure an automation with trigger events, optional schedule, and plugin dependencies.
+                </p>
+              </div>
 
             <div className="space-y-5">
               <label className="space-y-2">
@@ -1054,99 +1466,143 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 />
               </label>
 
-              <label className="space-y-2">
-                <span className="text-sm font-medium text-foreground">Prompt</span>
-                <textarea
-                  value={newAutomationPrompt}
-                  onChange={(event) => setNewAutomationPrompt(event.target.value)}
-                  rows={5}
-                  placeholder="Describe what the automation should do..."
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
-                />
-              </label>
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="pt-2">
                 <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Repository</span>
-                  <input
-                    value={newAutomationRepository}
-                    onChange={(event) => setNewAutomationRepository(event.target.value)}
-                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
-                  />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Branch</span>
-                  <input
-                    value={newAutomationBranch}
-                    onChange={(event) => setNewAutomationBranch(event.target.value)}
-                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  <span className="text-sm font-medium text-foreground">Prompt</span>
+                  <textarea
+                    value={newAutomationPrompt}
+                    onChange={(event) => setNewAutomationPrompt(event.target.value)}
+                    rows={5}
+                    placeholder="Describe what the automation should do..."
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
                   />
                 </label>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Model</span>
-                  <input
-                    value={newAutomationModel}
-                    onChange={(event) => setNewAutomationModel(event.target.value)}
-                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
-                  />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-foreground">Notification</span>
-                  <input
-                    value={newAutomationNotification}
-                    onChange={(event) => setNewAutomationNotification(event.target.value)}
-                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
-                  />
-                </label>
+              <div className="-mt-2">
+                <RepositoryTargetsBubbleField
+                  targets={newAutomationRepoTargets}
+                  onRemove={(target) =>
+                    setNewAutomationRepoTargets((previous) =>
+                      previous.filter(
+                        (item) => repositoryTargetKey(item) !== repositoryTargetKey(target)
+                      )
+                    )
+                  }
+                  onRequestAdd={() => setAddRepoModalOpen(true)}
+                />
               </div>
 
               <MultiSelectBubbleInput
-                label="Git Trigger Events"
-                options={gitTriggerOptions}
+                label="Trigger Events"
+                addActionLabel="Add Trigger"
+                options={eventTriggerOptions}
+                menuTriggerMode
                 selectedValues={selectedTriggerEvents}
-                selectValue={selectedTriggerOption}
-                onSelectValueChange={setSelectedTriggerOption}
-                onAdd={() => {
-                  if (!selectedTriggerOption) return;
+                additionalItems={newAutomationSchedules.map((entry) => ({
+                  id: entry.id,
+                  label: `Schedule · ${buildScheduleSummary(entry)} (${entry.timezone})`,
+                }))}
+                onRemoveAdditional={(id) =>
+                  setNewAutomationSchedules((previous) => previous.filter((entry) => entry.id !== id))
+                }
+                onAdd={(value) => {
+                  if (value === SCHEDULE_TRIGGER_OPTION) {
+                    setScheduleDraft({
+                      days: 'Weekdays',
+                      time: '09:00',
+                      timezone: 'America/Los_Angeles',
+                    });
+                    setScheduleModalOpen(true);
+                    return;
+                  }
                   setSelectedTriggerEvents((prev) =>
-                    prev.includes(selectedTriggerOption)
-                      ? prev
-                      : [...prev, selectedTriggerOption]
+                    prev.includes(value) ? prev : [...prev, value]
                   );
-                  setSelectedTriggerOption('');
                 }}
                 onRemove={(value) =>
                   setSelectedTriggerEvents((prev) => prev.filter((item) => item !== value))
                 }
-                addButtonLabel="Add trigger"
               />
 
               <MultiSelectBubbleInput
                 label="Plugins"
+                addActionLabel="Add Plugin"
                 options={automationPluginOptions}
                 selectedValues={selectedPlugins}
-                selectValue={selectedPluginOption}
-                onSelectValueChange={setSelectedPluginOption}
-                onAdd={() => {
-                  if (!selectedPluginOption) return;
+                menuSearchable
+                menuSearchPlaceholder="Search plugins"
+                onAdd={(value) =>
                   setSelectedPlugins((prev) =>
-                    prev.includes(selectedPluginOption)
-                      ? prev
-                      : [...prev, selectedPluginOption]
-                  );
-                  setSelectedPluginOption('');
-                }}
+                    prev.includes(value) ? prev : [...prev, value]
+                  )
+                }
                 onRemove={(value) =>
                   setSelectedPlugins((prev) => prev.filter((item) => item !== value))
                 }
-                addButtonLabel="Add plugin"
               />
-            </div>
 
-            <div className="mt-8 flex items-center justify-end gap-3">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-4 md:gap-y-0">
+                <label className="space-y-2">
+                  <span className="flex h-5 items-center text-sm font-medium leading-none text-foreground">
+                    Model
+                  </span>
+                  <select
+                    value={newAutomationModel}
+                    onChange={(event) => setNewAutomationModel(event.target.value)}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  >
+                    {automationModelOptions.map((model) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="space-y-2">
+                  <div className="flex h-5 items-center gap-1.5">
+                    <label
+                      htmlFor="create-automation-notification"
+                      className="text-sm font-medium leading-none text-foreground"
+                    >
+                      Notification
+                    </label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          aria-label="How notification destination is used"
+                        >
+                          <Info className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" side="top" className="w-80 space-y-3 p-4 text-sm">
+                        <p className="leading-relaxed text-popover-foreground">
+                          If your original prompt does not already include notification instructions, this
+                          destination is amended into the prompt so the automation knows where to send
+                          updates.
+                        </p>
+                        <a
+                          href="#"
+                          className="inline-flex font-medium text-foreground underline decoration-muted-foreground/60 underline-offset-4 transition-colors hover:decoration-foreground"
+                        >
+                          Read Documentation
+                        </a>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <input
+                    id="create-automation-notification"
+                    value={newAutomationNotification}
+                    onChange={(event) => setNewAutomationNotification(event.target.value)}
+                    placeholder="e.g. Slack digest to #channel, email alias, or PagerDuty service"
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -1160,7 +1616,11 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               <button
                 type="button"
                 onClick={handleCreateAutomation}
-                disabled={!newAutomationTitle.trim() || !newAutomationPrompt.trim()}
+                disabled={
+                  !newAutomationTitle.trim() ||
+                  !newAutomationPrompt.trim() ||
+                  newAutomationRepoTargets.length === 0
+                }
                 className="h-9 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Create Automation
@@ -1169,6 +1629,90 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           </div>
         </div>
       </div>
+        </div>
+
+        <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
+          <DialogContent className="max-w-md border-border bg-background text-foreground sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Schedule</DialogTitle>
+              <DialogDescription>
+                Choose which days and what time this automation runs, and the timezone to use.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-5">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Days</span>
+                <select
+                  value={scheduleDraft.days}
+                  onChange={(event) =>
+                    setScheduleDraft((previous) => ({ ...previous, days: event.target.value }))
+                  }
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                >
+                  {scheduleDayChoices.map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Time</span>
+                <input
+                  type="time"
+                  value={scheduleDraft.time}
+                  onChange={(event) =>
+                    setScheduleDraft((previous) => ({ ...previous, time: event.target.value }))
+                  }
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                />
+              </label>
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Timezone</span>
+                <select
+                  value={scheduleDraft.timezone}
+                  onChange={(event) =>
+                    setScheduleDraft((previous) => ({ ...previous, timezone: event.target.value }))
+                  }
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                >
+                  {scheduleTimezoneChoices.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={() => setScheduleModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setNewAutomationSchedules((previous) => [
+                    ...previous,
+                    { id: createAutomationScheduleId(), ...scheduleDraft },
+                  ]);
+                  setScheduleModalOpen(false);
+                }}
+              >
+                Save schedule
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <AddAutomationRepositoryDialog
+          open={addRepoModalOpen}
+          onOpenChange={setAddRepoModalOpen}
+          existingTargets={newAutomationRepoTargets}
+          onAdd={(target) =>
+            setNewAutomationRepoTargets((previous) => [...previous, target])
+          }
+        />
+      </>
     );
   }
 

@@ -18,6 +18,7 @@ import {
 } from '../data/skillsPageData';
 import { InfoCard } from '../components/common/InfoCard';
 import { PluginToggle } from '../components/ui/plugin-toggle';
+import { APP_ROUTE_EVENT } from '../lib/captureNavigation';
 
 type PluginMarketplaceScreenProps = {
   installedPluginRepos?: string[];
@@ -96,6 +97,46 @@ export function PluginMarketplaceScreen({
       (repo) => repo.label.toLowerCase().includes(query) || repo.value.toLowerCase().includes(query),
     );
   }, [repoItems, repoSearchQuery]);
+
+  useEffect(() => {
+    const applyPluginFromHash = () => {
+      const raw = window.location.hash.replace(/^#\/?/, '');
+      if (!raw.startsWith('plugin-marketplace')) return;
+
+      const pathPart = raw.split('?')[0];
+      let pluginId: string | null = null;
+      const pathMatch = pathPart.match(/^plugin-marketplace\/plugin\/([^/?#]+)/);
+      if (pathMatch) {
+        pluginId = decodeURIComponent(pathMatch[1]);
+      } else {
+        const qIdx = raw.indexOf('?');
+        if (qIdx >= 0) {
+          pluginId = new URLSearchParams(raw.slice(qIdx + 1)).get('plugin');
+        }
+      }
+
+      if (!pluginId) {
+        if (pathPart === 'plugin-marketplace') {
+          setSelectedPlugin(null);
+        }
+        return;
+      }
+
+      const skill = marketplaceSkills.find((s) => s.id === pluginId);
+      if (!skill) return;
+      const repoKey = normalizeRepoKey(skill.repoUrl ?? skill.repo);
+      const match = repoItems.find((r) => r.repoKey === repoKey);
+      setSelectedRepo(match?.value ?? null);
+      setSelectedPlugin(skill);
+    };
+    applyPluginFromHash();
+    window.addEventListener('hashchange', applyPluginFromHash);
+    window.addEventListener(APP_ROUTE_EVENT, applyPluginFromHash);
+    return () => {
+      window.removeEventListener('hashchange', applyPluginFromHash);
+      window.removeEventListener(APP_ROUTE_EVENT, applyPluginFromHash);
+    };
+  }, [repoItems]);
 
   const filteredSkills = useMemo(() => {
     const selectedRepoKey = normalizeRepoKey(selectedRepo ?? '');
@@ -337,7 +378,13 @@ ${skill.initialPrompt}
               <div className="repo-dropdown-scroll min-w-0 flex-1 overflow-y-auto pr-1">
                 <button
                   type="button"
-                  onClick={() => setSelectedPlugin(null)}
+                  onClick={() => {
+                    setSelectedPlugin(null);
+                    const h = window.location.hash;
+                    if (h.includes('plugin=') || h.includes('/plugin/')) {
+                      window.history.replaceState(null, '', '#/plugin-marketplace');
+                    }
+                  }}
                   className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -508,7 +555,17 @@ ${skill.initialPrompt}
                         />
                         <button
                           type="button"
-                          onClick={() => setSelectedPlugin(skill)}
+                          onClick={() => {
+                            setSelectedPlugin(skill);
+                            const repoKey = normalizeRepoKey(skill.repoUrl ?? skill.repo);
+                            const match = repoItems.find((r) => r.repoKey === repoKey);
+                            setSelectedRepo(match?.value ?? null);
+                            window.history.replaceState(
+                              null,
+                              '',
+                              `#/plugin-marketplace/plugin/${encodeURIComponent(skill.id)}`,
+                            );
+                          }}
                           className="w-full rounded-xl p-5 pr-14 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                         >
                           <div className="flex items-start gap-3">

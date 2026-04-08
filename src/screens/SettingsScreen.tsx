@@ -261,6 +261,10 @@ type OrgCatalogKind = 'plugin' | 'skill';
 type OrgPluginCatalogItem = {
   id: string;
   name: string;
+  /** Git URL or owner/repo for the plugin or skill bundle. */
+  pluginRepo: string;
+  /** Marketplace catalog id; used to open this item in Plugin Marketplace. */
+  marketplaceSkillId: string;
   kind: OrgCatalogKind;
   visible: boolean;
   availableAllConversations: boolean;
@@ -270,6 +274,8 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'cat-static',
     name: 'Static Analysis',
+    pluginRepo: 'github.com/OpenHands/static-analysis',
+    marketplaceSkillId: 'marketplace-deps',
     kind: 'plugin',
     visible: true,
     availableAllConversations: false,
@@ -277,6 +283,8 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'cat-search',
     name: 'Code Search',
+    pluginRepo: 'github.com/OpenHands/code-search',
+    marketplaceSkillId: 'marketplace-performance',
     kind: 'plugin',
     visible: true,
     availableAllConversations: true,
@@ -284,6 +292,8 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'cat-github',
     name: 'GitHub',
+    pluginRepo: 'github.com/OpenHands/github-plugin',
+    marketplaceSkillId: 'marketplace-security',
     kind: 'plugin',
     visible: true,
     availableAllConversations: false,
@@ -291,6 +301,8 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'skill-babysit',
     name: 'babysit',
+    pluginRepo: 'github.com/FraterCCCLXIII/babysit-skill',
+    marketplaceSkillId: 'marketplace-refactor',
     kind: 'skill',
     visible: true,
     availableAllConversations: false,
@@ -298,6 +310,8 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'skill-canvas',
     name: 'canvas',
+    pluginRepo: 'gitlab.com/FraterCCCLXIII/canvas-skill',
+    marketplaceSkillId: 'marketplace-api-design',
     kind: 'skill',
     visible: true,
     availableAllConversations: false,
@@ -305,6 +319,8 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'skill-create-rule',
     name: 'create-rule',
+    pluginRepo: 'github.com/FraterCCCLXIII/create-rule',
+    marketplaceSkillId: 'marketplace-pr-description',
     kind: 'skill',
     visible: false,
     availableAllConversations: false,
@@ -386,17 +402,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [pluginRepoInput, setPluginRepoInput] = useState('');
   const [orgPluginCatalog, setOrgPluginCatalog] = useState<OrgPluginCatalogItem[]>(initialOrgPluginCatalog);
   const [orgPluginsSearchQuery, setOrgPluginsSearchQuery] = useState('');
+  const [orgPluginsKindFilter, setOrgPluginsKindFilter] = useState<'all' | OrgCatalogKind>('all');
+  const [orgPluginsRepoFilter, setOrgPluginsRepoFilter] = useState<string>('all');
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
+  const orgPluginCatalogRepoOptions = useMemo(() => {
+    const unique = [...new Set(orgPluginCatalog.map((r) => r.pluginRepo))];
+    unique.sort((a, b) => a.localeCompare(b));
+    return unique;
+  }, [orgPluginCatalog]);
+
   const filteredOrgPluginCatalog = useMemo(() => {
+    let rows = orgPluginCatalog;
+    if (orgPluginsKindFilter !== 'all') {
+      rows = rows.filter((r) => r.kind === orgPluginsKindFilter);
+    }
+    if (orgPluginsRepoFilter !== 'all') {
+      rows = rows.filter((r) => r.pluginRepo === orgPluginsRepoFilter);
+    }
     const q = orgPluginsSearchQuery.trim().toLowerCase();
-    if (!q) return orgPluginCatalog;
-    return orgPluginCatalog.filter((row) => {
+    if (!q) return rows;
+    return rows.filter((row) => {
       const name = row.name.toLowerCase();
       const kind = row.kind.toLowerCase();
-      return name.includes(q) || kind.includes(q);
+      const repo = row.pluginRepo.toLowerCase();
+      return name.includes(q) || kind.includes(q) || repo.includes(q);
     });
-  }, [orgPluginCatalog, orgPluginsSearchQuery]);
+  }, [
+    orgPluginCatalog,
+    orgPluginsSearchQuery,
+    orgPluginsKindFilter,
+    orgPluginsRepoFilter,
+  ]);
 
   useEffect(() => {
     if (initialTab && settingsTabs.some((t) => t.id === initialTab)) {
@@ -1533,7 +1570,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       Add Plugin
                     </button>
                   </div>
-                  <div className="mt-4 overflow-hidden rounded-md border border-border">
+                  <div className="mb-4 overflow-hidden rounded-md border border-border">
                     {pluginRepositories.length > 0 ? (
                       <ul className="divide-y divide-border">
                         {pluginRepositories.map((repo) => (
@@ -1550,31 +1587,79 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         ))}
                       </ul>
                     ) : (
-                      <div className="px-3 py-3 text-sm text-muted-foreground">
+                      <div className="px-3 pt-3 pb-4 text-sm text-muted-foreground">
                         No plugin repositories added yet.
                       </div>
                     )}
                   </div>
                 </div>
-                <div className="max-w-md space-y-3">
+                <div className="w-full max-w-5xl space-y-3">
                   <div className="space-y-1">
                     <h3 className="text-xl font-semibold leading-6 text-foreground">Plugins & skills</h3>
                     <p className="text-sm text-muted-foreground">
-                      Search by name or type to filter the organization catalog in the table below.
+                      Search and filter by repository path, plugin vs skill, or narrow by repository.
                     </p>
                   </div>
-                  <SearchInput
-                    value={orgPluginsSearchQuery}
-                    onValueChange={setOrgPluginsSearchQuery}
-                    placeholder="Search by name or type…"
-                    aria-label="Search organization plugins and skills"
-                    className="w-full"
-                  />
+                  <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
+                    <SearchInput
+                      value={orgPluginsSearchQuery}
+                      onValueChange={setOrgPluginsSearchQuery}
+                      placeholder="Search by name, repo, or type…"
+                      aria-label="Search organization plugins and skills"
+                      className="min-w-0 w-full sm:max-w-md sm:flex-1"
+                    />
+                    <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0">
+                      <label className="flex min-w-0 flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+                        <span className="text-[11px] uppercase tracking-wide">Type</span>
+                        <div className="relative min-w-[8.5rem]">
+                          <select
+                            value={orgPluginsKindFilter}
+                            onChange={(e) =>
+                              setOrgPluginsKindFilter(e.target.value as 'all' | OrgCatalogKind)
+                            }
+                            aria-label="Filter by plugin or skill"
+                            className="h-10 w-full min-w-[8.5rem] appearance-none rounded-md border border-border bg-muted/40 pl-3 pr-10 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          >
+                            <option value="all">All types</option>
+                            <option value="plugin">Plugins only</option>
+                            <option value="skill">Skills only</option>
+                          </select>
+                          <ChevronDown
+                            className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+                            aria-hidden
+                          />
+                        </div>
+                      </label>
+                      <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs font-medium text-muted-foreground sm:min-w-[12rem] sm:max-w-[22rem]">
+                        <span className="text-[11px] uppercase tracking-wide">Repository</span>
+                        <div className="relative min-w-0 w-full">
+                          <select
+                            value={orgPluginsRepoFilter}
+                            onChange={(e) => setOrgPluginsRepoFilter(e.target.value)}
+                            aria-label="Filter by plugin repository"
+                            className="h-10 w-full min-w-0 appearance-none rounded-md border border-border bg-muted/40 pl-3 pr-10 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          >
+                            <option value="all">All repositories</option>
+                            {orgPluginCatalogRepoOptions.map((repo) => (
+                              <option key={repo} value={repo}>
+                                {repo}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground"
+                            aria-hidden
+                          />
+                        </div>
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                   <div className="min-w-0">
                     <table className="w-full table-fixed border-collapse text-sm">
                       <colgroup>
+                        <col className="min-w-0" />
                         <col className="min-w-0" />
                         <col className="w-[6.5rem]" />
                         <col className="w-[5.5rem]" />
@@ -1587,6 +1672,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                           >
                             Name
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                            title="Plugin or skill bundle repository"
+                          >
+                            Repository
                           </th>
                           <th
                             scope="col"
@@ -1613,7 +1705,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         {filteredOrgPluginCatalog.length === 0 ? (
                           <tr>
                             <td
-                              colSpan={4}
+                              colSpan={5}
                               className="px-4 py-10 text-center text-sm text-muted-foreground"
                             >
                               No plugins or skills match your search.
@@ -1626,7 +1718,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               className="bg-card transition-colors hover:bg-muted/25"
                             >
                               <td className="px-4 py-3.5 align-middle">
-                                <span className="font-medium text-foreground">{row.name}</span>
+                                <a
+                                  href={
+                                    row.kind === 'skill'
+                                      ? `#/skills/skill/${encodeURIComponent(row.marketplaceSkillId)}`
+                                      : `#/plugin-marketplace/plugin/${encodeURIComponent(row.marketplaceSkillId)}`
+                                  }
+                                  className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+                                >
+                                  {row.name}
+                                </a>
+                              </td>
+                              <td className="min-w-0 px-3 py-3.5 align-middle">
+                                <span
+                                  className="block truncate font-mono text-xs text-muted-foreground"
+                                  title={row.pluginRepo}
+                                >
+                                  {row.pluginRepo}
+                                </span>
                               </td>
                               <td className="px-3 py-3.5 align-middle">
                                 <span className="inline-flex rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium capitalize text-foreground">

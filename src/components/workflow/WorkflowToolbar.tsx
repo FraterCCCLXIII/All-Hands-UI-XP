@@ -66,7 +66,7 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
               />
             </div>
           </div>
-          <div className="max-h-[240px] overflow-y-auto py-1">
+          <div className="dropdown-scroll max-h-[240px] overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <div className="px-3 py-6 text-center text-sm text-muted-foreground">
                 No workflows found

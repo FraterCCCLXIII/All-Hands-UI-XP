@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
   BookOpen,
@@ -40,6 +40,7 @@ import {
   skillRepositoryItems,
   type SkillRepositoryItem,
 } from '../data/skillsPageData';
+import { APP_ROUTE_EVENT } from '../lib/captureNavigation';
 import { cn } from '../lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
@@ -276,6 +277,34 @@ export function SkillsScreen() {
 
   const isMarketplaceView = viewMode === 'marketplace' && !selectedItem;
 
+  useEffect(() => {
+    const applySkillFromHash = () => {
+      const raw = window.location.hash.replace(/^#\/?/, '');
+      if (!raw.startsWith('skills')) return;
+      const pathPart = raw.split('?')[0];
+      const pathMatch = pathPart.match(/^skills\/skill\/([^/?#]+)/);
+      if (!pathMatch) {
+        if (pathPart === 'skills') {
+          setSelectedItem(null);
+        }
+        return;
+      }
+      const skillId = decodeURIComponent(pathMatch[1]);
+      const skill = marketplaceSkills.find((s) => s.id === skillId);
+      if (!skill) return;
+      setViewMode('marketplace');
+      setSelectedRepo(null);
+      setSelectedItem(skill);
+    };
+    applySkillFromHash();
+    window.addEventListener('hashchange', applySkillFromHash);
+    window.addEventListener(APP_ROUTE_EVENT, applySkillFromHash);
+    return () => {
+      window.removeEventListener('hashchange', applySkillFromHash);
+      window.removeEventListener(APP_ROUTE_EVENT, applySkillFromHash);
+    };
+  }, []);
+
   useLayoutEffect(() => {
     const wrapper = categoryTabsWrapperRef.current;
     const measureContainer = categoryTabsMeasureRef.current;
@@ -490,6 +519,9 @@ export function SkillsScreen() {
                 setViewMode('marketplace');
                 setSelectedRepo(null);
                 setSelectedItem(null);
+                if (window.location.hash.includes('/skill/')) {
+                  window.history.replaceState(null, '', '#/skills');
+                }
               }}
               className={cn(
                 'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
@@ -739,7 +771,14 @@ export function SkillsScreen() {
                     <button
                       key={skill.id}
                       type="button"
-                      onClick={() => setSelectedItem(skill)}
+                      onClick={() => {
+                        setSelectedItem(skill);
+                        window.history.replaceState(
+                          null,
+                          '',
+                          `#/skills/skill/${encodeURIComponent(skill.id)}`,
+                        );
+                      }}
                       className="flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/50 hover:border-muted-foreground/20"
                     >
                       <div className="flex flex-1 flex-col p-6">
@@ -767,7 +806,12 @@ export function SkillsScreen() {
               {isMarketplaceSkill && (
                 <button
                   type="button"
-                  onClick={() => setSelectedItem(null)}
+                  onClick={() => {
+                    setSelectedItem(null);
+                    if (window.location.hash.includes('/skill/')) {
+                      window.history.replaceState(null, '', '#/skills');
+                    }
+                  }}
                   className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />

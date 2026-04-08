@@ -82,13 +82,13 @@ export function BubbleSelect({
               variant="ghost"
               size="sm"
               disabled={disabled || availableOptions.length === 0}
-              className="h-7 shrink-0 px-2 text-muted-foreground hover:text-foreground"
+              className="group h-7 shrink-0 px-2 text-muted-foreground hover:text-foreground"
               aria-label="Add"
             >
-              <Plus className="h-3.5 w-3.5" />
+              <Plus className="h-3.5 w-3.5 text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="max-h-60 overflow-y-auto">
+          <DropdownMenuContent align="start" className="max-h-60">
             {availableOptions.length === 0 ? (
               <div className="px-2 py-3 text-sm text-muted-foreground">
                 All options selected
