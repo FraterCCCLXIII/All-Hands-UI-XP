@@ -320,7 +320,7 @@ ${skill.initialPrompt}
                 No activated repositories yet. Add one in Settings → Plugins.
               </p>
               <a
-                href="#/settings/plugins"
+                href="#/settings/org-plugins"
                 className="mt-2 inline-flex h-7 items-center rounded-md border border-border bg-background px-2.5 text-xs text-foreground transition-colors hover:bg-muted/60"
               >
                 Open Settings

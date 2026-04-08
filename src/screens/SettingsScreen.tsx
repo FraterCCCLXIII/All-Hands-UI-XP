@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Building2,
@@ -8,7 +8,6 @@ import {
   CheckCircle,
   ChevronDown,
   Key,
-  Library,
   MoreVertical,
   Plus,
   Puzzle,
@@ -38,6 +37,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { PluginToggle } from '../components/ui/plugin-toggle';
+import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
 
 type OrgRole = 'Member' | 'Admin' | 'Owner';
@@ -108,7 +108,6 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
-  { id: 'plugins', label: 'Plugins', icon: Box },
   { id: 'integrations', label: 'Integrations', icon: Puzzle },
   { id: 'app', label: 'Application', icon: SettingsIcon },
   { id: 'llm', label: 'Language Model (LLM)', icon: Cpu },
@@ -117,13 +116,12 @@ const settingsTabs = [
   { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'mcp', label: 'MCP', icon: Cloud },
   { id: 'organizations', label: 'Organization', icon: Building2 },
-  { id: 'org-plugins', label: 'Plugins', icon: Library },
+  { id: 'org-plugins', label: 'Plugins', icon: Box },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
 ];
 
 const settingsTabDescriptions: Record<string, string> = {
   user: 'View and update your account email address.',
-  plugins: 'Add Git repositories so plugins appear in the Plugin Marketplace.',
   integrations: 'Connect Git hosts, Slack, Jira, and other services.',
   app: 'Set language, privacy, notifications, and Git commit identity.',
   llm: 'Choose your model provider, API keys, and advanced options.',
@@ -133,7 +131,7 @@ const settingsTabDescriptions: Record<string, string> = {
   mcp: 'Add Model Context Protocol servers to extend agent capabilities.',
   organizations: 'Manage credits, organization details, and Git conversation routing.',
   'org-plugins':
-    'Choose which plugins and skills appear for your organization and whether they are enabled in every conversation.',
+    'Add plugin repositories from Git URLs, choose which plugins and skills appear for your organization, and enable them in every conversation.',
 };
 
 const settingsLinks: Array<{
@@ -159,7 +157,7 @@ const settingsLinks: Array<{
   {
     id: 'org-plugins',
     label: 'Plugins',
-    icon: Library,
+    icon: Box,
     tabId: 'org-plugins',
     requiredPermission: 'manage_org_plugins',
   },
@@ -263,7 +261,6 @@ type OrgCatalogKind = 'plugin' | 'skill';
 type OrgPluginCatalogItem = {
   id: string;
   name: string;
-  description: string;
   kind: OrgCatalogKind;
   visible: boolean;
   availableAllConversations: boolean;
@@ -273,7 +270,6 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'cat-static',
     name: 'Static Analysis',
-    description: 'Lint and static analysis across your repositories.',
     kind: 'plugin',
     visible: true,
     availableAllConversations: false,
@@ -281,7 +277,6 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'cat-search',
     name: 'Code Search',
-    description: 'Semantic and text search to navigate large codebases.',
     kind: 'plugin',
     visible: true,
     availableAllConversations: true,
@@ -289,7 +284,6 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'cat-github',
     name: 'GitHub',
-    description: 'Issues, pull requests, and repository operations.',
     kind: 'plugin',
     visible: true,
     availableAllConversations: false,
@@ -297,7 +291,6 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'skill-babysit',
     name: 'babysit',
-    description: 'Triage PR feedback, resolve conflicts, and keep CI green.',
     kind: 'skill',
     visible: true,
     availableAllConversations: false,
@@ -305,7 +298,6 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'skill-canvas',
     name: 'canvas',
-    description: 'Author in-IDE canvases for dashboards and rich layouts.',
     kind: 'skill',
     visible: true,
     availableAllConversations: false,
@@ -313,7 +305,6 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   {
     id: 'skill-create-rule',
     name: 'create-rule',
-    description: 'Generate Cursor rules and persistent project guidance.',
     kind: 'skill',
     visible: false,
     availableAllConversations: false,
@@ -394,7 +385,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [claimRegistry, setClaimRegistry] = useState<Record<string, string | null>>(initialClaimRegistry);
   const [pluginRepoInput, setPluginRepoInput] = useState('');
   const [orgPluginCatalog, setOrgPluginCatalog] = useState<OrgPluginCatalogItem[]>(initialOrgPluginCatalog);
+  const [orgPluginsSearchQuery, setOrgPluginsSearchQuery] = useState('');
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
+
+  const filteredOrgPluginCatalog = useMemo(() => {
+    const q = orgPluginsSearchQuery.trim().toLowerCase();
+    if (!q) return orgPluginCatalog;
+    return orgPluginCatalog.filter((row) => {
+      const name = row.name.toLowerCase();
+      const kind = row.kind.toLowerCase();
+      return name.includes(q) || kind.includes(q);
+    });
+  }, [orgPluginCatalog, orgPluginsSearchQuery]);
 
   useEffect(() => {
     if (initialTab && settingsTabs.some((t) => t.id === initialTab)) {
@@ -738,27 +740,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </span>
           </button>
           <button
-            onClick={() => handleTabClick('plugins')}
-            className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
-              activeTab === 'plugins'
-                ? 'bg-muted/60'
-                : 'hover:bg-muted/40'
-            }`}
-          >
-            <Box
-              className={`w-5 h-5 ${
-                activeTab === 'plugins' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
-              }`}
-            />
-            <span
-              className={`text-sm font-normal whitespace-nowrap ${
-                activeTab === 'plugins' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
-              }`}
-            >
-              Plugins
-            </span>
-          </button>
-          <button
             type="button"
             onClick={() => setCreateOrgModalOpen(true)}
             className="group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/40"
@@ -810,60 +791,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Plugins Content */}
-          {activeTab === 'plugins' && (
-            <div className="flex-1 overflow-auto">
-              <div className="flex flex-col gap-6">
-                <section className="rounded-lg border border-border bg-card p-5">
-                  <div className="mb-4 space-y-1">
-                    <h3 className="text-xl font-semibold leading-6 text-foreground">Plugin Repositories</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Add plugin repositories from Git URLs. Added repositories appear in Plugin Marketplace.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input
-                      value={pluginRepoInput}
-                      onChange={(e) => setPluginRepoInput(e.target.value)}
-                      placeholder="https://github.com/org/plugin-repo"
-                      className="h-10 flex-1 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground placeholder:text-muted-foreground"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAddPluginRepo}
-                      disabled={pluginRepoInput.trim().length === 0}
-                      className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      Add Plugin
-                    </button>
-                  </div>
-                  <div className="mt-4 overflow-hidden rounded-md border border-border">
-                    {pluginRepositories.length > 0 ? (
-                      <ul className="divide-y divide-border">
-                        {pluginRepositories.map((repo) => (
-                          <li key={repo} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                            <span className="truncate text-sm text-foreground">{repo}</span>
-                            <button
-                              type="button"
-                              onClick={() => onRemovePluginRepository?.(repo)}
-                              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground transition-colors hover:bg-muted/60"
-                            >
-                              Remove
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="px-3 py-3 text-sm text-muted-foreground">
-                        No plugin repositories added yet.
-                      </div>
-                    )}
-                  </div>
-                </section>
               </div>
             </div>
           )}
@@ -951,8 +878,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Integrations Content */}
           {activeTab === 'integrations' && (
-            <div className="flex-1 overflow-auto">
-              <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4">
                 {gitSourceDefinitions.map((source) => {
                   const status = gitSourceStatus[source.id];
                   const isConnected = status === 'connected';
@@ -1080,7 +1006,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     Configure
                   </button>
                 </div>
-              </div>
             </div>
           )}
 
@@ -1584,63 +1509,169 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* Org plugins & skills (Admin / Owner) */}
           {activeTab === 'org-plugins' && (
             <div className="flex-1 overflow-auto">
-              <div className="flex flex-col gap-4 max-w-4xl">
-                <div className="overflow-hidden rounded-lg border border-border">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/80">
-                      <tr className="text-left">
-                        <th className="p-3 font-medium text-foreground">Name</th>
-                        <th className="p-3 font-medium text-foreground w-[88px]">Type</th>
-                        <th className="p-3 font-medium text-foreground w-[120px]">Visible</th>
-                        <th className="p-3 font-medium text-foreground min-w-[200px]">All conversations</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {orgPluginCatalog.map((row) => (
-                        <tr key={row.id} className="bg-card">
-                          <td className="p-3 align-top">
-                            <div className="font-medium text-foreground">{row.name}</div>
-                            <div className="text-muted-foreground text-xs mt-1 max-w-md">{row.description}</div>
-                          </td>
-                          <td className="p-3 align-middle capitalize text-muted-foreground">{row.kind}</td>
-                          <td className="p-3 align-middle">
-                            <PluginToggle
-                              checked={row.visible}
-                              onCheckedChange={(next) =>
-                                updateOrgCatalogItem(row.id, {
-                                  visible: next,
-                                  ...(next ? {} : { availableAllConversations: false }),
-                                })
-                              }
-                              aria-label="Visible in UI for members"
-                            />
-                          </td>
-                          <td className="p-3 align-middle">
-                            <div
-                              className={cn(
-                                'flex w-fit items-center gap-2',
-                                !row.visible && 'cursor-not-allowed opacity-40',
-                              )}
+              <div className="flex w-full max-w-5xl flex-col gap-4">
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold leading-6 text-foreground">Plugin Repositories</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add plugin repositories from Git URLs. Added repositories appear in Plugin Marketplace.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      value={pluginRepoInput}
+                      onChange={(e) => setPluginRepoInput(e.target.value)}
+                      placeholder="https://github.com/org/plugin-repo"
+                      className="h-10 flex-1 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground placeholder:text-muted-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddPluginRepo}
+                      disabled={pluginRepoInput.trim().length === 0}
+                      className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Add Plugin
+                    </button>
+                  </div>
+                  <div className="mt-4 overflow-hidden rounded-md border border-border">
+                    {pluginRepositories.length > 0 ? (
+                      <ul className="divide-y divide-border">
+                        {pluginRepositories.map((repo) => (
+                          <li key={repo} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                            <span className="truncate text-sm text-foreground">{repo}</span>
+                            <button
+                              type="button"
+                              onClick={() => onRemovePluginRepository?.(repo)}
+                              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground transition-colors hover:bg-muted/60"
                             >
-                              <PluginToggle
-                                checked={row.visible && row.availableAllConversations}
-                                disabled={!row.visible}
-                                onCheckedChange={(next) =>
-                                  updateOrgCatalogItem(row.id, {
-                                    availableAllConversations: next,
-                                  })
-                                }
-                                aria-label="Enable for every new conversation"
-                              />
-                              <span className="whitespace-normal text-xs text-muted-foreground">
-                                Enable for every new conversation
-                              </span>
-                            </div>
-                          </td>
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="px-3 py-3 text-sm text-muted-foreground">
+                        No plugin repositories added yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="max-w-md space-y-3">
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold leading-6 text-foreground">Plugins & skills</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Search by name or type to filter the organization catalog in the table below.
+                    </p>
+                  </div>
+                  <SearchInput
+                    value={orgPluginsSearchQuery}
+                    onValueChange={setOrgPluginsSearchQuery}
+                    placeholder="Search by name or type…"
+                    aria-label="Search organization plugins and skills"
+                    className="w-full"
+                  />
+                </div>
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="min-w-0">
+                    <table className="w-full table-fixed border-collapse text-sm">
+                      <colgroup>
+                        <col className="min-w-0" />
+                        <col className="w-[6.5rem]" />
+                        <col className="w-[5.5rem]" />
+                        <col className="w-[7rem]" />
+                      </colgroup>
+                      <thead>
+                        <tr className="border-b border-border bg-muted/50">
+                          <th
+                            scope="col"
+                            className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Name
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Type
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Visible
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-2 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                            title="All conversations — enable for every new conversation"
+                          >
+                            All conv.
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {filteredOrgPluginCatalog.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={4}
+                              className="px-4 py-10 text-center text-sm text-muted-foreground"
+                            >
+                              No plugins or skills match your search.
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredOrgPluginCatalog.map((row) => (
+                            <tr
+                              key={row.id}
+                              className="bg-card transition-colors hover:bg-muted/25"
+                            >
+                              <td className="px-4 py-3.5 align-middle">
+                                <span className="font-medium text-foreground">{row.name}</span>
+                              </td>
+                              <td className="px-3 py-3.5 align-middle">
+                                <span className="inline-flex rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium capitalize text-foreground">
+                                  {row.kind}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3.5 align-middle">
+                                <div className="flex justify-center">
+                                  <PluginToggle
+                                    checked={row.visible}
+                                    onCheckedChange={(next) =>
+                                      updateOrgCatalogItem(row.id, {
+                                        visible: next,
+                                        ...(next ? {} : { availableAllConversations: false }),
+                                      })
+                                    }
+                                    aria-label="Visible in UI for members"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-2 py-3.5 align-middle">
+                                <div
+                                  className={cn(
+                                    'flex justify-center',
+                                    !row.visible && 'cursor-not-allowed opacity-40',
+                                  )}
+                                >
+                                  <PluginToggle
+                                    checked={row.visible && row.availableAllConversations}
+                                    disabled={!row.visible}
+                                    onCheckedChange={(next) =>
+                                      updateOrgCatalogItem(row.id, {
+                                        availableAllConversations: next,
+                                      })
+                                    }
+                                    aria-label="Enable for every new conversation"
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>

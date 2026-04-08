@@ -586,7 +586,12 @@ function App() {
         setActiveNavItem('settings');
         setLastNonDrawerNavItem('settings');
         setIsConversationDrawerOpen(false);
-        setSettingsTab(hash === 'settings' ? null : hash.split('/')[1] ?? null);
+        let subTab = hash === 'settings' ? null : hash.split('/')[1] ?? null;
+        if (subTab === 'plugins') {
+          subTab = 'org-plugins';
+          window.history.replaceState(null, '', '#/settings/org-plugins');
+        }
+        setSettingsTab(subTab);
         return;
       }
       if (hash === 'workflows') {
