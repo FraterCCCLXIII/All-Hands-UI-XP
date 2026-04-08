@@ -1,28 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import {
   Bell,
-  Bot,
   BookOpen,
   CalendarClock,
   CheckCircle2,
-  Clock3,
   ChevronLeft,
-  GitBranch,
   Github,
   History,
-  KeyRound,
   MessageSquare,
   Package,
+  Plus,
   PlayCircle,
   MoreVertical,
   Power,
-  Repeat,
-  Server,
   Settings2,
   Trash2,
+  X,
   XCircle,
 } from 'lucide-react';
 import { SearchInput } from '../components/ui/search-input';
+import { Spinner } from '../components/common/Spinner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,13 +29,14 @@ import {
 import { DeleteWorkflowDialog } from '../components/workflow/DeleteWorkflowDialog';
 
 type AutomationStatus = 'active' | 'inactive';
-type AutomationRunStatus = 'success' | 'failed';
+type AutomationRunStatus = 'success' | 'failed' | 'running';
 type AutomationTrigger = 'schedule' | 'event';
 
 type AutomationRunLogEntry = {
   id: string;
   ranAtIso: string;
   status: AutomationRunStatus;
+  conversationId?: string;
 };
 
 type RepositoryTarget = {
@@ -346,15 +344,97 @@ const metadataSections: Array<{
       { key: 'notification', label: 'Notification', icon: Bell },
     ],
   },
-  {
-    title: 'Activity',
-    icon: History,
-    fields: [
-      { key: 'createdAt', label: 'Created', icon: History },
-      { key: 'lastRun', label: 'Last run', icon: Clock3 },
-    ],
-  },
 ];
+
+const configurationMetadataSection = metadataSections[0];
+
+const gitTriggerOptions = [
+  'Pull request opened',
+  'Pull request synchronized',
+  'Pull request reopened',
+  'Pull request merged',
+  'Push to branch',
+  'Tag created',
+  'Release published',
+  'Issue opened',
+  'Issue labeled',
+  'Comment created',
+  'Workflow run completed',
+];
+
+const automationPluginOptions = Array.from(
+  new Set(initialAutomations.flatMap((automation) => automation.plugins))
+);
+
+function MultiSelectBubbleInput({
+  label,
+  options,
+  selectedValues,
+  selectValue,
+  onSelectValueChange,
+  onAdd,
+  onRemove,
+  addButtonLabel,
+}: {
+  label: string;
+  options: string[];
+  selectedValues: string[];
+  selectValue: string;
+  onSelectValueChange: (value: string) => void;
+  onAdd: () => void;
+  onRemove: (value: string) => void;
+  addButtonLabel: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <label className="text-sm font-medium text-foreground">{label}</label>
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={selectValue}
+          onChange={(event) => onSelectValueChange(event.target.value)}
+          className="h-10 min-w-[260px] rounded-md border border-border bg-background px-3 text-sm text-foreground"
+        >
+          <option value="">Select from list</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={!selectValue}
+          className="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground transition-colors hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {addButtonLabel}
+        </button>
+      </div>
+      <div className="flex min-h-10 flex-wrap items-center gap-2 rounded-md border border-border bg-muted/20 p-2">
+        {selectedValues.length > 0 ? (
+          selectedValues.map((value) => (
+            <span
+              key={value}
+              className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
+            >
+              {value}
+              <button
+                type="button"
+                onClick={() => onRemove(value)}
+                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={`Remove ${value}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))
+        ) : (
+          <span className="text-xs text-muted-foreground">No selections yet.</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function AssociatedResources({
   title,
@@ -397,7 +477,7 @@ function PromptSection({ prompt }: { prompt: string }) {
         </div>
       </div>
       <div className="px-5 py-4">
-        <div className="rounded-xl bg-background/40 p-4">
+        <div className="rounded-xl bg-background/40">
           <p className="text-sm leading-6 text-foreground">{prompt}</p>
         </div>
       </div>
@@ -447,7 +527,7 @@ function MetadataSection({
           const isRepositoriesField = field.key === 'repository';
 
           return (
-            <div key={field.key} className="rounded-xl border border-border bg-background/40 p-4">
+            <div key={field.key} className="pb-4">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                 <Icon className="h-3.5 w-3.5" />
                 <span>{field.label}</span>
@@ -476,7 +556,13 @@ function MetadataSection({
   );
 }
 
-function ActivityLogSection({ runHistory }: { runHistory: AutomationRunLogEntry[] }) {
+function ActivityLogSection({
+  runHistory,
+  onOpenConversation,
+}: {
+  runHistory: AutomationRunLogEntry[];
+  onOpenConversation?: (conversationId: string) => void;
+}) {
   return (
     <section className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
@@ -488,21 +574,65 @@ function ActivityLogSection({ runHistory }: { runHistory: AutomationRunLogEntry[
       <ul className="divide-y divide-border">
         {runHistory.map((run) => {
           const isSuccess = run.status === 'success';
+          const isRunning = run.status === 'running';
           const runDateLabel = runDateFormatter.format(new Date(run.ranAtIso));
 
-          return (
-            <li
-              key={run.id}
-              className="flex items-center justify-between px-5 py-3"
-            >
+          const conversationId = run.conversationId;
+          const hasLinkedConversation = Boolean(conversationId);
+
+          return hasLinkedConversation ? (
+            <li key={run.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (conversationId) {
+                    onOpenConversation?.(conversationId);
+                  }
+                }}
+                className="flex w-full items-center justify-between px-5 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                aria-label={`Open conversation for run at ${runDateLabel}`}
+              >
+                <div className="text-sm text-foreground">{runDateLabel}</div>
+                <div
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                    isRunning
+                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                      : isSuccess
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                      : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
+                  }`}
+                >
+                  {isRunning ? (
+                    <Spinner className="h-3.5 w-3.5" color="border-t-amber-300" />
+                  ) : isSuccess ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  ) : (
+                    <XCircle className="h-3.5 w-3.5" />
+                  )}
+                  {isRunning ? 'Running' : isSuccess ? 'Successful' : 'Failed'}
+                </div>
+              </button>
+            </li>
+          ) : (
+            <li key={run.id} className="flex items-center justify-between px-5 py-3">
               <div className="text-sm text-foreground">{runDateLabel}</div>
               <div
-                className={`inline-flex items-center gap-1 text-xs font-medium ${
-                  isSuccess ? 'text-emerald-300' : 'text-rose-300'
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                  isRunning
+                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                    : isSuccess
+                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                    : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
                 }`}
               >
-                {isSuccess ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                {isSuccess ? 'Successful' : 'Failed'}
+                {isRunning ? (
+                  <Spinner className="h-3.5 w-3.5" color="border-t-amber-300" />
+                ) : isSuccess ? (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                ) : (
+                  <XCircle className="h-3.5 w-3.5" />
+                )}
+                {isRunning ? 'Running' : isSuccess ? 'Successful' : 'Failed'}
               </div>
             </li>
           );
@@ -510,6 +640,15 @@ function ActivityLogSection({ runHistory }: { runHistory: AutomationRunLogEntry[
       </ul>
     </section>
   );
+}
+
+interface AutomationsScreenProps {
+  onRunNow?: (payload: {
+    automationTitle: string;
+    repository: string;
+    branch: string;
+  }) => { conversationId: string } | undefined;
+  onOpenConversation?: (conversationId: string) => void;
 }
 
 function StatusToggle({
@@ -538,11 +677,25 @@ function StatusToggle({
   );
 }
 
-export const AutomationsScreen: React.FC = () => {
+export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
+  onRunNow,
+  onOpenConversation,
+}) => {
   const [search, setSearch] = useState('');
   const [automations, setAutomations] = useState(initialAutomations);
   const [selectedAutomationId, setSelectedAutomationId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isCreatingAutomation, setIsCreatingAutomation] = useState(false);
+  const [newAutomationTitle, setNewAutomationTitle] = useState('');
+  const [newAutomationPrompt, setNewAutomationPrompt] = useState('');
+  const [newAutomationRepository, setNewAutomationRepository] = useState('acme/frontend-app');
+  const [newAutomationBranch, setNewAutomationBranch] = useState('main');
+  const [newAutomationModel, setNewAutomationModel] = useState('GPT-5');
+  const [newAutomationNotification, setNewAutomationNotification] = useState('Slack digest to #automations');
+  const [selectedTriggerOption, setSelectedTriggerOption] = useState('');
+  const [selectedPluginOption, setSelectedPluginOption] = useState('');
+  const [selectedTriggerEvents, setSelectedTriggerEvents] = useState<string[]>([]);
+  const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
 
   const filteredAutomations = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -551,14 +704,12 @@ export const AutomationsScreen: React.FC = () => {
     return automations.filter((automation) =>
       [
         automation.title,
-        automation.description,
         formatRepositories(automation),
         formatBranches(automation),
         automation.trigger,
         automation.schedule ?? '',
         automation.event ?? '',
         automation.model,
-        automation.owner,
       ]
         .join(' ')
         .toLowerCase()
@@ -593,6 +744,100 @@ export const AutomationsScreen: React.FC = () => {
     setDeleteTargetId((prev) => (prev === automationId ? null : prev));
   };
 
+  const resetCreateForm = () => {
+    setNewAutomationTitle('');
+    setNewAutomationPrompt('');
+    setNewAutomationRepository('acme/frontend-app');
+    setNewAutomationBranch('main');
+    setNewAutomationModel('GPT-5');
+    setNewAutomationNotification('Slack digest to #automations');
+    setSelectedTriggerOption('');
+    setSelectedPluginOption('');
+    setSelectedTriggerEvents([]);
+    setSelectedPlugins([]);
+  };
+
+  const handleCreateAutomation = () => {
+    const title = newAutomationTitle.trim();
+    const prompt = newAutomationPrompt.trim();
+    if (!title || !prompt) return;
+
+    const now = new Date();
+    const createdAt = new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(now);
+
+    const normalizedRepository = newAutomationRepository.trim() || 'acme/frontend-app';
+    const normalizedBranch = newAutomationBranch.trim() || 'main';
+
+    const createdAutomation: AutomationItem = {
+      id: `auto-${now.getTime()}`,
+      title,
+      description: '',
+      prompt,
+      status: 'active',
+      repository: normalizedRepository,
+      branch: normalizedBranch,
+      trigger: 'event',
+      event: selectedTriggerEvents.join(', ') || 'Push to branch',
+      model: newAutomationModel.trim() || 'GPT-5',
+      notification: newAutomationNotification.trim() || 'Slack digest to #automations',
+      owner: '',
+      createdAt,
+      lastRun: 'Not run yet',
+      nextRun: 'On matching event',
+      runsThisWeek: 0,
+      plugins: selectedPlugins.length > 0 ? selectedPlugins : ['GitHub'],
+      skills: ['Custom workflow'],
+      mcpServers: ['GitHub MCP'],
+      secrets: ['GITHUB_TOKEN'],
+      runHistory: [],
+      repositoryTargets: [{ repository: normalizedRepository, branch: normalizedBranch }],
+    };
+
+    setAutomations((prev) => [createdAutomation, ...prev]);
+    setIsCreatingAutomation(false);
+    resetCreateForm();
+    setSelectedAutomationId(createdAutomation.id);
+  };
+
+  const handleRunNow = (automationId: string) => {
+    const targetAutomation = automations.find((automation) => automation.id === automationId);
+    if (!targetAutomation) return;
+
+    const primaryTarget = getRepositoryTargets(targetAutomation)[0] ?? {
+      repository: targetAutomation.repository,
+      branch: targetAutomation.branch || 'main',
+    };
+
+    const runNowResult = onRunNow?.({
+      automationTitle: targetAutomation.title,
+      repository: primaryTarget.repository,
+      branch: primaryTarget.branch || 'main',
+    });
+
+    const runEntry: AutomationRunLogEntry = {
+      id: `run-now-${automationId}-${Date.now()}`,
+      ranAtIso: new Date().toISOString(),
+      status: 'running',
+      conversationId: runNowResult?.conversationId,
+    };
+
+    setAutomations((prev) =>
+      prev.map((automation) =>
+        automation.id === automationId
+          ? {
+              ...automation,
+              lastRun: 'Running now',
+              runHistory: [runEntry, ...automation.runHistory],
+            }
+          : automation
+      )
+    );
+  };
+
   const renderAutomationRow = (automation: AutomationItem) => (
     <div
       key={automation.id}
@@ -607,8 +852,7 @@ export const AutomationsScreen: React.FC = () => {
           <div className="flex items-center gap-3">
             <h3 className="truncate text-base font-medium text-foreground">{automation.title}</h3>
           </div>
-          <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{automation.description}</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
               <Github className="h-3.5 w-3.5" />
               {formatRepositories(automation)}
@@ -674,7 +918,7 @@ export const AutomationsScreen: React.FC = () => {
         <button
           type="button"
           onClick={() => setSelectedAutomationId(null)}
-          className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4" />
           <span>Back to Automations</span>
@@ -694,7 +938,6 @@ export const AutomationsScreen: React.FC = () => {
                 {selectedAutomation.status === 'active' ? 'Active' : 'Inactive'}
               </span>
             </div>
-            <p className="mt-4 max-w-3xl text-sm text-muted-foreground">{selectedAutomation.description}</p>
           </div>
           <div className="flex items-center gap-3">
             <StatusToggle
@@ -728,39 +971,35 @@ export const AutomationsScreen: React.FC = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <button
+              type="button"
+              onClick={() => handleRunNow(selectedAutomation.id)}
+              className="h-8 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
+            >
+              Run now
+            </button>
           </div>
         </div>
 
         <div className="mt-8 space-y-4">
           <PromptSection prompt={selectedAutomation.prompt} />
-          <MetadataSection
-            title={metadataSections[0].title}
-            icon={metadataSections[0].icon}
-            fields={metadataSections[0].fields}
-            automation={selectedAutomation}
-          />
+          {configurationMetadataSection && (
+            <MetadataSection
+              title={configurationMetadataSection.title}
+              icon={configurationMetadataSection.icon}
+              fields={configurationMetadataSection.fields}
+              automation={selectedAutomation}
+            />
+          )}
           <AssociatedResources
             title="Plugins"
             icon={Package}
             items={selectedAutomation.plugins}
           />
-          <AssociatedResources
-            title="MCP Servers"
-            icon={Server}
-            items={selectedAutomation.mcpServers}
+          <ActivityLogSection
+            runHistory={selectedAutomation.runHistory}
+            onOpenConversation={onOpenConversation}
           />
-          <AssociatedResources
-            title="Secrets"
-            icon={KeyRound}
-            items={selectedAutomation.secrets}
-          />
-          <MetadataSection
-            title={metadataSections[1].title}
-            icon={metadataSections[1].icon}
-            fields={metadataSections[1].fields}
-            automation={selectedAutomation}
-          />
-          <ActivityLogSection runHistory={selectedAutomation.runHistory} />
         </div>
         <DeleteWorkflowDialog
           open={deleteTargetAutomation !== null}
@@ -775,6 +1014,159 @@ export const AutomationsScreen: React.FC = () => {
             }
           }}
         />
+        </div>
+      </div>
+    );
+  }
+
+  if (isCreatingAutomation) {
+    return (
+      <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+        <div className="mx-auto w-full max-w-5xl">
+          <button
+            type="button"
+            onClick={() => {
+              setIsCreatingAutomation(false);
+              resetCreateForm();
+            }}
+            className="mb-6 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Back to Automations</span>
+          </button>
+
+          <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground">Create Automation</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Configure an automation with Git triggers and plugin dependencies.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Name</span>
+                <input
+                  value={newAutomationTitle}
+                  onChange={(event) => setNewAutomationTitle(event.target.value)}
+                  placeholder="Weekly release risk check"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="text-sm font-medium text-foreground">Prompt</span>
+                <textarea
+                  value={newAutomationPrompt}
+                  onChange={(event) => setNewAutomationPrompt(event.target.value)}
+                  rows={5}
+                  placeholder="Describe what the automation should do..."
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </label>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Repository</span>
+                  <input
+                    value={newAutomationRepository}
+                    onChange={(event) => setNewAutomationRepository(event.target.value)}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Branch</span>
+                  <input
+                    value={newAutomationBranch}
+                    onChange={(event) => setNewAutomationBranch(event.target.value)}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Model</span>
+                  <input
+                    value={newAutomationModel}
+                    onChange={(event) => setNewAutomationModel(event.target.value)}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  />
+                </label>
+                <label className="space-y-2">
+                  <span className="text-sm font-medium text-foreground">Notification</span>
+                  <input
+                    value={newAutomationNotification}
+                    onChange={(event) => setNewAutomationNotification(event.target.value)}
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  />
+                </label>
+              </div>
+
+              <MultiSelectBubbleInput
+                label="Git Trigger Events"
+                options={gitTriggerOptions}
+                selectedValues={selectedTriggerEvents}
+                selectValue={selectedTriggerOption}
+                onSelectValueChange={setSelectedTriggerOption}
+                onAdd={() => {
+                  if (!selectedTriggerOption) return;
+                  setSelectedTriggerEvents((prev) =>
+                    prev.includes(selectedTriggerOption)
+                      ? prev
+                      : [...prev, selectedTriggerOption]
+                  );
+                  setSelectedTriggerOption('');
+                }}
+                onRemove={(value) =>
+                  setSelectedTriggerEvents((prev) => prev.filter((item) => item !== value))
+                }
+                addButtonLabel="Add trigger"
+              />
+
+              <MultiSelectBubbleInput
+                label="Plugins"
+                options={automationPluginOptions}
+                selectedValues={selectedPlugins}
+                selectValue={selectedPluginOption}
+                onSelectValueChange={setSelectedPluginOption}
+                onAdd={() => {
+                  if (!selectedPluginOption) return;
+                  setSelectedPlugins((prev) =>
+                    prev.includes(selectedPluginOption)
+                      ? prev
+                      : [...prev, selectedPluginOption]
+                  );
+                  setSelectedPluginOption('');
+                }}
+                onRemove={(value) =>
+                  setSelectedPlugins((prev) => prev.filter((item) => item !== value))
+                }
+                addButtonLabel="Add plugin"
+              />
+            </div>
+
+            <div className="mt-8 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreatingAutomation(false);
+                  resetCreateForm();
+                }}
+                className="h-9 rounded-md border border-border bg-background px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCreateAutomation}
+                disabled={!newAutomationTitle.trim() || !newAutomationPrompt.trim()}
+                className="h-9 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Create Automation
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -799,6 +1191,14 @@ export const AutomationsScreen: React.FC = () => {
             View active and inactive automations, search by metadata, and inspect read-only details.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsCreatingAutomation(true)}
+          className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
+        >
+          <Plus className="h-4 w-4" />
+          Add Automation
+        </button>
       </div>
 
       <div className="mt-6 max-w-sm">

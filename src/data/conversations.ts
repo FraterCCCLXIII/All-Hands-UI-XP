@@ -2,6 +2,7 @@ export interface ConversationSummary {
   id: string;
   name: string;
   version: string;
+  tag?: string;
   repo: string;
   branch?: string;
   time: string;

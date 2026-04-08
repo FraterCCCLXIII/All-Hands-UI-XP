@@ -911,7 +911,7 @@ export function SkillsScreen() {
                         onClick={() => handleSelectSkill(skill)}
                         title={skill.skillName ?? skill.title}
                         description={skill.description}
-                        icon={<Wrench className="h-4 w-4" />}
+                        icon={<Wrench className="h-5 w-5" />}
                         iconPosition="left"
                         interactive
                         className="w-full"

@@ -12,6 +12,7 @@ import {
   AutomationsScreen,
   LoadingScreen,
   SkillsScreen,
+  PluginMarketplaceScreen,
   LoginScreen,
   ActiveChatScreen,
   ComponentLibraryScreen,
@@ -29,6 +30,7 @@ import {
   NewLlmSwitcherFlowchart,
   NewLlmSwitcher2Flowchart,
   WorkflowsScreen,
+  ClaimStatesScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -161,6 +163,7 @@ const actionSlugs: Record<string, string> = {
   dashboard: 'dashboard',
   automations: 'automations',
   skills: 'skills',
+  'plugin-marketplace': 'plugin-marketplace',
   components: 'components',
   'new-components': 'new-components',
   'new-llm-switcher': 'new-llm-switcher',
@@ -168,6 +171,7 @@ const actionSlugs: Record<string, string> = {
   conversations: 'conversations',
   settings: 'settings',
   workflows: 'workflows',
+  'claim-states': 'claim-states',
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
@@ -209,6 +213,9 @@ function App() {
   const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
   const [activeFlowchart, setActiveFlowchart] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<string | null>(null);
+  const [installedPluginRepos, setInstalledPluginRepos] = useState<string[]>([]);
+  const [drawerConversations, setDrawerConversations] = useState(conversationSummaries);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isActiveChatView, setIsActiveChatView] = useState(false);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
@@ -221,12 +228,14 @@ function App() {
   const isDashboardView = activeNavItem === 'dashboard';
   const isAutomationsView = activeNavItem === 'automations';
   const isSkillsView = activeNavItem === 'skills';
+  const isPluginMarketplaceView = activeNavItem === 'plugin-marketplace';
   const isSettingsView = activeNavItem === 'settings';
   const isComponentsView = activeNavItem === 'components';
   const isNewComponentsView = activeNavItem === 'new-components';
   const isNewLlmSwitcherView = activeNavItem === 'new-llm-switcher';
   const isNewLlmSwitcherView2 = activeNavItem === 'new-llm-switcher-2';
   const isWorkflowsView = activeNavItem === 'workflows';
+  const isClaimStatesView = activeNavItem === 'claim-states';
   const showFlowchartView = Boolean(activeFlowchart);
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showFigmaExportView = figmaExportRoute !== null;
@@ -236,6 +245,7 @@ function App() {
     !isDashboardView &&
     !isAutomationsView &&
     !isSkillsView &&
+    !isPluginMarketplaceView &&
     !isSettingsView &&
     !isComponentsView &&
     !isNewComponentsView &&
@@ -336,10 +346,43 @@ function App() {
   const handleConversationDrawerChange = useCallback(
     (open: boolean) => {
       setIsConversationDrawerOpen(open);
+      if (!open) {
+        setActiveConversationId(null);
+      }
       navigateAppRoute(open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
     },
     [lastNonDrawerNavItem]
   );
+
+  const handleAutomationRunNow = useCallback(
+    (payload: { automationTitle: string; repository: string; branch: string }) => {
+      const shortId = Math.random().toString(16).slice(2, 7);
+      const conversationId = `automation-${Date.now()}`;
+      setDrawerConversations((prev) => [
+        {
+          id: conversationId,
+          name: `Automation ${shortId} · ${payload.automationTitle}`,
+          version: 'V1',
+          tag: 'Automation',
+          repo: payload.repository,
+          branch: payload.branch,
+          time: 'just now',
+        },
+        ...prev,
+      ]);
+      setActiveConversationId(conversationId);
+      setIsConversationDrawerOpen(true);
+      navigateAppRoute(actionSlugs.conversations);
+      return { conversationId };
+    },
+    []
+  );
+
+  const handleOpenAutomationConversation = useCallback((conversationId: string) => {
+    setActiveConversationId(conversationId);
+    setIsConversationDrawerOpen(true);
+    navigateAppRoute(actionSlugs.conversations);
+  }, []);
 
   const handleNavItemClick = useCallback(
     (action: string) => {
@@ -370,11 +413,13 @@ function App() {
         return;
       }
       if (action === 'conversations') {
-        setIsConversationDrawerOpen((prev) => {
-          const next = !prev;
-          navigateAppRoute(next ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
-          return next;
-        });
+        const nextOpenState = !isConversationDrawerOpen;
+        setIsConversationDrawerOpen(nextOpenState);
+        navigateAppRoute(
+          nextOpenState
+            ? actionSlugs.conversations
+            : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code
+        );
         return;
       }
 
@@ -391,7 +436,7 @@ function App() {
       };
       setMessages((prev) => [...prev, tetrisMessage]);
     }
-  }, []);
+  }, [isConversationDrawerOpen, lastNonDrawerNavItem]);
 
   const handleFlowPrototypeClick = useCallback((flowId: string) => {
     setActiveFlowPrototype(null);
@@ -775,8 +820,16 @@ function App() {
                   )}
                 </AnimatePresence>
                 {isDashboardView && <DashboardScreen />}
-                {isAutomationsView && <AutomationsScreen />}
+                {isAutomationsView && (
+                  <AutomationsScreen
+                    onRunNow={handleAutomationRunNow}
+                    onOpenConversation={handleOpenAutomationConversation}
+                  />
+                )}
                 {isSkillsView && <SkillsScreen />}
+                {isPluginMarketplaceView && (
+                  <PluginMarketplaceScreen installedPluginRepos={installedPluginRepos} />
+                )}
                 {isComponentsView && <ComponentLibraryScreen />}
                 {isNewComponentsView && <NewComponentsScreen />}
                 {isNewLlmSwitcherView && <NewLlmSwitcherScreen />}
@@ -787,9 +840,19 @@ function App() {
                     onTabChange={(tab) => {
                       navigateAppRoute(`#/settings/${tab}`);
                     }}
+                    pluginRepositories={installedPluginRepos}
+                    onAddPluginRepository={(repoUrl: string) =>
+                      setInstalledPluginRepos((prev) =>
+                        prev.includes(repoUrl) ? prev : [...prev, repoUrl]
+                      )
+                    }
+                    onRemovePluginRepository={(repoUrl: string) =>
+                      setInstalledPluginRepos((prev) => prev.filter((repo) => repo !== repoUrl))
+                    }
                   />
                 )}
                 {isWorkflowsView && <WorkflowsScreen />}
+                {isClaimStatesView && <ClaimStatesScreen />}
                 {showChatView && !isActiveChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
@@ -861,11 +924,6 @@ function App() {
                         </div>
                       </div>
                     )}
-                    <ConversationDrawer
-                      open={isConversationDrawerOpen}
-                      onOpenChange={handleConversationDrawerChange}
-                      conversations={conversationSummaries}
-                    />
                   </div>
                 )}
               </div>
@@ -878,6 +936,14 @@ function App() {
                 </>
               )}
             </div>
+            {showMainApp && showLeftNav && (
+              <ConversationDrawer
+                open={isConversationDrawerOpen}
+                onOpenChange={handleConversationDrawerChange}
+                conversations={drawerConversations}
+                highlightedConversationId={activeConversationId}
+              />
+            )}
             <UxTourOverlay
               isActive={uxTourController.isActive}
               step={uxTourController.activeStep}

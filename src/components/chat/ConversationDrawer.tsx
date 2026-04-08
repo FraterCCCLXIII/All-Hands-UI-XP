@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Download, GitBranch, Github, List, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
+import { Download, GitBranch, Github, MoreVertical, Pencil, Trash } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,10 +14,29 @@ interface ConversationDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   conversations: ConversationSummary[];
+  highlightedConversationId?: string | null;
 }
 
-export function ConversationDrawer({ open, onOpenChange, conversations }: ConversationDrawerProps) {
+export function ConversationDrawer({
+  open,
+  onOpenChange,
+  conversations,
+  highlightedConversationId = null,
+}: ConversationDrawerProps) {
   const items = useMemo(() => conversations, [conversations]);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open || !highlightedConversationId || !panelRef.current) {
+      return;
+    }
+
+    const target = panelRef.current.querySelector<HTMLElement>(
+      `[data-conversation-id="${highlightedConversationId}"]`
+    );
+
+    target?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [highlightedConversationId, open]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -25,17 +44,17 @@ export function ConversationDrawer({ open, onOpenChange, conversations }: Conver
         side="left"
         overlayClassName="bg-transparent pointer-events-none left-16 right-0"
         hideClose
-        className="p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-40 flex flex-row"
+        onPointerDownOutside={(event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.closest('[data-conversation-toggle="true"]')) {
+            // Let the nav toggle button control open/close state itself.
+            event.preventDefault();
+          }
+        }}
+        className="p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-40"
       >
-        <button
-          type="button"
-          onClick={() => onOpenChange(false)}
-          className="flex w-12 shrink-0 flex-col items-center justify-center gap-1 border-r border-border bg-sidebar-accent/50 py-4 text-sidebar-foreground transition-colors hover:bg-sidebar-accent"
-          aria-label="Close conversations"
-        >
-          <List className="w-5 h-5" />
-        </button>
         <div
+          ref={panelRef}
           data-testid="conversation-panel"
           className="flex-1 min-w-0 h-full bg-card overflow-y-auto hide-scrollbar"
         >
@@ -43,7 +62,12 @@ export function ConversationDrawer({ open, onOpenChange, conversations }: Conver
             <div
               key={conversation.id}
               data-testid="conversation-card"
-              className="relative h-auto w-full p-3.5 border-b border-border cursor-pointer hover:bg-muted/60 transition-colors"
+              data-conversation-id={conversation.id}
+              className={`relative h-auto w-full border-b border-border p-3.5 transition-colors ${
+                conversation.id === highlightedConversationId
+                  ? 'bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/40'
+                  : 'cursor-pointer hover:bg-muted/60'
+              }`}
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden mr-2">
@@ -63,7 +87,13 @@ export function ConversationDrawer({ open, onOpenChange, conversations }: Conver
                     {conversation.name}
                   </p>
                 </div>
-                <div className="group">
+                <div className="ml-auto flex items-center gap-2">
+                  {conversation.tag && (
+                    <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                      {conversation.tag}
+                    </span>
+                  )}
+                  <div className="group">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button
@@ -95,6 +125,7 @@ export function ConversationDrawer({ open, onOpenChange, conversations }: Conver
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  </div>
                 </div>
               </div>
               <div className="flex flex-row justify-between items-center mt-1">

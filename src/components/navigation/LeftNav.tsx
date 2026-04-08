@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bot, Box, List, Plus, SquareKanban, Workflow, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles, User } from 'lucide-react';
+import { Bot, Box, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles, User, Megaphone, MessageCircle } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
@@ -7,14 +7,40 @@ import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 const highlightCards = [
   { title: 'Docs', text: 'Build, integrate, and scale with ease.', url: 'https://docs.openhands.dev/', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M8.53787 11.87L8.49787 11C8.49787 10.4696 8.70858 9.96086 9.08366 9.58579C9.45873 9.21071 9.96744 9 10.4979 9H14.1699C14.7003 9.00011 15.2089 9.2109 15.5839 9.586L16.4119 10.414C16.7869 10.7891 17.2955 10.9999 17.8259 11H21.8079C22.0858 11 22.3607 11.0579 22.615 11.17C22.8693 11.2821 23.0974 11.446 23.2848 11.6512C23.4723 11.8564 23.6149 12.0985 23.7035 12.3618C23.7922 12.6252 23.825 12.9042 23.7999 13.181L23.1629 20.181C23.1177 20.6779 22.8884 21.14 22.5201 21.4766C22.1517 21.8131 21.6708 21.9998 21.1719 22H10.8239C10.3249 21.9998 9.84404 21.8131 9.47567 21.4766C9.1073 21.14 8.87803 20.6779 8.83287 20.181L8.19587 13.181C8.15326 12.7178 8.27426 12.2543 8.53787 11.871V11.87ZM10.1879 12C10.049 12 9.91156 12.0289 9.78445 12.085C9.65734 12.141 9.5433 12.2229 9.44959 12.3254C9.35589 12.428 9.28457 12.5489 9.2402 12.6806C9.19583 12.8122 9.17937 12.9516 9.19187 13.09L9.82887 20.09C9.85132 20.3385 9.96584 20.5696 10.1499 20.7379C10.334 20.9063 10.5744 20.9998 10.8239 21H21.1719C21.4213 20.9998 21.6617 20.9063 21.8458 20.7379C22.0299 20.5696 22.1444 20.3385 22.1669 20.09L22.8039 13.09C22.8164 12.9516 22.7999 12.8122 22.7555 12.6806C22.7112 12.5489 22.6399 12.428 22.5462 12.3254C22.4524 12.2229 22.3384 12.141 22.2113 12.085C22.0842 12.0289 21.9468 12 21.8079 12H10.1879ZM14.8779 10.293C14.7849 10.2 14.6745 10.1263 14.553 10.076C14.4316 10.0257 14.3014 9.9999 14.1699 10H10.4979C10.2359 9.99995 9.9844 10.1027 9.7974 10.2861C9.6104 10.4696 9.50285 10.7191 9.49787 10.981L9.50387 11.12C9.71787 11.042 9.94787 11 10.1879 11H15.5839L14.8769 10.293H14.8779Z" fill="currentColor"/></svg> },
   { title: 'Blog', text: 'Ideas, updates, and insights that inspire.', url: '/blog', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M22.5 11C22.6326 11 22.7598 11.0527 22.8536 11.1464C22.9473 11.2402 23 11.3674 23 11.5V20.5C23 20.6326 22.9473 20.7598 22.8536 20.8536C22.7598 20.9473 22.6326 21 22.5 21H9.5C9.36739 21 9.24021 20.9473 9.14645 20.8536C9.05268 20.7598 9 20.6326 9 20.5V11.5C9 11.3674 9.05268 11.2402 9.14645 11.1464C9.24021 11.0527 9.36739 11 9.5 11H22.5ZM9.5 10C9.10218 10 8.72064 10.158 8.43934 10.4393C8.15804 10.7206 8 11.1022 8 11.5V20.5C8 20.8978 8.15804 21.2794 8.43934 21.5607C8.72064 21.842 9.10218 22 9.5 22H22.5C22.8978 22 23.2794 21.842 23.5607 21.5607C23.842 21.2794 24 20.8978 24 20.5V11.5C24 11.1022 23.842 10.7206 23.5607 10.4393C23.2794 10.158 22.8978 10 22.5 10H9.5Z" fill="currentColor"/><path d="M11 16.5C11 16.3674 11.0527 16.2402 11.1464 16.1464C11.2402 16.0527 11.3674 16 11.5 16H20.5C20.6326 16 20.7598 16.0527 20.8536 16.1464C20.9473 16.2402 21 16.3674 21 16.5C21 16.6326 20.9473 16.7598 20.8536 16.8536C20.7598 16.9473 20.6326 17 20.5 17H11.5C11.3674 17 11.2402 16.9473 11.1464 16.8536C11.0527 16.7598 11 16.6326 11 16.5ZM11 18.5C11 18.3674 11.0527 18.2402 11.1464 18.1464C11.2402 18.0527 11.3674 18 11.5 18H17.5C17.6326 18 17.7598 18.0527 17.8536 18.1464C17.9473 18.2402 18 18.3674 18 18.5C18 18.6326 17.9473 18.7598 17.8536 18.8536C17.7598 18.9473 17.6326 19 17.5 19H11.5C11.3674 19 11.2402 18.9473 11.1464 18.8536C11.0527 18.7598 11 18.6326 11 18.5ZM11 13.5C11 13.3674 11.0527 13.2402 11.1464 13.1464C11.2402 13.0527 11.3674 13 11.5 13H20.5C20.6326 13 20.7598 13.0527 20.8536 13.1464C20.9473 13.2402 21 13.3674 21 13.5V14.5C21 14.6326 20.9473 14.7598 20.8536 14.8536C20.7598 14.9473 20.6326 15 20.5 15H11.5C11.3674 15 11.2402 14.9473 11.1464 14.8536C11.0527 14.7598 11 14.6326 11 14.5V13.5Z" fill="currentColor"/></svg> },
-  { title: 'Press', text: 'News, releases, and media highlights.', url: '/press', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M14.5 9C14.1022 9 13.7206 9.15804 13.4393 9.43934C13.158 9.72064 13 10.1022 13 10.5V11H9.5C9.10218 11 8.72064 11.158 8.43934 11.4393C8.15804 11.7206 8 12.1022 8 12.5V20.5C8 20.8978 8.15804 21.2794 8.43934 21.5607C8.72064 21.842 9.10218 22 9.5 22H22.5C22.8978 22 23.2794 21.842 23.5607 21.5607C23.842 21.2794 24 20.8978 24 20.5V12.5C24 12.1022 23.842 11.7206 23.5607 11.4393C23.2794 11.158 22.8978 11 22.5 11H19V10.5C19 10.1022 18.842 9.72064 18.5607 9.43934C18.2794 9.15804 17.8978 9 17.5 9H14.5Z" fill="currentColor"/></svg> },
-  { title: 'Community', text: 'Connect, share, and grow together.', url: 'http://openhands.dev/joinslack', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M19 14C19 14.7956 18.6839 15.5587 18.1213 16.1213C17.5587 16.6839 16.7956 17 16 17C15.2044 17 14.4413 16.6839 13.8787 16.1213C13.3161 15.5587 13 14.7956 13 14C13 13.2044 13.3161 12.4413 13.8787 11.8787C14.4413 11.3161 15.2044 11 16 11C16.7956 11 17.5587 11.3161 18.1213 11.8787C18.6839 12.4413 19 13.2044 19 14Z" fill="currentColor"/><path d="M10 8C9.46957 8 8.96086 8.21071 8.58579 8.58579C8.21071 8.96086 8 9.46957 8 10V22C8 22.5304 8.21071 23.0391 8.58579 23.4142C8.96086 23.7893 9.46957 24 10 24H22C22.5304 24 23.0391 23.7893 23.4142 23.4142C23.7893 23.0391 24 22.5304 24 22V10C24 9.46957 23.7893 8.96086 23.4142 8.58579C23.0391 8.21071 22.5304 8 22 8H10Z" fill="currentColor"/></svg> },
+  {
+    title: 'Press',
+    text: 'News, releases, and media highlights.',
+    url: '/press',
+    icon: (
+      <div className="flex h-8 w-8 items-center justify-center rounded-[2.66667px] bg-black text-white">
+        <Megaphone className="h-5 w-5" />
+      </div>
+    ),
+  },
+  {
+    title: 'Community',
+    text: 'Connect, share, and grow together.',
+    url: 'http://openhands.dev/joinslack',
+    icon: (
+      <div className="flex h-8 w-8 items-center justify-center rounded-[2.66667px] bg-black text-white">
+        <MessageCircle className="h-5 w-5" />
+      </div>
+    ),
+  },
   { title: 'Careers', text: 'Learn more about our open roles.', url: 'https://jobs.ashbyhq.com/OpenHands', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M19.7422 18.3439C20.5329 17.2673 21 15.9382 21 14.5C21 10.9101 18.0899 8 14.5 8C10.9101 8 8 10.9101 8 14.5C8 18.0899 10.9101 21 14.5 21C15.9386 21 17.268 20.5327 18.3448 19.7415L18.3439 19.7422C18.3734 19.7822 18.4062 19.8204 18.4424 19.8566L22.2929 23.7071C22.6834 24.0976 23.3166 24.0976 23.7071 23.7071C24.0976 23.3166 24.0976 22.6834 23.7071 22.2929L19.8566 18.4424C19.8204 18.4062 19.7822 18.3734 19.7422 18.3439ZM20 14.5C20 17.5376 17.5376 20 14.5 20C11.4624 20 9 17.5376 9 14.5C9 11.4624 11.4624 9 14.5 9C17.5376 9 20 11.4624 20 14.5Z" fill="currentColor"/></svg> },
 ];
 
 function AutomationsIcon({ className }: { className?: string }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className={className} aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="none"
+      className={`${className ?? ''} block`.trim()}
+      aria-hidden="true"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <g clipPath="url(#automations-icon-clip)">
         <path d="M10 18.1818V16.5454" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
         <path d="M10 1.81812V3.45448" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
@@ -44,7 +70,7 @@ const navItems = [
   { icon: Plus, label: 'Create repository', action: 'new-project' },
   { icon: List, label: 'List view', action: 'conversations' },
   { icon: Bot, label: 'Robot assistant', action: 'skills' },
-  { icon: Workflow, label: 'Workflow builder', action: 'workflows' },
+  { icon: Box, label: 'Plugin Marketplace', action: 'plugin-marketplace' },
   { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
   { icon: SquareKanban, label: 'Dashboard view', action: 'dashboard' },
 ];
@@ -125,13 +151,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
           <PopoverTrigger asChild>
               <button
                 type="button"
-                className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground"
+                className="w-9 h-9 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground"
                 aria-label="Hyperview logo"
                 onMouseEnter={handleLogoMouseEnter}
                 onMouseLeave={handleLogoMouseLeave}
               >
               <svg
-                className="w-7 h-7 text-sidebar-foreground"
+                className="w-8 h-8 text-sidebar-foreground"
                 viewBox="0 0 133.88 91.13"
                 role="img"
                 aria-hidden="true"
@@ -186,22 +212,20 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             item.action === 'conversations'
               ? isConversationDrawerOpen
               : activeNavItem === item.action;
-          const isConversations = item.action === 'conversations';
           return (
             <button
               key={item.action}
               type="button"
               aria-label={item.label}
               aria-pressed={isActive}
+              data-conversation-toggle={item.action === 'conversations' ? 'true' : undefined}
               onClick={() => onNavItemClick(item.action)}
-              className={`p-2 rounded-md transition-colors ${
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
                 isActive ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent'
               }`}
             >
               <span
-                className={`inline-flex transition-transform duration-500 ease-out ${
-                  isConversations && isConversationDrawerOpen ? 'translate-x-0.5' : ''
-                }`}
+                className="inline-flex leading-none transition-transform duration-500 ease-out"
               >
                 <Icon className="w-5 h-5" />
               </span>

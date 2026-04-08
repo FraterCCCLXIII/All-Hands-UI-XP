@@ -158,13 +158,13 @@ export function NewComponentsScreen() {
                 usage: `<InfoCard
   title="Component Name"
   description="Short supporting description goes here."
-  icon={<Wrench className="h-4 w-4" />}
+  icon={<Wrench className="h-5 w-5" />}
 />`,
                 preview: (
                   <InfoCard
                     title="Foundations Audit"
                     description="Document baseline UI patterns and highlight reusable foundations."
-                    icon={<Wrench className="h-4 w-4" />}
+                    icon={<Wrench className="h-5 w-5" />}
                     className="max-w-md"
                   />
                 ),
@@ -176,7 +176,7 @@ export function NewComponentsScreen() {
                 usage: `<InfoCard
   title="Foundations Audit"
   description="Document baseline UI patterns and highlight reusable foundations."
-  icon={<Wrench className="h-4 w-4" />}
+  icon={<Wrench className="h-5 w-5" />}
   iconPosition="left"
   interactive
 />`,
@@ -184,7 +184,7 @@ export function NewComponentsScreen() {
                   <InfoCard
                     title="Foundations Audit"
                     description="Document baseline UI patterns and highlight reusable foundations."
-                    icon={<Wrench className="h-4 w-4" />}
+                    icon={<Wrench className="h-5 w-5" />}
                     iconPosition="left"
                     className="max-w-md"
                   />

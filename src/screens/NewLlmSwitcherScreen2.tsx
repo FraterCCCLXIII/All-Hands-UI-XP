@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { Check, CheckCircle, ChevronDown, ChevronLeft, KeyRound, MoreVertical, Pencil, Plus, Trash2, X } from 'lucide-react';
+import {
+  Check,
+  CheckCircle,
+  ChevronDown,
+  ChevronLeft,
+  KeyRound,
+  MoreVertical,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { SettingsScreen } from './SettingsScreen';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -221,6 +232,7 @@ export function NewLlmSwitcherScreen2() {
           </div>
         ))}
       </div>
+
     </div>
   );
 

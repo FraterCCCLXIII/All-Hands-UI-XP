@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Box,
   Building2,
   Cloud,
   Cpu,
@@ -7,6 +8,7 @@ import {
   CheckCircle,
   ChevronDown,
   Key,
+  Library,
   MoreVertical,
   Plus,
   Puzzle,
@@ -35,6 +37,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import { PluginToggle } from '../components/ui/plugin-toggle';
+import { cn } from '../lib/utils';
 
 type OrgRole = 'Member' | 'Admin' | 'Owner';
 type PermissionKey =
@@ -52,7 +56,9 @@ type PermissionKey =
   | 'change_user_role:owner'
   | 'change_organization_name'
   | 'delete_organization'
-  | 'add_credits';
+  | 'add_credits'
+  | 'manage_organization_claims'
+  | 'manage_org_plugins';
 
 const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
   Member: new Set([
@@ -76,6 +82,8 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
     'change_user_role:member',
     'change_user_role:admin',
     'add_credits',
+    'manage_organization_claims',
+    'manage_org_plugins',
   ]),
   Owner: new Set([
     'manage_secrets',
@@ -93,11 +101,14 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
     'change_organization_name',
     'delete_organization',
     'add_credits',
+    'manage_organization_claims',
+    'manage_org_plugins',
   ]),
 };
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
+  { id: 'plugins', label: 'Plugins', icon: Box },
   { id: 'integrations', label: 'Integrations', icon: Puzzle },
   { id: 'app', label: 'Application', icon: SettingsIcon },
   { id: 'llm', label: 'Language Model (LLM)', icon: Cpu },
@@ -105,8 +116,25 @@ const settingsTabs = [
   { id: 'secrets', label: 'Secrets', icon: Shield },
   { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'mcp', label: 'MCP', icon: Cloud },
+  { id: 'organizations', label: 'Organization', icon: Building2 },
+  { id: 'org-plugins', label: 'Plugins', icon: Library },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
 ];
+
+const settingsTabDescriptions: Record<string, string> = {
+  user: 'View and update your account email address.',
+  plugins: 'Add Git repositories so plugins appear in the Plugin Marketplace.',
+  integrations: 'Connect Git hosts, Slack, Jira, and other services.',
+  app: 'Set language, privacy, notifications, and Git commit identity.',
+  llm: 'Choose your model provider, API keys, and advanced options.',
+  billing: 'Check your balance and add credits to your account.',
+  secrets: 'Create and manage secrets for safe use in workflows.',
+  'api-keys': 'Manage API keys for programmatic access and the OpenHands LLM key.',
+  mcp: 'Add Model Context Protocol servers to extend agent capabilities.',
+  organizations: 'Manage credits, organization details, and Git conversation routing.',
+  'org-plugins':
+    'Choose which plugins and skills appear for your organization and whether they are enabled in every conversation.',
+};
 
 const settingsLinks: Array<{
   id: string;
@@ -121,6 +149,20 @@ const settingsLinks: Array<{
   { id: 'api-keys', label: 'API Keys', icon: Key, tabId: 'api-keys', requiredPermission: 'manage_api_keys' },
   { id: 'secrets', label: 'Secrets', icon: Shield, tabId: 'secrets', requiredPermission: 'manage_secrets' },
   { id: 'mcp', label: 'MCP', icon: Cloud, tabId: 'mcp', requiredPermission: 'manage_mcp' },
+  {
+    id: 'organizations',
+    label: 'Organization',
+    icon: Building2,
+    tabId: 'organizations',
+    requiredPermission: 'manage_organization_claims',
+  },
+  {
+    id: 'org-plugins',
+    label: 'Plugins',
+    icon: Library,
+    tabId: 'org-plugins',
+    requiredPermission: 'manage_org_plugins',
+  },
   { id: 'billing', label: 'Billing', icon: CreditCard, tabId: 'billing', requiredPermission: 'view_billing' },
 ];
 
@@ -194,6 +236,90 @@ const initialGitSourceStatus: Record<GitSourceId, GitConnectionStatus> = {
   bitbucket: 'disconnected',
 };
 
+type VcsProvider = 'GitHub' | 'GitLab';
+type OrgClaimOption = {
+  id: string;
+  provider: VcsProvider;
+  handle: string;
+  availableToOwner: boolean;
+};
+
+const orgClaimOptions: OrgClaimOption[] = [
+  { id: 'gh-openhands', provider: 'GitHub', handle: 'OpenHands', availableToOwner: true },
+  { id: 'gh-acmeco', provider: 'GitHub', handle: 'AcmeCo', availableToOwner: true },
+  { id: 'gh-already-claimed', provider: 'GitHub', handle: 'already-claimed', availableToOwner: true },
+  { id: 'gl-openhands', provider: 'GitLab', handle: 'OpenHands', availableToOwner: true },
+];
+
+const initialClaimRegistry: Record<string, string | null> = {
+  'gh-openhands': 'OpenHands',
+  'gh-acmeco': 'Acme Inc',
+  'gh-already-claimed': 'Acme Inc',
+  'gl-openhands': null,
+};
+
+type OrgCatalogKind = 'plugin' | 'skill';
+
+type OrgPluginCatalogItem = {
+  id: string;
+  name: string;
+  description: string;
+  kind: OrgCatalogKind;
+  visible: boolean;
+  availableAllConversations: boolean;
+};
+
+const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
+  {
+    id: 'cat-static',
+    name: 'Static Analysis',
+    description: 'Lint and static analysis across your repositories.',
+    kind: 'plugin',
+    visible: true,
+    availableAllConversations: false,
+  },
+  {
+    id: 'cat-search',
+    name: 'Code Search',
+    description: 'Semantic and text search to navigate large codebases.',
+    kind: 'plugin',
+    visible: true,
+    availableAllConversations: true,
+  },
+  {
+    id: 'cat-github',
+    name: 'GitHub',
+    description: 'Issues, pull requests, and repository operations.',
+    kind: 'plugin',
+    visible: true,
+    availableAllConversations: false,
+  },
+  {
+    id: 'skill-babysit',
+    name: 'babysit',
+    description: 'Triage PR feedback, resolve conflicts, and keep CI green.',
+    kind: 'skill',
+    visible: true,
+    availableAllConversations: false,
+  },
+  {
+    id: 'skill-canvas',
+    name: 'canvas',
+    description: 'Author in-IDE canvases for dashboards and rich layouts.',
+    kind: 'skill',
+    visible: true,
+    availableAllConversations: false,
+  },
+  {
+    id: 'skill-create-rule',
+    name: 'create-rule',
+    description: 'Generate Cursor rules and persistent project guidance.',
+    kind: 'skill',
+    visible: false,
+    availableAllConversations: false,
+  },
+];
+
 export interface SettingsScreenProps {
   /** Initial tab from route (e.g. llm for #/settings/llm) */
   initialTab?: string;
@@ -211,6 +337,12 @@ export interface SettingsScreenProps {
   selectedOrgId?: string;
   /** Optional org change callback */
   onOrgChange?: (orgId: string) => void;
+  /** Installed plugin repositories shown in user settings */
+  pluginRepositories?: string[];
+  /** Add plugin repository callback */
+  onAddPluginRepository?: (repoUrl: string) => void;
+  /** Remove plugin repository callback */
+  onRemovePluginRepository?: (repoUrl: string) => void;
 }
 
 export const SettingsScreen: React.FC<SettingsScreenProps> = ({
@@ -222,6 +354,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   mainContentScrollable = true,
   selectedOrgId: controlledOrgId,
   onOrgChange,
+  pluginRepositories = [],
+  onAddPluginRepository,
+  onRemovePluginRepository,
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab ?? 'api-keys');
   const [gitUsername, setGitUsername] = useState('openhands');
@@ -250,11 +385,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [inviteEmails, setInviteEmails] = useState<string[]>([]);
   const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastVariant, setToastVariant] = useState<'info' | 'success' | 'error'>('info');
   const [toastVisible, setToastVisible] = useState(false);
   const [gitSourceStatus, setGitSourceStatus] = useState<Record<GitSourceId, GitConnectionStatus>>(
     initialGitSourceStatus,
   );
   const [gitSourceDisconnectTarget, setGitSourceDisconnectTarget] = useState<GitSourceId | null>(null);
+  const [claimRegistry, setClaimRegistry] = useState<Record<string, string | null>>(initialClaimRegistry);
+  const [pluginRepoInput, setPluginRepoInput] = useState('');
+  const [orgPluginCatalog, setOrgPluginCatalog] = useState<OrgPluginCatalogItem[]>(initialOrgPluginCatalog);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   useEffect(() => {
@@ -266,6 +405,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
     onTabChange?.(tabId);
+  };
+
+  const updateOrgCatalogItem = (
+    id: string,
+    patch: Partial<Pick<OrgPluginCatalogItem, 'visible' | 'availableAllConversations'>>,
+  ) => {
+    setOrgPluginCatalog((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
   const isChatGPTConnected = llmProvider === 'openai' && llmApiKeyApproved && llmApiKey.length > 0;
@@ -281,14 +427,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const selectedOrg = orgOptions.find((org) => org.id === selectedOrgId) ?? orgOptions[0];
   const effectiveRole: OrgRole =
     selectedOrg?.type === 'personal' ? 'Owner' : (selectedOrg?.role as OrgRole) ?? 'Member';
+
+  useEffect(() => {
+    if (selectedOrg?.type === 'personal' && activeTab === 'org-plugins') {
+      setActiveTab('user');
+      onTabChange?.('user');
+    }
+  }, [selectedOrg?.type, activeTab, onTabChange]);
+
   const hasPermission = (permission: PermissionKey) => rolePermissions[effectiveRole].has(permission);
   const visibleSettingsLinks = settingsLinks.filter((item) => {
     if (selectedOrg?.type === 'personal' && item.id === 'manage-team') {
       return false;
     }
+    if (selectedOrg?.type === 'personal' && item.id === 'org-plugins') {
+      return false;
+    }
     return !item.requiredPermission || hasPermission(item.requiredPermission);
   });
   const canInviteMembers = hasPermission('invite_user_to_organization');
+  const canManageOrgClaims = true;
+  const activeOrgName = selectedOrg?.name ?? 'Personal Account';
   const canChangeRoles =
     hasPermission('change_user_role:member') ||
     hasPermission('change_user_role:admin') ||
@@ -307,8 +466,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setMemberDeleteTarget(null);
   };
 
-  const showToast = (message: string) => {
+  const showToast = (message: string, variant: 'info' | 'success' | 'error' = 'info') => {
     setToastMessage(message);
+    setToastVariant(variant);
     setToastVisible(true);
   };
 
@@ -395,6 +555,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     showToast(`Configuring ${sourceName} repositories...`);
   };
 
+  const claimableOptions = orgClaimOptions.filter((option) => option.availableToOwner);
+
+  const handleClaim = (claimId: string) => {
+    const owner = claimRegistry[claimId];
+    if (owner && owner !== activeOrgName) {
+      showToast('This has already been claimed by another organization and cannot be claimed.', 'error');
+      return;
+    }
+    setClaimRegistry((prev) => ({ ...prev, [claimId]: activeOrgName }));
+    showToast('Organization claimed successfully.', 'success');
+  };
+
+  const handleRemoveClaim = (claimId: string) => {
+    setClaimRegistry((prev) => ({ ...prev, [claimId]: null }));
+  };
+
   const handleChatGPTConnect = async () => {
     setOpenaiConnecting(true);
     setLlmProvider('openai');
@@ -408,6 +584,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setLlmProvider('');
     setLlmApiKey('');
     setLlmApiKeyApproved(false);
+  };
+
+  const handleAddPluginRepo = () => {
+    const repoUrl = pluginRepoInput.trim();
+    if (!repoUrl) return;
+    onAddPluginRepository?.(repoUrl);
+    setPluginRepoInput('');
   };
 
   const chatGPTConnectSection = (
@@ -555,6 +738,27 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </span>
           </button>
           <button
+            onClick={() => handleTabClick('plugins')}
+            className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
+              activeTab === 'plugins'
+                ? 'bg-muted/60'
+                : 'hover:bg-muted/40'
+            }`}
+          >
+            <Box
+              className={`w-5 h-5 ${
+                activeTab === 'plugins' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+              }`}
+            />
+            <span
+              className={`text-sm font-normal whitespace-nowrap ${
+                activeTab === 'plugins' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+              }`}
+            >
+              Plugins
+            </span>
+          </button>
+          <button
             type="button"
             onClick={() => setCreateOrgModalOpen(true)}
             className="group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/40"
@@ -571,7 +775,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <main className={mainContentScrollable ? 'flex-1 overflow-auto' : 'flex-1'}>
         <div className="flex flex-col gap-6 h-full">
           {activeTabLabel && activeTab !== 'manage-team' && (
-            <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
+            <div className="space-y-1">
+              <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
+              {settingsTabDescriptions[activeTab] && (
+                <p className="text-sm text-muted-foreground">{settingsTabDescriptions[activeTab]}</p>
+              )}
+            </div>
           )}
 
           {/* User Content */}
@@ -601,6 +810,60 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Plugins Content */}
+          {activeTab === 'plugins' && (
+            <div className="flex-1 overflow-auto">
+              <div className="flex flex-col gap-6">
+                <section className="rounded-lg border border-border bg-card p-5">
+                  <div className="mb-4 space-y-1">
+                    <h3 className="text-xl font-semibold leading-6 text-foreground">Plugin Repositories</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Add plugin repositories from Git URLs. Added repositories appear in Plugin Marketplace.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      value={pluginRepoInput}
+                      onChange={(e) => setPluginRepoInput(e.target.value)}
+                      placeholder="https://github.com/org/plugin-repo"
+                      className="h-10 flex-1 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground placeholder:text-muted-foreground"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddPluginRepo}
+                      disabled={pluginRepoInput.trim().length === 0}
+                      className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Add Plugin
+                    </button>
+                  </div>
+                  <div className="mt-4 overflow-hidden rounded-md border border-border">
+                    {pluginRepositories.length > 0 ? (
+                      <ul className="divide-y divide-border">
+                        {pluginRepositories.map((repo) => (
+                          <li key={repo} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                            <span className="truncate text-sm text-foreground">{repo}</span>
+                            <button
+                              type="button"
+                              onClick={() => onRemovePluginRepository?.(repo)}
+                              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground transition-colors hover:bg-muted/60"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="px-3 py-3 text-sm text-muted-foreground">
+                        No plugin repositories added yet.
+                      </div>
+                    )}
+                  </div>
+                </section>
               </div>
             </div>
           )}
@@ -697,23 +960,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   return (
                     <div key={source.id} className="rounded-lg border border-border bg-card p-6 shadow-sm">
                       <div className="mb-4 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
                           {source.icon}
-                          <h3 className="text-base font-medium text-foreground">{source.name}</h3>
-                          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
-                            <span
-                              className={`h-2 w-2 rounded-full ${
-                                isConnected
-                                  ? 'bg-emerald-400'
-                                  : isConnecting
-                                  ? 'bg-amber-400 animate-pulse'
-                                  : 'bg-[#FF684E]'
-                              }`}
-                              aria-hidden
-                            />
-                            <span className="font-normal text-xs text-muted-foreground">
-                              {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
-                            </span>
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <h3 className="text-xl font-semibold leading-6 text-foreground">{source.name}</h3>
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
+                                <span
+                                  className={`h-2 w-2 rounded-full ${
+                                    isConnected
+                                      ? 'bg-emerald-400'
+                                      : isConnecting
+                                      ? 'bg-amber-400 animate-pulse'
+                                      : 'bg-[#FF684E]'
+                                  }`}
+                                  aria-hidden
+                                />
+                                <span className="font-normal text-xs text-muted-foreground">
+                                  {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Connect your {source.name} account to authorize repositories and configure access for
+                              OpenHands.
+                            </p>
                           </div>
                         </div>
                         {isConnected && (
@@ -765,8 +1036,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
                 {/* Slack */}
                 <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                    <svg className="w-6 h-6" viewBox="0 0 54 54">
+                  <div className="flex items-start gap-3 mb-6">
+                    <svg className="w-6 h-6 shrink-0" viewBox="0 0 54 54">
                       <g fill="none" fillRule="evenodd">
                         <path d="M19.712.133a5.381 5.381 0 0 0-5.376 5.387 5.381 5.381 0 0 0 5.376 5.386h5.376V5.52A5.381 5.381 0 0 0 19.712.133m0 14.365H5.376A5.381 5.381 0 0 0 0 19.884a5.381 5.381 0 0 0 5.376 5.387h14.336a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386" fill="#36C5F0"/>
                         <path d="M53.76 19.884a5.381 5.381 0 0 0-5.376-5.386 5.381 5.381 0 0 0-5.376 5.386v5.387h5.376a5.381 5.381 0 0 0 5.376-5.387m-14.336 0V5.52A5.381 5.381 0 0 0 34.048.133a5.381 5.381 0 0 0-5.376 5.387v14.364a5.381 5.381 0 0 0 5.376 5.387 5.381 5.381 0 0 0 5.376-5.387" fill="#2EB67D"/>
@@ -774,7 +1045,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <path d="M0 34.249a5.381 5.381 0 0 0 5.376 5.386 5.381 5.381 0 0 0 5.376-5.386v-5.387H5.376A5.381 5.381 0 0 0 0 34.25m14.336 0v14.364A5.381 5.381 0 0 0 19.712 54a5.381 5.381 0 0 0 5.376-5.387V34.25a5.381 5.381 0 0 0-5.376-5.387 5.381 5.381 0 0 0-5.376 5.387" fill="#E01E5A"/>
                       </g>
                     </svg>
-                    <h3 className="text-base font-medium text-foreground">Slack</h3>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-semibold leading-6 text-foreground">Slack</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Install the OpenHands Slack app to receive notifications in your workspace.
+                      </p>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -786,11 +1062,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
                 {/* Jira Cloud */}
                 <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                    <svg className="w-6 h-6" viewBox="0 0 24 24">
+                  <div className="flex items-start gap-3 mb-6">
+                    <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
                       <path fill="#2684FF" d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.757a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"/>
                     </svg>
-                    <h3 className="text-base font-medium text-foreground">Jira Cloud</h3>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-semibold leading-6 text-foreground">Jira Cloud</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Link Jira to sync issues and keep OpenHands aligned with your project tracking.
+                      </p>
+                    </div>
                   </div>
                   <button
                     type="button"
@@ -873,8 +1154,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </label>
 
                   <div className="border-t border-border pt-6 mt-2">
-                    <h3 className="text-lg font-medium mb-2 text-foreground">Git Settings</h3>
-                    <p className="text-xs mb-4 text-muted-foreground">Configure the username and email that OpenHands uses to commit changes.</p>
+                    <div className="space-y-1 mb-4">
+                      <h3 className="text-xl font-semibold leading-6 text-foreground">Git Settings</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configure the username and email that OpenHands uses to commit changes.
+                      </p>
+                    </div>
                     <div className="flex flex-col gap-6">
                       <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
                         <span className="text-sm text-foreground">Git Username</span>
@@ -1147,7 +1432,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-6">
                 {/* OpenHands LLM Key Section */}
                 <div className="border-b border-border pb-6 mb-6 flex flex-col gap-6">
-                  <h3 className="text-xl font-medium text-foreground">OpenHands LLM Key</h3>
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-semibold leading-6 text-foreground">OpenHands LLM Key</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Use this key as the LLM API key in OpenHands open-source and CLI; usage is billed to your cloud
+                      account.
+                    </p>
+                  </div>
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
@@ -1158,7 +1449,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">
-                      You can use this API Key as the LLM API Key for OpenHands open-source and CLI. It will incur cost on your OpenHands Cloud account. Do NOT share this key elsewhere.
+                      Do not share this key elsewhere; anyone with it can incur charges on your account.
                     </p>
                     <div className="flex items-center gap-2">
                       <div className="flex-1 bg-muted rounded-md py-2 px-3 flex items-center justify-between">
@@ -1191,7 +1482,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </div>
 
                 {/* OpenHands API Keys Section */}
-                <h3 className="text-xl font-medium text-foreground">OpenHands API Keys</h3>
+                <div className="space-y-1">
+                  <h3 className="text-xl font-semibold leading-6 text-foreground">OpenHands API Keys</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Create keys to authenticate with the OpenHands API from your applications and scripts.
+                  </p>
+                </div>
                 <div className="flex items-center justify-between">
                   <button
                     type="button"
@@ -1201,7 +1497,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </button>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  API keys allow you to authenticate with the OpenHands API programmatically. Keep your API keys secure; anyone with your API key can access your account. For more information on how to use the API, see our{' '}
+                  Keep your API keys secure; anyone with a key can access your account. For more information on how to use
+                  the API, see our{' '}
                   <a
                     href="https://docs.all-hands.dev/usage/cloud/cloud-api"
                     target="_blank"
@@ -1280,6 +1577,179 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <div className="border border-border rounded-md p-8 text-center">
                   <p className="text-muted-foreground text-sm">No servers configured</p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Org plugins & skills (Admin / Owner) */}
+          {activeTab === 'org-plugins' && (
+            <div className="flex-1 overflow-auto">
+              <div className="flex flex-col gap-4 max-w-4xl">
+                <div className="overflow-hidden rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/80">
+                      <tr className="text-left">
+                        <th className="p-3 font-medium text-foreground">Name</th>
+                        <th className="p-3 font-medium text-foreground w-[88px]">Type</th>
+                        <th className="p-3 font-medium text-foreground w-[120px]">Visible</th>
+                        <th className="p-3 font-medium text-foreground min-w-[200px]">All conversations</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {orgPluginCatalog.map((row) => (
+                        <tr key={row.id} className="bg-card">
+                          <td className="p-3 align-top">
+                            <div className="font-medium text-foreground">{row.name}</div>
+                            <div className="text-muted-foreground text-xs mt-1 max-w-md">{row.description}</div>
+                          </td>
+                          <td className="p-3 align-middle capitalize text-muted-foreground">{row.kind}</td>
+                          <td className="p-3 align-middle">
+                            <PluginToggle
+                              checked={row.visible}
+                              onCheckedChange={(next) =>
+                                updateOrgCatalogItem(row.id, {
+                                  visible: next,
+                                  ...(next ? {} : { availableAllConversations: false }),
+                                })
+                              }
+                              aria-label="Visible in UI for members"
+                            />
+                          </td>
+                          <td className="p-3 align-middle">
+                            <div
+                              className={cn(
+                                'flex w-fit items-center gap-2',
+                                !row.visible && 'cursor-not-allowed opacity-40',
+                              )}
+                            >
+                              <PluginToggle
+                                checked={row.visible && row.availableAllConversations}
+                                disabled={!row.visible}
+                                onCheckedChange={(next) =>
+                                  updateOrgCatalogItem(row.id, {
+                                    availableAllConversations: next,
+                                  })
+                                }
+                                aria-label="Enable for every new conversation"
+                              />
+                              <span className="whitespace-normal text-xs text-muted-foreground">
+                                Enable for every new conversation
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Organizations Content */}
+          {activeTab === 'organizations' && (
+            <div className="flex-1 overflow-auto">
+              <div>
+                <div className="mb-6">
+                  <div>
+                    <div className="space-y-1 mb-3">
+                      <h3 className="text-xl font-semibold leading-6 text-foreground">Credits</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Organization-wide balance used for OpenHands Cloud usage.
+                      </p>
+                    </div>
+                    <div className="mt-3 flex items-center gap-3">
+                      <div className="inline-flex items-center rounded-full bg-[#FFE566] px-6 py-2 text-lg font-semibold text-black shadow-sm">
+                        $27.80
+                      </div>
+                      <button
+                        type="button"
+                        className="h-9 rounded-full bg-muted px-4 text-sm font-semibold text-foreground hover:bg-muted/80 transition-colors"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <div className="space-y-1 mb-3">
+                      <h3 className="text-xl font-semibold leading-6 text-foreground">Organization Name</h3>
+                      <p className="text-sm text-muted-foreground">
+                        This name appears across your organization and shared workspaces.
+                      </p>
+                    </div>
+                    <div className="mt-3 relative max-w-[520px]">
+                      <input
+                        type="text"
+                        value="Starlight Labs"
+                        readOnly
+                        className="w-full h-10 rounded-md border border-border bg-muted/40 px-3 pr-20 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
+                        aria-label="Organization name"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
+                  <button type="button" className="mt-5 text-sm font-semibold text-destructive hover:text-destructive transition-colors">
+                    Delete Organization
+                  </button>
+                </div>
+
+                <div className="space-y-1 mb-2">
+                  <h3 className="text-xl font-semibold leading-6 text-foreground">Git Conversation Routing</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Claim GitHub or GitLab organizations so resolver traffic routes to the correct OpenHands org.
+                  </p>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  If a requester is not a member of the claiming org, the conversation falls back to their Personal
+                  Workspace. Available organizations are derived from your connected GitHub/GitLab identity. Only
+                  organization admins and owners can manage organization claims.
+                </p>
+
+                <div className="overflow-hidden rounded-lg border border-border">
+                  {claimableOptions.map((option) => {
+                    const claimOwner = claimRegistry[option.id];
+                    const isClaimedByCurrentOrg = claimOwner === activeOrgName;
+
+                    return (
+                      <div
+                        key={option.id}
+                        className="flex items-center justify-between gap-3 border-b border-border px-3 py-3 last:border-b-0"
+                      >
+                        <div className="text-sm text-foreground">
+                          <span className="text-muted-foreground">{option.provider}</span>
+                          <span className="mx-1 text-muted-foreground">/</span>
+                          <span>{option.handle}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isClaimedByCurrentOrg && canManageOrgClaims ? (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveClaim(option.id)}
+                              className="group h-7 rounded-md border border-emerald-500/60 bg-emerald-500/20 px-2 text-xs font-medium text-emerald-300 transition-colors hover:border-rose-500/60 hover:bg-rose-500/15 hover:text-rose-300"
+                            >
+                              <span className="group-hover:hidden">Claimed</span>
+                              <span className="hidden group-hover:inline">Disconnect</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleClaim(option.id)}
+                              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-muted/60 transition-colors"
+                            >
+                              Claim
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
               </div>
             </div>
           )}
@@ -1499,8 +1969,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       role="status"
       aria-live="polite"
     >
-      <div className="rounded-md border border-blue-500/40 bg-blue-500/15 px-4 py-3 text-blue-100 shadow-lg">
-        <div className="text-sm text-blue-100">{toastMessage}</div>
+      <div
+        className={`rounded-md px-4 py-3 shadow-lg ${
+          toastVariant === 'error'
+            ? 'border border-rose-500/40 bg-rose-500/15 text-rose-100'
+            : toastVariant === 'success'
+            ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-100'
+            : 'border border-blue-500/40 bg-blue-500/15 text-blue-100'
+        }`}
+      >
+        <div className="text-sm">{toastMessage}</div>
       </div>
     </div>
   )}

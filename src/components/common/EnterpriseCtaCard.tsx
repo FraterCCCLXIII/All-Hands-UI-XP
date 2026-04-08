@@ -48,17 +48,17 @@ export function EnterpriseCtaCard({
       {!staticLayout && (
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
       )}
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="absolute right-3 top-3 z-20 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors pointer-events-auto"
+          aria-label="Dismiss enterprise CTA"
+        >
+          ×
+        </button>
+      )}
       <div className={cn('space-y-4 text-left', !staticLayout && 'relative z-10', staticLayout && 'relative')}>
-        {onDismiss && (
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="absolute right-3 top-3 z-20 inline-flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow hover:text-foreground hover:bg-muted/60 transition-colors pointer-events-auto"
-            aria-label="Dismiss enterprise CTA"
-          >
-            ×
-          </button>
-        )}
         {showIcon && (
           <div className="flex justify-start">
             <OpenHandsIcon />

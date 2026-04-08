@@ -14,6 +14,8 @@ export interface SkillRepositoryItem {
   curlCommand: string;
   docTitle: string;
   conversationCount?: number;
+  /** When true, marketplace switch stays on and cannot be turned off (shows lock). */
+  switchLocked?: boolean;
   /** Marketplace card metadata */
   stars?: number;
   reviews?: number;
@@ -128,6 +130,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     skillName: 'Code Review',
     repoUrl: 'https://github.com/skills/code-review',
     description: 'Review code for quality, security, and best practices. Get structured feedback and suggestions.',
+    switchLocked: true,
     initialPrompt: 'Analyze this codebase for potential issues, security concerns, and improvement opportunities.',
     curlCommand: `curl -X POST https://api.example.com/skills/run \\
   -H "Content-Type: application/json" \\

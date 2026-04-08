@@ -39,13 +39,13 @@ export function InfoCard<T extends React.ElementType = 'div'>({
     >
       <div className="flex flex-1 flex-col p-6">
         {showIconTop && (
-          <div className="mb-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+          <div className="mb-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
             {icon}
           </div>
         )}
         <div className={cn(showIconLeft && 'flex items-start gap-3')}>
           {showIconLeft && (
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
               {icon}
             </div>
           )}
