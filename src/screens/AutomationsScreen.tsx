@@ -1625,42 +1625,85 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       </Popover>
 
       <Dialog open={isAddAutomationGuideModalOpen} onOpenChange={setIsAddAutomationGuideModalOpen}>
-        <DialogContent className="max-w-md bg-popover text-popover-foreground sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add an automation</DialogTitle>
-            <DialogDescription asChild>
-              <div className="space-y-3 pt-1 text-left text-sm text-muted-foreground">
+        <DialogContent className="flex max-h-[min(90vh,40rem)] max-w-lg flex-col gap-0 overflow-hidden bg-popover p-0 text-popover-foreground sm:max-w-lg">
+          <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6 text-left">
+            <DialogTitle>How to create an Automation</DialogTitle>
+          </DialogHeader>
+          <DialogDescription asChild>
+            <div className="dropdown-scroll min-h-0 flex-1 overflow-y-auto px-6 py-4 text-left text-sm text-muted-foreground">
+              <div className="space-y-4">
                 <p>
-                  Open or start a conversation, then run this slash command in the message input:
+                  The easiest way is to ask OpenHands directly inside of a conversation. Automations handle schedules,
+                  plugins, and setup—you describe what you want and OpenHands will automate it. In the chat message
+                  input, run:
                 </p>
                 <p className="font-mono text-sm text-foreground bg-muted/50 border border-border rounded-md px-3 py-2.5">
                   /automation
                 </p>
-                <p>
-                  Describe triggers, repositories, plugins, and what the agent should do. The assistant will set up
-                  the workflow for you.
-                </p>
-                <a
-                  href={AUTOMATIONS_DOCUMENTATION_HREF}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-2 hover:underline"
-                >
-                  <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
-                  Automations documentation
-                </a>
+                <div>
+                  <p className="font-medium text-foreground">Prompt vs plugin</p>
+                  <p className="mt-1">
+                    <span className="text-foreground">Prompt-based</span> automations (most common): one natural-language
+                    request with timing—fine for reports, monitoring, and syncs.{' '}
+                    <span className="text-foreground">Plugin-based</span> adds MCP integrations (e.g. Slack) when you need
+                    more than your logged-in git provider.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">What to include</p>
+                  <ul className="mt-1 list-inside list-disc space-y-0.5">
+                    <li>What it should do</li>
+                    <li>When it runs (daily, hourly, weekdays 9 AM, etc.) and optional timezone (defaults to UTC)</li>
+                    <li>Optional name—the agent can suggest one</li>
+                    <li>Optional plugins for extra capabilities</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Writing good prompts</p>
+                  <p className="mt-1">
+                    Be specific. Say where results go (e.g. post to a Slack channel, save a file, open a GitHub issue).
+                    For health checks, say what to do on failure vs success. GitHub/GitLab/Bitbucket from your Cloud login
+                    are available automatically; other services need MCP configuration.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Schedules</p>
+                  <p className="mt-1">
+                    Plain language works—“every weekday at 9 AM Eastern”, “hourly”, “twice a day at 9 and 5”—and the agent
+                    maps it to cron. You can also pass a cron expression directly if you prefer.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">What each run can use</p>
+                  <p className="mt-1">
+                    A full sandbox: terminal, files, your configured LLM, secrets from Settings, MCP servers, network, and
+                    git tokens from your Cloud login.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">After creation</p>
+                  <p className="mt-1">
+                    Automations start enabled and run on the next schedule. Review past runs and linked conversations in
+                    this UI; disable, update, or delete anytime.
+                  </p>
+                </div>
               </div>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+            </div>
+          </DialogDescription>
+          <DialogFooter className="shrink-0 flex-col gap-2 border-t border-border px-6 py-4 sm:flex-col sm:space-x-0">
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full gap-2"
               onClick={() => {
                 setIsAddAutomationGuideModalOpen(false);
-                setIsCreatingAutomation(true);
+                if (AUTOMATIONS_DOCUMENTATION_HREF !== '#') {
+                  window.open(AUTOMATIONS_DOCUMENTATION_HREF, '_blank', 'noopener,noreferrer');
+                }
               }}
             >
-              Use full form instead
+              <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
+              View Documentation
             </Button>
           </DialogFooter>
         </DialogContent>
