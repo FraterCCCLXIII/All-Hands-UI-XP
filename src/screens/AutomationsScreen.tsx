@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Bell,
@@ -42,8 +42,12 @@ import {
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
 import { DeleteWorkflowDialog } from '../components/workflow/DeleteWorkflowDialog';
+import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { cn } from '../lib/utils';
+
+/** Placeholder; replace with real docs URL when available. */
+const AUTOMATIONS_DOCUMENTATION_HREF = '#';
 
 type AutomationStatus = 'active' | 'inactive';
 type AutomationRunStatus = 'success' | 'failed' | 'running';
@@ -641,6 +645,9 @@ const automationModelOptions = Array.from(
 ).sort((a, b) => a.localeCompare(b));
 
 const automationRowSpring = { type: 'spring', stiffness: 420, damping: 34, mass: 0.85 } as const;
+
+/** After PluginToggle thumb/track transition (200ms); list column animation runs next. */
+const AUTOMATION_TOGGLE_LAYOUT_DELAY_MS = 230;
 
 function MultiSelectBubbleInput({
   label,
@@ -1256,6 +1263,19 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     timezone: 'America/Los_Angeles',
   });
   const [newAutomationSchedules, setNewAutomationSchedules] = useState<AutomationScheduleEntry[]>([]);
+  const [useModalForAddAutomation, setUseModalForAddAutomation] = useState(false);
+  const [isAddAutomationGuideModalOpen, setIsAddAutomationGuideModalOpen] = useState(false);
+  const [toggleOptimisticStatus, setToggleOptimisticStatus] = useState<
+    Partial<Record<string, AutomationStatus>>
+  >({});
+  const toggleCommitTimeoutsRef = useRef<Map<string, number>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      toggleCommitTimeoutsRef.current.forEach((tid) => window.clearTimeout(tid));
+      toggleCommitTimeoutsRef.current.clear();
+    };
+  }, []);
 
   const filteredAutomations = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -1292,21 +1312,71 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   const deleteTargetAutomation =
     automations.find((automation) => automation.id === deleteTargetId) ?? null;
 
-  const handleToggle = (automationId: string) => {
-    setAutomations((prev) =>
-      prev.map((automation) =>
-        automation.id === automationId
-          ? {
-              ...automation,
-              status: automation.status === 'active' ? 'inactive' : 'active',
-              nextRun: automation.status === 'active' ? 'Paused' : automation.nextRun === 'Paused' ? 'Tomorrow, 9:00 AM' : automation.nextRun,
-            }
-          : automation
-      )
-    );
-  };
+  const displayAutomationStatus = useCallback(
+    (automation: AutomationItem): AutomationStatus =>
+      toggleOptimisticStatus[automation.id] ?? automation.status,
+    [toggleOptimisticStatus]
+  );
+
+  const handleToggle = useCallback(
+    (automationId: string) => {
+      const existingTid = toggleCommitTimeoutsRef.current.get(automationId);
+      if (existingTid !== undefined) {
+        window.clearTimeout(existingTid);
+        toggleCommitTimeoutsRef.current.delete(automationId);
+      }
+
+      const automation = automations.find((a) => a.id === automationId);
+      if (!automation) return;
+
+      let nextStatus!: AutomationStatus;
+      setToggleOptimisticStatus((opt) => {
+        const display = opt[automationId] ?? automation.status;
+        nextStatus = display === 'active' ? 'inactive' : 'active';
+        return { ...opt, [automationId]: nextStatus };
+      });
+
+      const tid = window.setTimeout(() => {
+        setAutomations((prev) =>
+          prev.map((a) =>
+            a.id === automationId
+              ? {
+                  ...a,
+                  status: nextStatus,
+                  nextRun:
+                    nextStatus === 'inactive'
+                      ? 'Paused'
+                      : a.nextRun === 'Paused'
+                        ? 'Tomorrow, 9:00 AM'
+                        : a.nextRun,
+                }
+              : a
+          )
+        );
+        setToggleOptimisticStatus((prev) => {
+          const copy = { ...prev };
+          delete copy[automationId];
+          return copy;
+        });
+        toggleCommitTimeoutsRef.current.delete(automationId);
+      }, AUTOMATION_TOGGLE_LAYOUT_DELAY_MS);
+
+      toggleCommitTimeoutsRef.current.set(automationId, tid);
+    },
+    [automations]
+  );
 
   const handleDelete = (automationId: string) => {
+    const pendingTid = toggleCommitTimeoutsRef.current.get(automationId);
+    if (pendingTid !== undefined) {
+      window.clearTimeout(pendingTid);
+      toggleCommitTimeoutsRef.current.delete(automationId);
+    }
+    setToggleOptimisticStatus((prev) => {
+      const copy = { ...prev };
+      delete copy[automationId];
+      return copy;
+    });
     setAutomations((prev) => prev.filter((automation) => automation.id !== automationId));
     setSelectedAutomationId((prev) => (prev === automationId ? null : prev));
     setDeleteTargetId((prev) => (prev === automationId ? null : prev));
@@ -1328,6 +1398,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       time: '09:00',
       timezone: 'America/Los_Angeles',
     });
+  };
+
+  const handleAddAutomationClick = () => {
+    if (useModalForAddAutomation) {
+      setIsAddAutomationGuideModalOpen(true);
+    } else {
+      setIsCreatingAutomation(true);
+    }
   };
 
   const handleCreateAutomation = () => {
@@ -1468,9 +1546,9 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
 
         <div className="flex items-center gap-3">
           <PluginToggle
-            checked={automation.status === 'active'}
+            checked={displayAutomationStatus(automation) === 'active'}
             onCheckedChange={() => handleToggle(automation.id)}
-            aria-label={`${automation.status === 'active' ? 'Deactivate' : 'Activate'} ${automation.title}`}
+            aria-label={`${displayAutomationStatus(automation) === 'active' ? 'Deactivate' : 'Activate'} ${automation.title}`}
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1496,7 +1574,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 className="gap-2"
               >
                 <Power className="h-4 w-4" />
-                {automation.status === 'active' ? 'Turn off' : 'Turn on'}
+                {displayAutomationStatus(automation) === 'active' ? 'Turn off' : 'Turn on'}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteTargetId(automation.id)}
@@ -1512,8 +1590,87 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     </div>
   );
 
+  const automationsFabAndGuideModal = (
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <PrototypeControlsFab
+            isActive={useModalForAddAutomation}
+            aria-label="Automations page options"
+            title="Automations page options"
+          />
+        </PopoverTrigger>
+        <PopoverContent side="top" align="end" className="w-64 p-3 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Add Automation modal</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={useModalForAddAutomation}
+              onClick={() => setUseModalForAddAutomation((v) => !v)}
+              className={cn(
+                'h-6 w-10 shrink-0 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                useModalForAddAutomation ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  useModalForAddAutomation ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <Dialog open={isAddAutomationGuideModalOpen} onOpenChange={setIsAddAutomationGuideModalOpen}>
+        <DialogContent className="max-w-md bg-popover text-popover-foreground sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add an automation</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-1 text-left text-sm text-muted-foreground">
+                <p>
+                  Open or start a conversation, then run this slash command in the message input:
+                </p>
+                <p className="font-mono text-sm text-foreground bg-muted/50 border border-border rounded-md px-3 py-2.5">
+                  /automation
+                </p>
+                <p>
+                  Describe triggers, repositories, plugins, and what the agent should do. The assistant will set up
+                  the workflow for you.
+                </p>
+                <a
+                  href={AUTOMATIONS_DOCUMENTATION_HREF}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary underline-offset-2 hover:underline"
+                >
+                  <BookOpen className="h-4 w-4 shrink-0" aria-hidden />
+                  Automations documentation
+                </a>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col sm:space-x-0">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setIsAddAutomationGuideModalOpen(false);
+                setIsCreatingAutomation(true);
+              }}
+            >
+              Use full form instead
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+
   if (selectedAutomation) {
     return (
+      <>
       <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
         <div className="mx-auto w-full max-w-5xl">
         <button
@@ -1530,25 +1687,25 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-semibold leading-6 text-foreground">{selectedAutomation.title}</h2>
               <motion.span
-                key={selectedAutomation.status}
+                key={`${selectedAutomation.id}-${displayAutomationStatus(selectedAutomation)}`}
                 initial={{ opacity: 0, scale: 0.94, y: 4 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={listTransition}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                  selectedAutomation.status === 'active'
+                  displayAutomationStatus(selectedAutomation) === 'active'
                     ? 'bg-emerald-500/15 text-emerald-300'
                     : 'bg-muted/40 text-muted-foreground'
                 }`}
               >
-                {selectedAutomation.status === 'active' ? 'Active' : 'Inactive'}
+                {displayAutomationStatus(selectedAutomation) === 'active' ? 'Active' : 'Inactive'}
               </motion.span>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <PluginToggle
-              checked={selectedAutomation.status === 'active'}
+              checked={displayAutomationStatus(selectedAutomation) === 'active'}
               onCheckedChange={() => handleToggle(selectedAutomation.id)}
-              aria-label={`${selectedAutomation.status === 'active' ? 'Deactivate' : 'Activate'} ${selectedAutomation.title}`}
+              aria-label={`${displayAutomationStatus(selectedAutomation) === 'active' ? 'Deactivate' : 'Activate'} ${selectedAutomation.title}`}
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1574,7 +1731,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                   className="gap-2"
                 >
                   <Power className="h-4 w-4" />
-                  {selectedAutomation.status === 'active' ? 'Turn off' : 'Turn on'}
+                  {displayAutomationStatus(selectedAutomation) === 'active' ? 'Turn off' : 'Turn on'}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setDeleteTargetId(selectedAutomation.id)}
@@ -1632,6 +1789,8 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         />
         </div>
       </div>
+      {automationsFabAndGuideModal}
+      </>
     );
   }
 
@@ -1917,11 +2076,13 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             setNewAutomationRepoTargets((previous) => [...previous, target])
           }
         />
+      {automationsFabAndGuideModal}
       </>
     );
   }
 
   return (
+    <>
     <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
       <div className="mx-auto w-full max-w-5xl">
       <div className="flex items-start justify-between gap-4">
@@ -1942,7 +2103,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         </div>
         <button
           type="button"
-          onClick={() => setIsCreatingAutomation(true)}
+          onClick={handleAddAutomationClick}
           className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
         >
           <Plus className="h-4 w-4" />
@@ -2041,5 +2202,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       />
       </div>
     </div>
+    {automationsFabAndGuideModal}
+    </>
   );
 };
