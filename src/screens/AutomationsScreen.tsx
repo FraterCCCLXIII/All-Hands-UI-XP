@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Bell,
   BookOpen,
@@ -639,6 +640,8 @@ const automationModelOptions = Array.from(
   new Set(initialAutomations.map((automation) => automation.model))
 ).sort((a, b) => a.localeCompare(b));
 
+const automationRowSpring = { type: 'spring', stiffness: 420, damping: 34, mass: 0.85 } as const;
+
 function MultiSelectBubbleInput({
   label,
   addActionLabel,
@@ -1228,6 +1231,11 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   onRunNow,
   onOpenConversation,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
+  const listTransition = prefersReducedMotion
+    ? { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const }
+    : automationRowSpring;
+
   const [search, setSearch] = useState('');
   const [automations, setAutomations] = useState(initialAutomations);
   const [selectedAutomationId, setSelectedAutomationId] = useState<string | null>(null);
@@ -1271,6 +1279,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
 
   const activeAutomations = filteredAutomations.filter((automation) => automation.status === 'active');
   const inactiveAutomations = filteredAutomations.filter((automation) => automation.status === 'inactive');
+  const totalActiveCount = useMemo(
+    () => automations.filter((a) => a.status === 'active').length,
+    [automations]
+  );
+  const totalInactiveCount = useMemo(
+    () => automations.filter((a) => a.status === 'inactive').length,
+    [automations]
+  );
   const selectedAutomation =
     automations.find((automation) => automation.id === selectedAutomationId) ?? null;
   const deleteTargetAutomation =
@@ -1418,10 +1434,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   };
 
   const renderAutomationRow = (automation: AutomationItem) => (
-    <div
-      key={automation.id}
-      className="rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/20"
-    >
+    <div className="rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/20">
       <div className="flex items-start justify-between gap-4 p-5">
         <button
           type="button"
@@ -1487,7 +1500,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setDeleteTargetId(automation.id)}
-                className="gap-2 text-destructive focus:text-destructive"
+                className="gap-2 text-destructive focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
@@ -1516,7 +1529,11 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           <div>
             <div className="flex items-center gap-3">
               <h2 className="text-xl font-semibold leading-6 text-foreground">{selectedAutomation.title}</h2>
-              <span
+              <motion.span
+                key={selectedAutomation.status}
+                initial={{ opacity: 0, scale: 0.94, y: 4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={listTransition}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                   selectedAutomation.status === 'active'
                     ? 'bg-emerald-500/15 text-emerald-300'
@@ -1524,7 +1541,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 }`}
               >
                 {selectedAutomation.status === 'active' ? 'Active' : 'Inactive'}
-              </span>
+              </motion.span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -1561,7 +1578,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setDeleteTargetId(selectedAutomation.id)}
-                  className="gap-2 text-destructive focus:text-destructive"
+                  className="gap-2 text-destructive focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete
@@ -1951,13 +1968,28 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             </span>
           </div>
           <div className="space-y-3">
-            {activeAutomations.length > 0 ? (
-              activeAutomations.map(renderAutomationRow)
-            ) : (
+            <AnimatePresence initial={false} mode="popLayout">
+              {activeAutomations.map((automation) => (
+                <motion.div
+                  key={automation.id}
+                  layout
+                  initial={{ opacity: 0, y: 22, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 18, scale: 0.98 }}
+                  transition={listTransition}
+                  className="w-full"
+                >
+                  {renderAutomationRow(automation)}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {activeAutomations.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card/40 px-4 py-6 text-sm text-muted-foreground">
-                No active automations match your search.
+                {totalActiveCount === 0
+                  ? 'No active automations. Turn one on from Inactive below or add a new automation.'
+                  : 'No active automations match your search.'}
               </div>
-            )}
+            ) : null}
           </div>
         </section>
 
@@ -1969,13 +2001,28 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             </span>
           </div>
           <div className="space-y-3">
-            {inactiveAutomations.length > 0 ? (
-              inactiveAutomations.map(renderAutomationRow)
-            ) : (
+            <AnimatePresence initial={false} mode="popLayout">
+              {inactiveAutomations.map((automation) => (
+                <motion.div
+                  key={automation.id}
+                  layout
+                  initial={{ opacity: 0, y: -20, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                  transition={listTransition}
+                  className="w-full"
+                >
+                  {renderAutomationRow(automation)}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {inactiveAutomations.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border bg-card/40 px-4 py-6 text-sm text-muted-foreground">
-                No inactive automations match your search.
+                {totalInactiveCount === 0
+                  ? 'No inactive automations. All automations are currently active.'
+                  : 'No inactive automations match your search.'}
               </div>
-            )}
+            ) : null}
           </div>
         </section>
       </div>
