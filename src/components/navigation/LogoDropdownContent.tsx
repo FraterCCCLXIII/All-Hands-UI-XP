@@ -65,7 +65,7 @@ export function LogoDropdownContent({ onNavToNewUserExperience, onEnterpriseLear
   };
 
   return (
-    <div className="flex gap-6 min-h-[320px]">
+    <div className="flex min-h-[320px] items-stretch gap-6">
       {/* Left: Login options */}
       <div className="flex-1 flex flex-col items-center gap-8 min-w-0 py-2">
         <div className="flex flex-col items-center gap-4">
@@ -109,9 +109,9 @@ export function LogoDropdownContent({ onNavToNewUserExperience, onEnterpriseLear
       </div>
 
       {/* Right: Enterprise sidebar */}
-      <div className="w-80 shrink-0 flex flex-col">
-        <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl p-6 shadow-lg supports-[backdrop-filter]:bg-card/50 min-h-[280px] flex flex-col flex-1">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
+      <div className="flex w-80 shrink-0 flex-col">
+        <div className="relative flex min-h-[280px] h-full flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-6 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-card/50">
+          <div className="pointer-events-none absolute inset-0 h-full min-h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
           <div className="relative z-10 flex flex-col items-start text-left gap-4 flex-1">
             <Server className="w-10 h-10 text-muted-foreground" aria-hidden />
             <h2 className="text-xl font-semibold text-foreground">Enterprise</h2>

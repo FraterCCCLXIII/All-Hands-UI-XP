@@ -1,8 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { Bot, Box, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, ChevronDown, Sparkles, User, Megaphone, MessageCircle } from 'lucide-react';
+import { Bot, Box, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../ui/dropdown-menu';
 import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
+import { cn } from '../../lib/utils';
+
+/** Mirrors Settings org selector options for a consistent workspace switcher. */
+const accountWorkspaceOptions = [
+  { id: 'personal', name: 'Personal Account', role: null as string | null, type: 'personal' as const },
+  { id: 'acme-owner', name: 'Acme Inc', role: 'Owner' as const, type: 'org' as const },
+  { id: 'starlight-admin', name: 'Starlight Labs', role: 'Admin' as const, type: 'org' as const },
+  { id: 'nova-member', name: 'Nova Group', role: 'Member' as const, type: 'org' as const },
+] as const;
 
 const highlightCards = [
   { title: 'Docs', text: 'Build, integrate, and scale with ease.', url: 'https://docs.openhands.dev/', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M8.53787 11.87L8.49787 11C8.49787 10.4696 8.70858 9.96086 9.08366 9.58579C9.45873 9.21071 9.96744 9 10.4979 9H14.1699C14.7003 9.00011 15.2089 9.2109 15.5839 9.586L16.4119 10.414C16.7869 10.7891 17.2955 10.9999 17.8259 11H21.8079C22.0858 11 22.3607 11.0579 22.615 11.17C22.8693 11.2821 23.0974 11.446 23.2848 11.6512C23.4723 11.8564 23.6149 12.0985 23.7035 12.3618C23.7922 12.6252 23.825 12.9042 23.7999 13.181L23.1629 20.181C23.1177 20.6779 22.8884 21.14 22.5201 21.4766C22.1517 21.8131 21.6708 21.9998 21.1719 22H10.8239C10.3249 21.9998 9.84404 21.8131 9.47567 21.4766C9.1073 21.14 8.87803 20.6779 8.83287 20.181L8.19587 13.181C8.15326 12.7178 8.27426 12.2543 8.53787 11.871V11.87ZM10.1879 12C10.049 12 9.91156 12.0289 9.78445 12.085C9.65734 12.141 9.5433 12.2229 9.44959 12.3254C9.35589 12.428 9.28457 12.5489 9.2402 12.6806C9.19583 12.8122 9.17937 12.9516 9.19187 13.09L9.82887 20.09C9.85132 20.3385 9.96584 20.5696 10.1499 20.7379C10.334 20.9063 10.5744 20.9998 10.8239 21H21.1719C21.4213 20.9998 21.6617 20.9063 21.8458 20.7379C22.0299 20.5696 22.1444 20.3385 22.1669 20.09L22.8039 13.09C22.8164 12.9516 22.7999 12.8122 22.7555 12.6806C22.7112 12.5489 22.6399 12.428 22.5462 12.3254C22.4524 12.2229 22.3384 12.141 22.2113 12.085C22.0842 12.0289 21.9468 12 21.8079 12H10.1879ZM14.8779 10.293C14.7849 10.2 14.6745 10.1263 14.553 10.076C14.4316 10.0257 14.3014 9.9999 14.1699 10H10.4979C10.2359 9.99995 9.9844 10.1027 9.7974 10.2861C9.6104 10.4696 9.50285 10.7191 9.49787 10.981L9.50387 11.12C9.71787 11.042 9.94787 11 10.1879 11H15.5839L14.8769 10.293H14.8779Z" fill="currentColor"/></svg> },
@@ -93,6 +108,9 @@ export interface LeftNavProps {
   isUxFlowMenuOpen?: boolean;
   onUxFlowMenuOpenChange?: (open: boolean) => void;
   onEnterpriseLearnMoreClick?: () => void;
+  /** Workspace id from `accountWorkspaceOptions`; non-`personal` shows org chrome on the account button. */
+  activeWorkspaceId?: string;
+  onActiveWorkspaceChange?: (workspaceId: string) => void;
 }
 
 const flowPrototypes = [
@@ -127,7 +145,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   isUxFlowMenuOpen,
   onUxFlowMenuOpenChange,
   onEnterpriseLearnMoreClick,
+  activeWorkspaceId = 'personal',
+  onActiveWorkspaceChange,
 }) => {
+  const selectedWorkspace =
+    accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
+  const isOrgAccount = selectedWorkspace.type === 'org';
+  const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
   const logoPopoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -144,8 +168,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   };
 
   return (
-  <aside className="fixed left-0 top-0 z-50 h-screen w-16 flex bg-sidebar pointer-events-auto">
-    <div className="flex h-full flex-col w-16 px-2 py-4 text-sidebar-foreground">
+  <aside className="pointer-events-auto fixed left-0 top-0 z-50 flex h-screen w-16 bg-sidebar">
+    <div className="flex h-full w-16 flex-col px-2 py-4 text-sidebar-foreground">
       <div className="flex justify-center mb-3">
         <Popover open={isLogoPopoverOpen} onOpenChange={setIsLogoPopoverOpen}>
           <PopoverTrigger asChild>
@@ -348,28 +372,90 @@ export const LeftNav: React.FC<LeftNavProps> = ({
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="w-8 h-8 rounded-full bg-sidebar-accent border border-border flex items-center justify-center text-sidebar-foreground hover:bg-sidebar-accent/80 transition-colors"
-              aria-label="Open account menu"
+              className={cn(
+                'relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80',
+                isOrgAccount && 'ring-2 ring-white'
+              )}
+              aria-label={isOrgAccount ? 'Open account menu, organization workspace' : 'Open account menu'}
             >
-              <User className="w-4 h-4" aria-hidden="true" />
+              <User className="h-4 w-4" aria-hidden="true" />
+              {isOrgAccount && (
+                <span
+                  className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-white shadow-sm"
+                  aria-hidden
+                >
+                  <span className="text-[8px] font-semibold leading-none text-black">{orgInitial}</span>
+                </span>
+              )}
             </button>
           </PopoverTrigger>
           <PopoverContent
             side="right"
             align="start"
             sideOffset={8}
-            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-[600px] p-6 -translate-y-12"
+            className="w-max max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground [max-height:min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-[12px] border border-border -translate-y-12"
           >
-            <div className="grid grid-cols-[1fr_1.15fr] gap-4 min-h-[320px]">
+            <div className="inline-grid w-max max-w-full grid-cols-[max-content_max-content] items-stretch gap-4">
               {/* Left column: Account menu */}
-              <div className="flex flex-col min-w-0">
+              <div className="flex w-min min-w-[220px] flex-col">
                 <div className="text-lg font-semibold mb-4">Account</div>
                 
-                {/* Organization Selector */}
-                <button className="w-full h-10 flex items-center justify-between px-4 mb-3 rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors text-left">
-                  <span className="text-sm text-sidebar-foreground">Acme Inc.</span>
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                </button>
+                {/* Workspace — same dropdown pattern as Settings org selector */}
+                <div className="mb-3 space-y-1">
+                  <div className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    Workspace
+                  </div>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex h-12 w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/40"
+                        aria-label="Select workspace"
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2">
+                          {selectedWorkspace.type === 'org' ? (
+                            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          ) : (
+                            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                          )}
+                          <span className="truncate">{selectedWorkspace.name}</span>
+                          {selectedWorkspace.role ? (
+                            <span className="ml-auto shrink-0 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              {selectedWorkspace.role}
+                            </span>
+                          ) : null}
+                        </span>
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start"
+                      className="z-[100] w-[var(--radix-dropdown-menu-trigger-width)] border-border bg-sidebar text-sidebar-foreground"
+                    >
+                      {accountWorkspaceOptions.map((org) => (
+                        <DropdownMenuItem
+                          key={org.id}
+                          className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground"
+                          onClick={() => onActiveWorkspaceChange?.(org.id)}
+                        >
+                          <span className="flex w-full items-center gap-2">
+                            {org.type === 'org' ? (
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <User className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <span>{org.name}</span>
+                            {org.role ? (
+                              <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                {org.role}
+                              </span>
+                            ) : null}
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
                 {/* Invite Team */}
                 <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
@@ -445,10 +531,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               </div>
 
               {/* Right column: OpenHands Enterprise CTA */}
-              <div className="flex flex-col min-h-0 justify-end">
+              <div className="flex h-full min-h-0 w-max max-w-[min(20rem,calc(100vw-3rem))] flex-col">
                 <EnterpriseCtaCard
                   showIcon
-                  className="h-full min-h-[280px] pointer-events-auto rounded-lg flex flex-col justify-end"
+                  className="pointer-events-auto h-full min-h-0 rounded-lg"
                   onLearnMoreClick={onEnterpriseLearnMoreClick}
                 />
               </div>

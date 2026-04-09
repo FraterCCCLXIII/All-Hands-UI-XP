@@ -41,12 +41,12 @@ export function EnterpriseCtaCard({
       className={cn(
         staticLayout
           ? 'relative overflow-hidden rounded-2xl border border-border/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)] bg-card/70 px-6 py-5 shadow-lg'
-          : 'relative overflow-hidden rounded-2xl border border-border/60 bg-card/70 backdrop-blur-xl px-6 py-5 shadow-lg supports-[backdrop-filter]:bg-card/50',
+          : 'relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/70 px-6 py-5 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-card/50',
         className
       )}
     >
       {!staticLayout && (
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 h-full min-h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
       )}
       {onDismiss && (
         <button

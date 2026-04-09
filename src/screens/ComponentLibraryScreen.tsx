@@ -1440,6 +1440,7 @@ export function ComponentLibraryScreen({
                   isConversationDrawerOpen={isConversationDrawerOpenPreview}
                   isInspectorEnabled={isInspectorPreview}
                   onInspectorToggle={() => setIsInspectorPreview((prev) => !prev)}
+                  activeWorkspaceId="acme-owner"
                 />
               </div>
             ),

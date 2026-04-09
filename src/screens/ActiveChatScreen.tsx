@@ -45,6 +45,7 @@ import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
 import { navigateAppRoute } from '../lib/captureNavigation';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
+import { AutomationGlyph } from '../components/icons/AutomationGlyph';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Protip, type ProtipVariant } from '../components/canvas/Protip';
 import { ChatStartScreen } from '../components/chat/ChatStartScreen';
@@ -77,6 +78,9 @@ interface ActiveChatScreenProps {
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
   showStatusBadge: boolean;
   onToggleStatusBadge: () => void;
+  /** When set, shows automation icon + title above the chat header. */
+  automationContextTitle: string | null;
+  onAutomationContextTitleChange: (title: string | null) => void;
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
@@ -101,6 +105,14 @@ const CANVAS_TIP_OPTIONS: Array<{ id: 'none' | ProtipVariant; label: string }> =
   { id: 'none', label: 'None' },
   { id: 'protip', label: 'Protip 1' },
   { id: 'cli', label: 'CLI' },
+];
+
+const AUTOMATION_CONTEXT_OPTIONS: Array<{ title: string | null; label: string }> = [
+  { title: null, label: 'None' },
+  { title: 'PR Triage Digest', label: 'PR Triage Digest' },
+  { title: 'Cross-Repo Release Readiness', label: 'Cross-Repo Release Readiness' },
+  { title: 'Nightly Security Pass', label: 'Nightly Security Pass' },
+  { title: 'Docs Sync on Push', label: 'Docs Sync on Push' },
 ];
 
 type CommandItem = {
@@ -296,6 +308,8 @@ export function ActiveChatScreen({
   onRepositoryStatusChange,
   showStatusBadge,
   onToggleStatusBadge,
+  automationContextTitle,
+  onAutomationContextTitleChange,
 }: ActiveChatScreenProps) {
   const [leftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
   const [serverStatus, setServerStatus] = useState('Starting');
@@ -332,6 +346,8 @@ export function ActiveChatScreen({
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const showCanvasTip = canvasTipVariant !== 'none';
   const canvasTipLabel = CANVAS_TIP_OPTIONS.find((option) => option.id === canvasTipVariant)?.label ?? 'None';
+  const automationContextLabel =
+    AUTOMATION_CONTEXT_OPTIONS.find((o) => o.title === automationContextTitle)?.label ?? 'None';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -539,6 +555,17 @@ export function ActiveChatScreen({
     <div className="flex flex-col w-full h-[calc(100%-50px)] md:h-full gap-3" data-theme={theme}>
       <div id="root-outlet" className={cn('flex-1 relative overflow-auto custom-scrollbar min-h-0', getThemeClasses('scrollbar'))}>
         <div data-testid="app-route" className="p-3 md:p-4 flex flex-col h-full gap-3 min-h-0">
+          {automationContextTitle ? (
+            <div
+              className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 shrink-0"
+              data-testid="automation-context-banner"
+              role="status"
+              aria-label={`Automation: ${automationContextTitle}`}
+            >
+              <AutomationGlyph className="h-5 w-5 shrink-0 text-emerald-400" />
+              <span className="text-sm font-medium text-foreground truncate">{automationContextTitle}</span>
+            </div>
+          ) : null}
           {/* Header row: server status + conversation name | Changes/Code/Terminal/App/Browser */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4.5 pt-2 lg:pt-0">
             <div className="flex items-center">
@@ -1800,7 +1827,11 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
       </div>
       <Popover>
         <PopoverTrigger asChild>
-          <PrototypeControlsFab isActive={showRefreshNotification || showCanvasTip || showCanvasLoading} />
+          <PrototypeControlsFab
+            isActive={
+              showRefreshNotification || showCanvasTip || showCanvasLoading || Boolean(automationContextTitle)
+            }
+          />
         </PopoverTrigger>
         <PopoverContent side="top" align="end" className="w-64 p-3 space-y-3">
           <div className="flex items-center justify-between gap-3">
@@ -1926,6 +1957,32 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                     key={option.id}
                     className="cursor-pointer"
                     onSelect={() => onChatContentModeChange(option.id as 'skeleton' | 'conversation' | 'start')}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Automation</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap max-w-[11rem]"
+                  aria-label="Automation context"
+                >
+                  <span className="truncate whitespace-nowrap">{automationContextLabel}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+                {AUTOMATION_CONTEXT_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.title ?? 'none'}
+                    className="cursor-pointer"
+                    onSelect={() => onAutomationContextTitleChange(option.title)}
                   >
                     {option.label}
                   </DropdownMenuItem>

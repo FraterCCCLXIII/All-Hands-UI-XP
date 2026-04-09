@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Package,
   Plus,
+  Play,
   PlayCircle,
   MoreVertical,
   Power,
@@ -52,6 +53,8 @@ type AutomationRunLogEntry = {
   ranAtIso: string;
   status: AutomationRunStatus;
   conversationId?: string;
+  /** Shown in the activity log; should match drawer name when linked. */
+  conversationName?: string;
 };
 
 type RepositoryTarget = {
@@ -111,11 +114,41 @@ const initialAutomations: AutomationItem[] = [
     mcpServers: ['GitHub MCP', 'Slack MCP', 'Linear MCP'],
     secrets: ['GITHUB_TOKEN', 'SLACK_BOT_TOKEN', 'LINEAR_API_KEY'],
     runHistory: [
-      { id: 'run-pr-triage-1', ranAtIso: '2026-03-23T09:00:00-07:00', status: 'success' },
-      { id: 'run-pr-triage-2', ranAtIso: '2026-03-20T09:00:00-07:00', status: 'success' },
-      { id: 'run-pr-triage-3', ranAtIso: '2026-03-19T09:00:00-07:00', status: 'failed' },
-      { id: 'run-pr-triage-4', ranAtIso: '2026-03-18T09:00:00-07:00', status: 'success' },
-      { id: 'run-pr-triage-5', ranAtIso: '2026-03-17T09:00:00-07:00', status: 'success' },
+      {
+        id: 'run-pr-triage-1',
+        ranAtIso: '2026-03-23T09:00:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-pr-triage',
+        conversationName: 'PR triage — risky changes & reviewer queue',
+      },
+      {
+        id: 'run-pr-triage-2',
+        ranAtIso: '2026-03-20T09:00:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-pr-triage',
+        conversationName: 'PR triage — risky changes & reviewer queue',
+      },
+      {
+        id: 'run-pr-triage-3',
+        ranAtIso: '2026-03-19T09:00:00-07:00',
+        status: 'failed',
+        conversationId: 'auto-activity-pr-triage',
+        conversationName: 'PR triage — risky changes & reviewer queue',
+      },
+      {
+        id: 'run-pr-triage-4',
+        ranAtIso: '2026-03-18T09:00:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-pr-triage',
+        conversationName: 'PR triage — risky changes & reviewer queue',
+      },
+      {
+        id: 'run-pr-triage-5',
+        ranAtIso: '2026-03-17T09:00:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-pr-triage',
+        conversationName: 'PR triage — risky changes & reviewer queue',
+      },
     ],
   },
   {
@@ -148,11 +181,41 @@ const initialAutomations: AutomationItem[] = [
       { repository: 'acme/ui-tokens', branch: 'next' },
     ],
     runHistory: [
-      { id: 'run-cross-repo-1', ranAtIso: '2026-03-23T08:30:00-07:00', status: 'success' },
-      { id: 'run-cross-repo-2', ranAtIso: '2026-03-20T08:30:00-07:00', status: 'failed' },
-      { id: 'run-cross-repo-3', ranAtIso: '2026-03-19T08:30:00-07:00', status: 'success' },
-      { id: 'run-cross-repo-4', ranAtIso: '2026-03-18T08:30:00-07:00', status: 'success' },
-      { id: 'run-cross-repo-5', ranAtIso: '2026-03-17T08:30:00-07:00', status: 'success' },
+      {
+        id: 'run-cross-repo-1',
+        ranAtIso: '2026-03-23T08:30:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-cross-repo',
+        conversationName: 'Cross-repo release — dependency & CI report',
+      },
+      {
+        id: 'run-cross-repo-2',
+        ranAtIso: '2026-03-20T08:30:00-07:00',
+        status: 'failed',
+        conversationId: 'auto-activity-cross-repo',
+        conversationName: 'Cross-repo release — dependency & CI report',
+      },
+      {
+        id: 'run-cross-repo-3',
+        ranAtIso: '2026-03-19T08:30:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-cross-repo',
+        conversationName: 'Cross-repo release — dependency & CI report',
+      },
+      {
+        id: 'run-cross-repo-4',
+        ranAtIso: '2026-03-18T08:30:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-cross-repo',
+        conversationName: 'Cross-repo release — dependency & CI report',
+      },
+      {
+        id: 'run-cross-repo-5',
+        ranAtIso: '2026-03-17T08:30:00-07:00',
+        status: 'success',
+        conversationId: 'auto-activity-cross-repo',
+        conversationName: 'Cross-repo release — dependency & CI report',
+      },
     ],
   },
   {
@@ -179,11 +242,41 @@ const initialAutomations: AutomationItem[] = [
     mcpServers: ['GitHub MCP', 'Snyk MCP', 'PagerDuty MCP'],
     secrets: ['GITHUB_TOKEN', 'SNYK_TOKEN', 'PAGERDUTY_API_KEY'],
     runHistory: [
-      { id: 'run-security-1', ranAtIso: '2026-03-23T01:30:00Z', status: 'success' },
-      { id: 'run-security-2', ranAtIso: '2026-03-22T01:30:00Z', status: 'success' },
-      { id: 'run-security-3', ranAtIso: '2026-03-21T01:30:00Z', status: 'failed' },
-      { id: 'run-security-4', ranAtIso: '2026-03-20T01:30:00Z', status: 'success' },
-      { id: 'run-security-5', ranAtIso: '2026-03-19T01:30:00Z', status: 'success' },
+      {
+        id: 'run-security-1',
+        ranAtIso: '2026-03-23T01:30:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-security',
+        conversationName: 'Nightly security pass — findings digest',
+      },
+      {
+        id: 'run-security-2',
+        ranAtIso: '2026-03-22T01:30:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-security',
+        conversationName: 'Nightly security pass — findings digest',
+      },
+      {
+        id: 'run-security-3',
+        ranAtIso: '2026-03-21T01:30:00Z',
+        status: 'failed',
+        conversationId: 'auto-activity-security',
+        conversationName: 'Nightly security pass — findings digest',
+      },
+      {
+        id: 'run-security-4',
+        ranAtIso: '2026-03-20T01:30:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-security',
+        conversationName: 'Nightly security pass — findings digest',
+      },
+      {
+        id: 'run-security-5',
+        ranAtIso: '2026-03-19T01:30:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-security',
+        conversationName: 'Nightly security pass — findings digest',
+      },
     ],
   },
   {
@@ -209,11 +302,41 @@ const initialAutomations: AutomationItem[] = [
     mcpServers: ['GitHub MCP', 'Notion MCP'],
     secrets: ['GITHUB_TOKEN', 'NOTION_TOKEN'],
     runHistory: [
-      { id: 'run-docs-1', ranAtIso: '2026-03-23T14:15:00Z', status: 'success' },
-      { id: 'run-docs-2', ranAtIso: '2026-03-23T11:08:00Z', status: 'success' },
-      { id: 'run-docs-3', ranAtIso: '2026-03-22T16:10:00Z', status: 'failed' },
-      { id: 'run-docs-4', ranAtIso: '2026-03-22T13:42:00Z', status: 'success' },
-      { id: 'run-docs-5', ranAtIso: '2026-03-22T10:08:00Z', status: 'success' },
+      {
+        id: 'run-docs-1',
+        ranAtIso: '2026-03-23T14:15:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-docs',
+        conversationName: 'Docs sync run — user-facing updates summary',
+      },
+      {
+        id: 'run-docs-2',
+        ranAtIso: '2026-03-23T11:08:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-docs',
+        conversationName: 'Docs sync run — user-facing updates summary',
+      },
+      {
+        id: 'run-docs-3',
+        ranAtIso: '2026-03-22T16:10:00Z',
+        status: 'failed',
+        conversationId: 'auto-activity-docs',
+        conversationName: 'Docs sync run — user-facing updates summary',
+      },
+      {
+        id: 'run-docs-4',
+        ranAtIso: '2026-03-22T13:42:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-docs',
+        conversationName: 'Docs sync run — user-facing updates summary',
+      },
+      {
+        id: 'run-docs-5',
+        ranAtIso: '2026-03-22T10:08:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-docs',
+        conversationName: 'Docs sync run — user-facing updates summary',
+      },
     ],
   },
   {
@@ -240,9 +363,27 @@ const initialAutomations: AutomationItem[] = [
     mcpServers: ['Slack MCP', 'Jira MCP', 'GitHub MCP'],
     secrets: ['SLACK_BOT_TOKEN', 'JIRA_API_TOKEN', 'GITHUB_TOKEN'],
     runHistory: [
-      { id: 'run-release-1', ranAtIso: '2026-03-07T11:00:00-08:00', status: 'success' },
-      { id: 'run-release-2', ranAtIso: '2026-02-28T11:00:00-08:00', status: 'failed' },
-      { id: 'run-release-3', ranAtIso: '2026-02-21T11:00:00-08:00', status: 'success' },
+      {
+        id: 'run-release-1',
+        ranAtIso: '2026-03-07T11:00:00-08:00',
+        status: 'success',
+        conversationId: 'auto-activity-release',
+        conversationName: 'Release readiness — blockers & approvals',
+      },
+      {
+        id: 'run-release-2',
+        ranAtIso: '2026-02-28T11:00:00-08:00',
+        status: 'failed',
+        conversationId: 'auto-activity-release',
+        conversationName: 'Release readiness — blockers & approvals',
+      },
+      {
+        id: 'run-release-3',
+        ranAtIso: '2026-02-21T11:00:00-08:00',
+        status: 'success',
+        conversationId: 'auto-activity-release',
+        conversationName: 'Release readiness — blockers & approvals',
+      },
     ],
   },
   {
@@ -268,9 +409,27 @@ const initialAutomations: AutomationItem[] = [
     mcpServers: ['PagerDuty MCP', 'Slack MCP'],
     secrets: ['PAGERDUTY_ROUTING_KEY', 'SLACK_BOT_TOKEN'],
     runHistory: [
-      { id: 'run-incident-1', ranAtIso: '2026-02-27T18:45:00Z', status: 'success' },
-      { id: 'run-incident-2', ranAtIso: '2026-02-11T09:18:00Z', status: 'failed' },
-      { id: 'run-incident-3', ranAtIso: '2026-01-29T22:04:00Z', status: 'success' },
+      {
+        id: 'run-incident-1',
+        ranAtIso: '2026-02-27T18:45:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-incident',
+        conversationName: 'Incident summary — PD webhook run',
+      },
+      {
+        id: 'run-incident-2',
+        ranAtIso: '2026-02-11T09:18:00Z',
+        status: 'failed',
+        conversationId: 'auto-activity-incident',
+        conversationName: 'Incident summary — PD webhook run',
+      },
+      {
+        id: 'run-incident-3',
+        ranAtIso: '2026-01-29T22:04:00Z',
+        status: 'success',
+        conversationId: 'auto-activity-incident',
+        conversationName: 'Incident summary — PD webhook run',
+      },
     ],
   },
 ];
@@ -576,11 +735,11 @@ function MultiSelectBubbleInput({
               variant="ghost"
               size="sm"
               disabled={menuTriggerMode ? false : availableOptions.length === 0}
-              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
+              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-transparent hover:!text-black"
               aria-label={addActionLabel}
             >
-              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert" />
-              <span className="text-xs font-medium text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:!text-black" />
+              <span className="text-xs font-medium text-muted-foreground transition-colors duration-200 group-hover:!text-black">
                 {addActionLabel}
               </span>
             </Button>
@@ -821,12 +980,12 @@ function RepositoryTargetsBubbleField({
           type="button"
           variant="ghost"
           size="sm"
-          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:text-foreground"
+          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-transparent hover:!text-black"
           aria-label="Add repository"
           onClick={onRequestAdd}
         >
-          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert" />
-          <span className="text-xs font-medium text-muted-foreground transition-[filter] duration-200 ease-out group-hover:invert">
+          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:!text-black" />
+          <span className="text-xs font-medium text-muted-foreground transition-colors duration-200 group-hover:!text-black">
             Add repository
           </span>
         </Button>
@@ -975,73 +1134,81 @@ function ActivityLogSection({
           No automations have run yet.
         </div>
       ) : (
-      <ul className="divide-y divide-border">
-        {runHistory.map((run) => {
-          const isSuccess = run.status === 'success';
-          const isRunning = run.status === 'running';
-          const runDateLabel = runDateFormatter.format(new Date(run.ranAtIso));
+        <>
+          <div
+            className="hidden border-b border-border bg-muted/20 px-5 py-2 sm:grid sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_auto] sm:items-center sm:gap-4 sm:[&>*]:min-w-0"
+            aria-hidden
+          >
+            <span className="text-left text-xs font-medium text-muted-foreground">Time</span>
+            <span className="text-left text-xs font-medium text-muted-foreground">Conversation</span>
+            <span className="text-right text-xs font-medium text-muted-foreground">Status</span>
+          </div>
+          <ul className="divide-y divide-border">
+            {runHistory.map((run) => {
+              const isSuccess = run.status === 'success';
+              const isRunning = run.status === 'running';
+              const runDateLabel = runDateFormatter.format(new Date(run.ranAtIso));
+              const conversationId = run.conversationId;
+              const conversationName = run.conversationName;
+              const canOpenConversation = Boolean(conversationId && onOpenConversation);
 
-          const conversationId = run.conversationId;
-          const hasLinkedConversation = Boolean(conversationId);
-
-          return hasLinkedConversation ? (
-            <li key={run.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (conversationId) {
-                    onOpenConversation?.(conversationId);
-                  }
-                }}
-                className="flex w-full items-center justify-between px-5 py-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                aria-label={`Open conversation for run at ${runDateLabel}`}
-              >
-                <div className="text-sm text-foreground">{runDateLabel}</div>
-                <div
-                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                    isRunning
-                      ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                      : isSuccess
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                      : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
-                  }`}
+              return (
+                <li
+                  key={run.id}
+                  className="grid grid-cols-1 gap-2 px-5 py-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_auto] sm:items-center sm:gap-4 sm:[&>*]:min-w-0"
                 >
-                  {isRunning ? (
-                    <Spinner className="h-3.5 w-3.5" color="border-t-amber-300" />
-                  ) : isSuccess ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : (
-                    <XCircle className="h-3.5 w-3.5" />
-                  )}
-                  {isRunning ? 'Running' : isSuccess ? 'Successful' : 'Failed'}
-                </div>
-              </button>
-            </li>
-          ) : (
-            <li key={run.id} className="flex items-center justify-between px-5 py-3">
-              <div className="text-sm text-foreground">{runDateLabel}</div>
-              <div
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                  isRunning
-                    ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                    : isSuccess
-                    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                    : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
-                }`}
-              >
-                {isRunning ? (
-                  <Spinner className="h-3.5 w-3.5" color="border-t-amber-300" />
-                ) : isSuccess ? (
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                ) : (
-                  <XCircle className="h-3.5 w-3.5" />
-                )}
-                {isRunning ? 'Running' : isSuccess ? 'Successful' : 'Failed'}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+                  <div className="text-left">
+                    <div className="text-left text-xs font-medium text-muted-foreground sm:hidden">Time</div>
+                    <div className="text-left text-sm text-foreground sm:mt-0">{runDateLabel}</div>
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <div className="text-left text-xs font-medium text-muted-foreground sm:hidden">Conversation</div>
+                    {conversationId ? (
+                      <button
+                        type="button"
+                        disabled={!canOpenConversation}
+                        onClick={() => conversationId && onOpenConversation?.(conversationId)}
+                        className={cn(
+                          'mt-0.5 block w-full max-w-full truncate text-left text-sm font-medium sm:mt-0',
+                          canOpenConversation
+                            ? 'rounded-sm text-primary underline-offset-2 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+                            : 'cursor-default text-muted-foreground'
+                        )}
+                        aria-label={`Open conversation${conversationName ? `: ${conversationName}` : ''}`}
+                      >
+                        {conversationName ?? 'View conversation'}
+                      </button>
+                    ) : (
+                      <div className="mt-0.5 text-left text-sm text-muted-foreground sm:mt-0">—</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-start gap-1 sm:items-end">
+                    <span className="text-xs font-medium text-muted-foreground sm:hidden">Status</span>
+                    <div
+                      className={cn(
+                        'inline-flex w-fit items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium',
+                        isRunning
+                          ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                          : isSuccess
+                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                            : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
+                      )}
+                    >
+                      {isRunning ? (
+                        <Spinner className="h-3.5 w-3.5" color="border-t-amber-300" />
+                      ) : isSuccess ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <XCircle className="h-3.5 w-3.5" />
+                      )}
+                      {isRunning ? 'Running' : isSuccess ? 'Successful' : 'Failed'}
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </section>
   );
@@ -1052,7 +1219,8 @@ interface AutomationsScreenProps {
     automationTitle: string;
     repository: string;
     branch: string;
-  }) => { conversationId: string } | undefined;
+    model: string;
+  }) => { conversationId: string; conversationName: string } | undefined;
   onOpenConversation?: (conversationId: string) => void;
 }
 
@@ -1225,6 +1393,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       automationTitle: targetAutomation.title,
       repository: primaryTarget.repository,
       branch: primaryTarget.branch || 'main',
+      model: targetAutomation.model,
     });
 
     const runEntry: AutomationRunLogEntry = {
@@ -1232,6 +1401,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       ranAtIso: new Date().toISOString(),
       status: 'running',
       conversationId: runNowResult?.conversationId,
+      conversationName: runNowResult?.conversationName,
     };
 
     setAutomations((prev) =>
@@ -1301,6 +1471,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuItem
+                onClick={() => handleRunNow(automation.id)}
+                className="gap-2"
+              >
+                <Play className="h-4 w-4" />
+                Run now
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 onClick={() => handleToggle(automation.id)}
                 className="gap-2"
               >
@@ -1367,6 +1545,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
                 <DropdownMenuItem
+                  onClick={() => handleRunNow(selectedAutomation.id)}
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  Run now
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
                   onClick={() => handleToggle(selectedAutomation.id)}
                   className="gap-2"
                 >
@@ -1385,8 +1571,10 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             <button
               type="button"
               onClick={() => handleRunNow(selectedAutomation.id)}
-              className="h-8 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
+              aria-label={`Run now: ${selectedAutomation.title}`}
             >
+              <Play className="h-4 w-4" aria-hidden />
               Run now
             </button>
           </div>

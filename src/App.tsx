@@ -196,6 +196,7 @@ function App() {
   const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
   const [showStatusBadge, setShowStatusBadge] = useState(false);
+  const [activeChatAutomationTitle, setActiveChatAutomationTitle] = useState<string | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
@@ -223,6 +224,7 @@ function App() {
   const [isUxFlowMenuOpen, setIsUxFlowMenuOpen] = useState(false);
   const [enterpriseRequestSubmitted, setEnterpriseRequestSubmitted] = useState(false);
   const [figmaExportRoute, setFigmaExportRoute] = useState<string | null>(null);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState('personal');
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
@@ -355,17 +357,19 @@ function App() {
   );
 
   const handleAutomationRunNow = useCallback(
-    (payload: { automationTitle: string; repository: string; branch: string }) => {
+    (payload: { automationTitle: string; repository: string; branch: string; model: string }) => {
       const shortId = Math.random().toString(16).slice(2, 7);
       const conversationId = `automation-${Date.now()}`;
+      const conversationName = `Automation ${shortId} · ${payload.automationTitle}`;
       setDrawerConversations((prev) => [
         {
           id: conversationId,
-          name: `Automation ${shortId} · ${payload.automationTitle}`,
+          name: conversationName,
           version: 'V1',
           tag: 'Automation',
           repo: payload.repository,
           branch: payload.branch,
+          model: payload.model,
           time: 'just now',
         },
         ...prev,
@@ -373,7 +377,7 @@ function App() {
       setActiveConversationId(conversationId);
       setIsConversationDrawerOpen(true);
       navigateAppRoute(actionSlugs.conversations);
-      return { conversationId };
+      return { conversationId, conversationName };
     },
     []
   );
@@ -709,6 +713,8 @@ function App() {
                 isUxFlowMenuOpen={isUxFlowMenuOpen}
                 onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
                 onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
+                activeWorkspaceId={activeWorkspaceId}
+                onActiveWorkspaceChange={setActiveWorkspaceId}
               />
             )}
             <div 
@@ -801,6 +807,8 @@ function App() {
                       onRepositoryStatusChange={setRepositoryStatus}
                       showStatusBadge={showStatusBadge}
                       onToggleStatusBadge={() => setShowStatusBadge((prev) => !prev)}
+                      automationContextTitle={activeChatAutomationTitle}
+                      onAutomationContextTitleChange={setActiveChatAutomationTitle}
                     />
                   </div>
                 )}
@@ -959,6 +967,7 @@ function App() {
                 onOpenChange={handleConversationDrawerChange}
                 conversations={drawerConversations}
                 highlightedConversationId={activeConversationId}
+                onSelectConversation={(c) => setActiveConversationId(c.id)}
               />
             )}
             <UxTourOverlay
