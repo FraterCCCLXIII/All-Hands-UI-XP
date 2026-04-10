@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
@@ -7,65 +8,30 @@ import {
   FileText,
   Folder,
   Github,
-  Package,
 } from 'lucide-react';
-import { SearchInput } from '../components/ui/search-input';
 import {
   marketplaceSkills,
   skillRepoTree,
   type RepoTreeNode,
   type SkillRepositoryItem,
-} from '../data/skillsPageData';
-import { InfoCard } from '../components/common/InfoCard';
-import { PluginToggle } from '../components/ui/plugin-toggle';
-import { APP_ROUTE_EVENT } from '../lib/captureNavigation';
+} from '../../data/skillsPageData';
+import { InfoCard } from '../../components/common/InfoCard';
+import { PluginToggle } from '../../components/ui/plugin-toggle';
+import { APP_ROUTE_EVENT, navigateAppRoute } from '../../lib/captureNavigation';
+import { EXTENSIONS_ALL_BASE, EXTENSIONS_PLUGINS_BASE } from '../../lib/extensionsRoutes';
+import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
+import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
+import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
+import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
+import { cn } from '../../lib/utils';
+import { toSkillFileName } from './pluginRepoUtils';
 
-type PluginMarketplaceScreenProps = {
-  installedPluginRepos?: string[];
+type ExtensionsPluginsPanelProps = {
+  browseControls: ExtensionsBrowseControls;
+  footerExtra?: ReactNode;
 };
 
-function extractRepoSlug(value: string): string | null {
-  const normalized = value.trim().replace(/\.git$/, '');
-  if (!normalized) return null;
-
-  const directSlugMatch = normalized.match(/^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)$/);
-  if (directSlugMatch) return directSlugMatch[1];
-
-  const hostSlugMatch = normalized.match(/(?:github\.com|gitlab\.com)[/:]([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)/i);
-  if (hostSlugMatch) return hostSlugMatch[1];
-
-  try {
-    const parsed = new URL(normalized);
-    const segments = parsed.pathname.split('/').filter(Boolean);
-    if (segments.length >= 2) {
-      return `${segments[0]}/${segments[1]}`;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-function normalizeRepoKey(value: string): string | null {
-  const slug = extractRepoSlug(value);
-  return slug ? slug.toLowerCase() : null;
-}
-
-function toSkillFileName(skillName: string): string {
-  return `${skillName
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')}.md`;
-}
-
-export function PluginMarketplaceScreen({
-  installedPluginRepos = [],
-}: PluginMarketplaceScreenProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [repoSearchQuery, setRepoSearchQuery] = useState('');
-  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+export function ExtensionsPluginsPanel({ browseControls, footerExtra }: ExtensionsPluginsPanelProps) {
   const [selectedPlugin, setSelectedPlugin] = useState<SkillRepositoryItem | null>(null);
   const [pluginDetailView, setPluginDetailView] = useState<'files' | 'content'>('files');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
@@ -75,37 +41,14 @@ export function PluginMarketplaceScreen({
   /** Per-plugin enabled state; missing id defaults to on. */
   const [pluginEnabledById, setPluginEnabledById] = useState<Record<string, boolean>>({});
 
-  const repoItems = useMemo(
-    () =>
-      installedPluginRepos.map((repo) => {
-        const slug = extractRepoSlug(repo);
-        const repoKey = normalizeRepoKey(repo);
-        return {
-          value: repo,
-          label: slug ?? repo,
-          slug,
-          repoKey,
-        };
-      }),
-    [installedPluginRepos],
-  );
-
-  const filteredRepoItems = useMemo(() => {
-    if (!repoSearchQuery.trim()) return repoItems;
-    const query = repoSearchQuery.toLowerCase();
-    return repoItems.filter(
-      (repo) => repo.label.toLowerCase().includes(query) || repo.value.toLowerCase().includes(query),
-    );
-  }, [repoItems, repoSearchQuery]);
-
   useEffect(() => {
     const applyPluginFromHash = () => {
       const raw = window.location.hash.replace(/^#\/?/, '');
-      if (!raw.startsWith('plugin-marketplace')) return;
+      if (!raw.startsWith(EXTENSIONS_PLUGINS_BASE) && !raw.startsWith(EXTENSIONS_ALL_BASE)) return;
 
       const pathPart = raw.split('?')[0];
       let pluginId: string | null = null;
-      const pathMatch = pathPart.match(/^plugin-marketplace\/plugin\/([^/?#]+)/);
+      const pathMatch = pathPart.match(/^extensions\/plugins\/plugin\/([^/?#]+)/);
       if (pathMatch) {
         pluginId = decodeURIComponent(pathMatch[1]);
       } else {
@@ -116,7 +59,7 @@ export function PluginMarketplaceScreen({
       }
 
       if (!pluginId) {
-        if (pathPart === 'plugin-marketplace') {
+        if (pathPart === EXTENSIONS_PLUGINS_BASE || pathPart === EXTENSIONS_ALL_BASE) {
           setSelectedPlugin(null);
         }
         return;
@@ -124,9 +67,6 @@ export function PluginMarketplaceScreen({
 
       const skill = marketplaceSkills.find((s) => s.id === pluginId);
       if (!skill) return;
-      const repoKey = normalizeRepoKey(skill.repoUrl ?? skill.repo);
-      const match = repoItems.find((r) => r.repoKey === repoKey);
-      setSelectedRepo(match?.value ?? null);
       setSelectedPlugin(skill);
     };
     applyPluginFromHash();
@@ -136,28 +76,21 @@ export function PluginMarketplaceScreen({
       window.removeEventListener('hashchange', applyPluginFromHash);
       window.removeEventListener(APP_ROUTE_EVENT, applyPluginFromHash);
     };
-  }, [repoItems]);
+  }, []);
 
   const filteredSkills = useMemo(() => {
-    const selectedRepoKey = normalizeRepoKey(selectedRepo ?? '');
-    const query = searchQuery.trim().toLowerCase();
+    const query = browseControls.searchQuery.trim().toLowerCase();
 
     return marketplaceSkills.filter((item) => {
+      if (!item.isPlugin) return false;
       const itemName = (item.skillName ?? item.title).toLowerCase();
-      const itemRepoKey = normalizeRepoKey(item.repo) ?? normalizeRepoKey(item.repoUrl ?? '');
 
       const matchesSearch =
         !query || itemName.includes(query) || item.description.toLowerCase().includes(query);
-      const matchesRepo = !selectedRepoKey || (itemRepoKey != null && itemRepoKey === selectedRepoKey);
 
-      return matchesSearch && matchesRepo;
+      return matchesSearch;
     });
-  }, [searchQuery, selectedRepo]);
-
-  const selectedRepoLabel = useMemo(
-    () => repoItems.find((repo) => repo.value === selectedRepo)?.label ?? null,
-    [repoItems, selectedRepo],
-  );
+  }, [browseControls.searchQuery]);
 
   const pluginBundleSkills = useMemo(() => {
     if (!selectedPlugin) return [];
@@ -307,73 +240,16 @@ ${skill.initialPrompt}
 
   return (
     <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
-      <aside className="flex w-64 flex-shrink-0 flex-col">
-        <div className="p-4">
-          <h1 className="text-lg font-semibold text-foreground">Plugin Marketplace</h1>
-          <div className="mt-3">
-            <SearchInput
-              value={repoSearchQuery}
-              onValueChange={setRepoSearchQuery}
-              placeholder="Search repositories"
-              aria-label="Search repositories"
-              size="sm"
-            />
-          </div>
-          <nav className="mt-3 space-y-0.5">
-            <ul className="list-none space-y-1">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => setSelectedRepo(null)}
-                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                    selectedRepo === null
-                      ? 'bg-muted/80 text-foreground'
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                  }`}
-                >
-                  <Package className="h-4 w-4 flex-shrink-0" />
-                  <span>All Plugins</span>
-                </button>
-              </li>
-              {filteredRepoItems.map((repo) => (
-                <li key={repo.value}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRepo(repo.value)}
-                    className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-                      selectedRepo === repo.value
-                        ? 'bg-muted/80 text-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    }`}
-                  >
-                    <Github className="h-4 w-4 flex-shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">{repo.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-4">
-          {filteredRepoItems.length === 0 && (
-            <div className="px-2">
-              <p className="text-xs text-muted-foreground">
-                No activated repositories yet. Add one in Settings → Plugins.
-              </p>
-              <a
-                href="#/settings/org-plugins"
-                className="mt-2 inline-flex h-7 items-center rounded-md border border-border bg-background px-2.5 text-xs text-foreground transition-colors hover:bg-muted/60"
-              >
-                Open Settings
-              </a>
-            </div>
-          )}
-        </div>
-      </aside>
+      <ExtensionsShellSidebar browseControls={browseControls} footerExtra={footerExtra} />
 
-      <main className="flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="flex min-h-0 flex-1 flex-col p-6">
-          {selectedPlugin ? (
+      <main
+        className={cn(
+          'flex min-w-0 min-h-0 flex-1 flex-col',
+          selectedPlugin ? 'overflow-hidden' : 'overflow-y-auto'
+        )}
+      >
+        {selectedPlugin ? (
+          <div className="flex min-h-0 flex-1 flex-col p-6">
             <div className="flex h-full min-h-0 gap-4">
               <div className="repo-dropdown-scroll min-w-0 flex-1 overflow-y-auto pr-1">
                 <button
@@ -382,7 +258,7 @@ ${skill.initialPrompt}
                     setSelectedPlugin(null);
                     const h = window.location.hash;
                     if (h.includes('plugin=') || h.includes('/plugin/')) {
-                      window.history.replaceState(null, '', '#/plugin-marketplace');
+                      navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`);
                     }
                   }}
                   className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -409,29 +285,34 @@ ${skill.initialPrompt}
                           {selectedPlugin.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                         </span>
                       </a>
+                      <div className="mt-4">
+                        <SkillSourceBadge source={getSkillSource(selectedPlugin)} />
+                      </div>
                     </div>
-                    <PluginToggle
-                      className="mt-0.5 shrink-0"
-                      checked={
-                        selectedPlugin.switchLocked === true
-                          ? true
-                          : pluginEnabledById[selectedPlugin.id] !== false
-                      }
-                      locked={selectedPlugin.switchLocked === true}
-                      onCheckedChange={() =>
-                        setPluginEnabledById((prev) => ({
-                          ...prev,
-                          [selectedPlugin.id]: !(prev[selectedPlugin.id] !== false),
-                        }))
-                      }
-                      aria-label={
-                        selectedPlugin.switchLocked
-                          ? `${selectedPlugin.skillName ?? selectedPlugin.title} is on and locked by your organization`
-                          : pluginEnabledById[selectedPlugin.id] !== false
-                            ? `Turn off ${selectedPlugin.skillName ?? selectedPlugin.title}`
-                            : `Turn on ${selectedPlugin.skillName ?? selectedPlugin.title}`
-                      }
-                    />
+                    {selectedPlugin.isPlugin ? (
+                      <PluginToggle
+                        className="mt-0.5 shrink-0"
+                        checked={
+                          selectedPlugin.switchLocked === true
+                            ? true
+                            : pluginEnabledById[selectedPlugin.id] !== false
+                        }
+                        locked={selectedPlugin.switchLocked === true}
+                        onCheckedChange={() =>
+                          setPluginEnabledById((prev) => ({
+                            ...prev,
+                            [selectedPlugin.id]: !(prev[selectedPlugin.id] !== false),
+                          }))
+                        }
+                        aria-label={
+                          selectedPlugin.switchLocked
+                            ? `${selectedPlugin.skillName ?? selectedPlugin.title} is on and locked by your organization`
+                            : pluginEnabledById[selectedPlugin.id] !== false
+                              ? `Turn off ${selectedPlugin.skillName ?? selectedPlugin.title}`
+                              : `Turn on ${selectedPlugin.skillName ?? selectedPlugin.title}`
+                        }
+                      />
+                    ) : null}
                   </div>
                 </div>
 
@@ -497,31 +378,22 @@ ${skill.initialPrompt}
                 )}
               </section>
             </div>
-          ) : (
-            <>
-              <div className="rounded-xl border border-border bg-gradient-to-br from-muted/50 via-muted/30 to-muted/10 p-10 sm:p-12">
-                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[4px] bg-foreground/10 text-foreground">
-                  <Box className="h-6 w-6" />
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight">
-                  {selectedRepoLabel ? `${selectedRepoLabel} Plugins` : 'Plugin Marketplace'}
-                </h2>
-                <div className="mt-8 w-full max-w-lg">
-                  <SearchInput
-                    value={searchQuery}
-                    onValueChange={setSearchQuery}
-                    placeholder={selectedRepoLabel ? `Search plugins in ${selectedRepoLabel}` : 'Search plugins'}
-                    aria-label="Search marketplace plugins"
-                    size="lg"
-                  />
-                </div>
-              </div>
-
-              <section className="mt-6">
-                <h3 className="text-sm font-semibold text-foreground">Available Plugins</h3>
-                {selectedRepo && filteredSkills.length === 0 && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    No marketplace plugins found for this repository yet.
+          </div>
+        ) : (
+          <>
+            <ExtensionsCatalogPageHeader
+              title="Plugins"
+              description="Enable plugin bundles that ship multiple skills together. Open a pack for files, toggles, and bundled skills."
+              actions={<ExtensionsCatalogAddButton kind="plugin" />}
+            />
+            <div className="px-6 pb-6">
+              <section aria-labelledby="plugins-marketplace-heading">
+                <h3 id="plugins-marketplace-heading" className="sr-only">
+                  Available plugins
+                </h3>
+                {filteredSkills.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No marketplace plugins match your search.
                   </p>
                 )}
                 <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
@@ -556,14 +428,8 @@ ${skill.initialPrompt}
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedPlugin(skill);
-                            const repoKey = normalizeRepoKey(skill.repoUrl ?? skill.repo);
-                            const match = repoItems.find((r) => r.repoKey === repoKey);
-                            setSelectedRepo(match?.value ?? null);
-                            window.history.replaceState(
-                              null,
-                              '',
-                              `#/plugin-marketplace/plugin/${encodeURIComponent(skill.id)}`,
+                            navigateAppRoute(
+                              `#/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
                             );
                           }}
                           className="w-full rounded-xl p-5 pr-14 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
@@ -572,13 +438,14 @@ ${skill.initialPrompt}
                             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
                               <Box className="h-5 w-5" />
                             </div>
-                            <div className="min-w-0">
-                              <span className="text-base font-medium text-foreground">
-                                {pluginLabel}
-                              </span>
+                            <div className="flex min-w-0 flex-1 flex-col">
+                              <span className="text-base font-medium text-foreground">{pluginLabel}</span>
                               <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                                 {skill.description}
                               </p>
+                              <div className="mt-3">
+                                <SkillSourceBadge source={getSkillSource(skill)} />
+                              </div>
                             </div>
                           </div>
                         </button>
@@ -587,9 +454,9 @@ ${skill.initialPrompt}
                   })}
                 </div>
               </section>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </main>
     </div>
   );

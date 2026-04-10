@@ -2,6 +2,15 @@
  * Data for the Skills page: repository/task list and detail content.
  */
 
+/** Where the skill comes from in the catalog (shown as a tag on marketplace cards). */
+export type SkillSource = 'personal' | 'organization' | 'openhands';
+
+export const SKILL_SOURCE_LABELS: Record<SkillSource, string> = {
+  personal: 'Personal',
+  organization: 'Organization',
+  openhands: 'OpenHands',
+};
+
 export interface SkillRepositoryItem {
   id: string;
   repo: string;
@@ -22,6 +31,10 @@ export interface SkillRepositoryItem {
   forks?: number;
   updatedAt?: string;
   category?: string;
+  /** When true, Extensions shows a plugin on/off toggle; skills omit the switch. */
+  isPlugin?: boolean;
+  /** Catalog origin: personal, organization, or OpenHands platform. */
+  skillSource?: SkillSource;
 }
 
 export type SkillRepositoryLinkType = 'repo' | 'docs' | 'issues' | 'homepage';
@@ -142,6 +155,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 58,
     updatedAt: '2024-01-22',
     category: 'Development',
+    skillSource: 'openhands',
   },
   {
     id: 'marketplace-docs',
@@ -161,6 +175,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 31,
     updatedAt: '2024-01-18',
     category: 'Documentation',
+    skillSource: 'openhands',
   },
   {
     id: 'marketplace-security',
@@ -180,6 +195,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 27,
     updatedAt: '2024-01-15',
     category: 'Testing & Security',
+    skillSource: 'organization',
   },
   {
     id: 'marketplace-test-gen',
@@ -199,6 +215,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 12,
     updatedAt: '2024-01-12',
     category: 'Testing & Security',
+    skillSource: 'openhands',
   },
   {
     id: 'marketplace-refactor',
@@ -218,6 +235,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 19,
     updatedAt: '2024-01-14',
     category: 'Tools',
+    skillSource: 'personal',
   },
   {
     id: 'marketplace-migrate',
@@ -237,12 +255,14 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 38,
     updatedAt: '2024-01-19',
     category: 'DevOps',
+    skillSource: 'organization',
   },
   {
     id: 'marketplace-deps',
     repo: 'skills/dependency-audit',
     title: 'Dependency Audit',
     skillName: 'Dependency Audit',
+    isPlugin: true,
     repoUrl: 'https://github.com/skills/dependency-audit',
     description: 'Audit dependencies for outdated packages, vulnerabilities, and license compliance.',
     initialPrompt: 'Audit this project\'s dependencies. Report outdated packages and security issues.',
@@ -256,12 +276,14 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 9,
     updatedAt: '2024-01-10',
     category: 'Development',
+    skillSource: 'organization',
   },
   {
     id: 'marketplace-pr-description',
     repo: 'skills/pr-description',
     title: 'PR Description',
     skillName: 'PR Description',
+    isPlugin: true,
     repoUrl: 'https://github.com/skills/pr-description',
     description: 'Generate pull request descriptions from diffs and commit history.',
     initialPrompt: 'Generate a PR description for these changes. Include summary and checklist.',
@@ -275,12 +297,14 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 15,
     updatedAt: '2024-01-16',
     category: 'Documentation',
+    skillSource: 'openhands',
   },
   {
     id: 'marketplace-changelog',
     repo: 'skills/changelog',
     title: 'Changelog Generator',
     skillName: 'Changelog Generator',
+    isPlugin: true,
     repoUrl: 'https://github.com/skills/changelog',
     description: 'Generate changelogs from commits, tags, and PRs.',
     initialPrompt: 'Generate a changelog for the latest release. Group by type and highlight breaking changes.',
@@ -294,6 +318,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 24,
     updatedAt: '2024-01-17',
     category: 'Tools',
+    skillSource: 'organization',
   },
   {
     id: 'marketplace-api-design',
@@ -313,6 +338,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 21,
     updatedAt: '2024-01-13',
     category: 'Tools',
+    skillSource: 'personal',
   },
   {
     id: 'marketplace-performance',
@@ -332,6 +358,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 18,
     updatedAt: '2024-01-11',
     category: 'Tools',
+    skillSource: 'openhands',
   },
   {
     id: 'marketplace-accessibility',
@@ -351,6 +378,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 14,
     updatedAt: '2024-01-09',
     category: 'Tools',
+    skillSource: 'organization',
   },
   {
     id: 'marketplace-i18n',
@@ -370,6 +398,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 11,
     updatedAt: '2024-01-08',
     category: 'Tools',
+    skillSource: 'personal',
   },
   {
     id: 'marketplace-db-schema',
@@ -389,6 +418,7 @@ export const marketplaceSkills: SkillRepositoryItem[] = [
     forks: 8,
     updatedAt: '2024-01-07',
     category: 'Databases',
+    skillSource: 'personal',
   },
 ];
 
@@ -456,6 +486,7 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -d '{"skillId": "update-readme", "repo": "orbit234/sudoku"}'`,
     docTitle: 'Plugin.json',
     conversationCount: 1,
+    skillSource: 'openhands',
   },
   {
     id: 'update-readme',
@@ -471,6 +502,7 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -d '{"skillId": "update-readme", "repo": "orbit234/sudoku"}'`,
     docTitle: 'Plugin.json',
     conversationCount: 1,
+    skillSource: 'openhands',
   },
   {
     id: 'personal-lab-foundations',
@@ -487,6 +519,7 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -d '{"skillId": "personal-lab-foundations", "repo": "paulbloch/personal-lab"}'`,
     docTitle: 'README.md',
     conversationCount: 1,
+    skillSource: 'personal',
   },
   {
     id: 'personal-lab-components',
@@ -503,6 +536,7 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -d '{"skillId": "personal-lab-components", "repo": "paulbloch/personal-lab"}'`,
     docTitle: 'README.md',
     conversationCount: 1,
+    skillSource: 'personal',
   },
   {
     id: 'personal-lab-tokens',
@@ -519,6 +553,7 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -d '{"skillId": "personal-lab-tokens", "repo": "paulbloch/personal-lab"}'`,
     docTitle: 'README.md',
     conversationCount: 1,
+    skillSource: 'personal',
   },
   {
     id: 'acme-backend',
@@ -535,5 +570,6 @@ export const skillRepositoryItems: SkillRepositoryItem[] = [
   -d '{"skillId": "code-review", "repo": "acme/backend-api"}'`,
     docTitle: 'README.md',
     conversationCount: 2,
+    skillSource: 'organization',
   },
 ];

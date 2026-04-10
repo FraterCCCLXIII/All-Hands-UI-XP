@@ -1,8 +1,7 @@
 export { LoadingScreen } from './LoadingScreen';
 export { DashboardScreen } from './DashboardScreen';
 export { AutomationsScreen } from './AutomationsScreen';
-export { SkillsScreen } from './SkillsScreen';
-export { PluginMarketplaceScreen } from './PluginMarketplaceScreen';
+export { ExtensionsScreen } from './ExtensionsScreen';
 export { LoginScreen } from './LoginScreen';
 export { ActiveChatScreen } from './ActiveChatScreen';
 export { ComponentLibraryScreen } from './ComponentLibraryScreen';

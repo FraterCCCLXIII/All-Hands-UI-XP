@@ -1721,8 +1721,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                 <a
                                   href={
                                     row.kind === 'skill'
-                                      ? `#/skills/skill/${encodeURIComponent(row.marketplaceSkillId)}`
-                                      : `#/plugin-marketplace/plugin/${encodeURIComponent(row.marketplaceSkillId)}`
+                                      ? `#/extensions/skills/skill/${encodeURIComponent(row.marketplaceSkillId)}`
+                                      : `#/extensions/plugins/plugin/${encodeURIComponent(row.marketplaceSkillId)}`
                                   }
                                   className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
                                 >

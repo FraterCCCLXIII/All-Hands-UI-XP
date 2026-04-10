@@ -11,8 +11,7 @@ import {
   DashboardScreen,
   AutomationsScreen,
   LoadingScreen,
-  SkillsScreen,
-  PluginMarketplaceScreen,
+  ExtensionsScreen,
   LoginScreen,
   ActiveChatScreen,
   ComponentLibraryScreen,
@@ -34,6 +33,7 @@ import {
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
+import { AppToaster } from './components/common/AppToaster';
 import { Gripper } from './components/common/Gripper';
 import { InspectorOverlay } from './components/common/InspectorOverlay';
 import {
@@ -52,6 +52,7 @@ import { useUxTourController } from './features/ux-tours/useUxTourController';
 import { uxTourDefinitions, uxTourLinks } from './features/ux-tours/uxTourRegistry';
 import type { UxTourAction } from './features/ux-tours/uxTourTypes';
 import { APP_ROUTE_EVENT, isFigmaCaptureActive, navigateAppRoute, normalizeAppRoute } from './lib/captureNavigation';
+import { tryNormalizeExtensionsHash } from './lib/extensionsRoutes';
 
 const themeClasses: ThemeClassMap = {
   dark: {
@@ -162,8 +163,7 @@ const actionSlugs: Record<string, string> = {
   'chat-cards': 'chat-cards',
   dashboard: 'dashboard',
   automations: 'automations',
-  skills: 'skills',
-  'plugin-marketplace': 'plugin-marketplace',
+  extensions: 'extensions/all',
   components: 'components',
   'new-components': 'new-components',
   'new-llm-switcher': 'new-llm-switcher',
@@ -229,8 +229,7 @@ function App() {
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
   const isAutomationsView = activeNavItem === 'automations';
-  const isSkillsView = activeNavItem === 'skills';
-  const isPluginMarketplaceView = activeNavItem === 'plugin-marketplace';
+  const isExtensionsView = activeNavItem === 'extensions';
   const isSettingsView = activeNavItem === 'settings';
   const isComponentsView = activeNavItem === 'components';
   const isNewComponentsView = activeNavItem === 'new-components';
@@ -246,8 +245,7 @@ function App() {
   const showChatView =
     !isDashboardView &&
     !isAutomationsView &&
-    !isSkillsView &&
-    !isPluginMarketplaceView &&
+    !isExtensionsView &&
     !isSettingsView &&
     !isComponentsView &&
     !isNewComponentsView &&
@@ -606,15 +604,12 @@ function App() {
         return;
       }
       setSettingsTab(null);
-      if (hash === 'plugin-marketplace' || hash.startsWith('plugin-marketplace/')) {
-        setActiveNavItem('plugin-marketplace');
-        setLastNonDrawerNavItem('plugin-marketplace');
-        setIsConversationDrawerOpen(false);
+      if (tryNormalizeExtensionsHash()) {
         return;
       }
-      if (hash === 'skills' || hash.startsWith('skills/')) {
-        setActiveNavItem('skills');
-        setLastNonDrawerNavItem('skills');
+      if (hash === 'extensions' || hash.startsWith('extensions/')) {
+        setActiveNavItem('extensions');
+        setLastNonDrawerNavItem('extensions');
         setIsConversationDrawerOpen(false);
         return;
       }
@@ -851,9 +846,8 @@ function App() {
                     onOpenConversation={handleOpenAutomationConversation}
                   />
                 )}
-                {isSkillsView && <SkillsScreen />}
-                {isPluginMarketplaceView && (
-                  <PluginMarketplaceScreen installedPluginRepos={installedPluginRepos} />
+                {isExtensionsView && (
+                  <ExtensionsScreen installedPluginRepos={installedPluginRepos} />
                 )}
                 {isComponentsView && <ComponentLibraryScreen />}
                 {isNewComponentsView && <NewComponentsScreen />}
@@ -1004,6 +998,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      <AppToaster />
     </div>
   );
 }

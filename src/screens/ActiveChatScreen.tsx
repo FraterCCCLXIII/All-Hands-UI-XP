@@ -150,7 +150,7 @@ const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
     description: 'Summarizes code changes, flags risky diffs, and prepares reviewer-ready notes.',
     repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
     source: 'Loaded from the conversation skill registry.',
-    pageUrl: '#/skills',
+    pageUrl: '#/extensions/all',
     initialPrompt: 'Review this pull request for risky changes, unclear logic, regressions, and missing test coverage.',
     curlCommand: `curl -X POST https://api.example.com/skills/run \\
   -H "Content-Type: application/json" \\
@@ -164,7 +164,7 @@ const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
     description: 'Builds concise release-note drafts from the current conversation and changes.',
     repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
     source: 'Loaded from the conversation skill registry.',
-    pageUrl: '#/skills',
+    pageUrl: '#/extensions/all',
     initialPrompt: 'Draft release notes from the current conversation, grouped by user-facing changes, fixes, and operational impact.',
     curlCommand: `curl -X POST https://api.example.com/skills/run \\
   -H "Content-Type: application/json" \\
@@ -271,7 +271,12 @@ function CopyableBlock({
   className?: string;
 }) {
   return (
-    <div className={cn('overflow-hidden rounded-xl border border-border bg-card', className)}>
+    <div
+      className={cn(
+        'overflow-hidden rounded-xl border border-border bg-card [&_textarea]:min-h-[100px]',
+        className
+      )}
+    >
       <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
         <span className="text-sm font-medium text-foreground">{title}</span>
         <button
@@ -287,7 +292,7 @@ function CopyableBlock({
         readOnly
         value={value}
         rows={4}
-        className="custom-scrollbar w-full resize-none overflow-y-auto border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
+        className="repo-dropdown-scroll max-h-[180px] w-full resize-none overflow-y-auto border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
       />
     </div>
   );

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
@@ -9,16 +10,15 @@ import {
   ExternalLink,
   FlaskConical,
   GitBranch,
-  Package,
   Github,
   MoreHorizontal,
   MoreVertical,
   ShieldCheck,
   Wrench,
 } from 'lucide-react';
-import { InfoCard } from '../components/common/InfoCard';
-import { Button } from '../components/ui/button';
-import { SearchInput } from '../components/ui/search-input';
+import { InfoCard } from '../../components/common/InfoCard';
+import { Button } from '../../components/ui/button';
+import { PluginToggle } from '../../components/ui/plugin-toggle';
 import {
   Dialog,
   DialogContent,
@@ -26,22 +26,31 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../components/ui/dialog';
+} from '../../components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
+} from '../../components/ui/dropdown-menu';
 import {
   marketplaceCategories,
   marketplaceSkills,
   skillRepositoryMetadata,
   skillRepositoryItems,
   type SkillRepositoryItem,
-} from '../data/skillsPageData';
-import { APP_ROUTE_EVENT } from '../lib/captureNavigation';
-import { cn } from '../lib/utils';
+} from '../../data/skillsPageData';
+import { APP_ROUTE_EVENT, navigateAppRoute } from '../../lib/captureNavigation';
+import {
+  EXTENSIONS_ALL_BASE,
+  EXTENSIONS_PLUGINS_BASE,
+  EXTENSIONS_SKILLS_BASE,
+} from '../../lib/extensionsRoutes';
+import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
+import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
+import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
+import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
+import { cn } from '../../lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
 const SKILL_ICONS: Record<string, LucideIcon> = {
@@ -148,7 +157,7 @@ function CopyableBlock({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-border bg-card',
+        'overflow-hidden rounded-xl border border-border bg-card [&_textarea]:min-h-[100px]',
         className
       )}
     >
@@ -167,7 +176,7 @@ function CopyableBlock({
         readOnly
         value={value}
         rows={4}
-        className="w-full resize-none border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
+        className="repo-dropdown-scroll max-h-[180px] w-full resize-none overflow-y-auto border-0 bg-transparent p-4 font-mono text-sm text-foreground focus:ring-0 focus-visible:outline-none"
       />
     </div>
   );
@@ -260,10 +269,14 @@ function AddSkillDialog({
 
 type SkillsViewMode = 'marketplace' | 'repos';
 
-export function SkillsScreen() {
+export type ExtensionsSkillsPanelProps = {
+  browseControls: ExtensionsBrowseControls;
+  footerExtra?: ReactNode;
+};
+
+export function ExtensionsSkillsPanel({ browseControls, footerExtra }: ExtensionsSkillsPanelProps) {
   const [viewMode, setViewMode] = useState<SkillsViewMode>('marketplace');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [marketplaceSearchQuery, setMarketplaceSearchQuery] = useState('');
+  const [marketplaceSwitchById, setMarketplaceSwitchById] = useState<Record<string, boolean>>({});
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SkillRepositoryItem | null>(null);
   const [addToRepoModalOpen, setAddToRepoModalOpen] = useState(false);
@@ -280,11 +293,11 @@ export function SkillsScreen() {
   useEffect(() => {
     const applySkillFromHash = () => {
       const raw = window.location.hash.replace(/^#\/?/, '');
-      if (!raw.startsWith('skills')) return;
+      if (!raw.startsWith(EXTENSIONS_SKILLS_BASE) && !raw.startsWith(EXTENSIONS_ALL_BASE)) return;
       const pathPart = raw.split('?')[0];
-      const pathMatch = pathPart.match(/^skills\/skill\/([^/?#]+)/);
+      const pathMatch = pathPart.match(/^extensions\/skills\/skill\/([^/?#]+)/);
       if (!pathMatch) {
-        if (pathPart === 'skills') {
+        if (pathPart === EXTENSIONS_SKILLS_BASE || pathPart === EXTENSIONS_ALL_BASE) {
           setSelectedItem(null);
         }
         return;
@@ -351,18 +364,6 @@ export function SkillsScreen() {
 
   const allRepoGroups = useMemo(() => groupSkillsByRepo(skillRepositoryItems), []);
 
-  /** Repos with their skills; filtered by search. Number in column = skills count. */
-  const repoGroups = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    const items = q
-      ? skillRepositoryItems.filter((item) => {
-          const label = (item.skillName ?? item.title).toLowerCase();
-          return item.repo.toLowerCase().includes(q) || label.includes(q);
-        })
-      : skillRepositoryItems;
-    return groupSkillsByRepo(items);
-  }, [searchQuery]);
-
   const selectedRepoGroup = useMemo(() => {
     if (!selectedRepo) return null;
     return allRepoGroups.find((group) => group.repo === selectedRepo) ?? null;
@@ -403,14 +404,6 @@ export function SkillsScreen() {
     const rest = allRepoGroups.filter((group) => group.repo !== personalRepoSlug);
     return personal ? [personal, ...rest] : rest;
   }, [allRepoGroups, personalRepoSlug]);
-  const personalRepoGroup = useMemo(
-    () => repoGroups.find((group) => group.repo === personalRepoSlug) ?? null,
-    [repoGroups]
-  );
-  const nonPersonalRepoGroups = useMemo(
-    () => repoGroups.filter((group) => group.repo !== personalRepoSlug),
-    [repoGroups]
-  );
   const displayItem = selectedItem;
   const displayItemConversations = displayItem?.conversationCount ?? 0;
   const skillFileContent = useMemo(() => {
@@ -425,12 +418,6 @@ export function SkillsScreen() {
     };
     return JSON.stringify(payload, null, 2);
   }, [displayItem]);
-
-  const handleSelectRepo = useCallback((repo: string) => {
-    setViewMode('repos');
-    setSelectedRepo(repo);
-    setSelectedItem(null);
-  }, []);
 
   const handleSelectSkill = useCallback((skill: SkillRepositoryItem) => {
     setViewMode('repos');
@@ -474,14 +461,14 @@ export function SkillsScreen() {
       const cat = marketplaceCategories.find((c) => c.slug === selectedCategory);
       if (cat) items = items.filter((s) => s.category === cat.name);
     }
-    if (!marketplaceSearchQuery.trim()) return items;
-    const q = marketplaceSearchQuery.toLowerCase();
+    const q = browseControls.searchQuery.trim().toLowerCase();
+    if (!q) return items;
     return items.filter(
       (s) =>
         (s.skillName ?? s.title).toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q)
     );
-  }, [marketplaceSearchQuery, selectedCategory]);
+  }, [browseControls.searchQuery, selectedCategory]);
 
   const isMarketplaceSkill =
     displayItem?.id != null && String(displayItem.id).startsWith('marketplace-');
@@ -490,177 +477,19 @@ export function SkillsScreen() {
 
   return (
     <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
-      {/* Left sidebar */}
-      <aside className="flex w-64 flex-shrink-0 flex-col">
-        <div className="p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h1 className="text-lg font-semibold text-foreground">Skills</h1>
-            <a
-              href="#"
-              className="rounded p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              aria-label="Skills documentation"
-            >
-              <BookOpen className="h-4 w-4" />
-            </a>
-          </div>
-          <div className="mt-3">
-            <SearchInput
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              placeholder="Search"
-              aria-label="Search repositories"
-              size="sm"
-            />
-          </div>
-          <nav className="mt-3 space-y-0.5" aria-label="Skills navigation">
-            <button
-              type="button"
-              onClick={() => {
-                setViewMode('marketplace');
-                setSelectedRepo(null);
-                setSelectedItem(null);
-                if (window.location.hash.includes('/skill/')) {
-                  window.history.replaceState(null, '', '#/skills');
-                }
-              }}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-                viewMode === 'marketplace' &&
-                  (!selectedItem || String(selectedItem?.id).startsWith('marketplace-'))
-                  ? 'bg-muted/80 text-foreground'
-                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-              )}
-            >
-              <Package className="h-4 w-4 flex-shrink-0" />
-              <span>All Skills</span>
-            </button>
-          </nav>
-        </div>
-        <div className="flex-1 overflow-y-auto px-3 py-4 repo-dropdown-scroll">
-          <div className="mb-4 px-1">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Personal Repository
-            </div>
-            <ul className="mt-2 list-none space-y-1">
-              {personalRepoGroup ? (
-                <li>
-                  <div
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
-                      selectedRepo === personalRepoGroup.repo
-                        ? 'bg-muted/80 text-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectRepo(personalRepoGroup.repo)}
-                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                      aria-current={selectedRepo === personalRepoGroup.repo}
-                    >
-                      <Github className="h-4 w-4 flex-shrink-0" />
-                      <span className="min-w-0 flex-1 truncate">{personalRepoGroup.repo}</span>
-                    </button>
-                    <span className="tabular-nums text-xs text-muted-foreground">
-                      {personalRepoGroup.skills.length}
-                    </span>
-                  </div>
-                </li>
-              ) : (
-                <li className="px-2 py-1.5 text-xs text-muted-foreground">
-                  No personal repository yet.
-                </li>
-              )}
-            </ul>
-          </div>
-          <h3 className="mb-3 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            All Repositories
-          </h3>
-          <ul className="list-none space-y-1">
-            {nonPersonalRepoGroups.slice(0, 10).map(({ repo, skills }) => (
-                <li key={repo}>
-                  <div
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
-                      selectedRepo === repo
-                        ? 'bg-muted/80 text-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectRepo(repo)}
-                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                      aria-current={selectedRepo === repo}
-                    >
-                      <Github className="h-4 w-4 flex-shrink-0" />
-                      <span className="min-w-0 flex-1 truncate">{repo}</span>
-                    </button>
-                    <span className="tabular-nums text-xs text-muted-foreground">
-                      {skills.length}
-                    </span>
-                  </div>
-                </li>
-            ))}
-          </ul>
-          <div className="mt-4 border-t border-border pt-4">
-            <ul className="list-none space-y-1">
-              {[
-                'facebook/react',
-                'vercel/next.js',
-                'tailwindlabs/tailwindcss',
-                'shadcn-ui/ui',
-                'microsoft/vscode',
-                'facebook/react-native',
-                'nodejs/node',
-                'python/cpython',
-                'rust-lang/rust',
-                'golang/go',
-              ].map((repo) => (
-                <li key={repo}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                  >
-                    <Github className="h-4 w-4 flex-shrink-0" />
-                    <span className="min-w-0 flex-1 truncate">{repo}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-            <button
-              type="button"
-              className="mt-2 w-full px-2 py-1.5 text-left text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View more...
-            </button>
-          </div>
-        </div>
-      </aside>
+      <ExtensionsShellSidebar browseControls={browseControls} footerExtra={footerExtra} />
 
       {/* Main content: spans available width (right panel only when skill selected) */}
       <main className="flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="p-6">
-          {showMarketplace ? (
-            <>
-                  <div className="rounded-xl border border-border bg-gradient-to-br from-muted/50 via-muted/30 to-muted/10 p-10 sm:p-12 flex flex-col items-start">
-                    <div className="mb-3 flex h-8 w-8 items-center justify-center rounded-[4px] bg-foreground/10 text-foreground">
-                      <Package className="h-5 w-5" />
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl font-semibold text-foreground leading-tight text-left">
-                      Skills
-                    </h2>
-                    <div className="mt-8 w-full max-w-lg">
-                      <SearchInput
-                        value={marketplaceSearchQuery}
-                        onValueChange={setMarketplaceSearchQuery}
-                        placeholder="Search skills"
-                        aria-label="Search marketplace skills"
-                        size="lg"
-                      />
-                    </div>
-                  </div>
-                  <div className="relative mt-6 w-full overflow-hidden">
+        {showMarketplace ? (
+          <>
+            <ExtensionsCatalogPageHeader
+              title="Skills"
+              description="Discover skills to add to your workspace. Open a card for prompts, curl, and install flows. Filter by category below or search from the sidebar."
+              actions={<ExtensionsCatalogAddButton kind="skill" />}
+            />
+            <div className="px-6 pb-6">
+                  <div className="relative w-full overflow-hidden">
                     {/* Hidden measurement container - all tabs for accurate width calculation on resize */}
                     <div
                       ref={categoryTabsMeasureRef}
@@ -767,55 +596,88 @@ export function SkillsScreen() {
               <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {filteredMarketplaceSkills.map((skill) => {
                   const IconComponent = getSkillIcon(skill.id);
+                  const label = skill.skillName ?? skill.title;
+                  const locked = skill.switchLocked === true;
+                  const enabled = locked ? true : marketplaceSwitchById[skill.id] !== false;
+                  const source = getSkillSource(skill);
                   return (
-                    <button
+                    <div
                       key={skill.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedItem(skill);
-                        window.history.replaceState(
-                          null,
-                          '',
-                          `#/skills/skill/${encodeURIComponent(skill.id)}`,
-                        );
-                      }}
-                      className="flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/50 hover:border-muted-foreground/20"
+                      className="relative flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/50 hover:border-muted-foreground/20"
                     >
-                      <div className="flex flex-1 flex-col p-6">
+                      <PluginToggle
+                        size="sm"
+                        className="absolute right-3 top-3 z-10"
+                        checked={enabled}
+                        locked={locked}
+                        onCheckedChange={() =>
+                          setMarketplaceSwitchById((prev) => ({
+                            ...prev,
+                            [skill.id]: !(prev[skill.id] !== false),
+                          }))
+                        }
+                        aria-label={
+                          locked
+                            ? `${label} is on and locked by your organization`
+                            : enabled
+                              ? `Turn off ${label}`
+                              : `Turn on ${label}`
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (skill.isPlugin) {
+                            navigateAppRoute(
+                              `#/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
+                            );
+                            return;
+                          }
+                          setSelectedItem(skill);
+                          window.history.replaceState(
+                            null,
+                            '',
+                            `#/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`,
+                          );
+                        }}
+                        className="flex flex-1 flex-col rounded-xl p-6 pr-14 pt-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                      >
                         <div className="flex items-start gap-3">
                           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
                             <IconComponent className="h-4 w-4" />
                           </div>
-                          <div className="min-w-0">
-                            <span className="text-base font-medium text-foreground">
-                              {skill.skillName ?? skill.title}
-                            </span>
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <span className="text-base font-medium text-foreground">{label}</span>
                             <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                               {skill.description}
                             </p>
+                            <div className="mt-3">
+                              <SkillSourceBadge source={source} />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                    </div>
                   );
                 })}
               </div>
+            </div>
             </>
           ) : displayItem ? (
-            <>
+            <div className="p-6">
               {isMarketplaceSkill && (
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedItem(null);
                     if (window.location.hash.includes('/skill/')) {
-                      window.history.replaceState(null, '', '#/skills');
+                      navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`);
                     }
                   }}
                   className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Back to Skills</span>
+                  <span>Back</span>
                 </button>
               )}
               {!isMarketplaceSkill && selectedRepo && (
@@ -828,22 +690,77 @@ export function SkillsScreen() {
                   <span>Back to {selectedRepo}</span>
                 </button>
               )}
-              <h2 className="text-[28px] font-semibold text-foreground leading-tight">
-                {displayItem.skillName ?? displayItem.title}
-              </h2>
-              <a
-                href={displayItem.repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-              >
-                <Github className="h-4 w-4" />
-                <span className="font-mono">
-                  {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                </span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-              <p className="mt-4 text-sm text-muted-foreground">{displayItem.description}</p>
+              {isMarketplaceSkill ? (
+                <div className="my-6">
+                  <div className="flex items-start justify-between gap-4 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-[28px] font-semibold text-foreground leading-tight">
+                        {displayItem.skillName ?? displayItem.title}
+                      </h2>
+                      <a
+                        href={displayItem.repoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                      >
+                        <Github className="h-4 w-4" />
+                        <span className="font-mono">
+                          {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                        </span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                      <p className="mt-4 text-sm text-muted-foreground">{displayItem.description}</p>
+                      <div className="mt-4">
+                        <SkillSourceBadge source={getSkillSource(displayItem)} />
+                      </div>
+                    </div>
+                    <PluginToggle
+                      className="mt-0.5 shrink-0"
+                      checked={
+                        displayItem.switchLocked === true
+                          ? true
+                          : marketplaceSwitchById[displayItem.id] !== false
+                      }
+                      locked={displayItem.switchLocked === true}
+                      onCheckedChange={() =>
+                        setMarketplaceSwitchById((prev) => ({
+                          ...prev,
+                          [displayItem.id]: !(prev[displayItem.id] !== false),
+                        }))
+                      }
+                      aria-label={
+                        displayItem.switchLocked
+                          ? `${displayItem.skillName ?? displayItem.title} is on and locked by your organization`
+                          : marketplaceSwitchById[displayItem.id] !== false
+                            ? `Turn off ${displayItem.skillName ?? displayItem.title}`
+                            : `Turn on ${displayItem.skillName ?? displayItem.title}`
+                      }
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <h2 className="text-[28px] font-semibold text-foreground leading-tight">
+                    {displayItem.skillName ?? displayItem.title}
+                  </h2>
+                  <a
+                    href={displayItem.repoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                  >
+                    <Github className="h-4 w-4" />
+                    <span className="font-mono">
+                      {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                  <p className="mt-4 text-sm text-muted-foreground">{displayItem.description}</p>
+                  <div className="mt-4">
+                    <SkillSourceBadge source={getSkillSource(displayItem)} />
+                  </div>
+                </>
+              )}
 
               <div className="mt-6">
                 <CopyableBlock
@@ -910,9 +827,9 @@ export function SkillsScreen() {
                   onAdd={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
                 />
               )}
-            </>
+            </div>
           ) : showRepoPage && selectedRepoGroup && selectedRepoMeta ? (
-            <>
+            <div className="p-6">
               <div className="space-y-6">
                 <section className="rounded-xl border border-border bg-card p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -964,9 +881,8 @@ export function SkillsScreen() {
                   </div>
                 </section>
               </div>
-            </>
+            </div>
           ) : null}
-        </div>
       </main>
 
       {displayItem && (

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Bot, Box, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
+import { Box, Boxes, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   DropdownMenu,
@@ -84,8 +84,7 @@ function AutomationsIcon({ className }: { className?: string }) {
 const navItems = [
   { icon: Plus, label: 'Create repository', action: 'new-project' },
   { icon: List, label: 'List view', action: 'conversations' },
-  { icon: Bot, label: 'Robot assistant', action: 'skills' },
-  { icon: Box, label: 'Plugin Marketplace', action: 'plugin-marketplace' },
+  { icon: Boxes, label: 'Extensions', action: 'extensions' },
   { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
   { icon: SquareKanban, label: 'Dashboard view', action: 'dashboard' },
 ];

@@ -23,7 +23,7 @@ const nodes: FlowchartNode[] = [
     id: 'skills',
     title: 'Skills',
     subtitle: 'Use cases',
-    hash: 'skills',
+    hash: 'extensions/all',
     position: { x: 620, y: 160 },
     size: { width: 420, height: 280 },
     notes: [

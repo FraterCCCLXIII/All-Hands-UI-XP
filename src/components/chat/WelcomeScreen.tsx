@@ -130,7 +130,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const featuredSkills = useMemo(() => marketplaceSkills.slice(0, 5), []);
 
   const handleNavigateToSkills = useCallback(() => {
-    navigateAppRoute('#/skills');
+    navigateAppRoute('#/extensions/all');
   }, []);
 
   const handleLaunch = () => {
