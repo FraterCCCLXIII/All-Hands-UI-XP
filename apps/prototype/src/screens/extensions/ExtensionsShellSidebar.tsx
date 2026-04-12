@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { BookOpen, Box, Cloud, Package, Sparkles, Webhook } from 'lucide-react';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
@@ -26,15 +25,12 @@ const SCOPE_ITEMS: { id: ExtensionsCatalogScope; label: string; icon: LucideIcon
 export type ExtensionsShellSidebarProps = {
   /** When true, the user is on the mixed “All active” catalog (`#/extensions/all`). */
   isAllActive?: boolean;
-  /** Optional footer below the nav (e.g. activated repo count). */
-  footerExtra?: ReactNode;
   /** Search + scope filters for the mixed catalog (`#/extensions/all`). */
   browseControls?: ExtensionsBrowseControls;
 };
 
 export function ExtensionsShellSidebar({
   isAllActive = false,
-  footerExtra,
   browseControls,
 }: ExtensionsShellSidebarProps) {
   return (
@@ -109,9 +105,6 @@ export function ExtensionsShellSidebar({
           </nav>
         )}
       </div>
-      {footerExtra ? (
-        <div className="flex-1 border-t border-border px-4 py-3">{footerExtra}</div>
-      ) : null}
     </aside>
   );
 }

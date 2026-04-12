@@ -44,6 +44,7 @@ interface FlowchartLayoutProps {
   activeFlowId?: string;
   onFlowSelect?: (flowId: string) => void;
   onExit?: () => void;
+  embedBaseUrl?: string;
 }
 
 const defaultFrame = { width: 1280, height: 720, scale: 0.22 };
@@ -54,9 +55,9 @@ const normalizeHash = (hash: string) => {
   return `#/${hash.replace(/^\/+/, '')}`;
 };
 
-const buildEmbedSrc = (hash: string) => {
-  const baseUrl = `${window.location.origin}${window.location.pathname}`;
-  return `${baseUrl}?embed=1${normalizeHash(hash)}`;
+const buildEmbedSrc = (hash: string, baseUrl?: string) => {
+  const resolvedBase = baseUrl ?? `${window.location.origin}${window.location.pathname}`;
+  return `${resolvedBase}?embed=1${normalizeHash(hash)}`;
 };
 
 const FlowNodeFrame: React.FC<{
@@ -65,7 +66,8 @@ const FlowNodeFrame: React.FC<{
   frame: { width: number; height: number };
   render?: React.ReactNode;
   useInline?: boolean;
-}> = ({ title, hash, frame, render, useInline }) => {
+  embedBaseUrl?: string;
+}> = ({ title, hash, frame, render, useInline, embedBaseUrl }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -104,7 +106,7 @@ const FlowNodeFrame: React.FC<{
       ) : (
         <iframe
           title={`${title} preview`}
-          src={buildEmbedSrc(hash)}
+          src={buildEmbedSrc(hash, embedBaseUrl)}
           loading="lazy"
           className="absolute left-0 top-0 origin-top-left"
           style={{
@@ -127,6 +129,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
   activeFlowId,
   onFlowSelect,
   onExit,
+  embedBaseUrl,
 }) => {
   const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [openNotes, setOpenNotes] = useState<Record<string, boolean>>({});
@@ -560,6 +563,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                           frame={frame}
                           render={node.render}
                           useInline={isCapture}
+                          embedBaseUrl={embedBaseUrl}
                         />
                       </div>
                     </div>

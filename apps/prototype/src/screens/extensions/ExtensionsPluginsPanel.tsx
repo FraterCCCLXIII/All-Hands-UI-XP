@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
@@ -28,10 +27,9 @@ import { toSkillFileName } from './pluginRepoUtils';
 
 type ExtensionsPluginsPanelProps = {
   browseControls: ExtensionsBrowseControls;
-  footerExtra?: ReactNode;
 };
 
-export function ExtensionsPluginsPanel({ browseControls, footerExtra }: ExtensionsPluginsPanelProps) {
+export function ExtensionsPluginsPanel({ browseControls }: ExtensionsPluginsPanelProps) {
   const [selectedPlugin, setSelectedPlugin] = useState<SkillRepositoryItem | null>(null);
   const [pluginDetailView, setPluginDetailView] = useState<'files' | 'content'>('files');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
@@ -240,7 +238,7 @@ ${skill.initialPrompt}
 
   return (
     <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
-      <ExtensionsShellSidebar browseControls={browseControls} footerExtra={footerExtra} />
+      <ExtensionsShellSidebar browseControls={browseControls} />
 
       <main
         className={cn(

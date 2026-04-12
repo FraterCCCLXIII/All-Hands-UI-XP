@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import {
   BookOpen,
@@ -87,10 +86,9 @@ function hooksMatchesQuery(entry: HooksCatalogEntry, q: string): boolean {
 
 export type ExtensionsAllMixedViewProps = {
   browseControls: ExtensionsBrowseControls;
-  footerExtra?: ReactNode;
 };
 
-export function ExtensionsAllMixedView({ browseControls, footerExtra }: ExtensionsAllMixedViewProps) {
+export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedViewProps) {
   /** Enabled state for marketplace skills and plugins (toggle on cards). */
   const [marketplaceSwitchById, setMarketplaceSwitchById] = useState<Record<string, boolean>>({});
   const { searchQuery, scope } = browseControls;
@@ -323,7 +321,7 @@ export function ExtensionsAllMixedView({ browseControls, footerExtra }: Extensio
 
   return (
     <div className="flex h-full min-w-0 overflow-hidden bg-background">
-      <ExtensionsShellSidebar browseControls={browseControls} footerExtra={footerExtra} />
+      <ExtensionsShellSidebar browseControls={browseControls} />
 
       <main className="repo-dropdown-scroll flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
         {scope === 'all' ? (
@@ -334,7 +332,6 @@ export function ExtensionsAllMixedView({ browseControls, footerExtra }: Extensio
                   titleId="ext-skills-heading"
                   title="Skills"
                   description={skillsDescription}
-                  actions={<ExtensionsCatalogAddButton kind="skill" />}
                   bordered={false}
                   className="px-0"
                 />
@@ -356,7 +353,6 @@ export function ExtensionsAllMixedView({ browseControls, footerExtra }: Extensio
                   titleId="ext-plugins-heading"
                   title="Plugins"
                   description={pluginsDescription}
-                  actions={<ExtensionsCatalogAddButton kind="plugin" />}
                   bordered={false}
                   className="px-0"
                 />
@@ -380,7 +376,6 @@ export function ExtensionsAllMixedView({ browseControls, footerExtra }: Extensio
                   titleId="ext-mcp-heading"
                   title="MCP servers"
                   description={mcpDescription}
-                  actions={<ExtensionsCatalogAddButton kind="mcp" />}
                   bordered={false}
                   className="px-0"
                 />
@@ -401,7 +396,6 @@ export function ExtensionsAllMixedView({ browseControls, footerExtra }: Extensio
                   titleId="ext-hooks-heading"
                   title="Hooks"
                   description={hooksDescription}
-                  actions={<ExtensionsCatalogAddButton kind="hook" />}
                   bordered={false}
                   className="px-0"
                 />

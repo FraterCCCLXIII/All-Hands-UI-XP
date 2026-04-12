@@ -79,30 +79,55 @@ export function AddRepoExtensionModal({ open, onOpenChange }: AddRepoExtensionMo
   );
 }
 
-const MCP_SERVER_TYPES = [
+export const MCP_SERVER_TYPES = [
   { value: 'stdio', label: 'stdio' },
   { value: 'http', label: 'HTTP' },
   { value: 'sse', label: 'SSE' },
   { value: 'websocket', label: 'WebSocket' },
 ] as const;
 
+export function mcpServerTypeLabel(value: string): string {
+  return MCP_SERVER_TYPES.find((t) => t.value === value)?.label ?? value;
+}
+
 export type AddMcpServerModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Persist row in Settings (or elsewhere); when omitted, only the success toast runs (e.g. Extensions catalog). */
+  onAdd?: (payload: { serverType: string; url: string; apiKey: string }) => void;
+  /** When set with initialValues, modal is in edit mode and calls onEdit on save. */
+  editingId?: string | null;
+  initialValues?: { serverType: string; url: string; hasApiKey: boolean } | null;
+  onEdit?: (id: string, payload: { serverType: string; url: string; apiKey: string }) => void;
 };
 
-export function AddMcpServerModal({ open, onOpenChange }: AddMcpServerModalProps) {
+export function AddMcpServerModal({
+  open,
+  onOpenChange,
+  onAdd,
+  editingId = null,
+  initialValues = null,
+  onEdit,
+}: AddMcpServerModalProps) {
   const [serverType, setServerType] = useState<string>('http');
   const [url, setUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
 
+  const isEdit = Boolean(editingId);
+
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    if (editingId && initialValues) {
+      setServerType(initialValues.serverType);
+      setUrl(initialValues.url);
+      setApiKey('');
+    } else if (!editingId) {
       setServerType('http');
       setUrl('');
       setApiKey('');
     }
-  }, [open]);
+    // Intentionally omit initialValues: avoid resetting the form when the row object updates (e.g. toggles) while open.
+  }, [open, editingId]);
 
   const submit = () => {
     const trimmed = url.trim();
@@ -115,16 +140,27 @@ export function AddMcpServerModal({ open, onOpenChange }: AddMcpServerModalProps
         return;
       }
     }
+    const payload = { serverType, url: trimmed, apiKey: apiKey.trim() };
     onOpenChange(false);
-    showAppToast({ variant: 'success', message: 'MCP server added.' });
+    if (editingId) {
+      onEdit?.(editingId, payload);
+      showAppToast({ variant: 'success', message: 'MCP server updated.' });
+    } else {
+      onAdd?.(payload);
+      showAppToast({ variant: 'success', message: 'MCP server added.' });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add MCP server</DialogTitle>
-          <DialogDescription>Configure how to reach this Model Context Protocol server.</DialogDescription>
+          <DialogTitle>{isEdit ? 'Edit MCP server' : 'Add MCP server'}</DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? 'Update connection details. Leave API key blank to keep the existing key.'
+              : 'Configure how to reach this Model Context Protocol server.'}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
           <div>
@@ -164,7 +200,11 @@ export function AddMcpServerModal({ open, onOpenChange }: AddMcpServerModalProps
             <Input
               id="mcp-key"
               type="password"
-              placeholder="••••••••"
+              placeholder={
+                isEdit && initialValues?.hasApiKey && !apiKey
+                  ? 'Leave blank to keep existing'
+                  : '••••••••'
+              }
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               autoComplete="off"
@@ -176,7 +216,7 @@ export function AddMcpServerModal({ open, onOpenChange }: AddMcpServerModalProps
             Cancel
           </Button>
           <Button type="button" size="sm" disabled={!url.trim()} onClick={submit}>
-            Add server
+            {isEdit ? 'Save' : 'Add server'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -187,9 +227,11 @@ export function AddMcpServerModal({ open, onOpenChange }: AddMcpServerModalProps
 export type AddHookModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When provided, called with trimmed values after validation; use for persisting (e.g. org settings table). */
+  onAdd?: (payload: { name: string; instructions: string }) => void;
 };
 
-export function AddHookModal({ open, onOpenChange }: AddHookModalProps) {
+export function AddHookModal({ open, onOpenChange, onAdd }: AddHookModalProps) {
   const [hookName, setHookName] = useState('');
   const [instructions, setInstructions] = useState('');
 
@@ -201,8 +243,11 @@ export function AddHookModal({ open, onOpenChange }: AddHookModalProps) {
   }, [open]);
 
   const submit = () => {
-    if (!hookName.trim() || !instructions.trim()) return;
+    const name = hookName.trim();
+    if (!name) return;
+    const instr = instructions.trim();
     onOpenChange(false);
+    onAdd?.({ name, instructions: instr });
     showAppToast({ variant: 'success', message: 'Hook added.' });
   };
 
@@ -246,12 +291,7 @@ export function AddHookModal({ open, onOpenChange }: AddHookModalProps) {
           <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={!hookName.trim() || !instructions.trim()}
-            onClick={submit}
-          >
+          <Button type="button" size="sm" disabled={!hookName.trim()} onClick={submit}>
             Add hook
           </Button>
         </DialogFooter>

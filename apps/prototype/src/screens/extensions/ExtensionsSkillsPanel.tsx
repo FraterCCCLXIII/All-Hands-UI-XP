@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
@@ -271,10 +270,9 @@ type SkillsViewMode = 'marketplace' | 'repos';
 
 export type ExtensionsSkillsPanelProps = {
   browseControls: ExtensionsBrowseControls;
-  footerExtra?: ReactNode;
 };
 
-export function ExtensionsSkillsPanel({ browseControls, footerExtra }: ExtensionsSkillsPanelProps) {
+export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelProps) {
   const [viewMode, setViewMode] = useState<SkillsViewMode>('marketplace');
   const [marketplaceSwitchById, setMarketplaceSwitchById] = useState<Record<string, boolean>>({});
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
@@ -477,7 +475,7 @@ export function ExtensionsSkillsPanel({ browseControls, footerExtra }: Extension
 
   return (
     <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
-      <ExtensionsShellSidebar browseControls={browseControls} footerExtra={footerExtra} />
+      <ExtensionsShellSidebar browseControls={browseControls} />
 
       {/* Main content: spans available width (right panel only when skill selected) */}
       <main className="flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto">

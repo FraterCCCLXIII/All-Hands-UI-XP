@@ -11,15 +11,11 @@ import { ExtensionsPluginsPanel } from './extensions/ExtensionsPluginsPanel';
 import { ExtensionsSkillsPanel } from './extensions/ExtensionsSkillsPanel';
 import type { ExtensionsBrowseControls, ExtensionsCatalogScope } from './extensions/ExtensionsShellSidebar';
 
-export type ExtensionsScreenProps = {
-  installedPluginRepos: string[];
-};
-
 function readShellMode(): ExtensionsShellMode {
   return getExtensionsShellMode(window.location.hash);
 }
 
-export function ExtensionsScreen({ installedPluginRepos }: ExtensionsScreenProps) {
+export function ExtensionsScreen() {
   const [mode, setMode] = useState<ExtensionsShellMode>(readShellMode);
   const [extensionsSearchQuery, setExtensionsSearchQuery] = useState('');
   const [extensionsScope, setExtensionsScope] = useState<ExtensionsCatalogScope>('all');
@@ -46,14 +42,6 @@ export function ExtensionsScreen({ installedPluginRepos }: ExtensionsScreenProps
     [extensionsSearchQuery, extensionsScope, navigateForScope]
   );
 
-  const footerExtra =
-    installedPluginRepos.length > 0 ? (
-      <p className="mt-3 text-xs text-muted-foreground">
-        {installedPluginRepos.length} activated repo
-        {installedPluginRepos.length === 1 ? '' : 's'} linked in Settings.
-      </p>
-    ) : null;
-
   useEffect(() => {
     const sync = () => {
       setMode(readShellMode());
@@ -75,15 +63,15 @@ export function ExtensionsScreen({ installedPluginRepos }: ExtensionsScreenProps
 
   if (mode === 'skills') {
     return (
-      <ExtensionsSkillsPanel browseControls={browseControls} footerExtra={footerExtra} />
+      <ExtensionsSkillsPanel browseControls={browseControls} />
     );
   }
   if (mode === 'plugins') {
     return (
-      <ExtensionsPluginsPanel browseControls={browseControls} footerExtra={footerExtra} />
+      <ExtensionsPluginsPanel browseControls={browseControls} />
     );
   }
   return (
-    <ExtensionsAllMixedView browseControls={browseControls} footerExtra={footerExtra} />
+    <ExtensionsAllMixedView browseControls={browseControls} />
   );
 }
