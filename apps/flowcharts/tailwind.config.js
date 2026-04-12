@@ -1,7 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    // Shared UI imported from the prototype app (FlowchartLayout, Button, etc.)
+    "../prototype/src/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: {
     container: {
       center: true,

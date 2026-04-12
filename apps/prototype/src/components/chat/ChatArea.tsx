@@ -35,6 +35,7 @@ interface ChatAreaProps {
   onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
   welcomeScreenVariant?: 'default' | 'cards';
   onEnterpriseLearnMoreClick?: () => void;
+  /** `inline` = in-flow under messages / on welcome (default). `fixed` = bottom-right overlay. */
   enterpriseCtaPlacement?: 'fixed' | 'inline';
 }
 
@@ -61,7 +62,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onEnterpriseCtaVisibilityChange,
   welcomeScreenVariant = 'default',
   onEnterpriseLearnMoreClick,
-  enterpriseCtaPlacement = 'fixed',
+  enterpriseCtaPlacement = 'inline',
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
@@ -203,7 +204,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             <motion.div
               className={
                 enterpriseCtaPlacement === 'inline'
-                  ? 'mt-6 w-[320px] max-w-full'
+                  ? 'mx-auto mt-6 w-[320px] max-w-full'
                   : 'pointer-events-none fixed bottom-6 right-6 z-50 w-[320px] max-w-[90vw]'
               }
               initial={{ opacity: 0, y: 16, scale: 0.98 }}

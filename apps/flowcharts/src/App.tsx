@@ -1,4 +1,3 @@
-import React from 'react';
 import { FlowchartLayout, FlowchartNode, FlowchartEdge } from '../../prototype/src/components/flowchart/FlowchartLayout';
 import { Button } from '@all-hands/ui';
 

@@ -1,4 +1,4 @@
-import { Children, isValidElement, useMemo, useState } from 'react';
+import { Children, isValidElement, useCallback, useMemo, useRef, useState } from 'react';
 import { Check, MoreVertical, Pencil, Power, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -78,12 +78,70 @@ import CurrentProjects from '../components/navigation/CurrentProjects';
 import { TopBar } from '../components/navigation/TopBar';
 import { LeftNav } from '../components/navigation/LeftNav';
 import { GitControls } from '../components/git/GitControls';
+import { AutomationGlyph } from '../components/icons/AutomationGlyph';
+import { PluginToggle } from '../components/ui/plugin-toggle';
 import { TetrisGame } from '../components/tetris/TetrisGame';
+import { showAppToast } from '../lib/appToast';
 import type { ThemeElement } from '../types/theme';
 import type { Message as MessageModel } from '../types/message';
 import { conversationSummaries } from '../data/conversations';
 import type { PRCard } from '../types/pr';
 import { componentExportManifest } from './componentExportManifest';
+import { PrototypeLucideIconGrid } from './componentLibraryIcons';
+import { ComponentLibraryBlocksScreen } from './ComponentLibraryBlocksScreen';
+import { cn } from '../lib/utils';
+
+/** Library nav order: foundations → primitives → shared shell → feature areas → playground → stubs. */
+const COMPONENT_LIBRARY_GROUPS: { id: string; title: string; description?: string; sectionIds: string[] }[] = [
+  {
+    id: 'foundations',
+    title: 'Foundations',
+    description: 'Brand, tokens, icons, and global utilities.',
+    sectionIds: ['logos', 'icons', 'colors', 'typography', 'styles'],
+  },
+  {
+    id: 'primitives',
+    title: 'UI primitives',
+    description: 'Shadcn-style controls used across screens.',
+    sectionIds: ['ui'],
+  },
+  {
+    id: 'shared-shell',
+    title: 'Shared & shell',
+    description: 'Cross-feature widgets, navigation, and git controls.',
+    sectionIds: ['common', 'navigation', 'git'],
+  },
+  {
+    id: 'chat',
+    title: 'Chat & composer',
+    description: 'Messaging, tasks, drawer, and welcome flows.',
+    sectionIds: ['chat'],
+  },
+  {
+    id: 'canvas',
+    title: 'Canvas & preview',
+    description: 'Split preview, terminal, and canvas chrome.',
+    sectionIds: ['canvas'],
+  },
+  {
+    id: 'dashboard',
+    title: 'Dashboard & boards',
+    description: 'Kanban, PRs, repos, and dashboard dialogs.',
+    sectionIds: ['dashboard'],
+  },
+  {
+    id: 'playground',
+    title: 'Playground',
+    description: 'Non-product demos.',
+    sectionIds: ['tetris'],
+  },
+  {
+    id: 'export-scaffolds',
+    title: 'Export scaffolds',
+    description: 'Auto-registered from the Figma export manifest; previews are usually missing.',
+    sectionIds: ['export-scaffolds'],
+  },
+];
 
 type ComponentCardProps = {
   title: string;
@@ -126,6 +184,27 @@ type ComponentSection = {
   items: ComponentItem[];
 };
 
+function orderComponentSections(sections: ComponentSection[]): ComponentSection[] {
+  const byId = new Map(sections.map((s) => [s.id, s]));
+  const ordered: ComponentSection[] = [];
+  const seen = new Set<string>();
+  for (const g of COMPONENT_LIBRARY_GROUPS) {
+    for (const id of g.sectionIds) {
+      const s = byId.get(id);
+      if (s) {
+        ordered.push(s);
+        seen.add(id);
+      }
+    }
+  }
+  for (const s of sections) {
+    if (!seen.has(s.id)) {
+      ordered.push(s);
+    }
+  }
+  return ordered;
+}
+
 type ExportExample = {
   label: string;
   content: React.ReactNode;
@@ -167,11 +246,14 @@ const extractNodeText = (node: React.ReactNode): string => {
 type ComponentLibraryScreenProps = {
   mode?: 'library' | 'figma';
   exportItemId?: string | null;
+  /** Component entry ids to hide in library mode (e.g. docs app omits app-shell previews). */
+  omitComponentIds?: readonly string[];
 };
 
 export function ComponentLibraryScreen({
   mode = 'library',
   exportItemId = null,
+  omitComponentIds,
 }: ComponentLibraryScreenProps) {
   const isFigmaExport = mode === 'figma';
   const [isDialogOpen, setIsDialogOpen] = useState(isFigmaExport && exportItemId === 'ui-dialog');
@@ -206,6 +288,9 @@ export function ComponentLibraryScreen({
   const isConversationDrawerOpenPreview = false;
   const [isInspectorPreview, setIsInspectorPreview] = useState(false);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
+  const [pluginToggleOn, setPluginToggleOn] = useState(true);
+  const [libraryMainTab, setLibraryMainTab] = useState<'components' | 'blocks'>('components');
+  const mainScrollRef = useRef<HTMLDivElement>(null);
 
   const sampleMessages: MessageModel[] = [
     {
@@ -339,6 +424,35 @@ export function ComponentLibraryScreen({
       ],
     },
     {
+      id: 'icons',
+      title: 'Icons',
+      items: [
+        {
+          id: 'icons-lucide-prototype',
+          name: 'Lucide icons (prototype)',
+          path: 'lucide-react',
+          description:
+            'Every Lucide symbol imported under src/ (deduped). Prefer reusing these before adding new icon packages.',
+          usage: `import { Search } from 'lucide-react'`,
+          preview: <PrototypeLucideIconGrid />,
+        },
+        {
+          id: 'icons-automation-glyph',
+          name: 'AutomationGlyph',
+          path: 'components/icons/AutomationGlyph.tsx',
+          description: 'Custom SVG glyph for Automations and similar contexts (currentColor).',
+          usage: `<AutomationGlyph className="h-5 w-5 text-muted-foreground" />`,
+          preview: (
+            <div className="flex flex-wrap items-center gap-6">
+              <AutomationGlyph className="h-5 w-5 text-muted-foreground" />
+              <AutomationGlyph className="h-8 w-8 text-foreground" />
+              <AutomationGlyph className="h-5 w-5 text-primary" />
+            </div>
+          ),
+        },
+      ],
+    },
+    {
       id: 'colors',
       title: 'Colors',
       items: [
@@ -388,6 +502,109 @@ export function ComponentLibraryScreen({
               <div className="text-xs text-muted-foreground uppercase tracking-wider">Caption — 12px</div>
               <div className="rounded-md bg-muted/40 px-3 py-2 text-xs font-mono text-foreground">
                 Monospace sample: npx all-hands-ui build
+              </div>
+            </div>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'styles',
+      title: 'Styles & utilities',
+      items: [
+        {
+          id: 'styles-scrollbars',
+          name: 'Scrollbars',
+          path: 'src/index.css',
+          description:
+            'Scrollbar density and visibility for chat threads, dropdowns, and scroll regions. Pair with overflow-y-auto.',
+          usage:
+            '.scrollbar-on-hover, .custom-scrollbar, .repo-dropdown-scroll, .dropdown-scroll, .hide-scrollbar',
+          preview: (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-border p-3">
+                <div className="mb-2 text-xs font-medium text-muted-foreground">scrollbar-on-hover</div>
+                <div className="scrollbar-on-hover h-24 overflow-y-auto rounded bg-muted/30 p-2 text-xs text-muted-foreground">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`sh-${i}`}>Line {i + 1} — hover to reveal thumb</div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <div className="mb-2 text-xs font-medium text-muted-foreground">custom-scrollbar</div>
+                <div className="custom-scrollbar h-24 overflow-y-auto rounded bg-muted/30 p-2 text-xs text-muted-foreground">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`cs-${i}`}>Line {i + 1}</div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <div className="mb-2 text-xs font-medium text-muted-foreground">repo-dropdown-scroll</div>
+                <div className="repo-dropdown-scroll h-24 overflow-y-auto rounded bg-muted/30 p-2 text-xs text-muted-foreground">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`rd-${i}`}>Compact thumb (6px)</div>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <div className="mb-2 text-xs font-medium text-muted-foreground">hide-scrollbar</div>
+                <div className="hide-scrollbar h-24 overflow-y-auto rounded bg-muted/30 p-2 text-xs text-muted-foreground">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`hs-${i}`}>No visible bar — use trackpad/wheel</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: 'styles-agent-utilities',
+          name: 'Agent & motion utilities',
+          path: 'src/index.css',
+          description: '@layer utilities: gradient text, glow, pulse, and animated gradient for agent surfaces.',
+          usage: '.text-gradient-agent, .glow-agent, .animate-pulse-slow, .gradient-flow',
+          preview: (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-border p-4 text-center">
+                <span className="text-gradient-agent text-2xl font-semibold">text-gradient-agent</span>
+              </div>
+              <div className="rounded-lg border border-border p-4 text-center">
+                <div className="glow-agent inline-block rounded-full px-4 py-2 text-sm text-foreground">glow-agent</div>
+              </div>
+              <div className="rounded-lg border border-border p-4 text-center">
+                <div className="animate-pulse-slow text-sm text-muted-foreground">animate-pulse-slow</div>
+              </div>
+              <div className="rounded-lg border border-border p-4 text-center">
+                <span className="gradient-flow text-lg font-medium">gradient-flow</span>
+              </div>
+            </div>
+          ),
+        },
+        {
+          id: 'styles-shadows-tokens',
+          name: 'Shadows & gradients (tokens)',
+          path: 'src/index.css',
+          description: 'Semantic elevation and card hover gradient from :root.',
+          usage: 'var(--shadow-card), var(--shadow-agent), var(--gradient-card-hover)',
+          preview: (
+            <div className="flex flex-wrap gap-4">
+              <div
+                className="rounded-lg bg-card p-4 text-center text-xs text-muted-foreground"
+                style={{ boxShadow: 'var(--shadow-card)' }}
+              >
+                --shadow-card
+              </div>
+              <div
+                className="rounded-lg bg-card p-4 text-center text-xs text-muted-foreground"
+                style={{ boxShadow: 'var(--shadow-agent)' }}
+              >
+                --shadow-agent
+              </div>
+              <div
+                className="rounded-lg p-4 text-xs text-foreground"
+                style={{ background: 'var(--gradient-card-hover)' }}
+              >
+                --gradient-card-hover
               </div>
             </div>
           ),
@@ -609,12 +826,62 @@ export function ComponentLibraryScreen({
               </Sheet>
             ),
           },
+          {
+            id: 'ui-plugin-toggle',
+            name: 'PluginToggle',
+            path: 'components/ui/plugin-toggle.tsx',
+            description:
+              'Pill switch for org extensions and settings tables (visible / all conversations). Supports locked and compact size.',
+            usage: `<PluginToggle checked={on} onCheckedChange={setOn} aria-label="Visible" />`,
+            preview: (
+              <div className="flex flex-wrap items-center gap-6">
+                <PluginToggle
+                  checked={pluginToggleOn}
+                  onCheckedChange={setPluginToggleOn}
+                  aria-label="Toggle demo"
+                />
+                <PluginToggle checked size="sm" onCheckedChange={() => {}} aria-label="Small" />
+                <PluginToggle checked={false} onCheckedChange={() => {}} aria-label="Off" />
+                <PluginToggle checked locked aria-label="Locked required" />
+              </div>
+            ),
+          },
         ],
       },
       {
         id: 'common',
         title: 'Common',
         items: [
+          {
+            id: 'common-app-toaster',
+            name: 'AppToaster',
+            path: 'components/common/AppToaster.tsx',
+            description:
+              'Fixed bottom-right toast stack; mount once at app root. Fires on CustomEvent from showAppToast().',
+            usage: `<AppToaster />` + `showAppToast({ variant: 'success', message: '…' })`,
+            preview: (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs text-muted-foreground">
+                  App mounts one <code className="rounded bg-muted px-1">AppToaster</code> at root; buttons fire{' '}
+                  <code className="rounded bg-muted px-1">showAppToast</code>.
+                </p>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => showAppToast({ variant: 'success', message: 'Changes saved.' })}
+                >
+                  Success toast
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => showAppToast({ variant: 'error', message: 'Something went wrong.' })}
+                >
+                  Error toast
+                </Button>
+              </div>
+            ),
+          },
           {
             id: 'common-credits',
             name: 'Credits',
@@ -1047,7 +1314,7 @@ export function ComponentLibraryScreen({
                   activeChatWindowTab={chatWindowTab}
                   onChatWindowTabChange={setChatWindowTab}
                   disableAutoScroll
-                  enterpriseCtaPlacement={isFigmaExport ? 'inline' : 'fixed'}
+                  enterpriseCtaPlacement="inline"
                 />
               </div>
             ),
@@ -1534,6 +1801,14 @@ export function ComponentLibraryScreen({
       ])
     );
 
+    if (!mergedSections.has('export-scaffolds')) {
+      mergedSections.set('export-scaffolds', {
+        id: 'export-scaffolds',
+        title: 'Export manifest (stubs)',
+        items: [],
+      });
+    }
+
     componentExportManifest.forEach((modulePath) => {
       const relativePath = modulePath.replace(/^src\//, '');
 
@@ -1541,39 +1816,70 @@ export function ComponentLibraryScreen({
         return;
       }
 
-      const segments = relativePath.split('/');
-      const sectionId = segments[1] ?? 'misc';
-      const fileName = segments[segments.length - 1] ?? relativePath;
+      const fileName = relativePath.split('/').pop() ?? relativePath;
       const componentName = fileName.replace(/\.tsx$/, '');
-      const sectionTitle = formatLabel(sectionId);
-      const section = mergedSections.get(sectionId) ?? {
-        id: sectionId,
-        title: sectionTitle,
-        items: [],
-      };
+      const stubSection = mergedSections.get('export-scaffolds');
+      if (!stubSection) {
+        return;
+      }
 
-      section.items.push({
-        id: `${sectionId}-${toKebabCase(componentName)}`,
+      const stubId = `export-scaffolds-${toKebabCase(relativePath.replace(/\//g, '-').replace(/\.tsx$/, ''))}`;
+
+      stubSection.items.push({
+        id: stubId,
         name: formatLabel(componentName),
         path: relativePath,
-        description: `Standalone export route scaffold for ${formatLabel(componentName)}.`,
+        description: `Export route scaffold (no curated preview yet). File: ${relativePath}`,
       });
-
-      mergedSections.set(sectionId, section);
     });
 
-    return Array.from(mergedSections.values()).map((section) => ({
-      ...section,
-      items: section.items.sort((a, b) => a.name.localeCompare(b.name)),
-    }));
+    return orderComponentSections(
+      Array.from(mergedSections.values()).map((section) => ({
+        ...section,
+        items: section.items.sort((a, b) => a.name.localeCompare(b.name)),
+      }))
+    );
   }, [componentSections]);
 
-  const handleScrollTo = (targetId: string) => {
-    const element = document.getElementById(targetId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const librarySections = useMemo(() => {
+    if (!omitComponentIds?.length) {
+      return allComponentSections;
     }
-  };
+    const omit = new Set(omitComponentIds);
+    return allComponentSections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => !omit.has(item.id)),
+      }))
+      .filter((section) => section.items.length > 0);
+  }, [allComponentSections, omitComponentIds]);
+
+  const libraryGroups = useMemo(() => {
+    const byId = new Map(librarySections.map((s) => [s.id, s]));
+    return COMPONENT_LIBRARY_GROUPS.map((group) => ({
+      ...group,
+      sections: group.sectionIds
+        .map((id) => byId.get(id))
+        .filter((s): s is ComponentSection => !!s && s.items.length > 0),
+    })).filter((g) => g.sections.length > 0);
+  }, [librarySections]);
+
+  /** Scroll targets inside the main column only — avoids `scrollIntoView` moving the window and hiding the sticky top bar. */
+  const handleScrollTo = useCallback((targetId: string) => {
+    const element = document.getElementById(targetId);
+    if (!element) {
+      return;
+    }
+    const scrollEl = mainScrollRef.current;
+    if (scrollEl && scrollEl.contains(element)) {
+      const top =
+        scrollEl.scrollTop +
+        (element.getBoundingClientRect().top - scrollEl.getBoundingClientRect().top);
+      scrollEl.scrollTo({ top, behavior: 'smooth' });
+      return;
+    }
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   const filteredSections = useMemo(() => {
     if (!isFigmaExport || !exportItemId) {
@@ -2197,27 +2503,39 @@ export function ComponentLibraryScreen({
               </a>
             </header>
 
-            <div className="grid gap-6">
-              {allComponentSections.map((section) => (
-                <section key={section.id} className="rounded-2xl border border-border bg-card px-6 py-6">
-                  <div className="mb-4">
-                    <h2 className="text-lg font-semibold">{section.title}</h2>
-                    <p className="text-sm text-muted-foreground">{section.items.length} export routes.</p>
+            <div className="space-y-10">
+              {libraryGroups.map((group) => (
+                <div key={group.id} className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">{group.title}</h2>
+                    {group.description ? (
+                      <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
+                    ) : null}
                   </div>
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                    {section.items.map((item) => (
-                      <a
-                        key={item.id}
-                        href={`#/figma/${item.id}`}
-                        className="rounded-xl border border-border bg-background px-4 py-4 transition-colors hover:border-primary/60 hover:bg-muted/30"
-                      >
-                        <div className="text-sm font-semibold text-foreground">{item.name}</div>
-                        <div className="mt-1 text-xs text-muted-foreground">{item.description ?? item.path}</div>
-                        <div className="mt-3 text-[11px] font-mono text-muted-foreground">#/figma/{item.id}</div>
-                      </a>
+                  <div className="grid gap-6">
+                    {group.sections.map((section) => (
+                      <section key={section.id} className="rounded-2xl border border-border bg-card px-6 py-6">
+                        <div className="mb-4">
+                          <h3 className="text-base font-semibold">{section.title}</h3>
+                          <p className="text-sm text-muted-foreground">{section.items.length} export routes.</p>
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                          {section.items.map((item) => (
+                            <a
+                              key={item.id}
+                              href={`#/figma/${item.id}`}
+                              className="rounded-xl border border-border bg-background px-4 py-4 transition-colors hover:border-primary/60 hover:bg-muted/30"
+                            >
+                              <div className="text-sm font-semibold text-foreground">{item.name}</div>
+                              <div className="mt-1 text-xs text-muted-foreground">{item.description ?? item.path}</div>
+                              <div className="mt-3 text-[11px] font-mono text-muted-foreground">#/figma/{item.id}</div>
+                            </a>
+                          ))}
+                        </div>
+                      </section>
                     ))}
                   </div>
-                </section>
+                </div>
               ))}
             </div>
           </div>
@@ -2370,89 +2688,175 @@ export function ComponentLibraryScreen({
   }
 
   return (
-    <div className="flex h-full w-full min-w-0 bg-background">
-      <aside className="hidden w-72 flex-shrink-0 min-h-0 border-r border-border bg-card/50 px-6 py-6 lg:flex lg:flex-col">
-        <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Component Library
-        </div>
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-background">
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-6 border-b border-border bg-card/95 pl-4 pr-4 shadow-sm backdrop-blur-sm supports-[backdrop-filter]:bg-card/90 lg:pl-6 lg:pr-6">
         <button
           type="button"
-          onClick={() => handleScrollTo('component-library-top')}
-          className="mt-3 w-full text-left text-sm font-medium text-foreground hover:text-primary transition-colors"
+          onClick={() => {
+            setLibraryMainTab('components');
+            handleScrollTo('component-library-top');
+          }}
+          className="flex shrink-0 items-center gap-2 rounded-md text-left outline-none ring-offset-background transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label="OpenHands — go to components overview"
         >
-          Overview
+          <Logo className="h-8 w-8 shrink-0 text-foreground" />
+          <span className="hidden text-sm font-semibold tracking-tight text-foreground sm:inline">
+            OpenHands
+          </span>
         </button>
-        <nav
-          className="mt-6 flex-1 space-y-5 overflow-y-auto pr-2 scrollbar-on-hover"
-          aria-label="Component library navigation"
-        >
-          {allComponentSections.map((section) => (
-            <div key={section.id}>
+        <nav className="flex items-center gap-1" aria-label="Library main sections">
+          <button
+            type="button"
+            onClick={() => {
+              setLibraryMainTab('components');
+              handleScrollTo('component-library-top');
+            }}
+            className={cn(
+              'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              libraryMainTab === 'components'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            )}
+          >
+            Components
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setLibraryMainTab('blocks');
+              window.setTimeout(() => handleScrollTo('component-library-blocks-top'), 0);
+            }}
+            className={cn(
+              'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+              libraryMainTab === 'blocks'
+                ? 'bg-muted text-foreground'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            )}
+          >
+            Blocks
+          </button>
+        </nav>
+      </header>
+
+      {libraryMainTab === 'blocks' ? (
+        <ComponentLibraryBlocksScreen />
+      ) : (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {/* Left rail: does not scroll with main — only the nav list scrolls internally if needed */}
+          <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-card/95 backdrop-blur-sm supports-[backdrop-filter]:bg-card/85 scrollbar-on-hover lg:flex lg:h-full">
+            <div className="px-6 py-6 pr-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Browse
+              </div>
               <button
                 type="button"
-                onClick={() => handleScrollTo(`section-${section.id}`)}
-                className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
+                onClick={() => handleScrollTo('component-library-top')}
+                className="mt-3 w-full text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
               >
-                {section.title}
+                Overview
               </button>
-              <div className="mt-2 space-y-1">
-                {section.items.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleScrollTo(item.id)}
-                    className="block w-full truncate text-left text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {item.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </nav>
-      </aside>
-
-      <div className="flex min-w-0 min-h-0 flex-1 flex-col">
-        <header id="component-library-top" className="border-b border-border bg-card px-8 py-6">
-          <h1 className="text-2xl font-semibold text-foreground">Component Library</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Quick reference for UI building blocks and feature-level components.
-          </p>
-        </header>
-        <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth p-8 scrollbar-on-hover">
-          <div className="min-h-full pb-12">
-            {allComponentSections.map((section) => (
-              <div key={section.id} id={`section-${section.id}`} className="mb-10 scroll-mt-6">
-              <div className="mb-4">
-                <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {section.items.length} components in this section.
-                </p>
-              </div>
-              <div className="grid gap-5">
-                {section.items.map((item) => (
-                  <div key={item.id} id={item.id} className="scroll-mt-6">
-                    <ComponentCard
-                      title={item.name}
-                      description={item.description ?? 'Component reference entry.'}
-                      usage={item.usage ?? item.path}
+              <nav className="mt-6 space-y-6 pr-2" aria-label="Component library navigation">
+                {libraryGroups.map((group) => (
+                  <div key={group.id}>
+                    <button
+                      type="button"
+                      onClick={() => handleScrollTo(`group-${group.id}`)}
+                      className="text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-primary"
                     >
-                      {item.preview ? (
-                        item.preview
-                      ) : (
-                        <div className="text-xs text-muted-foreground">
-                          Preview coming soon. File: {item.path}
+                      {group.title}
+                    </button>
+                    <div className="mt-2 space-y-3">
+                      {group.sections.map((section) => (
+                        <div key={section.id}>
+                          <button
+                            type="button"
+                            onClick={() => handleScrollTo(`section-${section.id}`)}
+                            className="text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                          >
+                            {section.title}
+                          </button>
+                          <div className="mt-1.5 space-y-0.5">
+                            {section.items.map((item) => (
+                              <button
+                                key={item.id}
+                                type="button"
+                                onClick={() => handleScrollTo(item.id)}
+                                className="block w-full truncate text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+                              >
+                                {item.name}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      )}
-                    </ComponentCard>
+                      ))}
+                    </div>
                   </div>
                 ))}
-              </div>
-              </div>
-            ))}
+              </nav>
+            </div>
+          </aside>
+
+          <div
+            ref={mainScrollRef}
+            className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto scrollbar-on-hover"
+          >
+            <div
+              id="component-library-top"
+              className="border-b border-border bg-card/95 px-8 py-6 backdrop-blur-sm supports-[backdrop-filter]:bg-card/90"
+            >
+              <h1 className="text-2xl font-semibold text-foreground">Components</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Quick reference for UI building blocks and feature-level components.
+              </p>
+            </div>
+            <div className="p-8 pb-12">
+              {libraryGroups.map((group) => (
+                <div key={group.id} id={`group-${group.id}`} className="mb-14 scroll-mt-4">
+                  <div className="mb-6 border-b border-border pb-4">
+                    <h2 className="text-xl font-semibold text-foreground">{group.title}</h2>
+                    {group.description ? (
+                      <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{group.description}</p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-10">
+                    {group.sections.map((section) => (
+                      <div key={section.id} id={`section-${section.id}`} className="scroll-mt-4">
+                        <div className="mb-4">
+                          <h3 className="text-lg font-semibold text-foreground">{section.title}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {section.items.length} {section.items.length === 1 ? 'entry' : 'entries'} in this
+                            subsection.
+                          </p>
+                        </div>
+                        <div className="grid gap-5">
+                          {section.items.map((item) => (
+                            <div key={item.id} id={item.id} className="scroll-mt-4">
+                              <ComponentCard
+                                title={item.name}
+                                description={item.description ?? 'Component reference entry.'}
+                                usage={item.usage ?? item.path}
+                              >
+                                {item.preview ? (
+                                  item.preview
+                                ) : (
+                                  <div className="rounded-md border border-dashed border-border/80 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+                                    <span className="font-medium text-foreground">Stub</span> — no live preview yet.{' '}
+                                    <span className="font-mono text-[11px]">{item.path}</span>
+                                  </div>
+                                )}
+                              </ComponentCard>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -81,12 +81,19 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
 
           return (
             <div key={branch.name}>
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => toggleBranch(branch.name)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    toggleBranch(branch.name);
+                  }
+                }}
                 aria-expanded={isExpanded}
                 aria-controls={branchContentId}
-                className="w-full px-4 py-3 flex items-center justify-between bg-secondary/50 text-left hover:bg-muted/60"
+                className="w-full px-4 py-3 flex items-center justify-between bg-secondary/50 text-left hover:bg-muted/60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <div className="flex items-center gap-3">
                   {branch.prNumber ? (
@@ -104,24 +111,19 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      aria-label="Toggle branch"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        toggleBranch(branch.name);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground active:bg-muted/80"
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-0.5 text-xs font-semibold text-muted-foreground"
+                      aria-hidden
                     >
                       <Bot className="w-3 h-3" />
                       {activeConversations.length}
-                    </button>
+                    </span>
                     <CiChecksDialog count={stats?.commits ?? 0} />
                     <CommentsDialog count={branch.conversations.length} />
                   </div>
                   <NewConversationDialog repositoryName={name} branches={branches.map((branch) => branch.name)} />
                 </div>
-              </button>
+              </div>
 
               {isExpanded && (
                 <div id={branchContentId}>
