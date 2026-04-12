@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Box,
   Building2,
   Cloud,
   Cpu,
@@ -8,7 +7,9 @@ import {
   CheckCircle,
   ChevronDown,
   Key,
+  Layers,
   MoreVertical,
+  Pencil,
   Plus,
   Puzzle,
   Settings as SettingsIcon,
@@ -16,6 +17,7 @@ import {
   User,
   Users,
   Trash2,
+  Webhook,
 } from 'lucide-react';
 import { AdvancedLlmForm } from '../components/settings/AdvancedLlmForm';
 import { ChatGPTConnectSection } from '../components/settings/ChatGPTConnectSection';
@@ -36,9 +38,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import { Button } from '../components/ui/button';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
+import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
 
 type OrgRole = 'Member' | 'Admin' | 'Owner';
 type PermissionKey =
@@ -58,7 +62,8 @@ type PermissionKey =
   | 'delete_organization'
   | 'add_credits'
   | 'manage_organization_claims'
-  | 'manage_org_plugins';
+  | 'manage_org_plugins'
+  | 'manage_org_hooks';
 
 const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
   Member: new Set([
@@ -84,6 +89,7 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
     'add_credits',
     'manage_organization_claims',
     'manage_org_plugins',
+    'manage_org_hooks',
   ]),
   Owner: new Set([
     'manage_secrets',
@@ -103,6 +109,7 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
     'add_credits',
     'manage_organization_claims',
     'manage_org_plugins',
+    'manage_org_hooks',
   ]),
 };
 
@@ -116,7 +123,8 @@ const settingsTabs = [
   { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'mcp', label: 'MCP', icon: Cloud },
   { id: 'organizations', label: 'Organization', icon: Building2 },
-  { id: 'org-plugins', label: 'Plugins', icon: Box },
+  { id: 'org-plugins', label: 'Extensions', icon: Layers },
+  { id: 'org-hooks', label: 'Hooks', icon: Webhook },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
 ];
 
@@ -128,10 +136,13 @@ const settingsTabDescriptions: Record<string, string> = {
   billing: 'Check your balance and add credits to your account.',
   secrets: 'Create and manage secrets for safe use in workflows.',
   'api-keys': 'Manage API keys for programmatic access and the OpenHands LLM key.',
-  mcp: 'Add Model Context Protocol servers to extend agent capabilities.',
+  mcp:
+    'Add Model Context Protocol servers, control team visibility, and choose whether each server is used in every new conversation.',
   organizations: 'Manage credits, organization details, and Git conversation routing.',
   'org-plugins':
-    'Add plugin repositories from Git URLs, choose which plugins and skills appear for your organization, and enable them in every conversation.',
+    'Add extension repositories from Git URLs, choose which plugins and skills appear for your organization, and enable them in every conversation.',
+  'org-hooks':
+    'Define organization hooks and control whether members see them in the UI and whether they run automatically in every new conversation.',
 };
 
 const settingsLinks: Array<{
@@ -156,10 +167,17 @@ const settingsLinks: Array<{
   },
   {
     id: 'org-plugins',
-    label: 'Plugins',
-    icon: Box,
+    label: 'Extensions',
+    icon: Layers,
     tabId: 'org-plugins',
     requiredPermission: 'manage_org_plugins',
+  },
+  {
+    id: 'org-hooks',
+    label: 'Hooks',
+    icon: Webhook,
+    tabId: 'org-hooks',
+    requiredPermission: 'manage_org_hooks',
   },
   { id: 'billing', label: 'Billing', icon: CreditCard, tabId: 'billing', requiredPermission: 'view_billing' },
 ];
@@ -327,6 +345,25 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
   },
 ];
 
+type OrgHookItem = {
+  id: string;
+  name: string;
+  instructions: string;
+  visible: boolean;
+  availableAllConversations: boolean;
+};
+
+const initialOrgHooks: OrgHookItem[] = [];
+
+type SettingsMcpServerRow = {
+  id: string;
+  serverType: string;
+  url: string;
+  hasApiKey: boolean;
+  visible: boolean;
+  availableAllConversations: boolean;
+};
+
 export interface SettingsScreenProps {
   /** Initial tab from route (e.g. llm for #/settings/llm) */
   initialTab?: string;
@@ -404,6 +441,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [orgPluginsSearchQuery, setOrgPluginsSearchQuery] = useState('');
   const [orgPluginsKindFilter, setOrgPluginsKindFilter] = useState<'all' | OrgCatalogKind>('all');
   const [orgPluginsRepoFilter, setOrgPluginsRepoFilter] = useState<string>('all');
+  const [orgHooks, setOrgHooks] = useState<OrgHookItem[]>(initialOrgHooks);
+  const [addHookModalOpen, setAddHookModalOpen] = useState(false);
+  const [addMcpModalOpen, setAddMcpModalOpen] = useState(false);
+  const [mcpEditingId, setMcpEditingId] = useState<string | null>(null);
+  const [settingsMcpServers, setSettingsMcpServers] = useState<SettingsMcpServerRow[]>([]);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   const orgPluginCatalogRepoOptions = useMemo(() => {
@@ -453,6 +495,31 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setOrgPluginCatalog((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
   };
 
+  const updateOrgHookItem = (
+    id: string,
+    patch: Partial<Pick<OrgHookItem, 'visible' | 'availableAllConversations'>>,
+  ) => {
+    setOrgHooks((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  };
+
+  const updateSettingsMcpServer = (
+    id: string,
+    patch: Partial<Pick<SettingsMcpServerRow, 'visible' | 'availableAllConversations'>>,
+  ) => {
+    setSettingsMcpServers((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+    );
+  };
+
+  const handleDeleteMcpServer = (id: string) => {
+    setSettingsMcpServers((prev) => prev.filter((row) => row.id !== id));
+    if (mcpEditingId === id) {
+      setAddMcpModalOpen(false);
+      setMcpEditingId(null);
+    }
+    showToast('MCP server removed.', 'success');
+  };
+
   const isChatGPTConnected = llmProvider === 'openai' && llmApiKeyApproved && llmApiKey.length > 0;
   const isValidBaseUrl = (() => {
     try {
@@ -468,7 +535,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     selectedOrg?.type === 'personal' ? 'Owner' : (selectedOrg?.role as OrgRole) ?? 'Member';
 
   useEffect(() => {
-    if (selectedOrg?.type === 'personal' && activeTab === 'org-plugins') {
+    if (
+      selectedOrg?.type === 'personal' &&
+      (activeTab === 'org-plugins' || activeTab === 'org-hooks')
+    ) {
       setActiveTab('user');
       onTabChange?.('user');
     }
@@ -480,6 +550,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       return false;
     }
     if (selectedOrg?.type === 'personal' && item.id === 'org-plugins') {
+      return false;
+    }
+    if (selectedOrg?.type === 'personal' && item.id === 'org-hooks') {
       return false;
     }
     return !item.requiredPermission || hasPermission(item.requiredPermission);
@@ -1529,15 +1602,216 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* MCP Content */}
           {activeTab === 'mcp' && (
             <div className="flex-1 overflow-auto">
-              <div className="flex flex-col gap-5">
-                <button
-                  type="button"
-                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
-                >
-                  Add Server
-                </button>
-                <div className="border border-border rounded-md p-8 text-center">
-                  <p className="text-muted-foreground text-sm">No servers configured</p>
+              <div className="flex w-full max-w-5xl flex-col gap-4">
+                <div className="flex justify-start">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      setMcpEditingId(null);
+                      setAddMcpModalOpen(true);
+                    }}
+                  >
+                    Add server
+                  </Button>
+                </div>
+                <AddMcpServerModal
+                  open={addMcpModalOpen}
+                  onOpenChange={(open) => {
+                    setAddMcpModalOpen(open);
+                    if (!open) setMcpEditingId(null);
+                  }}
+                  editingId={mcpEditingId}
+                  initialValues={
+                    mcpEditingId
+                      ? settingsMcpServers.find((r) => r.id === mcpEditingId) ?? null
+                      : null
+                  }
+                  onAdd={({ serverType, url, apiKey }) => {
+                    setSettingsMcpServers((prev) => [
+                      ...prev,
+                      {
+                        id: `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                        serverType,
+                        url,
+                        hasApiKey: apiKey.length > 0,
+                        visible: true,
+                        availableAllConversations: false,
+                      },
+                    ]);
+                  }}
+                  onEdit={(id, payload) => {
+                    setSettingsMcpServers((prev) =>
+                      prev.map((r) => {
+                        if (r.id !== id) return r;
+                        const nextHasApiKey = payload.apiKey.length > 0 ? true : r.hasApiKey;
+                        return {
+                          ...r,
+                          serverType: payload.serverType,
+                          url: payload.url,
+                          hasApiKey: nextHasApiKey,
+                        };
+                      }),
+                    );
+                  }}
+                />
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="min-w-0">
+                    <table className="w-full table-fixed border-collapse text-sm">
+                      <colgroup>
+                        <col className="min-w-0" />
+                        <col className="w-[6.5rem]" />
+                        <col className="w-[5.5rem]" />
+                        <col className="w-[6.5rem]" />
+                        <col className="w-[7rem]" />
+                        <col className="w-12" />
+                      </colgroup>
+                      <thead>
+                        <tr className="border-b border-border bg-muted/50">
+                          <th
+                            scope="col"
+                            className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            URL
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Type
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            API key
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Visible
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-2 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                            title="All conversations — enable for every new conversation"
+                          >
+                            All conv.
+                          </th>
+                          <th
+                            scope="col"
+                            className="w-12 px-1 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            <span className="sr-only">Actions</span>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {settingsMcpServers.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="px-4 py-10 text-center text-sm text-muted-foreground"
+                            >
+                              No servers configured. Use Add server to connect one.
+                            </td>
+                          </tr>
+                        ) : (
+                          settingsMcpServers.map((row) => (
+                            <tr
+                              key={row.id}
+                              className="bg-card transition-colors hover:bg-muted/25"
+                            >
+                              <td className="min-w-0 px-4 py-3.5 align-middle">
+                                <span
+                                  className="block truncate font-mono text-xs text-foreground"
+                                  title={row.url}
+                                >
+                                  {row.url}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3.5 align-middle">
+                                <span className="inline-flex rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-foreground">
+                                  {mcpServerTypeLabel(row.serverType)}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3.5 align-middle text-center">
+                                <span className="text-xs text-muted-foreground">
+                                  {row.hasApiKey ? 'Set' : '—'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3.5 align-middle">
+                                <div className="flex justify-center">
+                                  <PluginToggle
+                                    checked={row.visible}
+                                    onCheckedChange={(next) =>
+                                      updateSettingsMcpServer(row.id, {
+                                        visible: next,
+                                        ...(next ? {} : { availableAllConversations: false }),
+                                      })
+                                    }
+                                    aria-label="Visible in UI for members"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-2 py-3.5 align-middle">
+                                <div
+                                  className={cn(
+                                    'flex justify-center',
+                                    !row.visible && 'cursor-not-allowed opacity-40',
+                                  )}
+                                >
+                                  <PluginToggle
+                                    checked={row.visible && row.availableAllConversations}
+                                    disabled={!row.visible}
+                                    onCheckedChange={(next) =>
+                                      updateSettingsMcpServer(row.id, {
+                                        availableAllConversations: next,
+                                      })
+                                    }
+                                    aria-label="Use in every new conversation"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-1 py-3.5 align-middle text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                                      aria-label={`Actions for ${row.url}`}
+                                    >
+                                      <MoreVertical className="h-4 w-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-44">
+                                    <DropdownMenuItem
+                                      className="gap-2"
+                                      onClick={() => {
+                                        setMcpEditingId(row.id);
+                                        setAddMcpModalOpen(true);
+                                      }}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="gap-2 text-destructive focus:text-destructive"
+                                      onClick={() => handleDeleteMcpServer(row.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1549,9 +1823,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex w-full max-w-5xl flex-col gap-4">
                 <div className="flex flex-col gap-4">
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold leading-6 text-foreground">Plugin Repositories</h3>
+                    <h3 className="text-xl font-semibold leading-6 text-foreground">Extension repositories</h3>
                     <p className="text-sm text-muted-foreground">
-                      Add plugin repositories from Git URLs. Added repositories appear in Plugin Marketplace.
+                      Add plugin repositories from Git URLs. Added repositories appear in the plugin marketplace.
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -1567,7 +1841,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       disabled={pluginRepoInput.trim().length === 0}
                       className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Add Plugin
+                      Add repository
                     </button>
                   </div>
                   <div className="mb-4 overflow-hidden rounded-md border border-border">
@@ -1588,7 +1862,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </ul>
                     ) : (
                       <div className="px-3 pt-3 pb-4 text-sm text-muted-foreground">
-                        No plugin repositories added yet.
+                        No extension repositories added yet.
                       </div>
                     )}
                   </div>
@@ -1768,6 +2042,140 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                     disabled={!row.visible}
                                     onCheckedChange={(next) =>
                                       updateOrgCatalogItem(row.id, {
+                                        availableAllConversations: next,
+                                      })
+                                    }
+                                    aria-label="Enable for every new conversation"
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Organization hooks (Admin / Owner) */}
+          {activeTab === 'org-hooks' && (
+            <div className="flex-1 overflow-auto">
+              <div className="flex w-full max-w-5xl flex-col gap-4">
+                <div className="flex justify-start">
+                  <Button type="button" size="sm" onClick={() => setAddHookModalOpen(true)}>
+                    Add hook
+                  </Button>
+                </div>
+                <AddHookModal
+                  open={addHookModalOpen}
+                  onOpenChange={setAddHookModalOpen}
+                  onAdd={({ name, instructions }) => {
+                    setOrgHooks((prev) => [
+                      ...prev,
+                      {
+                        id: `hook-${Date.now()}`,
+                        name,
+                        instructions,
+                        visible: true,
+                        availableAllConversations: false,
+                      },
+                    ]);
+                  }}
+                />
+                <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  <div className="min-w-0">
+                    <table className="w-full table-fixed border-collapse text-sm">
+                      <colgroup>
+                        <col className="min-w-0" />
+                        <col className="min-w-0" />
+                        <col className="w-[6.5rem]" />
+                        <col className="w-[7rem]" />
+                      </colgroup>
+                      <thead>
+                        <tr className="border-b border-border bg-muted/50">
+                          <th
+                            scope="col"
+                            className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Name
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Instructions
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                          >
+                            Visible
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-2 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                            title="All conversations — enable for every new conversation"
+                          >
+                            All conv.
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {orgHooks.length === 0 ? (
+                          <tr>
+                            <td
+                              colSpan={4}
+                              className="px-4 py-10 text-center text-sm text-muted-foreground"
+                            >
+                              No hooks yet. Use Add hook to create one.
+                            </td>
+                          </tr>
+                        ) : (
+                          orgHooks.map((row) => (
+                            <tr
+                              key={row.id}
+                              className="bg-card transition-colors hover:bg-muted/25"
+                            >
+                              <td className="px-4 py-3.5 align-middle">
+                                <span className="font-medium text-foreground">{row.name}</span>
+                              </td>
+                              <td className="min-w-0 px-3 py-3.5 align-middle">
+                                <span
+                                  className="block truncate text-sm text-muted-foreground"
+                                  title={row.instructions || undefined}
+                                >
+                                  {row.instructions || '—'}
+                                </span>
+                              </td>
+                              <td className="px-3 py-3.5 align-middle">
+                                <div className="flex justify-center">
+                                  <PluginToggle
+                                    checked={row.visible}
+                                    onCheckedChange={(next) =>
+                                      updateOrgHookItem(row.id, {
+                                        visible: next,
+                                        ...(next ? {} : { availableAllConversations: false }),
+                                      })
+                                    }
+                                    aria-label="Visible in UI for members"
+                                  />
+                                </div>
+                              </td>
+                              <td className="px-2 py-3.5 align-middle">
+                                <div
+                                  className={cn(
+                                    'flex justify-center',
+                                    !row.visible && 'cursor-not-allowed opacity-40',
+                                  )}
+                                >
+                                  <PluginToggle
+                                    checked={row.visible && row.availableAllConversations}
+                                    disabled={!row.visible}
+                                    onCheckedChange={(next) =>
+                                      updateOrgHookItem(row.id, {
                                         availableAllConversations: next,
                                       })
                                     }

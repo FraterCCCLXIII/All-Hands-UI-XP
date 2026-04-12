@@ -185,7 +185,17 @@ function App() {
   const [theme] = useState<Theme>('dark');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(() => {
-    return sessionStorage.getItem('hasShownLoadingScreen') !== 'true';
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const captureRoute = searchParams.get('captureRoute') ?? '';
+      const isFlowRoute = window.location.hash.includes('flows/') || captureRoute.startsWith('flows/');
+      const isEmbed = searchParams.has('embed');
+      if (isFlowRoute || isEmbed) {
+        return false;
+      }
+      return sessionStorage.getItem('hasShownLoadingScreen') !== 'true';
+    }
+    return false;
   });
   const [serverStatus, setServerStatus] = useState<'active' | 'stopped' | 'thinking' | 'connecting'>('active');
   const [canvasVisible, setCanvasVisible] = useState(false);
@@ -268,6 +278,12 @@ function App() {
       sessionStorage.setItem('hasShownLoadingScreen', 'true');
     }, 500);
   }, []);
+
+  useEffect(() => {
+    if (activeFlowchart || activeFlowPrototype || figmaExportRoute) {
+      setIsLoading(false);
+    }
+  }, [activeFlowchart, activeFlowPrototype, figmaExportRoute]);
 
   useEffect(() => {
     if (!isLoading) return;
@@ -526,8 +542,8 @@ function App() {
       const rawHash = window.location.hash.replace(/^#\/?/, '');
       const captureRoute = new URLSearchParams(window.location.search).get('captureRoute');
       const normalizedCaptureRoute = captureRoute?.replace(/^\/+/, '') ?? '';
-      // During Figma capture, route via query param so `#figmacapture=...` remains intact.
-      const hash = rawHash.startsWith('figmacapture=') && normalizedCaptureRoute
+      // Allow captureRoute to drive routing even without figmacapture hash.
+      const hash = normalizedCaptureRoute
         ? normalizedCaptureRoute
         : rawHash.split(/[?&]/)[0];
       if (hash === 'figma' || hash.startsWith('figma/')) {
@@ -592,6 +608,10 @@ function App() {
         if (subTab === 'plugins') {
           subTab = 'org-plugins';
           window.history.replaceState(null, '', '#/settings/org-plugins');
+        }
+        if (subTab === 'hooks') {
+          subTab = 'org-hooks';
+          window.history.replaceState(null, '', '#/settings/org-hooks');
         }
         setSettingsTab(subTab);
         return;
@@ -847,7 +867,7 @@ function App() {
                   />
                 )}
                 {isExtensionsView && (
-                  <ExtensionsScreen installedPluginRepos={installedPluginRepos} />
+                  <ExtensionsScreen />
                 )}
                 {isComponentsView && <ComponentLibraryScreen />}
                 {isNewComponentsView && <NewComponentsScreen />}

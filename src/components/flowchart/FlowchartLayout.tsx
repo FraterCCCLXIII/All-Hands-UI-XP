@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, StickyNote } from 'lucide-react';
 import { navigateAppRoute } from '../../lib/captureNavigation';
+import { isFigmaCaptureActive } from '../../lib/captureNavigation';
 
 export interface FlowchartNote {
   id: string;
@@ -15,7 +16,10 @@ export interface FlowchartNode {
   hash: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
+  capturePosition?: { x: number; y: number };
+  captureSize?: { width: number; height: number };
   frame?: { width: number; height: number; scale: number };
+  render?: React.ReactNode;
   notes?: FlowchartNote[];
 }
 
@@ -59,7 +63,9 @@ const FlowNodeFrame: React.FC<{
   title: string;
   hash: string;
   frame: { width: number; height: number };
-}> = ({ title, hash, frame }) => {
+  render?: React.ReactNode;
+  useInline?: boolean;
+}> = ({ title, hash, frame, render, useInline }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -80,19 +86,34 @@ const FlowNodeFrame: React.FC<{
     return () => resizeObserver.disconnect();
   }, [frame.height, frame.width]);
 
+  const isInline = Boolean(render && useInline);
+
   return (
     <div ref={containerRef} className="relative h-full w-full overflow-hidden rounded-md border border-border bg-background shadow-inner">
-      <iframe
-        title={`${title} preview`}
-        src={buildEmbedSrc(hash)}
-        loading="lazy"
-        className="absolute left-0 top-0 origin-top-left"
-        style={{
-          width: frame.width,
-          height: frame.height,
-          transform: `scale(${scale})`,
-        }}
-      />
+      {isInline ? (
+        <div
+          className="absolute left-0 top-0 origin-top-left"
+          style={{
+            width: frame.width,
+            height: frame.height,
+            transform: `scale(${scale})`,
+          }}
+        >
+          {render}
+        </div>
+      ) : (
+        <iframe
+          title={`${title} preview`}
+          src={buildEmbedSrc(hash)}
+          loading="lazy"
+          className="absolute left-0 top-0 origin-top-left"
+          style={{
+            width: frame.width,
+            height: frame.height,
+            transform: `scale(${scale})`,
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -143,15 +164,38 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
     });
   }, []);
 
+  const isCapture = isFigmaCaptureActive();
+
+  const getNodeRect = useCallback(
+    (node: FlowchartNode) => {
+      const position = isCapture && node.capturePosition ? node.capturePosition : node.position;
+      const size = isCapture && node.captureSize ? node.captureSize : node.size;
+      return { position, size };
+    },
+    [isCapture]
+  );
+
   const canvasSize = useMemo(() => {
     const padding = 160;
-    const maxX = Math.max(...nodes.map((node) => node.position.x + node.size.width), 0);
-    const maxY = Math.max(...nodes.map((node) => node.position.y + node.size.height), 0);
+    const maxX = Math.max(
+      ...nodes.map((node) => {
+        const rect = getNodeRect(node);
+        return rect.position.x + rect.size.width;
+      }),
+      0
+    );
+    const maxY = Math.max(
+      ...nodes.map((node) => {
+        const rect = getNodeRect(node);
+        return rect.position.y + rect.size.height;
+      }),
+      0
+    );
     return {
       width: Math.max(maxX + padding, 1200),
       height: Math.max(maxY + padding, 720),
     };
-  }, [nodes]);
+  }, [getNodeRect, nodes]);
 
   const nodeMap = useMemo(() => {
     return nodes.reduce<Record<string, FlowchartNode>>((acc, node) => {
@@ -450,10 +494,12 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                   const from = nodeMap[edge.from];
                   const to = nodeMap[edge.to];
                   if (!from || !to) return null;
-                  const fromX = from.position.x + from.size.width;
-                  const fromY = from.position.y + from.size.height / 2;
-                  const toX = to.position.x;
-                  const toY = to.position.y + to.size.height / 2;
+                  const fromRect = getNodeRect(from);
+                  const toRect = getNodeRect(to);
+                  const fromX = fromRect.position.x + fromRect.size.width;
+                  const fromY = fromRect.position.y + fromRect.size.height / 2;
+                  const toX = toRect.position.x;
+                  const toY = toRect.position.y + toRect.size.height / 2;
                   return (
                     <path
                       key={edge.id}
@@ -468,6 +514,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
               </svg>
               {nodes.map((node) => {
                 const frame = node.frame ?? defaultFrame;
+                const rect = getNodeRect(node);
                 const showNotes = openNotes[node.id];
                 return (
                   <div
@@ -477,10 +524,10 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                     }}
                     className="absolute"
                     style={{
-                      left: node.position.x,
-                      top: node.position.y,
-                      width: node.size.width,
-                      height: node.size.height,
+                      left: rect.position.x,
+                      top: rect.position.y,
+                      width: rect.size.width,
+                      height: rect.size.height,
                     }}
                   >
                     <div className="h-full w-full rounded-lg border border-border bg-card shadow-sm flex flex-col overflow-hidden">
@@ -507,7 +554,13 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                         )}
                       </div>
                       <div className="flex-1 bg-background/60 p-3">
-                        <FlowNodeFrame title={node.title} hash={node.hash} frame={frame} />
+                        <FlowNodeFrame
+                          title={node.title}
+                          hash={node.hash}
+                          frame={frame}
+                          render={node.render}
+                          useInline={isCapture}
+                        />
                       </div>
                     </div>
                     {showNotes && node.notes && (
