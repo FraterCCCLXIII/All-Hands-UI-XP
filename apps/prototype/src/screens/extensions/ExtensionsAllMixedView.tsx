@@ -1,16 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
-  BookOpen,
-  Bot,
   Box,
-  Code2,
   ExternalLink,
-  FlaskConical,
-  GitBranch,
-  ShieldCheck,
   Webhook,
-  Wrench,
 } from 'lucide-react';
+import { SkillIcon } from '../../components/icons/SkillIcon';
 import { Button } from '../../components/ui/button';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
 import { marketplaceSkills } from '../../data/skillsPageData';
@@ -33,20 +27,6 @@ import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
-import type { LucideIcon } from 'lucide-react';
-
-const SKILL_ICONS: Record<string, LucideIcon> = {
-  'marketplace-code-review': Code2,
-  'marketplace-docs': BookOpen,
-  'marketplace-security': ShieldCheck,
-  'marketplace-test-gen': FlaskConical,
-  'marketplace-refactor': Wrench,
-  'marketplace-migrate': GitBranch,
-};
-
-function getSkillIcon(skillId: string): LucideIcon {
-  return SKILL_ICONS[skillId] ?? Bot;
-}
 
 function skillMatchesQuery(
   skill: (typeof marketplaceSkills)[number],
@@ -133,7 +113,6 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
     const label = skill.skillName ?? skill.title;
     const locked = skill.switchLocked === true;
     const enabled = locked ? true : marketplaceSwitchById[skill.id] !== false;
-    const IconComponent = getSkillIcon(skill.id);
     const showPluginToggle =
       skill.isPlugin === true && (scope === 'all' || scope === 'plugins');
     const showSkillToggle =
@@ -182,7 +161,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
         >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
-              <IconComponent className="h-5 w-5" />
+              <SkillIcon className="h-5 text-muted-foreground" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="text-base font-medium text-foreground">{label}</span>

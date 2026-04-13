@@ -112,6 +112,8 @@ function App() {
   const [showCanvasLoading, setShowCanvasLoading] = useState(true);
   const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
+  const [activeChatRepositoryName, setActiveChatRepositoryName] = useState<string | null>(null);
+  const [activeChatBranchName, setActiveChatBranchName] = useState<string | null>(null);
   const [showStatusBadge, setShowStatusBadge] = useState(false);
   const [activeChatAutomationTitle, setActiveChatAutomationTitle] = useState<string | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
@@ -583,6 +585,9 @@ function App() {
             ? 'connect'
             : 'connected'
       );
+      setActiveChatRepositoryName(chatParams.get('repo'));
+      setActiveChatBranchName(chatParams.get('branch'));
+      setActiveChatAutomationTitle(chatParams.get('skill'));
       return;
     }
     setIsActiveChatView(false);
@@ -797,6 +802,8 @@ function App() {
                       onChatContentModeChange={setChatContentMode}
                       repositoryStatus={repositoryStatus}
                       onRepositoryStatusChange={setRepositoryStatus}
+                      repositoryName={activeChatRepositoryName}
+                      branchName={activeChatBranchName}
                       showStatusBadge={showStatusBadge}
                       onToggleStatusBadge={() => setShowStatusBadge((prev) => !prev)}
                       automationContextTitle={activeChatAutomationTitle}

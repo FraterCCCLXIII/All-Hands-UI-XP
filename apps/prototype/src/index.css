@@ -38,6 +38,7 @@
 
     --radius: 0.375rem;
     --radius-sm: 0.25rem;
+    --radius-modal: 0.75rem;
 
     --success: 142 71% 45%;
     /* Lighter green for labels, badges, and text on dark surfaces (replaces mixed emerald-* / green-*). */

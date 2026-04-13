@@ -82,11 +82,11 @@ function AutomationsIcon({ className }: { className?: string }) {
 }
 
 const navItems = [
-  { icon: Plus, label: 'Create repository', action: 'new-project' },
-  { icon: List, label: 'List view', action: 'conversations' },
+  { icon: Plus, label: 'New Conversation', action: 'new-project' },
+  { icon: List, label: 'Conversation List', action: 'conversations' },
   { icon: Boxes, label: 'Extensions', action: 'extensions' },
   { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
-  { icon: SquareKanban, label: 'Dashboard view', action: 'dashboard' },
+  { icon: SquareKanban, label: 'Workspaces', action: 'dashboard' },
 ];
 
 /** Hover/focus tooltip to the right of the trigger; hides after click until pointer leaves. */

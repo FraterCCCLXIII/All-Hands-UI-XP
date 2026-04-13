@@ -79,6 +79,7 @@ import { TopBar } from '../components/navigation/TopBar';
 import { LeftNav } from '../components/navigation/LeftNav';
 import { GitControls } from '../components/git/GitControls';
 import { AutomationGlyph } from '../components/icons/AutomationGlyph';
+import { SkillIcon } from '../components/icons/SkillIcon';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { TetrisGame } from '../components/tetris/TetrisGame';
 import { showAppToast } from '../lib/appToast';
@@ -447,6 +448,21 @@ export function ComponentLibraryScreen({
               <AutomationGlyph className="h-5 w-5 text-muted-foreground" />
               <AutomationGlyph className="h-8 w-8 text-foreground" />
               <AutomationGlyph className="h-5 w-5 text-primary" />
+            </div>
+          ),
+        },
+        {
+          id: 'icons-skill-icon',
+          name: 'SkillIcon',
+          path: 'components/icons/SkillIcon.tsx',
+          description:
+            'Global custom SVG used for skill surfaces. Size with height classes and keep `w-auto` so the supplied aspect ratio stays intact; stroke follows `currentColor`.',
+          usage: `<SkillIcon className="h-4 text-muted-foreground" />`,
+          preview: (
+            <div className="flex flex-wrap items-center gap-6">
+              <SkillIcon className="h-4 text-muted-foreground" />
+              <SkillIcon className="h-5 text-foreground" />
+              <SkillIcon className="h-6 text-primary" />
             </div>
           ),
         },

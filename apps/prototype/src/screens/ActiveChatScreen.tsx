@@ -87,6 +87,8 @@ interface ActiveChatScreenProps {
   onChatContentModeChange: (mode: 'skeleton' | 'conversation' | 'start') => void;
   repositoryStatus: 'connected' | 'disconnected' | 'connect';
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
+  repositoryName?: string | null;
+  branchName?: string | null;
   showStatusBadge: boolean;
   onToggleStatusBadge: () => void;
   /** When set, shows automation icon + title above the chat header. */
@@ -346,6 +348,8 @@ export function ActiveChatScreen({
   onChatContentModeChange,
   repositoryStatus,
   onRepositoryStatusChange,
+  repositoryName,
+  branchName,
   showStatusBadge,
   onToggleStatusBadge,
   automationContextTitle,
@@ -412,6 +416,10 @@ export function ActiveChatScreen({
   const canvasTipLabel = CANVAS_TIP_OPTIONS.find((option) => option.id === canvasTipVariant)?.label ?? 'None';
   const automationContextLabel =
     AUTOMATION_CONTEXT_OPTIONS.find((o) => o.title === automationContextTitle)?.label ?? 'None';
+  const connectedRepoName = repositoryName ?? 'FraterCCCLXIII/All-Hands-UI-XP';
+  const connectedBranchName = branchName ?? 'feature/kanban-drawer';
+  const connectedRepoUrl = `https://github.com/${connectedRepoName}`;
+  const connectedBranchUrl = `${connectedRepoUrl}/tree/${encodeURIComponent(connectedBranchName)}`;
   const repoActionRowClassName = 'flex w-full min-w-0 flex-nowrap items-center justify-between gap-2.5 overflow-x-hidden';
 
   useEffect(() => {
@@ -2012,7 +2020,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 <>
                                   <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
                                     <a
-                                      href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP"
+                                      href={connectedRepoUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center justify-between gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate hover:border-muted-foreground/30 hover:text-foreground cursor-pointer"
@@ -2020,15 +2028,15 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
                                         <Github className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
                                       </div>
-                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0 transition-colors group-hover:text-foreground" title="FraterCCCLXIII/All-Hands-UI-XP">
-                                        FraterCCCLXIII/All-Hands-UI-XP
+                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0 transition-colors group-hover:text-foreground" title={connectedRepoName}>
+                                        {connectedRepoName}
                                       </div>
                                       <div className="absolute right-0 top-1/2 flex h-full w-12 -translate-y-1/2 items-center justify-end rounded-r-[100px] bg-gradient-to-l from-background via-background/80 to-transparent pr-2.5 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
                                         <ExternalLink className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
                                       </div>
                                     </a>
                                     <a
-                                      href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP/tree/feature/kanban-drawer"
+                                      href={connectedBranchUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="group flex min-w-0 max-w-[220px] flex-row items-center justify-between gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate hover:border-muted-foreground/30 hover:text-foreground cursor-pointer"
@@ -2036,8 +2044,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
                                         <GitBranch className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
                                       </div>
-                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate transition-colors group-hover:text-foreground" title="feature/kanban-drawer">
-                                        feature/kanban-drawer
+                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate transition-colors group-hover:text-foreground" title={connectedBranchName}>
+                                        {connectedBranchName}
                                       </div>
                                       <div className="absolute right-0 top-1/2 flex h-full w-12 -translate-y-1/2 items-center justify-end rounded-r-[100px] bg-gradient-to-l from-background via-background/80 to-transparent pr-2.5 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
                                         <ExternalLink className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />

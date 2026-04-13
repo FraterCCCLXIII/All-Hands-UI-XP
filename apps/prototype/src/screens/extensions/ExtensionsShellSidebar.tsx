@@ -1,8 +1,10 @@
-import { BookOpen, Box, Cloud, Package, Sparkles, Webhook } from 'lucide-react';
+import { BookOpen, Box, Cloud, Package, Webhook } from 'lucide-react';
+import { SkillIcon } from '../../components/icons/SkillIcon';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 import { EXTENSIONS_ALL_BASE, extensionsSectionStackGap } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
+import type { ComponentType } from 'react';
 import type { LucideIcon } from 'lucide-react';
 
 export type ExtensionsCatalogScope = 'all' | 'skills' | 'plugins' | 'mcp' | 'hooks';
@@ -14,9 +16,9 @@ export type ExtensionsBrowseControls = {
   onScopeChange: (scope: ExtensionsCatalogScope) => void;
 };
 
-const SCOPE_ITEMS: { id: ExtensionsCatalogScope; label: string; icon: LucideIcon }[] = [
+const SCOPE_ITEMS: { id: ExtensionsCatalogScope; label: string; icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }> }[] = [
   { id: 'all', label: 'All active', icon: Package },
-  { id: 'skills', label: 'Skills', icon: Sparkles },
+  { id: 'skills', label: 'Skills', icon: SkillIcon },
   { id: 'plugins', label: 'Plugins', icon: Box },
   { id: 'mcp', label: 'MCP servers', icon: Cloud },
   { id: 'hooks', label: 'Hooks', icon: Webhook },

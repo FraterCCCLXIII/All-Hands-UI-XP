@@ -17,6 +17,7 @@ import {
 } from '../../prototype/src/components/ui/dropdown-menu';
 import { InfoCard } from '../../prototype/src/components/common/InfoCard';
 import { ConversationCard } from '../../prototype/src/components/dashboard/ConversationCard';
+import { SkillIcon } from '../../prototype/src/components/icons/SkillIcon';
 
 type ComponentItem = {
   id: string;
@@ -70,6 +71,20 @@ export function ComponentLibraryDocs() {
               'Add new components here with a short summary, usage snippet, and any relevant states. This catalog lives in the docs app (port 3002).',
             usage:
               '<ComponentCard title="Component Name" description="..." usage="<Component />" />',
+          },
+          {
+            id: 'overview-skill-icon',
+            name: 'SkillIcon',
+            description:
+              'Global skill icon for marketplace cards, launch/start-conversation modals, and skill lists. Preserve the custom aspect ratio by sizing via height and leaving width auto; stroke color follows `currentColor`.',
+            usage: `<SkillIcon className="h-4 text-muted-foreground" />`,
+            preview: (
+              <div className="flex flex-wrap items-center gap-6">
+                <SkillIcon className="h-4 text-muted-foreground" />
+                <SkillIcon className="h-5 text-foreground" />
+                <SkillIcon className="h-6 text-primary" />
+              </div>
+            ),
           },
         ],
       },

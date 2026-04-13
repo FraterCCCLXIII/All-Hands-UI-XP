@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  Bot,
-  BookOpen,
   ChevronDown,
   ChevronLeft,
-  Code2,
   Copy,
   ExternalLink,
-  FlaskConical,
+  Folder,
   GitBranch,
   Github,
   MoreHorizontal,
   MoreVertical,
-  ShieldCheck,
-  Wrench,
+  Plus,
 } from 'lucide-react';
+import { SkillIcon } from '../../components/icons/SkillIcon';
 import { InfoCard } from '../../components/common/InfoCard';
 import { Button } from '../../components/ui/button';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
@@ -54,20 +51,6 @@ import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
 import { cn } from '../../lib/utils';
-import type { LucideIcon } from 'lucide-react';
-
-const SKILL_ICONS: Record<string, LucideIcon> = {
-  'marketplace-code-review': Code2,
-  'marketplace-docs': BookOpen,
-  'marketplace-security': ShieldCheck,
-  'marketplace-test-gen': FlaskConical,
-  'marketplace-refactor': Wrench,
-  'marketplace-migrate': GitBranch,
-};
-
-function getSkillIcon(skillId: string): LucideIcon {
-  return SKILL_ICONS[skillId] ?? Bot;
-}
 
 function groupSkillsByRepo(items: SkillRepositoryItem[]) {
   const byRepo = new Map<string, SkillRepositoryItem[]>();
@@ -270,6 +253,134 @@ function AddSkillDialog({
   );
 }
 
+function buildChatRoute(options: {
+  repository: 'connected' | 'disconnected';
+  skillName?: string | null;
+  repo?: string | null;
+  branch?: string | null;
+}) {
+  const params = new URLSearchParams({
+    content: 'start',
+    repository: options.repository,
+    canvas: 'closed',
+  });
+  if (options.skillName) params.set('skill', options.skillName);
+  if (options.repo) params.set('repo', options.repo);
+  if (options.branch) params.set('branch', options.branch);
+  return `/chat?${params.toString()}`;
+}
+
+type StartConversationDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  skill: SkillRepositoryItem | null;
+  repoGroups: { repo: string }[];
+  repoMetadataMap: Map<string, { defaultBranch?: string }>;
+  selectedRepo: string | null;
+  selectedBranch: string;
+  onSelectRepo: (repo: string) => void;
+  onBranchChange: (branch: string) => void;
+  onStartWithRepo: () => void;
+  onStartWithoutRepo: () => void;
+};
+
+function StartConversationDialog({
+  open,
+  onOpenChange,
+  skill,
+  repoGroups,
+  repoMetadataMap,
+  selectedRepo,
+  selectedBranch,
+  onSelectRepo,
+  onBranchChange,
+  onStartWithRepo,
+  onStartWithoutRepo,
+}: StartConversationDialogProps) {
+  const canStartWithRepo = Boolean(selectedRepo && selectedBranch.trim());
+  const selectedRepoDefaultBranch = selectedRepo ? repoMetadataMap.get(selectedRepo)?.defaultBranch : undefined;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+            <DialogTitle>Start Conversation</DialogTitle>
+          <DialogDescription>
+            Launch a new conversation with this skill using an existing repository, or start without a repo.
+          </DialogDescription>
+        </DialogHeader>
+        {skill ? (
+          <div className="space-y-4 py-2">
+            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <SkillIcon className="h-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">{skill.skillName ?? skill.title}</span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{skill.description}</p>
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-foreground">
+                  <Folder className="h-4 w-4 text-muted-foreground" />
+                  <span>Select an existing repository</span>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-muted/60 disabled:pointer-events-none disabled:opacity-50"
+                      disabled={repoGroups.length === 0}
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Github className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                        <span className="truncate">{selectedRepo ?? 'Select a repository'}</span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
+                    {repoGroups.map(({ repo }) => (
+                      <DropdownMenuItem key={repo} onClick={() => onSelectRepo(repo)}>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Github className="h-4 w-4 text-muted-foreground" />
+                          <span className="truncate">{repo}</span>
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-muted-foreground">
+                  <GitBranch className="h-4 w-4" />
+                </div>
+                <input
+                  placeholder={selectedRepoDefaultBranch ?? 'Select branch...'}
+                  disabled={!selectedRepo}
+                  className="h-10 w-full rounded-md border border-border bg-muted/40 px-4 pl-10 pr-4 text-sm text-foreground shadow-none transition-colors hover:bg-muted/60 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                  value={selectedBranch}
+                  onChange={(event) => onBranchChange(event.target.value)}
+                />
+              </div>
+              <Button variant="default" size="sm" onClick={onStartWithRepo} disabled={!canStartWithRepo} className="w-full">
+                Start with Repository
+              </Button>
+            </div>
+            <div className="relative flex items-center justify-center py-1">
+              <div className="absolute inset-x-0 h-px bg-border" />
+              <span className="relative bg-background px-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">or</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={onStartWithoutRepo} className="w-full">
+              <Plus className="mr-1 h-4 w-4" />
+              Start Without Repository
+            </Button>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type SkillsViewMode = 'marketplace' | 'repos';
 
 export type ExtensionsSkillsPanelProps = {
@@ -282,9 +393,11 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
   const [marketplaceSwitchById, setMarketplaceSwitchById] = useState<Record<string, boolean>>({});
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SkillRepositoryItem | null>(null);
-  const [addToRepoModalOpen, setAddToRepoModalOpen] = useState(false);
   const [addSkillModalOpen, setAddSkillModalOpen] = useState(false);
   const [addSkillTargetRepo, setAddSkillTargetRepo] = useState<string | null>(null);
+  const [startConversationModalOpen, setStartConversationModalOpen] = useState(false);
+  const [startConversationTargetRepo, setStartConversationTargetRepo] = useState<string | null>(null);
+  const [startConversationTargetBranch, setStartConversationTargetBranch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [visibleCategoryCount, setVisibleCategoryCount] = useState<number>(marketplaceCategories.length);
   const categoryTabsRef = useRef<HTMLDivElement>(null);
@@ -430,12 +543,6 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
     void navigator.clipboard.writeText(text);
   }, []);
 
-  const handleAddToRepo = useCallback((repo: string) => {
-    void repo;
-    setAddToRepoModalOpen(false);
-    setAddSkillModalOpen(false);
-  }, []);
-
   const handleAddSkillModalChange = useCallback(
     (open: boolean) => {
       setAddSkillModalOpen(open);
@@ -446,15 +553,47 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
     [addSkillTargetRepo, orderedRepoGroups]
   );
 
-  const handleAddToRepoModalChange = useCallback(
+  const handleStartConversationModalChange = useCallback(
     (open: boolean) => {
-      setAddToRepoModalOpen(open);
-      if (open && !addSkillTargetRepo) {
-        setAddSkillTargetRepo(orderedRepoGroups[0]?.repo ?? null);
+      setStartConversationModalOpen(open);
+      if (open) {
+        const defaultRepo = startConversationTargetRepo ?? orderedRepoGroups[0]?.repo ?? null;
+        setStartConversationTargetRepo(defaultRepo);
+        setStartConversationTargetBranch(defaultRepo ? repoMetadataMap.get(defaultRepo)?.defaultBranch ?? '' : '');
       }
     },
-    [addSkillTargetRepo, orderedRepoGroups]
+    [orderedRepoGroups, repoMetadataMap, startConversationTargetRepo]
   );
+
+  const handleStartConversationRepoSelect = useCallback(
+    (repo: string) => {
+      setStartConversationTargetRepo(repo);
+      setStartConversationTargetBranch(repoMetadataMap.get(repo)?.defaultBranch ?? '');
+    },
+    [repoMetadataMap]
+  );
+
+  const handleStartConversationWithRepo = useCallback(() => {
+    if (!displayItem || !startConversationTargetRepo || !startConversationTargetBranch.trim()) return;
+    navigateAppRoute(
+      buildChatRoute({
+        repository: 'connected',
+        skillName: displayItem.skillName ?? displayItem.title,
+        repo: startConversationTargetRepo,
+        branch: startConversationTargetBranch.trim(),
+      })
+    );
+  }, [displayItem, startConversationTargetBranch, startConversationTargetRepo]);
+
+  const handleStartConversationWithoutRepo = useCallback(() => {
+    if (!displayItem) return;
+    navigateAppRoute(
+      buildChatRoute({
+        repository: 'disconnected',
+        skillName: displayItem.skillName ?? displayItem.title,
+      })
+    );
+  }, [displayItem]);
 
   const filteredMarketplaceSkills = useMemo(() => {
     let items = marketplaceSkills;
@@ -596,7 +735,6 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {filteredMarketplaceSkills.map((skill) => {
-                  const IconComponent = getSkillIcon(skill.id);
                   const label = skill.skillName ?? skill.title;
                   const locked = skill.switchLocked === true;
                   const enabled = locked ? true : marketplaceSwitchById[skill.id] !== false;
@@ -643,7 +781,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
-                            <IconComponent className="h-4 w-4" />
+                            <SkillIcon className="h-4 text-muted-foreground" />
                           </div>
                           <div className="flex min-w-0 flex-1 flex-col">
                             <span className="text-base font-medium text-foreground">{label}</span>
@@ -781,9 +919,9 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={() => handleAddToRepoModalChange(true)}
+                    onClick={() => handleStartConversationModalChange(true)}
                   >
-                    Add Skill
+                    Start Conversation
                   </Button>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -803,15 +941,18 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                 )}
               </div>
               {displayItem && isMarketplaceSkill && (
-                <AddSkillDialog
-                  open={addToRepoModalOpen}
-                  onOpenChange={handleAddToRepoModalChange}
-                  title="Add skill to repository"
-                  description={`Choose a repository to add "${displayItem.skillName ?? displayItem.title}" to.`}
+                <StartConversationDialog
+                  open={startConversationModalOpen}
+                  onOpenChange={handleStartConversationModalChange}
+                  skill={displayItem}
                   repoGroups={orderedRepoGroups}
-                  selectedRepo={addSkillTargetRepo}
-                  onSelectRepo={setAddSkillTargetRepo}
-                  onAdd={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
+                  repoMetadataMap={repoMetadataMap}
+                  selectedRepo={startConversationTargetRepo}
+                  selectedBranch={startConversationTargetBranch}
+                  onSelectRepo={handleStartConversationRepoSelect}
+                  onBranchChange={setStartConversationTargetBranch}
+                  onStartWithRepo={handleStartConversationWithRepo}
+                  onStartWithoutRepo={handleStartConversationWithoutRepo}
                 />
               )}
               {displayItem && !isMarketplaceSkill && (
@@ -823,7 +964,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   repoGroups={orderedRepoGroups}
                   selectedRepo={addSkillTargetRepo}
                   onSelectRepo={setAddSkillTargetRepo}
-                  onAdd={() => addSkillTargetRepo && handleAddToRepo(addSkillTargetRepo)}
+                  onAdd={() => handleAddSkillModalChange(false)}
                 />
               )}
             </div>
@@ -871,7 +1012,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                         onClick={() => handleSelectSkill(skill)}
                         title={skill.skillName ?? skill.title}
                         description={skill.description}
-                        icon={<Wrench className="h-5 w-5" />}
+                        icon={<SkillIcon className="h-5 text-muted-foreground" />}
                         iconPosition="left"
                         interactive
                         className="w-full"

@@ -1,18 +1,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  BookOpen,
   Bot,
   ChevronDown,
-  Code2,
   ExternalLink,
-  FlaskConical,
   Folder,
   GitBranch,
   Github,
   Plus,
-  ShieldCheck,
-  Wrench,
 } from 'lucide-react';
+import { SkillIcon } from '../icons/SkillIcon';
 import { ThemeElement } from '../../types/theme';
 import { conversationSummaries } from '../../data/conversations';
 import { marketplaceSkills } from '../../data/skillsPageData';
@@ -24,18 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import type { LucideIcon } from 'lucide-react';
-
-const SKILL_ICONS: Record<string, LucideIcon> = {
-  'marketplace-code-review': Code2,
-  'marketplace-docs': BookOpen,
-  'marketplace-security': ShieldCheck,
-  'marketplace-test-gen': FlaskConical,
-  'marketplace-refactor': Wrench,
-  'marketplace-migrate': GitBranch,
-};
-
-const getSkillIcon = (skillId: string): LucideIcon => SKILL_ICONS[skillId] ?? Bot;
 
 interface WelcomeScreenProps {
   theme: string;
@@ -47,7 +31,24 @@ interface WelcomeScreenProps {
   variant?: 'default' | 'cards';
 }
 
+function buildChatRoute(options: { repository: 'connected' | 'disconnected'; skillName?: string | null }) {
+  const params = new URLSearchParams({
+    content: 'start',
+    repository: options.repository,
+    canvas: 'closed',
+  });
+  if (options.skillName) {
+    params.set('skill', options.skillName);
+  }
+  return `/chat?${params.toString()}`;
+}
+
 const RECENT_REPOS = ['FraterCCCLXIII/All-Hands-UI-XP', 'FraterCCCLXIII/pr-navigator', 'FraterCCCLXIII/All-Hands-UI'];
+const BRANCH_OPTIONS = ['main', 'develop', 'feature/kanban-drawer', 'bugfix/status-badge', 'release/v1.2.0'];
+const HOMEPAGE_COLUMN_VISIBLE_ITEMS = 5;
+const HOMEPAGE_COLUMN_LIST_CLASSNAME =
+  'h-[360px] max-h-[calc(100vh-420px)] overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out';
+const RECENT_CONVERSATIONS_PREVIEW_COUNT = HOMEPAGE_COLUMN_VISIBLE_ITEMS;
 const ALL_REPOS = [
   'FraterCCCLXIII/a1-hvac-local-leads',
   'FraterCCCLXIII/acu-your-mobile-oasis',
@@ -87,8 +88,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [repoInput, setRepoInput] = useState('');
   const [branchInput, setBranchInput] = useState('');
   const [repoDropdownOpen, setRepoDropdownOpen] = useState(false);
+  const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(true);
   const [openRepoModalOpen, setOpenRepoModalOpen] = useState(false);
+  const [openSkillLaunchModalOpen, setOpenSkillLaunchModalOpen] = useState(false);
+  const [selectedHomepageSkill, setSelectedHomepageSkill] = useState<(typeof marketplaceSkills)[number] | null>(null);
 
   const filteredRecentRepos = useMemo(
     () =>
@@ -113,22 +117,64 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       setRepoInput(repo);
       setBranchInput('main');
       setRepoDropdownOpen(false);
+      setBranchDropdownOpen(false);
     },
     []
   );
 
+  const handleBranchSelect = useCallback((branch: string) => {
+    setBranchInput(branch);
+    setBranchDropdownOpen(false);
+  }, []);
+
   const suggestedTasks = useMemo(
     () => [
-      { id: '#5', title: 'Resolve merge conflicts', subtitle: 'Ai interact 2' },
-      { id: '#1', title: 'Resolve merge conflicts', subtitle: 'Fix LM Studio CORS issues with proxy server' },
+      {
+        id: '#5',
+        title: 'Resolve merge conflicts',
+        subtitle: 'Ai interact 2',
+        repo: 'FraterCCCLXIII/chatrtk',
+      },
+      {
+        id: '#1',
+        title: 'Resolve merge conflicts',
+        subtitle: 'Fix LM Studio CORS issues with proxy server',
+        repo: 'FraterCCCLXIII/chatrtk',
+      },
+      {
+        id: '#7',
+        title: 'Audit auth edge cases',
+        subtitle: 'Harden the session expiry and refresh flow',
+        repo: 'acme/web-app',
+      },
+      {
+        id: '#12',
+        title: 'Polish token usage in nav shell',
+        subtitle: 'Replace hardcoded values with semantic tokens',
+        repo: 'acme/design-system',
+      },
+      {
+        id: '#19',
+        title: 'Stabilize flaky onboarding checks',
+        subtitle: 'Triage test instability in CI before release',
+        repo: 'FraterCCCLXIII/pr-navigator',
+      },
     ],
     []
   );
 
-  const featuredSkills = useMemo(() => marketplaceSkills.slice(0, 5), []);
+  const featuredSkills = useMemo(() => marketplaceSkills.slice(0, HOMEPAGE_COLUMN_VISIBLE_ITEMS), []);
+  const recentConversationPreview = useMemo(
+    () => conversationSummaries.slice(0, RECENT_CONVERSATIONS_PREVIEW_COUNT),
+    []
+  );
 
   const handleNavigateToSkills = useCallback(() => {
     navigateAppRoute('/extensions/all');
+  }, []);
+
+  const handleOpenConversationDrawer = useCallback(() => {
+    navigateAppRoute('/conversations');
   }, []);
 
   const handleLaunch = () => {
@@ -141,8 +187,30 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const handleStartNewConversation = useCallback(() => {
-    navigateAppRoute('/chat?content=start&repository=disconnected&canvas=closed');
+    navigateAppRoute(buildChatRoute({ repository: 'disconnected' }));
   }, []);
+
+  const handleOpenSkillLaunchModal = useCallback((skill: (typeof marketplaceSkills)[number]) => {
+    setSelectedHomepageSkill(skill);
+    setOpenSkillLaunchModalOpen(true);
+  }, []);
+
+  const handleLaunchSkillWithRepository = useCallback(() => {
+    if (!selectedHomepageSkill) return;
+    const repo = repoInput.trim();
+    const branch = branchInput.trim();
+    if (!repo || !branch) return;
+    onRepoSelect(repo);
+    onBranchSelect(branch);
+    setOpenSkillLaunchModalOpen(false);
+    navigateAppRoute(buildChatRoute({ repository: 'connected', skillName: selectedHomepageSkill.skillName ?? selectedHomepageSkill.title }));
+  }, [branchInput, onBranchSelect, onRepoSelect, repoInput, selectedHomepageSkill]);
+
+  const handleLaunchSkillWithoutRepository = useCallback(() => {
+    if (!selectedHomepageSkill) return;
+    setOpenSkillLaunchModalOpen(false);
+    navigateAppRoute(buildChatRoute({ repository: 'disconnected', skillName: selectedHomepageSkill.skillName ?? selectedHomepageSkill.title }));
+  }, [selectedHomepageSkill]);
 
   return (
     <div className={`flex-1 relative overflow-visible min-h-screen ${getThemeClasses('bg')} ${getThemeClasses('scrollbar')}`}>
@@ -244,7 +312,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                   className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
                                   value={repoInput}
                                   onChange={(e) => setRepoInput(e.target.value)}
-                                  onFocus={() => setRepoDropdownOpen(true)}
                                   aria-expanded={repoDropdownOpen}
                                   aria-haspopup="listbox"
                                   role="combobox"
@@ -257,6 +324,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                               </div>
                             </PopoverTrigger>
                             <PopoverContent
+                              portalled={false}
                               className="w-[var(--radix-popover-trigger-width)] p-0 border border-border bg-card rounded-lg shadow-md mt-1 z-[99999] max-h-60 flex flex-col overflow-hidden"
                               align="start"
                               sideOffset={4}
@@ -325,16 +393,51 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         </div>
                       </div>
                       <div className="relative">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
-                          <GitBranch className="w-4 h-4" />
-                        </div>
-                        <input
-                          placeholder="Select branch..."
-                          disabled={!repoInput}
-                          className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
-                          value={branchInput}
-                          onChange={(e) => setBranchInput(e.target.value)}
-                        />
+                        <Popover open={branchDropdownOpen} onOpenChange={setBranchDropdownOpen}>
+                          <PopoverTrigger asChild>
+                            <div className="relative">
+                              <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                                <GitBranch className="w-4 h-4" />
+                              </div>
+                              <input
+                                placeholder="Select branch..."
+                                disabled={!repoInput}
+                                readOnly
+                                className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
+                                value={branchInput}
+                                aria-expanded={branchDropdownOpen}
+                                aria-haspopup="listbox"
+                                role="combobox"
+                              />
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                <ChevronDown
+                                  className={`w-4 h-4 text-muted-foreground transition-transform ${branchDropdownOpen ? 'rotate-180' : ''}`}
+                                />
+                              </div>
+                            </div>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            portalled={false}
+                            className="w-[var(--radix-popover-trigger-width)] p-1 border border-border bg-card rounded-lg shadow-md mt-1 z-[99999] max-h-60 flex flex-col overflow-hidden"
+                            align="start"
+                            sideOffset={4}
+                            onOpenAutoFocus={(e) => e.preventDefault()}
+                          >
+                            <ul role="listbox" className="w-full overflow-y-auto repo-dropdown-scroll">
+                              {BRANCH_OPTIONS.map((branch) => (
+                                <li
+                                  key={branch}
+                                  role="option"
+                                  tabIndex={-1}
+                                  className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground hover:bg-muted/60"
+                                  onClick={() => handleBranchSelect(branch)}
+                                >
+                                  <span className="font-medium">{branch}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                       <button
                         type="button"
@@ -348,6 +451,186 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         Launch
                       </button>
                     </div>
+                  </DialogContent>
+                </Dialog>
+                <Dialog open={openSkillLaunchModalOpen} onOpenChange={setOpenSkillLaunchModalOpen}>
+                  <DialogContent className="border-border sm:max-w-[480px]">
+                    <DialogHeader>
+                      <DialogTitle>Launch Skill</DialogTitle>
+                    </DialogHeader>
+                    {selectedHomepageSkill ? (
+                      <div className="flex flex-col gap-4 pt-2">
+                        <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <SkillIcon className="h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-foreground">
+                              {selectedHomepageSkill.skillName ?? selectedHomepageSkill.title}
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm text-muted-foreground">{selectedHomepageSkill.description}</p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-sm text-foreground">Select an existing repository</span>
+                          <div className="relative">
+                            <Popover open={repoDropdownOpen} onOpenChange={setRepoDropdownOpen}>
+                              <PopoverTrigger asChild>
+                                <div className="relative">
+                                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                                    <Github className="w-4 h-4" />
+                                  </div>
+                                  <input
+                                    placeholder="user/repo"
+                                    className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
+                                    value={repoInput}
+                                    onChange={(e) => setRepoInput(e.target.value)}
+                                    aria-expanded={repoDropdownOpen}
+                                    aria-haspopup="listbox"
+                                    role="combobox"
+                                  />
+                                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                    <ChevronDown
+                                      className={`w-4 h-4 text-muted-foreground transition-transform ${repoDropdownOpen ? 'rotate-180' : ''}`}
+                                    />
+                                  </div>
+                                </div>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                portalled={false}
+                                className="w-[var(--radix-popover-trigger-width)] p-0 border border-border bg-card rounded-lg shadow-md mt-1 z-[99999] max-h-60 flex flex-col overflow-hidden"
+                                align="start"
+                                sideOffset={4}
+                                onOpenAutoFocus={(e) => e.preventDefault()}
+                              >
+                                {hasRepos ? (
+                                  <ul
+                                    role="listbox"
+                                    className="w-full flex-1 min-h-0 overflow-y-auto p-1 repo-dropdown-scroll"
+                                  >
+                                    {filteredRecentRepos.length > 0 && (
+                                      <>
+                                        <div className="px-2 py-1.5">
+                                          <span className="text-xs font-semibold text-muted-foreground">Most Recent</span>
+                                        </div>
+                                        {filteredRecentRepos.map((repo) => (
+                                          <li
+                                            key={repo}
+                                            role="option"
+                                            tabIndex={-1}
+                                            className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground hover:bg-muted/60"
+                                            onClick={() => handleRepoSelect(repo)}
+                                          >
+                                            <span className="font-medium">{repo}</span>
+                                          </li>
+                                        ))}
+                                        {filteredAllRepos.length > 0 && <div className="border-t border-border my-1" />}
+                                      </>
+                                    )}
+                                    {filteredAllRepos.length > 0 && (
+                                      <>
+                                        {filteredRecentRepos.length === 0 && (
+                                          <div className="px-2 py-1.5">
+                                            <span className="text-xs font-semibold text-muted-foreground">All Repositories</span>
+                                          </div>
+                                        )}
+                                        {filteredAllRepos.map((repo) => (
+                                          <li
+                                            key={repo}
+                                            role="option"
+                                            tabIndex={-1}
+                                            className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground hover:bg-muted/60"
+                                            onClick={() => handleRepoSelect(repo)}
+                                          >
+                                            <span className="font-medium">{repo}</span>
+                                          </li>
+                                        ))}
+                                      </>
+                                    )}
+                                  </ul>
+                                ) : (
+                                  <div className="px-2 py-3 text-sm text-muted-foreground">No repositories found</div>
+                                )}
+                                <div className="flex-shrink-0 border-t border-border p-1">
+                                  <a
+                                    href="https://github.com/apps/openhands-ai/installations/new"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center w-full px-2 py-2 text-sm text-foreground hover:bg-muted/60 rounded-md"
+                                  >
+                                    + Add GitHub Repos
+                                  </a>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+                        <div className="relative">
+                          <Popover open={branchDropdownOpen} onOpenChange={setBranchDropdownOpen}>
+                            <PopoverTrigger asChild>
+                              <div className="relative">
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                                  <GitBranch className="w-4 h-4" />
+                                </div>
+                                <input
+                                  placeholder="Select branch..."
+                                  disabled={!repoInput}
+                                  readOnly
+                                  className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
+                                  value={branchInput}
+                                  aria-expanded={branchDropdownOpen}
+                                  aria-haspopup="listbox"
+                                  role="combobox"
+                                />
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                  <ChevronDown
+                                    className={`w-4 h-4 text-muted-foreground transition-transform ${branchDropdownOpen ? 'rotate-180' : ''}`}
+                                  />
+                                </div>
+                              </div>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              portalled={false}
+                              className="w-[var(--radix-popover-trigger-width)] p-1 border border-border bg-card rounded-lg shadow-md mt-1 z-[99999] max-h-60 flex flex-col overflow-hidden"
+                              align="start"
+                              sideOffset={4}
+                              onOpenAutoFocus={(e) => e.preventDefault()}
+                            >
+                              <ul role="listbox" className="w-full overflow-y-auto repo-dropdown-scroll">
+                                {BRANCH_OPTIONS.map((branch) => (
+                                  <li
+                                    key={branch}
+                                    role="option"
+                                    tabIndex={-1}
+                                    className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground hover:bg-muted/60"
+                                    onClick={() => handleBranchSelect(branch)}
+                                  >
+                                    <span className="font-medium">{branch}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleLaunchSkillWithRepository}
+                          disabled={!repoInput || !branchInput}
+                          className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
+                        >
+                          Launch with Repository
+                        </button>
+                        <div className="relative flex items-center justify-center py-1">
+                          <div className="absolute inset-x-0 h-px bg-border" />
+                          <span className="relative bg-card px-3 text-xs uppercase tracking-wide text-muted-foreground">or</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleLaunchSkillWithoutRepository}
+                          className="h-10 flex items-center justify-center px-4 text-sm rounded-md border border-border bg-transparent text-foreground hover:bg-muted/60 cursor-pointer transition-colors w-full"
+                        >
+                          Start New Conversation Without Repo
+                        </button>
+                      </div>
+                    ) : null}
                   </DialogContent>
                 </Dialog>
               </>
@@ -394,7 +677,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
                             value={repoInput}
                             onChange={(event) => setRepoInput(event.target.value)}
-                            onFocus={() => setRepoDropdownOpen(true)}
                             aria-expanded={repoDropdownOpen}
                             aria-haspopup="listbox"
                             aria-autocomplete="list"
@@ -506,28 +788,57 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     </Popover>
                   </div>
                   <div className="relative max-w-full">
-                    <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
-                        <GitBranch className="w-4 h-4" />
-                      </div>
-                      <input
-                        placeholder="Select branch..."
-                        disabled={!repoInput}
-                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
-                        value={branchInput}
-                        onChange={(event) => setBranchInput(event.target.value)}
-                      />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
-                        <button
-                          type="button"
-                          aria-label="Toggle menu"
-                          disabled={!repoInput}
-                          className="text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          <ChevronDown className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
+                    <Popover open={branchDropdownOpen} onOpenChange={setBranchDropdownOpen}>
+                      <PopoverTrigger asChild>
+                        <div className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-muted-foreground">
+                            <GitBranch className="w-4 h-4" />
+                          </div>
+                          <input
+                            placeholder="Select branch..."
+                            disabled={!repoInput}
+                            readOnly
+                            className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
+                            value={branchInput}
+                            aria-expanded={branchDropdownOpen}
+                            aria-haspopup="listbox"
+                            role="combobox"
+                          />
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
+                            <button
+                              type="button"
+                              aria-label="Toggle menu"
+                              disabled={!repoInput}
+                              className="text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <ChevronDown
+                                className={`w-4 h-4 transition-transform ${branchDropdownOpen ? 'rotate-180' : ''}`}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[var(--radix-popover-trigger-width)] p-1 border border-border bg-card rounded-lg shadow-md mt-1 z-[9999] max-h-60 flex flex-col overflow-hidden"
+                        align="start"
+                        sideOffset={4}
+                        onOpenAutoFocus={(event) => event.preventDefault()}
+                      >
+                        <ul role="listbox" className="w-full overflow-y-auto repo-dropdown-scroll">
+                          {BRANCH_OPTIONS.map((branch) => (
+                            <li
+                              key={branch}
+                              role="option"
+                              tabIndex={-1}
+                              className="px-2 py-2 cursor-pointer text-sm rounded-md my-0.5 text-foreground hover:bg-muted/60"
+                              onClick={() => handleBranchSelect(branch)}
+                            >
+                              <span className="font-medium">{branch}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
                 <button
@@ -569,24 +880,23 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Skills</h3>
               </div>
               <div className="flex flex-col min-h-0">
-                <div className="transition-all duration-300 ease-in-out overflow-y-auto custom-scrollbar max-h-[calc(100vh-420px)]">
+                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
                   <div className="flex flex-col">
                     {featuredSkills.map((skill) => {
-                      const Icon = getSkillIcon(skill.id);
                       return (
                         <button
                           key={skill.id}
                           type="button"
-                          onClick={handleNavigateToSkills}
+                          onClick={() => handleOpenSkillLaunchModal(skill)}
                           className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
                         >
                           <div className="flex items-center gap-2 pl-1">
-                            <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
-                          <span className="text-xs text-foreground leading-6 font-normal truncate">
+                            <SkillIcon className="h-3 text-muted-foreground" />
+                          <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
                             {skill.skillName ?? skill.title}
                           </span>
                         </div>
-                        <span className="text-xs text-muted-foreground leading-4 font-normal pl-5 line-clamp-2">
+                        <span className="block min-w-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal pl-5 truncate">
                           {skill.description}
                         </span>
                       </button>
@@ -602,9 +912,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Recent Conversations</h3>
               </div>
               <div className="flex flex-col min-h-0">
-                <div className="transition-all duration-300 ease-in-out overflow-y-auto custom-scrollbar max-h-[calc(100vh-420px)]">
+                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
                   <div className="flex flex-col">
-                    {conversationSummaries.map((conversation) => (
+                    {recentConversationPreview.map((conversation) => (
                       <button
                         key={conversation.id}
                         type="button"
@@ -622,22 +932,24 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                           <div className="inline-flex">
                             <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
                           </div>
-                          <span className="text-xs text-foreground leading-6 font-normal">{conversation.name}</span>
+                          <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                            {conversation.name}
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground leading-4 font-normal">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground leading-4 font-normal">
+                          <div className="flex min-w-0 flex-nowrap items-center gap-3 overflow-hidden">
+                            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
                               <Github className="w-3 h-3" />
-                              <span className="max-w-[160px] truncate">{conversation.repo}</span>
+                              <span className="min-w-0 whitespace-nowrap truncate">{conversation.repo}</span>
                             </div>
                             {conversation.branch ? (
-                              <div className="flex items-center gap-1">
+                              <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden">
                                 <GitBranch className="w-3 h-3" />
-                                <span className="max-w-[124px] truncate">{conversation.branch}</span>
+                                <span className="min-w-0 whitespace-nowrap truncate">{conversation.branch}</span>
                               </div>
                             ) : null}
                           </div>
-                          <span>{conversation.time}</span>
+                          <span className="shrink-0 whitespace-nowrap">{conversation.time}</span>
                         </div>
                       </button>
                     ))}
@@ -648,45 +960,39 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
             <section className="flex flex-1 min-w-0 flex-col">
               <div className="flex items-center gap-2">
-                <h3 className="text-xs leading-4 text-foreground font-semibold py-[14px] pl-[14px]">
+                <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">
                   Suggested Tasks
                 </h3>
               </div>
               <div className="flex flex-col min-h-0">
-                <div className="transition-all duration-300 ease-in-out overflow-y-auto custom-scrollbar max-h-[calc(100vh-420px)]">
+                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
                   <div className="flex flex-col">
-                    <div className="text-muted-foreground px-[14px]">
-                      <div className="flex items-center gap-2 border-b border-border mb-2">
-                        <Github className="w-3 h-3" />
-                        <div className="py-3">
-                          <h3 className="text-xs text-foreground leading-6 font-normal">FraterCCCLXIII/chatrtk</h3>
+                    {suggestedTasks.map((task) => (
+                      <button
+                        key={task.id}
+                        type="button"
+                        className="w-full p-[14px] text-left flex items-center justify-between cursor-pointer rounded-lg transition-all duration-300 hover:bg-muted/60"
+                      >
+                        <div className="flex items-start gap-3 min-w-0 w-full">
+                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal">
+                                {task.id}
+                              </span>
+                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                                {task.title}
+                              </span>
+                            </div>
+                            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden text-xs text-muted-foreground leading-4 font-normal">
+                              <Github className="w-3 h-3 shrink-0" />
+                              <span className="min-w-0 whitespace-nowrap truncate">
+                                {task.repo} / {task.subtitle}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <ul className="w-full text-sm">
-                        {suggestedTasks.map((task) => (
-                          <li key={task.id} className="w-full">
-                            <button
-                              type="button"
-                              className="w-full p-[14px] text-left flex items-center justify-between cursor-pointer hover:bg-muted/60 transition-all duration-300 rounded-lg"
-                            >
-                              <div className="flex items-center gap-3 min-w-0 w-full">
-                                <span className="text-xs text-muted-foreground leading-4 font-normal">
-                                  {task.id}
-                                </span>
-                                <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                  <span className="text-xs text-foreground leading-6 font-normal truncate">
-                                    {task.title}
-                                  </span>
-                                  <span className="text-xs text-muted-foreground leading-4 font-normal max-w-70 truncate">
-                                    {task.subtitle}
-                                  </span>
-                                </div>
-                              </div>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
