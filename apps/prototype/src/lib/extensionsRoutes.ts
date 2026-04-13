@@ -11,12 +11,11 @@ export const EXTENSIONS_HOOKS_BASE = 'extensions/hooks';
 export type ExtensionsShellMode = 'all' | 'skills' | 'plugins';
 
 /**
- * Which full-screen Extensions child to render from the current hash.
+ * Which full-screen Extensions child to render from the current pathname.
  * Skill / plugin detail routes mount the legacy full panels.
  */
-export function getExtensionsShellMode(hash: string): ExtensionsShellMode {
-  const normalized = hash.replace(/^#\/?/, '');
-  const pathPart = normalized.split('?')[0] ?? '';
+export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
+  const pathPart = pathname.replace(/^\/+/, '').split('?')[0] ?? '';
 
   if (/^extensions\/skills\/skill\//.test(pathPart)) {
     return 'skills';
@@ -31,37 +30,37 @@ export function getExtensionsShellMode(hash: string): ExtensionsShellMode {
 }
 
 /**
- * Normalize Extensions entry hashes and map legacy `#/skills` / `#/plugin-marketplace` routes.
- * Returns true when the URL was rewritten (caller should skip the rest of hash sync for this tick).
+ * Normalize Extensions entry paths and map legacy `/skills` / `/plugin-marketplace` routes.
+ * Returns true when the URL was rewritten (caller should skip the rest of location sync for this tick).
  */
-export function tryNormalizeExtensionsHash(): boolean {
+export function tryNormalizeExtensionsPath(): boolean {
   if (typeof window === 'undefined') return false;
-  const raw = window.location.hash.replace(/^#\/?/, '').split('?')[0];
+  const raw = window.location.pathname.replace(/^\/+/, '').split('?')[0] ?? '';
 
   if (raw === 'extensions/skills' || raw === 'extensions/mcp' || raw === 'extensions/hooks') {
-    navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`, { replace: true });
+    navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });
     return true;
   }
   if (raw === 'extensions') {
-    navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`, { replace: true });
+    navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });
     return true;
   }
   if (raw === 'skills') {
-    navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`, { replace: true });
+    navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });
     return true;
   }
   if (raw.startsWith('skills/')) {
     const next = `${EXTENSIONS_SKILLS_BASE}${raw.slice('skills'.length)}`;
-    navigateAppRoute(`#/${next}`, { replace: true });
+    navigateAppRoute(`/${next}`, { replace: true });
     return true;
   }
   if (raw === 'plugin-marketplace') {
-    navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`, { replace: true });
+    navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });
     return true;
   }
   if (raw.startsWith('plugin-marketplace/')) {
     const next = `${EXTENSIONS_PLUGINS_BASE}${raw.slice('plugin-marketplace'.length)}`;
-    navigateAppRoute(`#/${next}`, { replace: true });
+    navigateAppRoute(`/${next}`, { replace: true });
     return true;
   }
   return false;

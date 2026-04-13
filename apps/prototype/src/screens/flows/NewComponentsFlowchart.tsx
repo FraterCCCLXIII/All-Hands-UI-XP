@@ -8,7 +8,7 @@ const nodes: FlowchartNode[] = [
     id: 'new-components',
     title: 'New Components',
     subtitle: 'Latest prototypes',
-    hash: 'new-components',
+    hash: 'chat',
     position: { x: 80, y: 160 },
     size: { width: 420, height: 280 },
     notes: [
@@ -23,7 +23,7 @@ const nodes: FlowchartNode[] = [
     id: 'component-library',
     title: 'Component Library',
     subtitle: 'Browse catalog',
-    hash: 'components',
+    hash: 'chat',
     position: { x: 620, y: 160 },
     size: { width: 420, height: 280 },
     notes: [
@@ -66,7 +66,7 @@ export const NewComponentsFlowchart: React.FC<{ onExit: () => void }> = ({ onExi
     activeFlowId="new-components"
     onExit={onExit}
     onFlowSelect={(flowId) => {
-      navigateAppRoute(`#/flows/${flowId}`);
+      navigateAppRoute(`/flows/${flowId}`);
     }}
   />
 );

@@ -2,12 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { waitForTourTarget } from './uxTourTarget';
 import { UxTourAction, UxTourDefinition, UxTourStep } from './uxTourTypes';
 
-const normalizeHash = (hash: string) => {
-  if (hash.startsWith('#/')) return hash;
-  if (hash.startsWith('#')) return `#/${hash.replace(/^#+/, '')}`;
-  return `#/${hash.replace(/^\/+/, '')}`;
-};
-
 const waitForDelay = (ms: number) =>
   new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
@@ -97,7 +91,7 @@ export const useUxTourController = ({ tours, runAction, onStop }: UseUxTourContr
       setStepIndex(0);
       setEnteredStepKey(null);
       void (async () => {
-        await executeAction({ type: 'navigate', hash: normalizeHash(tour.startHash) });
+        await executeAction({ type: 'navigate', to: tour.startPath });
       })();
     },
     [executeAction, toursById]

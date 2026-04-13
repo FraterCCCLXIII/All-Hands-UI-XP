@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
 import { ConversationDrawer } from './components/chat/ConversationDrawer';
@@ -6,7 +7,7 @@ import { Canvas } from './components/canvas/Canvas';
 import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
 import { Message } from './types/message';
-import { Theme, ThemeElement, ThemeClassMap } from './types/theme';
+import { Theme, ThemeElement } from './types/theme';
 import {
   DashboardScreen,
   AutomationsScreen,
@@ -15,19 +16,11 @@ import {
   LoginScreen,
   ActiveChatScreen,
   ComponentLibraryScreen,
-  NewComponentsScreen,
   NewLlmSwitcherScreen,
   NewLlmSwitcherScreen2,
   SaasCreditCardFlow,
   EnterpriseLearnMoreScreen,
   SignInWithAdScreen,
-  NewUserExperienceFlowchart,
-  SaasCreditCardFlowchart,
-  UserJourneyCtaFlowchart,
-  ComponentLibraryFlowchart,
-  NewComponentsFlowchart,
-  NewLlmSwitcherFlowchart,
-  NewLlmSwitcher2Flowchart,
   WorkflowsScreen,
   ClaimStatesScreen,
 } from './screens';
@@ -51,110 +44,15 @@ import { UxTourOverlay } from './features/ux-tours/UxTourOverlay';
 import { useUxTourController } from './features/ux-tours/useUxTourController';
 import { uxTourDefinitions, uxTourLinks } from './features/ux-tours/uxTourRegistry';
 import type { UxTourAction } from './features/ux-tours/uxTourTypes';
-import { APP_ROUTE_EVENT, isFigmaCaptureActive, navigateAppRoute, normalizeAppRoute } from './lib/captureNavigation';
-import { tryNormalizeExtensionsHash } from './lib/extensionsRoutes';
-
-const themeClasses: ThemeClassMap = {
-  dark: {
-    text: 'text-stone-200',
-    bg: 'bg-sidebar',
-    border: 'border-stone-700',
-    'input-bg': 'bg-stone-800',
-    'placeholder-text': 'placeholder-stone-500',
-    'button-bg': 'bg-white',
-    'button-text': 'text-black',
-    'user-message-bg': 'bg-stone-700',
-    'user-message-text': 'text-stone-200',
-    'ai-message-bg': 'bg-stone-800',
-    'ai-message-text': 'text-stone-200',
-    'status-dot-running': 'bg-green-500',
-    'status-dot-stopped': 'bg-red-500',
-    'status-text': 'text-stone-400',
-    'stop-button-bg': 'bg-red-500',
-    'canvas-bg': 'bg-stone-900',
-    'panel-bg': 'bg-stone-800',
-    'active-button-bg': 'bg-stone-600',
-    'active-button-text': 'text-white',
-    'pill-button-bg': 'bg-stone-700',
-    'pill-button-text': 'text-stone-200',
-    'icon-color': 'text-stone-400',
-    'hover-icon-color': 'hover:text-yellow-400',
-    'hover-resizer-bg': 'hover:bg-yellow-500',
-    'stop-button-bg-subtle': 'bg-stone-700',
-    'stop-button-text': 'text-stone-200',
-    'button-hover': 'hover:bg-stone-600',
-    'task-item-bg': 'bg-stone-600',
-    'scrollbar': 'scrollbar-thin scrollbar-thumb-stone-700 scrollbar-track-stone-800',
-    'success-text': 'text-emerald-400',
-    'error-text': 'text-rose-400',
-  },
-  light: {
-    text: 'text-stone-800',
-    bg: 'bg-sidebar',
-    border: 'border-stone-300',
-    'input-bg': 'bg-white',
-    'placeholder-text': 'placeholder-stone-400',
-    'button-bg': 'bg-stone-200',
-    'button-text': 'text-stone-800',
-    'user-message-bg': 'bg-stone-200',
-    'user-message-text': 'text-stone-800',
-    'ai-message-bg': 'bg-white',
-    'ai-message-text': 'text-stone-800',
-    'status-dot-running': 'bg-green-500',
-    'status-dot-stopped': 'bg-red-500',
-    'status-text': 'text-stone-600',
-    'stop-button-bg': 'bg-red-500',
-    'canvas-bg': 'bg-stone-100',
-    'panel-bg': 'bg-white',
-    'active-button-bg': 'bg-stone-400',
-    'active-button-text': 'text-stone-900',
-    'pill-button-bg': 'bg-stone-200',
-    'pill-button-text': 'text-stone-800',
-    'icon-color': 'text-stone-600',
-    'hover-icon-color': 'hover:text-amber-600',
-    'hover-resizer-bg': 'hover:bg-amber-200',
-    'stop-button-bg-subtle': 'bg-stone-300',
-    'stop-button-text': 'text-stone-800',
-    'button-hover': 'hover:bg-stone-300',
-    'task-item-bg': 'bg-stone-300',
-    'scrollbar': 'scrollbar-thin scrollbar-thumb-stone-300 scrollbar-track-stone-100',
-    'success-text': 'text-emerald-600',
-    'error-text': 'text-rose-600',
-  },
-  sepia: {
-    text: 'text-[rgb(100,80,60)]',
-    bg: 'bg-sidebar',
-    border: 'border-[rgb(215,205,190)]',
-    'input-bg': 'bg-[rgb(245,235,220)]',
-    'placeholder-text': 'placeholder-[rgb(180,160,140)]',
-    'button-bg': 'bg-[rgb(225,215,200)]',
-    'button-text': 'text-[rgb(100,80,60)]',
-    'user-message-bg': 'bg-[rgb(225,215,200)]',
-    'user-message-text': 'text-[rgb(100,80,60)]',
-    'ai-message-bg': 'bg-[rgb(245,235,220)]',
-    'ai-message-text': 'text-[rgb(100,80,60)]',
-    'status-dot-running': 'bg-[rgb(120,180,120)]',
-    'status-dot-stopped': 'bg-[rgb(180,120,120)]',
-    'status-text': 'text-[rgb(140,120,100)]',
-    'stop-button-bg': 'bg-[rgb(180,120,120)]',
-    'canvas-bg': 'bg-[rgb(235,225,210)]',
-    'panel-bg': 'bg-[rgb(245,235,220)]',
-    'active-button-bg': 'bg-[rgb(200,190,175)]',
-    'active-button-text': 'text-[rgb(100,80,60)]',
-    'pill-button-bg': 'bg-[rgb(215,205,190)]',
-    'pill-button-text': 'text-[rgb(100,80,60)]',
-    'icon-color': 'text-[rgb(140,120,100)]',
-    'hover-icon-color': 'hover:text-[rgb(160,140,120)]',
-    'hover-resizer-bg': 'hover:bg-[rgb(200,190,175)]',
-    'stop-button-bg-subtle': 'bg-[rgb(200,190,175)]',
-    'stop-button-text': 'text-[rgb(100,80,60)]',
-    'button-hover': 'hover:bg-[rgb(215,205,190)]',
-    'task-item-bg': 'bg-[rgb(215,205,190)]',
-    'scrollbar': 'scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100',
-    'success-text': 'text-[rgb(120,180,120)]',
-    'error-text': 'text-[rgb(180,120,120)]',
-  },
-};
+import {
+  APP_ROUTE_EVENT,
+  isFigmaCaptureActive,
+  navigateAppRoute,
+  registerAppNavigate,
+  routeToPath,
+} from './lib/captureNavigation';
+import { tryNormalizeExtensionsPath } from './lib/extensionsRoutes';
+import { themeAppClassMap as themeClasses } from './theme/themeAppClassMap';
 
 type CanvasTipVariant = 'none' | ProtipVariant;
 
@@ -164,8 +62,6 @@ const actionSlugs: Record<string, string> = {
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
-  components: 'components',
-  'new-components': 'new-components',
   'new-llm-switcher': 'new-llm-switcher',
   'new-llm-switcher-2': 'new-llm-switcher-2',
   conversations: 'conversations',
@@ -175,22 +71,17 @@ const actionSlugs: Record<string, string> = {
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
-const normalizeHash = (hash: string) => {
-  if (hash.startsWith('#/')) return hash;
-  if (hash.startsWith('#')) return `#/${hash.replace(/^#+/, '')}`;
-  return `#/${hash.replace(/^\/+/, '')}`;
-};
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [theme] = useState<Theme>('dark');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
-      const captureRoute = searchParams.get('captureRoute') ?? '';
-      const isFlowRoute = window.location.hash.includes('flows/') || captureRoute.startsWith('flows/');
       const isEmbed = searchParams.has('embed');
-      if (isFlowRoute || isEmbed) {
+      if (isEmbed) {
         return false;
       }
       return sessionStorage.getItem('hasShownLoadingScreen') !== 'true';
@@ -222,7 +113,6 @@ function App() {
   const maxCanvasWidth = 70; // Maximum 70% width
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [activeFlowPrototype, setActiveFlowPrototype] = useState<string | null>(null);
-  const [activeFlowchart, setActiveFlowchart] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<string | null>(null);
   const [installedPluginRepos, setInstalledPluginRepos] = useState<string[]>([]);
   const [drawerConversations, setDrawerConversations] = useState(conversationSummaries);
@@ -230,35 +120,34 @@ function App() {
   const [isActiveChatView, setIsActiveChatView] = useState(false);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
-  const [isFlowchartLibraryOpen, setIsFlowchartLibraryOpen] = useState(false);
   const [isUxFlowMenuOpen, setIsUxFlowMenuOpen] = useState(false);
   const [enterpriseRequestSubmitted, setEnterpriseRequestSubmitted] = useState(false);
   const [figmaExportRoute, setFigmaExportRoute] = useState<string | null>(null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState('personal');
+
+  useEffect(() => {
+    registerAppNavigate(navigate);
+  }, [navigate]);
+
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
   const isDashboardView = activeNavItem === 'dashboard';
   const isAutomationsView = activeNavItem === 'automations';
   const isExtensionsView = activeNavItem === 'extensions';
   const isSettingsView = activeNavItem === 'settings';
-  const isComponentsView = activeNavItem === 'components';
-  const isNewComponentsView = activeNavItem === 'new-components';
   const isNewLlmSwitcherView = activeNavItem === 'new-llm-switcher';
   const isNewLlmSwitcherView2 = activeNavItem === 'new-llm-switcher-2';
   const isWorkflowsView = activeNavItem === 'workflows';
   const isClaimStatesView = activeNavItem === 'claim-states';
-  const showFlowchartView = Boolean(activeFlowchart);
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showFigmaExportView = figmaExportRoute !== null;
   const isFigmaCaptureSession = isFigmaCaptureActive();
-  const showMainApp = !showFlowchartView && !showStandaloneFlow && !showFigmaExportView;
+  const showMainApp = !showStandaloneFlow && !showFigmaExportView;
   const showChatView =
     !isDashboardView &&
     !isAutomationsView &&
     !isExtensionsView &&
     !isSettingsView &&
-    !isComponentsView &&
-    !isNewComponentsView &&
     !isNewLlmSwitcherView &&
     !isNewLlmSwitcherView2 &&
     !isWorkflowsView;
@@ -280,10 +169,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (activeFlowchart || activeFlowPrototype || figmaExportRoute) {
+    if (activeFlowPrototype || figmaExportRoute) {
       setIsLoading(false);
     }
-  }, [activeFlowchart, activeFlowPrototype, figmaExportRoute]);
+  }, [activeFlowPrototype, figmaExportRoute]);
 
   useEffect(() => {
     if (!isLoading) return;
@@ -405,29 +294,26 @@ function App() {
   const handleNavItemClick = useCallback(
     (action: string) => {
       if (action === 'loading-screen') {
-        setIsFlowchartLibraryOpen(false);
         setIsLoading(true);
         return;
       }
       setActiveFlowPrototype(null);
-      setActiveFlowchart(null);
       if (action === 'new-user-experience') {
         setActiveFlowPrototype('new-user-experience');
         setIsConversationDrawerOpen(false);
-        navigateAppRoute('#/new-user-experience');
+        navigateAppRoute('/new-user-experience');
         return;
       }
       if (action === 'saas-credit-card') {
         setActiveFlowPrototype('saas-credit-card');
         setIsConversationDrawerOpen(false);
-        navigateAppRoute('#/saas-credit-card');
+        navigateAppRoute('/saas-credit-card');
         return;
       }
       if (action === 'sign-in-with-ad') {
         setActiveFlowPrototype('sign-in-with-ad');
         setIsConversationDrawerOpen(false);
-        setIsFlowchartLibraryOpen(false);
-        navigateAppRoute('#/sign-in-with-ad');
+        navigateAppRoute('/sign-in-with-ad');
         return;
       }
       if (action === 'conversations') {
@@ -440,11 +326,20 @@ function App() {
         );
         return;
       }
+      if (action === 'new-project') {
+        setActiveFlowPrototype(null);
+        setIsConversationDrawerOpen(false);
+        setActiveNavItem('code');
+        setLastNonDrawerNavItem('code');
+        setIsWelcomeScreenActive(true);
+        navigateAppRoute('/');
+        return;
+      }
 
       setActiveNavItem(action);
       setLastNonDrawerNavItem(action);
       setIsConversationDrawerOpen(false);
-      navigateAppRoute(action === 'settings' ? '#/settings' : (actionSlugs[action] ?? actionSlugs.code));
+      navigateAppRoute(action === 'settings' ? '/settings' : (actionSlugs[action] ?? actionSlugs.code));
       if (action === 'tetris') {
       const tetrisMessage: Message = {
         role: 'ai',
@@ -456,17 +351,8 @@ function App() {
     }
   }, [isConversationDrawerOpen, lastNonDrawerNavItem]);
 
-  const handleFlowPrototypeClick = useCallback((flowId: string) => {
-    setActiveFlowPrototype(null);
-    setActiveFlowchart(flowId);
-    setIsConversationDrawerOpen(false);
-    setIsFlowchartLibraryOpen(false);
-    navigateAppRoute(`#/flows/${flowId}`);
-  }, []);
-
   const handleExitFlowPrototype = useCallback(() => {
     setActiveFlowPrototype(null);
-    setActiveFlowchart(null);
     navigateAppRoute(actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
   }, [lastNonDrawerNavItem]);
 
@@ -483,14 +369,13 @@ function App() {
   const handleClaimCreditsOpen = useCallback(() => {
     setShowClaimCreditsPrompt(false);
     setActiveFlowPrototype('saas-credit-card');
-    navigateAppRoute('#/saas-credit-card');
+    navigateAppRoute('/saas-credit-card');
   }, []);
 
   const handleEnterpriseLearnMoreClick = useCallback(() => {
     setActiveFlowPrototype('enterprise-learn-more');
-    setActiveFlowchart(null);
     setIsConversationDrawerOpen(false);
-    navigateAppRoute('#/enterprise-learn-more');
+    navigateAppRoute('/enterprise-learn-more');
   }, []);
 
   const handleEnterpriseRequestSubmitted = useCallback(() => {
@@ -500,14 +385,11 @@ function App() {
 
   const handleUxTourAction = useCallback(async (action: Extract<UxTourAction, { type: 'navigate' | 'set-state' }>) => {
     if (action.type === 'navigate') {
-      navigateAppRoute(normalizeHash(action.hash));
+      navigateAppRoute(action.to);
       return;
     }
 
     switch (action.key) {
-      case 'leftNav.flowchartLibrary.open':
-        setIsFlowchartLibraryOpen(Boolean(action.value));
-        return;
       case 'leftNav.uxFlows.open':
         setIsUxFlowMenuOpen(Boolean(action.value));
         return;
@@ -527,7 +409,6 @@ function App() {
     tours: uxTours,
     runAction: handleUxTourAction,
     onStop: () => {
-      setIsFlowchartLibraryOpen(false);
       setIsUxFlowMenuOpen(false);
     },
   });
@@ -537,120 +418,139 @@ function App() {
     setCanvasWidth(Math.min(Math.max(percentage, minCanvasWidth), maxCanvasWidth));
   }, []);
 
-  useEffect(() => {
-    const syncFromHash = () => {
-      const rawHash = window.location.hash.replace(/^#\/?/, '');
-      const captureRoute = new URLSearchParams(window.location.search).get('captureRoute');
-      const normalizedCaptureRoute = captureRoute?.replace(/^\/+/, '') ?? '';
-      // Allow captureRoute to drive routing even without figmacapture hash.
-      const hash = normalizedCaptureRoute
-        ? normalizedCaptureRoute
-        : rawHash.split(/[?&]/)[0];
-      if (hash === 'figma' || hash.startsWith('figma/')) {
-        setFigmaExportRoute(hash === 'figma' ? '__index__' : decodeURIComponent(hash.split('/').slice(1).join('/')));
-        setActiveFlowchart(null);
-        setActiveFlowPrototype(null);
-        setIsActiveChatView(false);
-        setIsConversationDrawerOpen(false);
-        setSettingsTab(null);
-        return;
-      }
+  const syncFromLocation = useCallback(() => {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const pathname = window.location.pathname.replace(/^\/+/, '') || '';
+    const legacyHash =
+      window.location.hash.startsWith('#/') && !window.location.hash.startsWith('#figmacapture=')
+        ? window.location.hash.slice(2).split(/[?&]/)[0] ?? ''
+        : '';
+    const captureRoute = new URLSearchParams(window.location.search).get('captureRoute');
+    const normalizedCaptureRoute = captureRoute?.replace(/^\/+/, '') ?? '';
+    if (!pathname && legacyHash && !normalizedCaptureRoute) {
+      navigate({ pathname: routeToPath(legacyHash), search }, { replace: true });
+      return;
+    }
+    const route = normalizedCaptureRoute ? normalizedCaptureRoute : pathname || legacyHash;
+    const hash = route.split('?')[0];
+    if (!hash && !normalizedCaptureRoute) {
       setFigmaExportRoute(null);
-      if (hash.startsWith('flows/')) {
-        const flowId = hash.split('/')[1] ?? null;
-        setActiveFlowchart(flowId);
-        setActiveFlowPrototype(null);
-        setIsActiveChatView(false);
-        setIsConversationDrawerOpen(false);
-        setSettingsTab(null);
-        return;
-      }
-      if (hash === 'new-user-experience') {
-        setActiveFlowPrototype('new-user-experience');
-        setActiveFlowchart(null);
-        setIsActiveChatView(false);
-        return;
-      }
-      if (hash === 'saas-credit-card') {
-        setActiveFlowPrototype('saas-credit-card');
-        setActiveFlowchart(null);
-        setIsActiveChatView(false);
-        return;
-      }
-      if (hash === 'enterprise-learn-more') {
-        setActiveFlowPrototype('enterprise-learn-more');
-        setActiveFlowchart(null);
-        setIsActiveChatView(false);
-        return;
-      }
-      if (hash === 'sign-in-with-ad') {
-        setActiveFlowPrototype('sign-in-with-ad');
-        setActiveFlowchart(null);
-        setIsActiveChatView(false);
-        return;
-      }
       setActiveFlowPrototype(null);
-      setActiveFlowchart(null);
-      if (hash === 'chat-active') {
-        setIsActiveChatView(true);
-        setActiveNavItem('code');
-        setLastNonDrawerNavItem('code');
-        setIsConversationDrawerOpen(false);
-        setSettingsTab(null);
-        return;
-      }
       setIsActiveChatView(false);
-      if (hash === 'settings' || hash.startsWith('settings/')) {
-        setActiveNavItem('settings');
-        setLastNonDrawerNavItem('settings');
-        setIsConversationDrawerOpen(false);
-        let subTab = hash === 'settings' ? null : hash.split('/')[1] ?? null;
-        if (subTab === 'plugins') {
-          subTab = 'org-plugins';
-          window.history.replaceState(null, '', '#/settings/org-plugins');
-        }
-        if (subTab === 'hooks') {
-          subTab = 'org-hooks';
-          window.history.replaceState(null, '', '#/settings/org-hooks');
-        }
-        setSettingsTab(subTab);
-        return;
-      }
-      if (hash === 'workflows') {
-        setActiveNavItem('workflows');
-        setLastNonDrawerNavItem('workflows');
-        setIsConversationDrawerOpen(false);
-        setSettingsTab(null);
-        return;
-      }
+      setActiveNavItem('code');
+      setLastNonDrawerNavItem('code');
+      setIsConversationDrawerOpen(false);
       setSettingsTab(null);
-      if (tryNormalizeExtensionsHash()) {
+      setIsWelcomeScreenActive(true);
+      return;
+    }
+    if (hash === 'figma' || hash.startsWith('figma/')) {
+      setFigmaExportRoute(hash === 'figma' ? '__index__' : decodeURIComponent(hash.split('/').slice(1).join('/')));
+      setActiveFlowPrototype(null);
+      setIsActiveChatView(false);
+      setIsConversationDrawerOpen(false);
+      setSettingsTab(null);
+      return;
+    }
+    setFigmaExportRoute(null);
+    if (hash === 'components') {
+      navigate({ pathname: '/chat', search }, { replace: true });
+      return;
+    }
+    if (hash.startsWith('flows/')) {
+      navigate({ pathname: '/chat', search }, { replace: true });
+      return;
+    }
+    if (hash === 'new-components') {
+      navigate({ pathname: '/chat', search }, { replace: true });
+      return;
+    }
+    if (hash === 'new-user-experience') {
+      setActiveFlowPrototype('new-user-experience');
+      setIsActiveChatView(false);
+      return;
+    }
+    if (hash === 'saas-credit-card') {
+      setActiveFlowPrototype('saas-credit-card');
+      setIsActiveChatView(false);
+      return;
+    }
+    if (hash === 'enterprise-learn-more') {
+      setActiveFlowPrototype('enterprise-learn-more');
+      setIsActiveChatView(false);
+      return;
+    }
+    if (hash === 'sign-in-with-ad') {
+      setActiveFlowPrototype('sign-in-with-ad');
+      setIsActiveChatView(false);
+      return;
+    }
+    setActiveFlowPrototype(null);
+    if (hash === 'chat-active') {
+      navigate({ pathname: '/chat', search }, { replace: true });
+      return;
+    }
+    if (hash === 'chat') {
+      setIsActiveChatView(true);
+      setActiveNavItem('code');
+      setLastNonDrawerNavItem('code');
+      setIsConversationDrawerOpen(false);
+      setSettingsTab(null);
+      return;
+    }
+    setIsActiveChatView(false);
+    if (hash === 'settings' || hash.startsWith('settings/')) {
+      setActiveNavItem('settings');
+      setLastNonDrawerNavItem('settings');
+      setIsConversationDrawerOpen(false);
+      let subTab = hash === 'settings' ? null : hash.split('/')[1] ?? null;
+      if (subTab === 'plugins') {
+        navigate({ pathname: '/settings/org-plugins', search }, { replace: true });
         return;
       }
-      if (hash === 'extensions' || hash.startsWith('extensions/')) {
-        setActiveNavItem('extensions');
-        setLastNonDrawerNavItem('extensions');
-        setIsConversationDrawerOpen(false);
+      if (subTab === 'hooks') {
+        navigate({ pathname: '/settings/org-hooks', search }, { replace: true });
         return;
       }
-      const action = slugToAction[hash] ?? 'code';
-      if (action === 'conversations') {
-        setIsConversationDrawerOpen(true);
-      } else {
-        setActiveNavItem(action);
-        setLastNonDrawerNavItem(action);
-        setIsConversationDrawerOpen(false);
-      }
-    };
+      setSettingsTab(subTab);
+      return;
+    }
+    if (hash === 'workflows') {
+      setActiveNavItem('workflows');
+      setLastNonDrawerNavItem('workflows');
+      setIsConversationDrawerOpen(false);
+      setSettingsTab(null);
+      return;
+    }
+    setSettingsTab(null);
+    if (tryNormalizeExtensionsPath()) {
+      return;
+    }
+    if (hash === 'extensions' || hash.startsWith('extensions/')) {
+      setActiveNavItem('extensions');
+      setLastNonDrawerNavItem('extensions');
+      setIsConversationDrawerOpen(false);
+      return;
+    }
+    const action = slugToAction[hash] ?? 'code';
+    if (action === 'conversations') {
+      setIsConversationDrawerOpen(true);
+    } else {
+      setActiveNavItem(action);
+      setLastNonDrawerNavItem(action);
+      setIsConversationDrawerOpen(false);
+    }
+  }, [navigate]);
 
-    syncFromHash();
-    window.addEventListener('hashchange', syncFromHash);
-    window.addEventListener(APP_ROUTE_EVENT, syncFromHash);
-    return () => {
-      window.removeEventListener('hashchange', syncFromHash);
-      window.removeEventListener(APP_ROUTE_EVENT, syncFromHash);
-    };
-  }, []);
+  useEffect(() => {
+    syncFromLocation();
+  }, [location.pathname, location.search, syncFromLocation]);
+
+  useEffect(() => {
+    const onAppRoute = () => syncFromLocation();
+    window.addEventListener(APP_ROUTE_EVENT, onAppRoute);
+    return () => window.removeEventListener(APP_ROUTE_EVENT, onAppRoute);
+  }, [syncFromLocation]);
 
   useEffect(() => {
     const handleCaptureAnchorNavigation = (event: MouseEvent) => {
@@ -659,13 +559,14 @@ function App() {
       }
 
       const target = event.target as HTMLElement | null;
-      const anchor = target?.closest('a[href^="#/"]') as HTMLAnchorElement | null;
+      const anchor = target?.closest('a[href^="/"], a[href^="#/"]') as HTMLAnchorElement | null;
       if (!anchor) {
         return;
       }
 
       event.preventDefault();
-      navigateAppRoute(normalizeAppRoute(anchor.getAttribute('href') ?? 'code'));
+      const href = anchor.getAttribute('href') ?? 'code';
+      navigateAppRoute(href.startsWith('#') ? href.slice(1) : href);
     };
 
     document.addEventListener('click', handleCaptureAnchorNavigation);
@@ -716,15 +617,12 @@ function App() {
                 isExpanded={isLeftNavExpanded}
                 onExpandChange={setIsLeftNavExpanded}
                 onNavItemClick={handleNavItemClick}
-                onFlowPrototypeClick={handleFlowPrototypeClick}
                 activeNavItem={activeNavItem}
                 isConversationDrawerOpen={isConversationDrawerOpen}
                 isInspectorEnabled={isInspectorEnabled}
                 onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
                 onStartUxTour={uxTourController.startTour}
                 uxTourLinks={uxTourLinks}
-                isFlowchartLibraryOpen={isFlowchartLibraryOpen}
-                onFlowchartLibraryOpenChange={setIsFlowchartLibraryOpen}
                 isUxFlowMenuOpen={isUxFlowMenuOpen}
                 onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
                 onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
@@ -748,30 +646,6 @@ function App() {
                   mode="figma"
                   exportItemId={figmaExportRoute === '__index__' ? null : figmaExportRoute}
                 />
-              ) : showFlowchartView ? (
-                <>
-                  {activeFlowchart === 'new-user-experience' && (
-                    <NewUserExperienceFlowchart onExit={handleExitFlowPrototype} />
-                  )}
-                  {activeFlowchart === 'saas-credit-card' && (
-                    <SaasCreditCardFlowchart onExit={handleExitFlowPrototype} />
-                  )}
-                  {activeFlowchart === 'user-journey-cta' && (
-                    <UserJourneyCtaFlowchart onExit={handleExitFlowPrototype} />
-                  )}
-                  {activeFlowchart === 'component-library' && (
-                    <ComponentLibraryFlowchart onExit={handleExitFlowPrototype} />
-                  )}
-                  {activeFlowchart === 'new-components' && (
-                    <NewComponentsFlowchart onExit={handleExitFlowPrototype} />
-                  )}
-                  {activeFlowchart === 'new-llm-switcher' && (
-                    <NewLlmSwitcherFlowchart onExit={handleExitFlowPrototype} />
-                  )}
-                  {activeFlowchart === 'new-llm-switcher-2' && (
-                    <NewLlmSwitcher2Flowchart onExit={handleExitFlowPrototype} />
-                  )}
-                </>
               ) : showStandaloneFlow ? (
                 activeFlowPrototype === 'new-user-experience' ? (
                   <LoginScreen onBack={handleExitFlowPrototype} />
@@ -869,15 +743,13 @@ function App() {
                 {isExtensionsView && (
                   <ExtensionsScreen />
                 )}
-                {isComponentsView && <ComponentLibraryScreen />}
-                {isNewComponentsView && <NewComponentsScreen />}
                 {isNewLlmSwitcherView && <NewLlmSwitcherScreen />}
                 {isNewLlmSwitcherView2 && <NewLlmSwitcherScreen2 />}
                 {isSettingsView && (
                   <SettingsScreen
                     initialTab={settingsTab ?? undefined}
                     onTabChange={(tab) => {
-                      navigateAppRoute(`#/settings/${tab}`);
+                      navigateAppRoute(`/settings/${tab}`);
                     }}
                     pluginRepositories={installedPluginRepos}
                     onAddPluginRepository={(repoUrl: string) =>
@@ -919,11 +791,11 @@ function App() {
                         onCreatePR={handleCreatePR}
                         onRepoSelect={handleRepoSelect}
                         onBranchSelect={handleBranchSelect}
-                        onCreateNewRepo={handleCreateNewRepo}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
                         welcomeScreenVariant={activeNavItem === 'chat-cards' ? 'cards' : 'default'}
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
+                        isHomeRoute={location.pathname === '/'}
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />
@@ -1041,10 +913,6 @@ const handleRepoSelect = (repo: string) => {
 
 const handleBranchSelect = (branch: string) => {
   console.log('Branch selected:', branch);
-};
-
-const handleCreateNewRepo = () => {
-  console.log('Create new repo clicked');
 };
 
 export default App; 

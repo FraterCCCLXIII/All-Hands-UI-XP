@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Bot,
   BookOpen,
@@ -39,7 +40,7 @@ import {
   skillRepositoryItems,
   type SkillRepositoryItem,
 } from '../../data/skillsPageData';
-import { APP_ROUTE_EVENT, navigateAppRoute } from '../../lib/captureNavigation';
+import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '../../lib/captureNavigation';
 import {
   EXTENSIONS_ALL_BASE,
   EXTENSIONS_PLUGINS_BASE,
@@ -273,6 +274,7 @@ export type ExtensionsSkillsPanelProps = {
 };
 
 export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelProps) {
+  const location = useLocation();
   const [viewMode, setViewMode] = useState<SkillsViewMode>('marketplace');
   const [marketplaceSwitchById, setMarketplaceSwitchById] = useState<Record<string, boolean>>({});
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
@@ -289,8 +291,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
   const isMarketplaceView = viewMode === 'marketplace' && !selectedItem;
 
   useEffect(() => {
-    const applySkillFromHash = () => {
-      const raw = window.location.hash.replace(/^#\/?/, '');
+    const applySkillFromPath = () => {
+      const raw = getEffectiveAppRouteSegment();
       if (!raw.startsWith(EXTENSIONS_SKILLS_BASE) && !raw.startsWith(EXTENSIONS_ALL_BASE)) return;
       const pathPart = raw.split('?')[0];
       const pathMatch = pathPart.match(/^extensions\/skills\/skill\/([^/?#]+)/);
@@ -307,14 +309,12 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
       setSelectedRepo(null);
       setSelectedItem(skill);
     };
-    applySkillFromHash();
-    window.addEventListener('hashchange', applySkillFromHash);
-    window.addEventListener(APP_ROUTE_EVENT, applySkillFromHash);
+    applySkillFromPath();
+    window.addEventListener(APP_ROUTE_EVENT, applySkillFromPath);
     return () => {
-      window.removeEventListener('hashchange', applySkillFromHash);
-      window.removeEventListener(APP_ROUTE_EVENT, applySkillFromHash);
+      window.removeEventListener(APP_ROUTE_EVENT, applySkillFromPath);
     };
-  }, []);
+  }, [location.pathname, location.search]);
 
   useLayoutEffect(() => {
     const wrapper = categoryTabsWrapperRef.current;
@@ -627,15 +627,13 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                         onClick={() => {
                           if (skill.isPlugin) {
                             navigateAppRoute(
-                              `#/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
+                              `/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
                             );
                             return;
                           }
                           setSelectedItem(skill);
-                          window.history.replaceState(
-                            null,
-                            '',
-                            `#/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`,
+                          navigateAppRoute(
+                            `/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`,
                           );
                         }}
                         className="flex flex-1 flex-col rounded-xl p-6 pr-14 pt-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
@@ -668,8 +666,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   type="button"
                   onClick={() => {
                     setSelectedItem(null);
-                    if (window.location.hash.includes('/skill/')) {
-                      navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`);
+                    if (getEffectiveAppRouteSegment().includes('/skill/')) {
+                      navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`);
                     }
                   }}
                   className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"

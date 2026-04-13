@@ -66,7 +66,7 @@ export const SaasCreditCardFlowchart: React.FC<{ onExit: () => void }> = ({ onEx
     activeFlowId="saas-credit-card"
     onExit={onExit}
     onFlowSelect={(flowId) => {
-      navigateAppRoute(`#/flows/${flowId}`);
+      navigateAppRoute(`/flows/${flowId}`);
     }}
   />
 );

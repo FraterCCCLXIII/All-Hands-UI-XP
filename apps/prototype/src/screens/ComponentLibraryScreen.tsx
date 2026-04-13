@@ -1238,7 +1238,6 @@ export function ComponentLibraryScreen({
                     userName="User"
                     onRepoSelect={() => {}}
                     onBranchSelect={() => {}}
-                    onCreateNewRepo={() => {}}
                     onClose={() => setShowWelcome(false)}
                   />
                 )}
@@ -1310,7 +1309,6 @@ export function ComponentLibraryScreen({
                   onCreatePR={() => {}}
                   onRepoSelect={() => {}}
                   onBranchSelect={() => {}}
-                  onCreateNewRepo={() => {}}
                   activeChatWindowTab={chatWindowTab}
                   onChatWindowTabChange={setChatWindowTab}
                   disableAutoScroll
@@ -1702,7 +1700,6 @@ export function ComponentLibraryScreen({
                   isExpanded={isLeftNavExpanded}
                   onExpandChange={setIsLeftNavExpanded}
                   onNavItemClick={setActiveNavItemPreview}
-                  onFlowPrototypeClick={() => {}}
                   activeNavItem={activeNavItemPreview}
                   isConversationDrawerOpen={isConversationDrawerOpenPreview}
                   isInspectorEnabled={isInspectorPreview}
@@ -2496,7 +2493,7 @@ export function ComponentLibraryScreen({
                 {' '}while keeping the Figma capture hash intact.
               </div>
               <a
-                href="#/figma/all-components"
+                href="/figma/all-components"
                 className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
               >
                 Open All Components Page
@@ -2523,12 +2520,12 @@ export function ComponentLibraryScreen({
                           {section.items.map((item) => (
                             <a
                               key={item.id}
-                              href={`#/figma/${item.id}`}
+                              href={`/figma/${item.id}`}
                               className="rounded-xl border border-border bg-background px-4 py-4 transition-colors hover:border-primary/60 hover:bg-muted/30"
                             >
                               <div className="text-sm font-semibold text-foreground">{item.name}</div>
                               <div className="mt-1 text-xs text-muted-foreground">{item.description ?? item.path}</div>
-                              <div className="mt-3 text-[11px] font-mono text-muted-foreground">#/figma/{item.id}</div>
+                              <div className="mt-3 text-[11px] font-mono text-muted-foreground">/figma/{item.id}</div>
                             </a>
                           ))}
                         </div>
@@ -2556,7 +2553,7 @@ export function ComponentLibraryScreen({
                   </p>
                 </div>
                 <div className="space-y-2 text-right text-xs text-muted-foreground">
-                  <div className="font-mono">#/figma/all-components</div>
+                  <div className="font-mono">/figma/all-components</div>
                 </div>
               </div>
             </header>
@@ -2583,7 +2580,7 @@ export function ComponentLibraryScreen({
                           </div>
                           <div className="space-y-1 text-right text-xs text-muted-foreground">
                             <div className="font-mono text-foreground">{item.path}</div>
-                            <div className="font-mono">#/figma/{item.id}</div>
+                            <div className="font-mono">/figma/{item.id}</div>
                           </div>
                         </div>
 
@@ -2628,7 +2625,7 @@ export function ComponentLibraryScreen({
               No export page is registered for <span className="font-mono text-foreground">{exportItemId}</span>.
             </p>
             <a
-              href="#/figma"
+              href="/figma"
               className="mt-4 inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
             >
               Back to export index
@@ -2651,7 +2648,7 @@ export function ComponentLibraryScreen({
               </div>
               <div className="space-y-2 text-right text-xs text-muted-foreground">
                 <div className="font-mono text-foreground">{selectedItem.path}</div>
-                <div className="font-mono">#/figma/{selectedItem.id}</div>
+                <div className="font-mono">/figma/{selectedItem.id}</div>
               </div>
             </div>
           </header>

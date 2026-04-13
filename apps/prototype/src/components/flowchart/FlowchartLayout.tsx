@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, StickyNote } from 'lucide-react';
-import { navigateAppRoute } from '../../lib/captureNavigation';
-import { isFigmaCaptureActive } from '../../lib/captureNavigation';
+import { isFigmaCaptureActive, navigateAppRoute, routeToPath } from '../../lib/captureNavigation';
 
 export interface FlowchartNote {
   id: string;
@@ -49,15 +48,11 @@ interface FlowchartLayoutProps {
 
 const defaultFrame = { width: 1280, height: 720, scale: 0.22 };
 
-const normalizeHash = (hash: string) => {
-  if (hash.startsWith('#/')) return hash;
-  if (hash.startsWith('#')) return `#/${hash.replace(/^#+/, '')}`;
-  return `#/${hash.replace(/^\/+/, '')}`;
-};
-
-const buildEmbedSrc = (hash: string, baseUrl?: string) => {
-  const resolvedBase = baseUrl ?? `${window.location.origin}${window.location.pathname}`;
-  return `${resolvedBase}?embed=1${normalizeHash(hash)}`;
+const buildEmbedSrc = (route: string, baseUrl?: string) => {
+  const resolvedBase = (baseUrl ?? `${window.location.origin}${window.location.pathname}`).replace(/\/$/, '');
+  const path = routeToPath(route);
+  const pathPart = path === '/' ? '' : path;
+  return `${resolvedBase}${pathPart}?embed=1`;
 };
 
 const FlowNodeFrame: React.FC<{
@@ -154,7 +149,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
         onFlowSelect(flowId);
         return;
       }
-      navigateAppRoute(`#/flows/${flowId}`);
+      navigateAppRoute(`/flows/${flowId}`);
     },
     [onFlowSelect]
   );

@@ -5,7 +5,7 @@ export const uxTourDefinitions: UxTourDefinition[] = [
     id: 'new-user-onboarding',
     label: 'New User Onboarding Tour',
     description: 'Demo tour that highlights key onboarding UX touchpoints.',
-    startHash: '#/chat',
+    startPath: '/chat',
     steps: [
       {
         id: 'chat-composer',
@@ -14,12 +14,12 @@ export const uxTourDefinitions: UxTourDefinition[] = [
         targetId: 'left-nav.ux-flow-icon',
       },
       {
-        id: 'flowchart-library-menu',
+        id: 'ux-flow-inspector',
         title: 'Open a contextual menu',
         body: 'Tutorial steps can open menus before highlighting controls inside them.',
         targetId: 'left-nav.inspector-toggle',
         beforeActions: [
-          { type: 'set-state', key: 'leftNav.flowchartLibrary.open', value: true },
+          { type: 'set-state', key: 'leftNav.uxFlows.open', value: true },
           { type: 'wait-for-target', targetId: 'left-nav.inspector-toggle', timeoutMs: 3000 },
         ],
       },
@@ -29,8 +29,8 @@ export const uxTourDefinitions: UxTourDefinition[] = [
         body: 'Steps can move users between routes and keep the tour running.',
         targetId: 'settings.org-selector',
         beforeActions: [
-          { type: 'set-state', key: 'leftNav.flowchartLibrary.open', value: false },
-          { type: 'navigate', hash: '#/settings' },
+          { type: 'set-state', key: 'leftNav.uxFlows.open', value: false },
+          { type: 'navigate', to: '/settings' },
           { type: 'wait-for-target', targetId: 'settings.org-selector', timeoutMs: 4000 },
         ],
       },
@@ -50,7 +50,7 @@ export const uxTourDefinitions: UxTourDefinition[] = [
         body: 'Finish by navigating users to another area to continue their UX walkthrough.',
         targetId: 'dashboard.root',
         beforeActions: [
-          { type: 'navigate', hash: '#/dashboard' },
+          { type: 'navigate', to: '/dashboard' },
           { type: 'wait-for-target', targetId: 'dashboard.root', timeoutMs: 4000 },
           { type: 'set-state', key: 'claimCreditsPrompt.visible', value: false },
         ],

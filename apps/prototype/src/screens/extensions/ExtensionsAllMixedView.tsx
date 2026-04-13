@@ -165,8 +165,8 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
           onClick={() =>
             navigateAppRoute(
               skill.isPlugin === true
-                ? `#/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`
-                : `#/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`
+                ? `/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`
+                : `/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`
             )
           }
           className={cn(
@@ -201,7 +201,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
       <button
         type="button"
         className="font-medium text-foreground transition-colors hover:text-foreground/90"
-        onClick={() => navigateAppRoute('#/settings/mcp')}
+        onClick={() => navigateAppRoute('/settings/mcp')}
       >
         Settings
       </button>
@@ -215,7 +215,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
       <button
         type="button"
         className="font-medium text-foreground transition-colors hover:text-foreground/90"
-        onClick={() => navigateAppRoute('#/settings/integrations')}
+        onClick={() => navigateAppRoute('/settings/integrations')}
       >
         Settings
       </button>
@@ -243,7 +243,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
             </div>
             <p className="mt-3 line-clamp-4 text-sm text-muted-foreground">{entry.description}</p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button type="button" size="sm" variant="default" onClick={() => navigateAppRoute('#/settings/mcp')}>
+              <Button type="button" size="sm" variant="default" onClick={() => navigateAppRoute('/settings/mcp')}>
                 Add in Settings
               </Button>
               {entry.docsUrl ? (
@@ -292,7 +292,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
                 type="button"
                 size="sm"
                 variant="default"
-                onClick={() => navigateAppRoute('#/settings/integrations')}
+                onClick={() => navigateAppRoute('/settings/integrations')}
               >
                 Configure in Settings
               </Button>

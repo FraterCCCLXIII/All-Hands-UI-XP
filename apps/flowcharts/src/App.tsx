@@ -16,7 +16,7 @@ const nodes: FlowchartNode[] = [
     id: 'first-conversation',
     title: 'First Conversation',
     subtitle: 'Guided prompt',
-    hash: 'chat-active',
+    hash: 'chat',
     position: { x: 680, y: 140 },
     size: { width: 480, height: 320 },
   },

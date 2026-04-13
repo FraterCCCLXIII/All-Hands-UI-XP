@@ -66,7 +66,7 @@ export const NewLlmSwitcherFlowchart: React.FC<{ onExit: () => void }> = ({ onEx
     activeFlowId="new-llm-switcher"
     onExit={onExit}
     onFlowSelect={(flowId) => {
-      navigateAppRoute(`#/flows/${flowId}`);
+      navigateAppRoute(`/flows/${flowId}`);
     }}
   />
 );

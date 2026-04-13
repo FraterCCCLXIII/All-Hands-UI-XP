@@ -95,7 +95,7 @@ export function ExtensionsShellSidebar({
             ) : (
               <button
                 type="button"
-                onClick={() => navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`)}
+                onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
                 className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm bg-muted/80 text-foreground transition-colors hover:bg-muted/70"
               >
                 <Package className="h-4 w-4 shrink-0" aria-hidden />

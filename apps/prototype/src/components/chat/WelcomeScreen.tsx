@@ -43,7 +43,6 @@ interface WelcomeScreenProps {
   userName: string;
   onRepoSelect: (repo: string) => void;
   onBranchSelect: (branch: string) => void;
-  onCreateNewRepo: () => void;
   onClose: () => void;
   variant?: 'default' | 'cards';
 }
@@ -82,7 +81,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   userName,
   onRepoSelect,
   onBranchSelect,
-  onCreateNewRepo,
   onClose,
   variant = 'default',
 }) => {
@@ -130,7 +128,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const featuredSkills = useMemo(() => marketplaceSkills.slice(0, 5), []);
 
   const handleNavigateToSkills = useCallback(() => {
-    navigateAppRoute('#/extensions/all');
+    navigateAppRoute('/extensions/all');
   }, []);
 
   const handleLaunch = () => {
@@ -142,10 +140,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     onClose();
   };
 
-  const handleCreateNewRepo = () => {
-    onCreateNewRepo();
-    onClose();
-  };
+  const handleStartNewConversation = useCallback(() => {
+    navigateAppRoute('/chat');
+  }, []);
 
   return (
     <div className={`flex-1 relative overflow-visible min-h-screen ${getThemeClasses('bg')} ${getThemeClasses('scrollbar')}`}>
@@ -214,7 +211,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
                 <button
                   type="button"
-                  onClick={handleCreateNewRepo}
+                  onClick={handleStartNewConversation}
                   className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/40 transition-colors text-left"
                 >
                   <Plus className="w-5 h-5 text-foreground shrink-0" />
@@ -554,7 +551,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </span>
               <button
                 type="button"
-                onClick={handleCreateNewRepo}
+                onClick={handleStartNewConversation}
                 className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
               >
                 New Conversation
@@ -612,7 +609,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         key={conversation.id}
                         type="button"
                         onClick={() => {
-                          navigateAppRoute('#/chat-active');
+                          navigateAppRoute('/chat');
                           if (conversation.repo !== 'No Repository') {
                             onRepoSelect(conversation.repo);
                             if (conversation.branch) onBranchSelect(conversation.branch);

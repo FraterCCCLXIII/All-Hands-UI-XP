@@ -67,45 +67,47 @@ export function LogoDropdownContent({ onNavToNewUserExperience, onEnterpriseLear
   return (
     <div className="flex min-h-[320px] items-stretch gap-6">
       {/* Left: Login options */}
-      <div className="flex-1 flex flex-col items-center gap-8 min-w-0 py-2">
-        <div className="flex flex-col items-center gap-4">
-          <Logo className="w-16 h-16 text-foreground" />
-          <h1 className="text-[40px] font-semibold text-foreground text-center leading-tight tracking-tight">
-            Let&apos;s get started
-          </h1>
+      <div className="flex flex-1 flex-col items-center justify-center min-w-0 py-2">
+        <div className="flex w-full max-w-md flex-col items-center gap-8">
+          <div className="flex flex-col items-center gap-4">
+            <Logo className="w-16 h-16 text-foreground" />
+            <h1 className="text-[40px] font-semibold text-foreground text-center leading-tight tracking-tight">
+              Let&apos;s get started
+            </h1>
+          </div>
+          <div className="w-full flex flex-col gap-3">
+            {socialLogins.map(({ id, label, icon: Icon, className, iconClassName }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={handleSocialLogin}
+                className={`h-10 w-full flex items-center justify-center gap-2 rounded-md text-sm font-medium border transition-colors ${className}`}
+              >
+                <Icon className={iconClassName ?? 'w-5 h-5 shrink-0'} />
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="w-full flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-sm text-muted-foreground">OR</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <button
+            type="button"
+            onClick={handleSocialLogin}
+            className="h-10 w-full flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-muted/60 hover:bg-muted border border-border text-foreground transition-colors"
+          >
+            <Mail className="w-5 h-5" />
+            Use Email
+          </button>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            By signing up, you agree to our{' '}
+            <a href="#" className="text-primary underline underline-offset-2 hover:no-underline">Terms of Service</a>{' '}
+            and{' '}
+            <a href="#" className="text-primary underline underline-offset-2 hover:no-underline">Privacy Policy</a>.
+          </p>
         </div>
-        <div className="w-full flex flex-col gap-3">
-          {socialLogins.map(({ id, label, icon: Icon, className, iconClassName }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={handleSocialLogin}
-              className={`h-10 w-full flex items-center justify-center gap-2 rounded-md text-sm font-medium border transition-colors ${className}`}
-            >
-              <Icon className={iconClassName ?? 'w-5 h-5 shrink-0'} />
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="w-full flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-sm text-muted-foreground">OR</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-        <button
-          type="button"
-          onClick={handleSocialLogin}
-          className="h-10 w-full flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-muted/60 hover:bg-muted border border-border text-foreground transition-colors"
-        >
-          <Mail className="w-5 h-5" />
-          Use Email
-        </button>
-        <p className="text-xs text-muted-foreground text-center mt-2">
-          By signing up, you agree to our{' '}
-          <a href="#" className="text-primary underline underline-offset-2 hover:no-underline">Terms of Service</a>{' '}
-          and{' '}
-          <a href="#" className="text-primary underline underline-offset-2 hover:no-underline">Privacy Policy</a>.
-        </p>
       </div>
 
       {/* Right: Enterprise sidebar */}

@@ -41,7 +41,7 @@ export function ExtensionsMcpPanel() {
       <button
         type="button"
         className="font-medium text-foreground transition-colors hover:text-foreground/90"
-        onClick={() => navigateAppRoute('#/settings/mcp')}
+        onClick={() => navigateAppRoute('/settings/mcp')}
       >
         Settings
       </button>
@@ -118,7 +118,7 @@ export function ExtensionsMcpPanel() {
                   type="button"
                   size="sm"
                   variant="default"
-                  onClick={() => navigateAppRoute('#/settings/mcp')}
+                  onClick={() => navigateAppRoute('/settings/mcp')}
                 >
                   Add in Settings
                 </Button>
@@ -145,7 +145,7 @@ export function ExtensionsMcpPanel() {
           <button
             type="button"
             className="font-medium text-foreground transition-colors hover:text-foreground/90"
-            onClick={() => navigateAppRoute('#/settings/mcp')}
+            onClick={() => navigateAppRoute('/settings/mcp')}
           >
             Settings → MCP
           </button>

@@ -16,7 +16,7 @@ export function SignInWithAdScreen({ onBack }: SignInWithAdScreenProps) {
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center min-h-0 bg-background text-foreground px-6 py-12">
-      <div className="w-full max-w-5xl">
+      <div className="w-full max-w-4xl">
         <button
           type="button"
           onClick={handleBack}
@@ -27,10 +27,10 @@ export function SignInWithAdScreen({ onBack }: SignInWithAdScreenProps) {
         </button>
         <LogoDropdownContent
           onNavToNewUserExperience={() => {
-            navigateAppRoute('#/new-user-experience');
+            navigateAppRoute('/new-user-experience');
           }}
           onEnterpriseLearnMoreClick={() => {
-            navigateAppRoute('#/enterprise-learn-more');
+            navigateAppRoute('/enterprise-learn-more');
           }}
         />
       </div>

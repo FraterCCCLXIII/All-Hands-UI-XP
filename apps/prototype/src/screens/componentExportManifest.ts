@@ -55,7 +55,6 @@ export const componentExportManifest = [
   'src/components/dashboard/RepositorySection.tsx',
   'src/components/dashboard/Sidebar.tsx',
   'src/components/dashboard/StatusBadge.tsx',
-  'src/components/flowchart/FlowchartLayout.tsx',
   'src/components/icons/AutomationGlyph.tsx',
   'src/components/git/GitControls.tsx',
   'src/components/navigation/CurrentProjects.tsx',

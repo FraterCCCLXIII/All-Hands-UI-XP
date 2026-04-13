@@ -116,7 +116,7 @@ export function ConversationDrawer({
             const isHighlighted = conversation.id === highlightedConversationId;
             const openChatActive = () => {
               onSelectConversation?.(conversation);
-              navigateAppRoute('#/chat-active');
+              navigateAppRoute('/chat');
             };
 
             return (

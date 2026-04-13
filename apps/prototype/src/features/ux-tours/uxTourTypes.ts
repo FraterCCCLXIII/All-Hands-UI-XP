@@ -3,7 +3,8 @@ export type UxTourPlacement = 'auto' | 'top' | 'bottom' | 'left' | 'right';
 export type UxTourAction =
   | {
       type: 'navigate';
-      hash: string;
+      /** App pathname, e.g. `/chat`, `/settings/llm` */
+      to: string;
     }
   | {
       type: 'set-state';
@@ -35,6 +36,7 @@ export interface UxTourDefinition {
   id: string;
   label: string;
   description?: string;
-  startHash: string;
+  /** Initial route when the tour starts (path-based). */
+  startPath: string;
   steps: UxTourStep[];
 }

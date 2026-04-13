@@ -150,7 +150,7 @@ const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
     description: 'Summarizes code changes, flags risky diffs, and prepares reviewer-ready notes.',
     repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
     source: 'Loaded from the conversation skill registry.',
-    pageUrl: '#/extensions/all',
+    pageUrl: '/extensions/all',
     initialPrompt: 'Review this pull request for risky changes, unclear logic, regressions, and missing test coverage.',
     curlCommand: `curl -X POST https://api.example.com/skills/run \\
   -H "Content-Type: application/json" \\
@@ -164,7 +164,7 @@ const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
     description: 'Builds concise release-note drafts from the current conversation and changes.',
     repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
     source: 'Loaded from the conversation skill registry.',
-    pageUrl: '#/extensions/all',
+    pageUrl: '/extensions/all',
     initialPrompt: 'Draft release notes from the current conversation, grouped by user-facing changes, fixes, and operational impact.',
     curlCommand: `curl -X POST https://api.example.com/skills/run \\
   -H "Content-Type: application/json" \\
@@ -1649,7 +1649,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         <DropdownMenuItem
                                           className="gap-2 cursor-pointer"
                                           onSelect={() => {
-                                            navigateAppRoute('#/settings/llm');
+                                            navigateAppRoute('/settings/llm');
                                           }}
                                         >
                                           <Settings className="h-4 w-4 shrink-0" />

@@ -27,7 +27,6 @@ interface ChatAreaProps {
   onCreatePR: () => void;
   onRepoSelect: (repo: string) => void;
   onBranchSelect: (branch: string) => void;
-  onCreateNewRepo: () => void;
   onWelcomeScreenChange?: (isActive: boolean) => void;
   activeChatWindowTab: ChatWindowTabId;
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
@@ -37,6 +36,8 @@ interface ChatAreaProps {
   onEnterpriseLearnMoreClick?: () => void;
   /** `inline` = in-flow under messages / on welcome (default). `fixed` = bottom-right overlay. */
   enterpriseCtaPlacement?: 'fixed' | 'inline';
+  /** When true (URL `/`), show the three-column landing again (e.g. after left-nav Plus). */
+  isHomeRoute?: boolean;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -54,7 +55,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onCreatePR,
   onRepoSelect,
   onBranchSelect,
-  onCreateNewRepo,
   onWelcomeScreenChange,
   activeChatWindowTab: _activeChatWindowTab,
   onChatWindowTabChange: _onChatWindowTabChange,
@@ -63,6 +63,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   welcomeScreenVariant = 'default',
   onEnterpriseLearnMoreClick,
   enterpriseCtaPlacement = 'inline',
+  isHomeRoute = false,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
@@ -148,6 +149,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   }, [showWelcomeScreen, onWelcomeScreenChange]);
 
   useEffect(() => {
+    if (isHomeRoute) {
+      setShowWelcomeScreen(true);
+    }
+  }, [isHomeRoute]);
+
+  useEffect(() => {
     onEnterpriseCtaVisibilityChange?.(showEnterpriseCta);
   }, [showEnterpriseCta, onEnterpriseCtaVisibilityChange]);
 
@@ -195,7 +202,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           userName={userName}
           onRepoSelect={onRepoSelect}
           onBranchSelect={onBranchSelect}
-          onCreateNewRepo={onCreateNewRepo}
           onClose={handleWelcomeScreenClose}
           variant={welcomeScreenVariant}
         />

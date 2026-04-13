@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Box,
   ChevronDown,
@@ -16,7 +17,7 @@ import {
 } from '../../data/skillsPageData';
 import { InfoCard } from '../../components/common/InfoCard';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
-import { APP_ROUTE_EVENT, navigateAppRoute } from '../../lib/captureNavigation';
+import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '../../lib/captureNavigation';
 import { EXTENSIONS_ALL_BASE, EXTENSIONS_PLUGINS_BASE } from '../../lib/extensionsRoutes';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
@@ -30,6 +31,7 @@ type ExtensionsPluginsPanelProps = {
 };
 
 export function ExtensionsPluginsPanel({ browseControls }: ExtensionsPluginsPanelProps) {
+  const location = useLocation();
   const [selectedPlugin, setSelectedPlugin] = useState<SkillRepositoryItem | null>(null);
   const [pluginDetailView, setPluginDetailView] = useState<'files' | 'content'>('files');
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
@@ -40,8 +42,8 @@ export function ExtensionsPluginsPanel({ browseControls }: ExtensionsPluginsPane
   const [pluginEnabledById, setPluginEnabledById] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    const applyPluginFromHash = () => {
-      const raw = window.location.hash.replace(/^#\/?/, '');
+    const applyPluginFromPath = () => {
+      const raw = getEffectiveAppRouteSegment();
       if (!raw.startsWith(EXTENSIONS_PLUGINS_BASE) && !raw.startsWith(EXTENSIONS_ALL_BASE)) return;
 
       const pathPart = raw.split('?')[0];
@@ -67,14 +69,12 @@ export function ExtensionsPluginsPanel({ browseControls }: ExtensionsPluginsPane
       if (!skill) return;
       setSelectedPlugin(skill);
     };
-    applyPluginFromHash();
-    window.addEventListener('hashchange', applyPluginFromHash);
-    window.addEventListener(APP_ROUTE_EVENT, applyPluginFromHash);
+    applyPluginFromPath();
+    window.addEventListener(APP_ROUTE_EVENT, applyPluginFromPath);
     return () => {
-      window.removeEventListener('hashchange', applyPluginFromHash);
-      window.removeEventListener(APP_ROUTE_EVENT, applyPluginFromHash);
+      window.removeEventListener(APP_ROUTE_EVENT, applyPluginFromPath);
     };
-  }, []);
+  }, [location.pathname, location.search]);
 
   const filteredSkills = useMemo(() => {
     const query = browseControls.searchQuery.trim().toLowerCase();
@@ -254,9 +254,9 @@ ${skill.initialPrompt}
                   type="button"
                   onClick={() => {
                     setSelectedPlugin(null);
-                    const h = window.location.hash;
-                    if (h.includes('plugin=') || h.includes('/plugin/')) {
-                      navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`);
+                    const path = `${window.location.pathname}${window.location.search}`;
+                    if (path.includes('plugin=') || path.includes('/plugin/')) {
+                      navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`);
                     }
                   }}
                   className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -427,7 +427,7 @@ ${skill.initialPrompt}
                           type="button"
                           onClick={() => {
                             navigateAppRoute(
-                              `#/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
+                              `/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
                             );
                           }}
                           className="w-full rounded-xl p-5 pr-14 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"

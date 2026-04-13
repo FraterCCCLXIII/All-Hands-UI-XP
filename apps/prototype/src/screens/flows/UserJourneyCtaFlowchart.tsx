@@ -38,7 +38,7 @@ const nodes: FlowchartNode[] = [
     id: 'components',
     title: 'Component Library',
     subtitle: 'Reusable patterns',
-    hash: 'components',
+    hash: 'chat',
     position: { x: 1160, y: 120 },
     size: { width: 420, height: 280 },
     notes: [
@@ -53,7 +53,7 @@ const nodes: FlowchartNode[] = [
     id: 'new-components',
     title: 'New Components',
     subtitle: 'Experiment flow',
-    hash: 'new-components',
+    hash: 'chat',
     position: { x: 620, y: 460 },
     size: { width: 420, height: 280 },
     notes: [
@@ -82,7 +82,7 @@ export const UserJourneyCtaFlowchart: React.FC<{ onExit: () => void }> = ({ onEx
     activeFlowId="user-journey-cta"
     onExit={onExit}
     onFlowSelect={(flowId) => {
-      navigateAppRoute(`#/flows/${flowId}`);
+      navigateAppRoute(`/flows/${flowId}`);
     }}
   />
 );

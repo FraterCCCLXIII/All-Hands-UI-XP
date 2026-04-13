@@ -1,14 +1,14 @@
 import { useMemo } from 'react';
-import { PrLabel, type PrLabelStatus } from '../components/dashboard/PrLabel';
+import { PrLabel, type PrLabelStatus } from '../../prototype/src/components/dashboard/PrLabel';
 import { ChevronDown, Copy, EllipsisVertical, FileCode, FolderOpen, Wrench } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
-import { InfoCard } from '../components/common/InfoCard';
-import { ConversationCard } from '../components/dashboard/ConversationCard';
+} from '../../prototype/src/components/ui/dropdown-menu';
+import { InfoCard } from '../../prototype/src/components/common/InfoCard';
+import { ConversationCard } from '../../prototype/src/components/dashboard/ConversationCard';
 
 type ComponentItem = {
   id: string;
@@ -48,7 +48,7 @@ function ComponentCard({ title, description, usage, preview }: ComponentCardProp
   );
 }
 
-export function NewComponentsScreen() {
+export function ComponentLibraryDocs() {
   const componentSections = useMemo<ComponentSection[]>(
     () => [
       {
@@ -59,7 +59,7 @@ export function NewComponentsScreen() {
             id: 'overview-guidelines',
             name: 'Documentation Guidelines',
             description:
-              'Add new components here with a short summary, usage snippet, and any relevant states.',
+              'Add new components here with a short summary, usage snippet, and any relevant states. This catalog lives in the docs app (port 3002).',
             usage:
               '<ComponentCard title="Component Name" description="..." usage="<Component />" />',
           },

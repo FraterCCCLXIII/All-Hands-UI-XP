@@ -164,7 +164,7 @@ const nodes: FlowchartNode[] = [
     id: 'first-conversation',
     title: 'First Conversation',
     subtitle: 'Guided prompt',
-    hash: 'chat-active',
+    hash: 'chat',
     position: { x: 620, y: 140 },
     size: { width: 420, height: 280 },
     capturePosition: { x: 1560, y: 140 },
@@ -215,7 +215,7 @@ export const NewUserExperienceFlowchart: React.FC<{ onExit: () => void }> = ({ o
     activeFlowId="new-user-experience"
     onExit={onExit}
     onFlowSelect={(flowId) => {
-      navigateAppRoute(`#/flows/${flowId}`);
+      navigateAppRoute(`/flows/${flowId}`);
     }}
   />
 );

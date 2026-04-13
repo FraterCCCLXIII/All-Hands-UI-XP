@@ -250,7 +250,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
             <DropdownMenuItem
               className="gap-2 cursor-pointer"
               onSelect={() => {
-                navigateAppRoute('#/settings/llm');
+                navigateAppRoute('/settings/llm');
               }}
             >
               <Settings className="h-4 w-4" />

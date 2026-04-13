@@ -185,7 +185,7 @@ export function NewLlmSwitcherScreen2() {
         )}
       </div>
 
-      <div className="rounded-lg border border-border bg-card divide-y divide-border">
+      <div className="overflow-hidden rounded-md border border-border bg-card divide-y divide-border">
         {profiles.map((profile) => (
           <div key={profile.id} className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">

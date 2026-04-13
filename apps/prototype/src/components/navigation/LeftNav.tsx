@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Box, Boxes, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
+import { Boxes, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   DropdownMenu,
@@ -95,15 +95,12 @@ export interface LeftNavProps {
   isExpanded: boolean;
   onExpandChange: (expanded: boolean) => void;
   onNavItemClick: (action: string) => void;
-  onFlowPrototypeClick?: (flowId: string) => void;
   activeNavItem: string;
   isConversationDrawerOpen: boolean;
   isInspectorEnabled: boolean;
   onInspectorToggle: () => void;
   onStartUxTour?: (tourId: string) => void;
   uxTourLinks?: Array<{ id: string; label: string }>;
-  isFlowchartLibraryOpen?: boolean;
-  onFlowchartLibraryOpenChange?: (open: boolean) => void;
   isUxFlowMenuOpen?: boolean;
   onUxFlowMenuOpenChange?: (open: boolean) => void;
   onEnterpriseLearnMoreClick?: () => void;
@@ -112,8 +109,7 @@ export interface LeftNavProps {
   onActiveWorkspaceChange?: (workspaceId: string) => void;
 }
 
-const flowPrototypes = [
-  { id: 'flowcharts-home', label: 'Flowcharts', flowId: 'new-user-experience' },
+const prototypeMenuEntries = [
   { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
   { id: 'chat-cards', label: 'Chat - Card-based', navAction: 'chat-cards' },
   { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
@@ -123,8 +119,6 @@ const flowPrototypes = [
     label: 'User Journey - Create in-app call-to-actions (CTAs)',
     navAction: 'code',
   },
-  { id: 'component-library', label: 'Component Library', navAction: 'components' },
-  { id: 'new-components', label: 'New Components', navAction: 'new-components' },
   { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
   { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', navAction: 'new-llm-switcher-2' },
   { id: 'loading-screen', label: 'Loading Screen', navAction: 'loading-screen' },
@@ -132,15 +126,12 @@ const flowPrototypes = [
 
 export const LeftNav: React.FC<LeftNavProps> = ({
   onNavItemClick,
-  onFlowPrototypeClick,
   activeNavItem,
   isConversationDrawerOpen,
   isInspectorEnabled,
   onInspectorToggle,
   onStartUxTour,
   uxTourLinks = [],
-  isFlowchartLibraryOpen,
-  onFlowchartLibraryOpenChange,
   isUxFlowMenuOpen,
   onUxFlowMenuOpenChange,
   onEnterpriseLearnMoreClick,
@@ -297,45 +288,24 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 </button>
               ))
             )}
-          </PopoverContent>
-        </Popover>
-        {/* Flowchart entry points */}
-        <Popover open={isFlowchartLibraryOpen} onOpenChange={onFlowchartLibraryOpenChange}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
-              aria-label="Flowchart library"
-              data-tour-id="left-nav.flowchart-library"
-            >
-              <Box className="w-5 h-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="end"
-            sideOffset={8}
-            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-56 p-3"
-          >
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-              Flowcharts
+            <div className="mt-3 border-t border-border pt-2">
+              <div className="px-1 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Prototypes
+              </div>
+              {prototypeMenuEntries.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => {
+                    onUxFlowMenuOpenChange?.(false);
+                    onNavItemClick(entry.navAction);
+                  }}
+                  className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
+                >
+                  {entry.label}
+                </button>
+              ))}
             </div>
-            {flowPrototypes.map((flow) => (
-              <button
-                key={flow.id}
-                type="button"
-                onClick={() => {
-                  if (flow.navAction) {
-                    onNavItemClick(flow.navAction);
-                    return;
-                  }
-                  onFlowPrototypeClick?.(flow.flowId ?? flow.id);
-                }}
-                className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
-              >
-                {flow.label}
-              </button>
-            ))}
             <div className="mt-3 border-t border-border pt-3">
               <div className="flex items-center justify-between px-1">
                 <div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { APP_ROUTE_EVENT, navigateAppRoute } from '../lib/captureNavigation';
+import { useLocation } from 'react-router-dom';
+import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '../lib/captureNavigation';
 import {
   EXTENSIONS_ALL_BASE,
   EXTENSIONS_PLUGINS_BASE,
@@ -11,21 +12,27 @@ import { ExtensionsPluginsPanel } from './extensions/ExtensionsPluginsPanel';
 import { ExtensionsSkillsPanel } from './extensions/ExtensionsSkillsPanel';
 import type { ExtensionsBrowseControls, ExtensionsCatalogScope } from './extensions/ExtensionsShellSidebar';
 
-function readShellMode(): ExtensionsShellMode {
-  return getExtensionsShellMode(window.location.hash);
-}
-
 export function ExtensionsScreen() {
-  const [mode, setMode] = useState<ExtensionsShellMode>(readShellMode);
+  const location = useLocation();
+  const [routeSegment, setRouteSegment] = useState(() => getEffectiveAppRouteSegment());
+
+  useEffect(() => {
+    const sync = () => setRouteSegment(getEffectiveAppRouteSegment());
+    sync();
+    window.addEventListener(APP_ROUTE_EVENT, sync);
+    return () => window.removeEventListener(APP_ROUTE_EVENT, sync);
+  }, [location.pathname, location.search]);
+
+  const mode: ExtensionsShellMode = useMemo(() => getExtensionsShellMode(routeSegment), [routeSegment]);
   const [extensionsSearchQuery, setExtensionsSearchQuery] = useState('');
   const [extensionsScope, setExtensionsScope] = useState<ExtensionsCatalogScope>('all');
 
   /** Skills / All / MCP use the mixed catalog; Plugins uses the dedicated plugin marketplace panel. */
   const navigateForScope = useCallback((next: ExtensionsCatalogScope) => {
     if (next === 'plugins') {
-      navigateAppRoute(`#/${EXTENSIONS_PLUGINS_BASE}`);
+      navigateAppRoute(`/${EXTENSIONS_PLUGINS_BASE}`);
     } else {
-      navigateAppRoute(`#/${EXTENSIONS_ALL_BASE}`);
+      navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`);
     }
   }, []);
 
@@ -43,23 +50,13 @@ export function ExtensionsScreen() {
   );
 
   useEffect(() => {
-    const sync = () => {
-      setMode(readShellMode());
-      const path = window.location.hash.replace(/^#\/?/, '').split('?')[0] ?? '';
-      if (path === EXTENSIONS_PLUGINS_BASE || path.startsWith(`${EXTENSIONS_PLUGINS_BASE}/`)) {
-        setExtensionsScope('plugins');
-      } else if (/^extensions\/skills\/skill\//.test(path)) {
-        setExtensionsScope('skills');
-      }
-    };
-    sync();
-    window.addEventListener('hashchange', sync);
-    window.addEventListener(APP_ROUTE_EVENT, sync);
-    return () => {
-      window.removeEventListener('hashchange', sync);
-      window.removeEventListener(APP_ROUTE_EVENT, sync);
-    };
-  }, []);
+    const path = routeSegment;
+    if (path === EXTENSIONS_PLUGINS_BASE || path.startsWith(`${EXTENSIONS_PLUGINS_BASE}/`)) {
+      setExtensionsScope('plugins');
+    } else if (/^extensions\/skills\/skill\//.test(path)) {
+      setExtensionsScope('skills');
+    }
+  }, [routeSegment]);
 
   if (mode === 'skills') {
     return (
