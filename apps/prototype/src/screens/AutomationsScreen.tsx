@@ -1200,8 +1200,8 @@ function ActivityLogSection({
                         isRunning
                           ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
                           : isSuccess
-                            ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-                            : 'border-rose-500/40 bg-rose-500/10 text-rose-300'
+                            ? 'border-success/40 bg-success/10 text-success-foreground'
+                            : 'border-destructive/40 bg-destructive/10 text-destructive-foreground'
                       )}
                     >
                       {isRunning ? (
@@ -1736,7 +1736,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 transition={listTransition}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
                   displayAutomationStatus(selectedAutomation) === 'active'
-                    ? 'bg-emerald-500/15 text-emerald-300'
+                    ? 'bg-success/15 text-success-foreground'
                     : 'bg-muted/40 text-muted-foreground'
                 }`}
               >

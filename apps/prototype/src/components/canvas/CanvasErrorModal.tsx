@@ -44,7 +44,7 @@ export const CanvasErrorModal: React.FC<CanvasErrorModalProps> = ({
             </motion.button>
             
             <div className="flex flex-col items-center justify-center space-y-3">
-              <AlertCircle className="w-8 h-8 text-red-500" />
+              <AlertCircle className="w-8 h-8 text-destructive" />
               <h3 className={`text-lg font-semibold ${getThemeClasses('text')}`}>
                 Something went wrong
               </h3>
@@ -56,7 +56,7 @@ export const CanvasErrorModal: React.FC<CanvasErrorModalProps> = ({
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-2 py-1 rounded-md text-xs border border-red-500 text-red-500 hover:opacity-80"
+                  className="px-2 py-1 rounded-md text-xs border border-destructive text-destructive hover:opacity-80"
                   onClick={() => {
                     console.log('Fix error clicked');
                     onErrorClose();

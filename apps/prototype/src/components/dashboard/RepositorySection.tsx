@@ -97,7 +97,7 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
               >
                 <div className="flex items-center gap-3">
                   {branch.prNumber ? (
-                    <GitPullRequest className="w-4 h-4 text-green-500" />
+                    <GitPullRequest className="w-4 h-4 text-success" />
                   ) : (
                     <GitBranch className="w-4 h-4 text-sky-400" />
                   )}

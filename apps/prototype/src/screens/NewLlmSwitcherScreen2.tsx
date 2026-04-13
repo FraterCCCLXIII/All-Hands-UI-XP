@@ -400,7 +400,7 @@ export function NewLlmSwitcherScreen2() {
                 )}
                 {isChatGPTConnected && addApiKey.length > 0 && (
                   <CheckCircle
-                    className="absolute right-12 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none"
+                    className="absolute right-12 top-1/2 -translate-y-1/2 w-5 h-5 text-success pointer-events-none"
                     aria-hidden
                   />
                 )}
@@ -639,7 +639,7 @@ export function NewLlmSwitcherScreen2() {
             )}
             {isChatGPTConnected && apiKey.length > 0 && (
               <CheckCircle
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-success pointer-events-none"
                 aria-hidden
               />
             )}

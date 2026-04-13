@@ -131,7 +131,7 @@ export function ConversationDrawer({
                 !isHighlighted && 'hover:bg-muted/60 focus-visible:bg-muted/60',
                 isHighlighted &&
                   !isAutomation &&
-                  'bg-emerald-500/10 ring-1 ring-inset ring-emerald-500/40 hover:bg-emerald-500/[0.14] focus-visible:bg-emerald-500/[0.14]',
+                  'bg-success/10 ring-1 ring-inset ring-success/40 hover:bg-success/[0.14] focus-visible:bg-success/[0.14]',
                 isHighlighted &&
                   isAutomation &&
                   'bg-muted/40 ring-1 ring-inset ring-border hover:bg-muted/55 focus-visible:bg-muted/55',
@@ -165,7 +165,7 @@ export function ConversationDrawer({
                     </span>
                     {isAutomation ? (
                       <span
-                        className="inline-flex shrink-0 items-center text-emerald-300"
+                        className="inline-flex shrink-0 items-center text-success-foreground"
                         role="img"
                         aria-label="Automation conversation"
                       >
@@ -176,7 +176,7 @@ export function ConversationDrawer({
                 </div>
                 <div className="ml-auto flex items-center gap-2">
                   {conversation.tag && !isAutomation && (
-                    <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                    <span className="inline-flex items-center rounded-full border border-success/40 bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-success-foreground">
                       {conversation.tag}
                     </span>
                   )}

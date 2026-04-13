@@ -228,12 +228,12 @@ export function DashboardScreen() {
               <div className="flex flex-wrap items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2">
-                    <GitPullRequest className="h-4 w-4 text-green-500 mt-1" />
+                    <GitPullRequest className="h-4 w-4 text-success mt-1" />
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="text-base font-normal text-foreground truncate">{pr.title}</p>
                         {pr.status === 'Open' ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-success" />
                         ) : (
                           <XCircle className="h-4 w-4 text-destructive" />
                         )}

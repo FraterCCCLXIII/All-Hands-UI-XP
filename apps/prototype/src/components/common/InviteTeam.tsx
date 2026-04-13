@@ -105,7 +105,7 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
                 {emails.map(email => (
                   <span key={email} className="flex items-center bg-stone-700 text-stone-200 rounded-full px-3 py-1 text-sm">
                     {email}
-                    <button className="ml-2 text-stone-400 hover:text-red-400" onClick={() => removeEmail(email)}>&times;</button>
+                    <button className="ml-2 text-stone-400 hover:text-destructive" onClick={() => removeEmail(email)}>&times;</button>
                   </span>
                 ))}
                 <input

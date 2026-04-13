@@ -174,7 +174,7 @@ export const Canvas: React.FC<CanvasLayoutProps | CanvasContentProps | CanvasCon
 
     if ('error' in props) {
       return (
-        <div className={`p-4 text-red-500 ${props.getThemeClasses('text')}`}>
+        <div className={`p-4 text-destructive ${props.getThemeClasses('text')}`}>
           {props.error}
         </div>
       );

@@ -21,18 +21,18 @@ const StatusIndicator = ({ status, hoverText }) => {
   const renderIndicator = () => {
     switch (status) {
       case 'active':
-        return <div className="w-3 h-3 rounded-full bg-green-400"></div>;
+        return <div className="w-3 h-3 rounded-full bg-success"></div>;
       case 'thinking':
         return <Spinner className="w-3 h-3" color="border-t-blue-400" />; // Blue spinner for thinking
       case 'error':
         return (
           <div className="relative w-4 h-4 flex items-center justify-center">
-            <div className="absolute w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+            <div className="absolute w-3 h-3 rounded-full bg-destructive animate-pulse"></div>
             <AlertCircle className="w-4 h-4 text-white z-10" />
           </div>
         );
       case 'stopped':
-        return <div className="w-3 h-3 rounded-full bg-red-500"></div>;
+        return <div className="w-3 h-3 rounded-full bg-destructive"></div>;
       default:
         return <div className="w-3 h-3 rounded-full bg-gray-400"></div>;
     }
@@ -345,7 +345,7 @@ const TetrisGame = ({ theme, getThemeClasses }) => {
         <span>Level: {level}</span>
       </div>
       {gameOver && (
-        <div className="mt-4 text-red-500 font-bold text-2xl">GAME OVER!</div>
+        <div className="mt-4 text-destructive font-bold text-2xl">GAME OVER!</div>
       )}
       {!gameStarted ? (
         <motion.button
@@ -566,24 +566,24 @@ function App() {
 
   // Message type to color mapping (Tailwind classes)
   const messageTypeColors = {
-    error: { text: 'text-red-500', border: 'border-red-500', bg_subtle: 'bg-red-500/20' },
-    llm_error: { text: 'text-red-500', border: 'border-red-500', bg_subtle: 'bg-red-500/20' },
+    error: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
+    llm_error: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
     code: { text: 'text-blue-400', border: 'border-blue-400', bg_subtle: 'bg-blue-400/20' },
     build: { text: 'text-purple-400', border: 'border-purple-400', bg_subtle: 'bg-purple-400/20' },
-    git: { text: 'text-green-400', border: 'border-green-400', bg_subtle: 'bg-green-400/20' },
+    git: { text: 'text-success-foreground', border: 'border-success', bg_subtle: 'bg-success/20' },
     bug: { text: 'text-orange-400', border: 'border-orange-400', bg_subtle: 'bg-orange-400/20' },
     dependency: { text: 'text-yellow-400', border: 'border-yellow-400', bg_subtle: 'bg-yellow-400/20' },
     test: { text: 'text-indigo-400', border: 'border-indigo-400', bg_subtle: 'bg-indigo-400/20' },
     docs: { text: 'text-teal-400', border: 'border-teal-400', bg_subtle: 'bg-teal-400/20' },
-    security: { text: 'text-red-400', border: 'border-red-400', bg_subtle: 'bg-red-400/20' },
+    security: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
     performance: { text: 'text-pink-400', border: 'border-pink-400', bg_subtle: 'bg-pink-400/20' },
     microagent_ready: { text: 'text-gray-400', border: 'border-gray-400', bg_subtle: 'bg-gray-400/20' },
     action_required: { text: 'text-yellow-500', border: 'border-yellow-500', bg_subtle: 'bg-yellow-500/20' },
     in_progress: { text: 'text-gray-500', border: 'border-gray-500', bg_subtle: 'bg-gray-500/20' },
     completed: { text: 'text-gray-400', border: 'border-gray-400', bg_subtle: 'bg-gray-400/20' },
     user: { text: '', border: '', bg_subtle: '' },
-    success: { text: 'text-green-500', border: 'border-green-500', bg_subtle: 'bg-green-500/20' },
-    fail: { text: 'text-red-500', border: 'border-red-500', bg_subtle: 'bg-red-500/20' },
+    success: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
+    fail: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
     tetris_game: { text: 'text-purple-500', border: 'border-purple-500', bg_subtle: 'bg-purple-500/20' },
   };
 
@@ -829,11 +829,11 @@ function App() {
         if (element === 'placeholder-text') return 'text-stone-900 opacity-50';
         if (element === 'icon-color') return 'text-stone-700';
         if (element === 'high-contrast-border') return 'border-stone-400';
-        if (element === 'status-dot-running') return 'bg-green-500';
-        if (element === 'status-dot-stopped') return 'bg-red-500';
+        if (element === 'status-dot-running') return 'bg-success';
+        if (element === 'status-dot-stopped') return 'bg-destructive';
         if (element === 'status-dot-inactive') return 'bg-gray-400'; // Added inactive status dot
         if (element === 'status-text') return 'text-stone-800';
-        if (element === 'stop-button-bg') return 'bg-red-500';
+        if (element === 'stop-button-bg') return 'bg-destructive';
         if (element === 'stop-button-text') return 'text-white';
         if (element === 'hover-icon-color') return 'hover:text-amber-600';
         if (element === 'hover-resizer-bg') return 'hover:bg-amber-200';
@@ -857,11 +857,11 @@ function App() {
         if (element === 'placeholder-text') return 'text-[rgb(100,80,60)] opacity-50';
         if (element === 'icon-color') return 'text-[rgb(120,100,80)]';
         if (element === 'high-contrast-border') return 'border-[rgb(160,140,120)]';
-        if (element === 'status-dot-running') return 'bg-green-600';
-        if (element === 'status-dot-stopped') return 'bg-red-600';
+        if (element === 'status-dot-running') return 'bg-success';
+        if (element === 'status-dot-stopped') return 'bg-destructive';
         if (element === 'status-dot-inactive') return 'bg-gray-500'; // Added inactive status dot
         if (element === 'status-text') return 'text-[rgb(100,80,60)]';
-        if (element === 'stop-button-bg') return 'bg-red-600';
+        if (element === 'stop-button-bg') return 'bg-destructive';
         if (element === 'stop-button-text') return 'text-white';
         if (element === 'hover-icon-color') return 'hover:text-[rgb(160,140,120)]';
         if (element === 'hover-resizer-bg') return 'hover:bg-[rgb(200,190,175)]';
@@ -885,11 +885,11 @@ function App() {
         if (element === 'placeholder-text') return 'text-stone-100 opacity-50';
         if (element === 'icon-color') return 'text-stone-400';
         if (element === 'high-contrast-border') return 'border-stone-600';
-        if (element === 'status-dot-running') return 'bg-green-400';
-        if (element === 'status-dot-stopped') return 'bg-red-400';
+        if (element === 'status-dot-running') return 'bg-success';
+        if (element === 'status-dot-stopped') return 'bg-destructive';
         if (element === 'status-dot-inactive') return 'bg-gray-600'; // Added inactive status dot
         if (element === 'status-text') return 'text-stone-300';
-        if (element === 'stop-button-bg') return 'bg-red-500';
+        if (element === 'stop-button-bg') return 'bg-destructive';
         if (element === 'stop-button-text') return 'text-white';
         if (element === 'hover-icon-color') return 'hover:text-yellow-400';
         if (element === 'hover-resizer-bg') return 'hover:bg-yellow-500';
@@ -932,8 +932,8 @@ function App() {
           <div className={`w-full h-full ${getThemeClasses('input-bg')} ${getThemeClasses('placeholder-text')} p-3 rounded-md text-lg overflow-auto`}>
             <h3 className="font-semibold mb-2">Recent Changes:</h3>
             <pre className="font-mono text-sm">
-              <span className="text-green-400">+ Added new feature X</span>{"\n"}
-              <span className="text-red-400">- Removed old component Y</span>{"\n"}
+              <span className="text-success-foreground">+ Added new feature X</span>{"\n"}
+              <span className="text-destructive">- Removed old component Y</span>{"\n"}
               <span className="text-yellow-400">~ Updated dependency Z</span>{"\n"}
               Merge conflict in `src/app.js`.
             </pre>
@@ -1668,14 +1668,14 @@ function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
                   transition={{ duration: 0.3 }}
-                  className="bg-red-500 text-white p-2 rounded-md flex items-center justify-between text-xs mx-4 mb-2"
+                  className="bg-destructive text-white p-2 rounded-md flex items-center justify-between text-xs mx-4 mb-2"
                 >
                   <span>An error occurred.</span>
                   <div className="flex items-center space-x-2">
-                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="border border-white text-white px-2 py-1 rounded-md hover:bg-white hover:text-red-500 transition-colors" onClick={() => setShowErrorPoll(false)}>
+                    <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="border border-white text-white px-2 py-1 rounded-md hover:bg-white hover:text-destructive transition-colors" onClick={() => setShowErrorPoll(false)}>
                       Retry
                     </motion.button>
-                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowErrorPoll(false)} className="text-white hover:text-red-200">
+                    <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setShowErrorPoll(false)} className="text-white hover:text-destructive-foreground">
                       <X className="w-5 h-5" /> {/* Increased size */}
                     </motion.button>
                   </div>
@@ -1876,7 +1876,7 @@ function App() {
                     {/* Console Toggle Icon */}
                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                       <Terminal
-                        className={`w-5 h-5 ${getThemeClasses('icon-color')} ${getThemeClasses('hover-icon-color')} ${isConsoleVisible ? 'text-green-400' : ''}`}
+                        className={`w-5 h-5 ${getThemeClasses('icon-color')} ${getThemeClasses('hover-icon-color')} ${isConsoleVisible ? 'text-success-foreground' : ''}`}
                         onClick={() => setIsConsoleVisible(!isConsoleVisible)}
                         title={isConsoleVisible ? "Hide Console" : "Show Console"}
                       />

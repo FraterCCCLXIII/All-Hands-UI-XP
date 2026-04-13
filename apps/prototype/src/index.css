@@ -38,6 +38,8 @@
     --radius-sm: 0.25rem;
 
     --success: 142 71% 45%;
+    /* Lighter green for labels, badges, and text on dark surfaces (replaces mixed emerald-* / green-*). */
+    --success-foreground: 142 71% 76%;
     --warning: 38 92% 50%;
     --info: 217 91% 60%;
     --agent-active: 271 91% 65%;

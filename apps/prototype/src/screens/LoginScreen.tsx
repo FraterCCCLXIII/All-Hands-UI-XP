@@ -445,7 +445,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
           {llmUpgradeOtpError && (
             <div
               role="alert"
-              className="w-full flex items-center gap-3 rounded-md border border-red-600 bg-red-950/95 px-4 py-3 text-white text-sm"
+              className="w-full flex items-center gap-3 rounded-md border border-destructive/80 bg-destructive/25 px-4 py-3 text-white text-sm"
             >
               <AlertTriangle className="h-5 w-5 shrink-0 text-white" aria-hidden />
               <span>That code was invalid, please try again.</span>
@@ -733,7 +733,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
           {otpError && (
             <div
               role="alert"
-              className="w-full flex items-center gap-3 rounded-md border border-red-600 bg-red-950/95 px-4 py-3 text-white text-sm"
+              className="w-full flex items-center gap-3 rounded-md border border-destructive/80 bg-destructive/25 px-4 py-3 text-white text-sm"
             >
               <AlertTriangle className="h-5 w-5 shrink-0 text-white" aria-hidden />
               <span>That code was invalid, please try again.</span>

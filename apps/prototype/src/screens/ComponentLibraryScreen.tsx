@@ -378,10 +378,10 @@ export function ComponentLibraryScreen({
       'user-message-text': 'text-foreground',
       'ai-message-bg': 'bg-card',
       'ai-message-text': 'text-foreground',
-      'status-dot-running': 'bg-emerald-400',
-      'status-dot-stopped': 'bg-rose-400',
+      'status-dot-running': 'bg-success',
+      'status-dot-stopped': 'bg-destructive',
       'status-text': 'text-muted-foreground',
-      'stop-button-bg': 'bg-rose-500',
+      'stop-button-bg': 'bg-destructive',
       'canvas-bg': 'bg-muted/40',
       'panel-bg': 'bg-card',
       'active-button-bg': 'bg-muted',
@@ -396,8 +396,8 @@ export function ComponentLibraryScreen({
       'button-hover': 'hover:bg-muted/60',
       'task-item-bg': 'bg-muted/40',
       scrollbar: 'scrollbar-thin scrollbar-thumb-muted/70 scrollbar-track-transparent',
-      'success-text': 'text-emerald-400',
-      'error-text': 'text-rose-400',
+      'success-text': 'text-success-foreground',
+      'error-text': 'text-destructive',
     };
     return map[element] ?? '';
   };

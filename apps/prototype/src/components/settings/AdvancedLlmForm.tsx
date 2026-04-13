@@ -90,7 +90,7 @@ export function AdvancedLlmForm({
           {apiKeyRightSlot}
           {showApiKeyCheck && (
             <CheckCircle
-              className={`absolute ${apiKeyCheckOffsetClass} top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none`}
+              className={`absolute ${apiKeyCheckOffsetClass} top-1/2 -translate-y-1/2 w-5 h-5 text-success pointer-events-none`}
               aria-hidden
             />
           )}

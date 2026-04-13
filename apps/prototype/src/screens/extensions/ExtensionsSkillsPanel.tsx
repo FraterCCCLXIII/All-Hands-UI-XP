@@ -89,10 +89,10 @@ function highlightJson(content: string) {
         tokens.push(line.slice(lastIndex, index));
       }
       const token = match[0];
-      let className = 'text-emerald-300';
+      let className = 'text-success-foreground';
       if (match[1]) {
         const rest = line.slice(index + token.length);
-        className = /^\s*:/.test(rest) ? 'text-sky-300' : 'text-emerald-300';
+        className = /^\s*:/.test(rest) ? 'text-sky-300' : 'text-success-foreground';
       } else if (match[2]) {
         className = 'text-purple-300';
       } else if (match[3]) {

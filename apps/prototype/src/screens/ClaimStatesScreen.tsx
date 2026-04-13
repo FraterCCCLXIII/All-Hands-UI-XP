@@ -82,7 +82,7 @@ export const ClaimStatesScreen = () => {
               <div className="text-xs text-muted-foreground">Claimed (default)</div>
               <button
                 type="button"
-                className="mt-3 h-8 rounded-md border border-emerald-500/60 bg-emerald-500/20 px-3 text-xs font-medium text-emerald-300 transition-colors"
+                className="mt-3 h-8 rounded-md border border-success/60 bg-success/20 px-3 text-xs font-medium text-success-foreground transition-colors"
               >
                 Claimed
               </button>
@@ -91,7 +91,7 @@ export const ClaimStatesScreen = () => {
               <div className="text-xs text-muted-foreground">Disconnect (hover)</div>
               <button
                 type="button"
-                className="mt-3 h-8 rounded-md border border-rose-500/60 bg-rose-500/15 px-3 text-xs font-medium text-rose-300"
+                className="mt-3 h-8 rounded-md border border-destructive/60 bg-destructive/15 px-3 text-xs font-medium text-destructive-foreground"
               >
                 Disconnect
               </button>
@@ -108,7 +108,7 @@ export const ClaimStatesScreen = () => {
               </div>
             </Tooltip>
             <Tooltip label="Success: Organization claimed">
-              <div className="h-9 w-9 rounded-full border border-emerald-500/40 bg-emerald-500/15 flex items-center justify-center text-emerald-200">
+              <div className="h-9 w-9 rounded-full border border-success/40 bg-success/15 flex items-center justify-center text-success-foreground">
                 <CheckCircle2 className="h-4 w-4" />
               </div>
             </Tooltip>
@@ -129,13 +129,13 @@ export const ClaimStatesScreen = () => {
                 Notification settings updated.
               </div>
             </div>
-            <div className="rounded-md px-4 py-3 shadow-lg border border-emerald-500/40 bg-emerald-500/15 text-emerald-100">
+            <div className="rounded-md px-4 py-3 shadow-lg border border-success/40 bg-success/15 text-success-foreground">
               <div className="text-sm flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />
                 Organization claimed successfully.
               </div>
             </div>
-            <div className="rounded-md px-4 py-3 shadow-lg border border-rose-500/40 bg-rose-500/15 text-rose-100">
+            <div className="rounded-md px-4 py-3 shadow-lg border border-destructive/40 bg-destructive/15 text-destructive-foreground">
               <div className="text-sm flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 Disconnect failed. Try again.

@@ -41,8 +41,8 @@ interface StatusConfig {
 const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   active: {
     text: 'Running',
-    dotColor: 'bg-emerald-400',
-    spinnerColor: 'border-emerald-400/20',
+    dotColor: 'bg-success',
+    spinnerColor: 'border-success/20',
     showSpinner: false,
     nextState: 'thinking',
     duration: 4000,
@@ -50,8 +50,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   idle: {
     text: 'Idle',
-    dotColor: 'bg-emerald-400',
-    spinnerColor: 'border-emerald-400/20',
+    dotColor: 'bg-success',
+    spinnerColor: 'border-success/20',
     showSpinner: false,
     nextState: 'active',
     duration: 3000,
@@ -86,8 +86,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   stopped: {
     text: 'Stopped',
-    dotColor: 'bg-rose-400',
-    spinnerColor: 'border-rose-400/20',
+    dotColor: 'bg-destructive',
+    spinnerColor: 'border-destructive/20',
     showSpinner: false,
     nextState: 'connecting',
     duration: 2000,
@@ -95,8 +95,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   error: {
     text: 'Error',
-    dotColor: 'bg-rose-400',
-    spinnerColor: 'border-rose-400/20',
+    dotColor: 'bg-destructive',
+    spinnerColor: 'border-destructive/20',
     showSpinner: false,
     nextState: 'reconnecting',
     duration: 2000,
@@ -104,8 +104,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   error_network: {
     text: 'Network Error',
-    dotColor: 'bg-rose-400',
-    spinnerColor: 'border-rose-400/20',
+    dotColor: 'bg-destructive',
+    spinnerColor: 'border-destructive/20',
     showSpinner: false,
     nextState: 'reconnecting',
     duration: 2000,
@@ -113,8 +113,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   error_auth: {
     text: 'Auth Error',
-    dotColor: 'bg-rose-400',
-    spinnerColor: 'border-rose-400/20',
+    dotColor: 'bg-destructive',
+    spinnerColor: 'border-destructive/20',
     showSpinner: false,
     nextState: 'stopped',
     duration: 2000,
@@ -122,8 +122,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   error_timeout: {
     text: 'Timeout',
-    dotColor: 'bg-rose-400',
-    spinnerColor: 'border-rose-400/20',
+    dotColor: 'bg-destructive',
+    spinnerColor: 'border-destructive/20',
     showSpinner: false,
     nextState: 'reconnecting',
     duration: 2000,
@@ -131,8 +131,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   error_rate_limit: {
     text: 'Rate Limited',
-    dotColor: 'bg-rose-400',
-    spinnerColor: 'border-rose-400/20',
+    dotColor: 'bg-destructive',
+    spinnerColor: 'border-destructive/20',
     showSpinner: false,
     nextState: 'reconnecting',
     duration: 2000,

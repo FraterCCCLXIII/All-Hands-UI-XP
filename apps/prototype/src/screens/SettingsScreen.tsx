@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Building2,
   Cloud,
@@ -54,6 +55,7 @@ import {
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
+import { usePageTransitions } from '../contexts/PageTransitionsContext';
 import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
 
 type OrgRole = 'Member' | 'Admin' | 'Owner';
@@ -506,7 +508,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [newSecretValue, setNewSecretValue] = useState('');
   const [newSecretDescription, setNewSecretDescription] = useState('');
   const [secretDeleteTarget, setSecretDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteOrganizationDialogOpen, setDeleteOrganizationDialogOpen] = useState(false);
+  const [addCreditAmount, setAddCreditAmount] = useState('');
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
+
+  const canAddCredit = useMemo(() => {
+    const v = addCreditAmount.trim();
+    if (v === '') return false;
+    const n = Number(v);
+    return Number.isFinite(n) && n >= 10 && n <= 25000;
+  }, [addCreditAmount]);
 
   const orgPluginCatalogRepoOptions = useMemo(() => {
     const unique = [...new Set(orgPluginCatalog.map((r) => r.pluginRepo))];
@@ -681,6 +692,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     showToast('Secret removed.', 'success');
   };
 
+  const handleConfirmDeleteOrganization = () => {
+    setDeleteOrganizationDialogOpen(false);
+    showToast('This prototype does not delete organizations.', 'info');
+  };
+
   const addInviteEmail = (rawValue: string) => {
     const normalized = rawValue.trim().replace(/,+$/, '');
     if (!normalized) return;
@@ -818,12 +834,26 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     return settingsTabs.find((t) => t.id === activeTab)?.label;
   })();
 
+  const prefersReducedMotion = useReducedMotion();
+  const { pageTransitionsEnabled, setPageTransitionsEnabled } = usePageTransitions();
+  const settingsContentMotionActive = pageTransitionsEnabled && !prefersReducedMotion;
+
+  /** Route-derived state only — avoids a second key flip when `initialTab` catches up after mount (which caused double transitions). */
+  const settingsMainTransitionKey = useMemo(
+    () => [activeTab, secretsView, editingSecretId ?? ''].join('|'),
+    [activeTab, secretsView, editingSecretId],
+  );
+
+  const settingsMainTransition = settingsContentMotionActive
+    ? { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
+    : { duration: 0 };
+
   return (
     <div className={cn('flex min-h-0 min-w-0 flex-1 overflow-hidden pl-8 pr-0', settingsSectionStackGap)}>
       {/* Left Navigation — vertical inset from CSS vars (independent of main) */}
       <nav
         className={cn(
-          'flex w-64 shrink-0 flex-col pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
+          'relative z-10 flex w-64 shrink-0 flex-col pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
           settingsSectionStackGap,
         )}
       >
@@ -967,11 +997,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       {/* Main Content — scrolls at the viewport right edge; inner padding keeps text off the gutter */}
       <main
         className={cn(
-          'flex min-h-0 min-w-0 flex-1 flex-col pt-[var(--settings-main-padding-top)] pb-[var(--settings-main-padding-bottom)]',
+          'relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden pt-[var(--settings-main-padding-top)] pb-[var(--settings-main-padding-bottom)]',
           mainContentScrollable && 'overflow-y-auto'
         )}
       >
-        <div className={cn('mx-auto flex w-full max-w-4xl flex-col pr-8', settingsSectionStackGap)}>
+        <div className="mx-auto flex w-full max-w-4xl flex-col pr-8">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={settingsMainTransitionKey}
+              className={cn('flex flex-col', settingsSectionStackGap)}
+              initial={settingsContentMotionActive ? { opacity: 0, x: 28 } : false}
+              animate={{ opacity: 1, x: 0 }}
+              exit={settingsContentMotionActive ? { opacity: 0, x: -28 } : { opacity: 0 }}
+              transition={settingsMainTransition}
+            >
           {activeTabLabel && activeTab !== 'manage-team' && (
             <div className="space-y-1">
               <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
@@ -1114,10 +1153,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                 <span
                                   className={`h-2 w-2 rounded-full ${
                                     isConnected
-                                      ? 'bg-emerald-400'
+                                      ? 'bg-success'
                                       : isConnecting
                                       ? 'bg-amber-400 animate-pulse'
-                                      : 'bg-[#FF684E]'
+                                      : 'bg-destructive'
                                   }`}
                                   aria-hidden
                                 />
@@ -1281,6 +1320,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <span className="text-sm text-foreground">Enable Solvability Analysis</span>
                   </label>
 
+                  <div
+                    className="flex gap-3"
+                    role="group"
+                    aria-labelledby="settings-page-transitions-label"
+                  >
+                    <PluginToggle
+                      checked={pageTransitionsEnabled}
+                      onCheckedChange={setPageTransitionsEnabled}
+                      aria-label="Page transitions when navigating"
+                      className="mt-0.5 shrink-0"
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span
+                        id="settings-page-transitions-label"
+                        className="text-sm leading-snug text-foreground"
+                      >
+                        Page transitions when navigating
+                      </span>
+                      <p className="text-xs leading-relaxed text-muted-foreground max-w-md">
+                        Slide animations when switching views. Turn off for instant navigation.
+                      </p>
+                    </div>
+                  </div>
+
                   <div className={settingsSectionRule}>
                     <div className={cn('flex flex-col', settingsSublineToContentGap)}>
                       <div className="space-y-1">
@@ -1413,7 +1476,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             />
                             {llmApiKeyApproved && llmApiKey.length > 0 && (
                               <CheckCircle
-                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500 pointer-events-none"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-success pointer-events-none"
                                 aria-hidden
                               />
                             )}
@@ -1465,47 +1528,63 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* Billing Content */}
           {activeTab === 'billing' && (
             <div className="contents">
-              <form className="flex flex-col gap-6">
-                <div className="w-[680px] rounded-lg border border-border bg-gradient-to-br from-card to-muted/50 p-6 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-                        <CreditCard className="w-5 h-5 text-foreground" />
+              <form
+                className="flex w-full min-w-0 flex-col gap-6"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!canAddCredit) return;
+                  showToast('Adding credits is not wired in this prototype.', 'info');
+                  setAddCreditAmount('');
+                }}
+              >
+                <div className="w-full rounded-lg border border-border bg-gradient-to-br from-card to-muted/50 p-6 shadow-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                        <CreditCard className="h-5 w-5 text-foreground" />
                       </div>
-                      <div className="flex flex-col">
+                      <div className="flex min-w-0 flex-col">
                         <span className="text-xs text-muted-foreground uppercase tracking-wide">Available Balance</span>
                         <span className="text-2xl font-bold text-foreground">$437.18</span>
                       </div>
                     </div>
                     <button
                       type="button"
-                      className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                      className="flex h-10 shrink-0 items-center justify-center rounded-md bg-white px-4 text-sm text-black transition-colors hover:bg-gray-300 cursor-pointer"
                     >
                       Manage Credits
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <label className="flex flex-col gap-2.5 w-[680px]">
-                    <span className="text-sm text-foreground">Add Funds</span>
-                    <input
-                      placeholder="Specify an amount in USD to add - min $10"
-                      min="10"
-                      max="25000"
-                      step="1"
-                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
-                      type="number"
-                    />
-                  </label>
-                  <div className="flex items-center w-[680px] gap-2">
-                    <button
-                      disabled
-                      type="submit"
-                      className="inline-flex h-10 items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <Plus className="h-4 w-4 shrink-0" aria-hidden />
-                      Add Credit
-                    </button>
+                <div className="flex w-full min-w-0 flex-col gap-3">
+                  <span className="text-sm text-foreground">Add Funds</span>
+                  <div className="flex w-full min-w-0 flex-col gap-2">
+                    <div className="flex w-full min-w-0 items-center gap-2">
+                      <div className="flex h-10 min-w-0 w-full max-w-[11rem] flex-1 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+                        <span className="shrink-0 select-none text-sm font-medium text-muted-foreground" aria-hidden>
+                          $
+                        </span>
+                        <input
+                          value={addCreditAmount}
+                          onChange={(e) => setAddCreditAmount(e.target.value)}
+                          placeholder="10 minimum"
+                          min="10"
+                          max="25000"
+                          step="1"
+                          aria-label="Amount in USD to add"
+                          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none [appearance:textfield] [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          type="number"
+                        />
+                      </div>
+                      <button
+                        disabled={!canAddCredit}
+                        type="submit"
+                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-white px-4 text-sm text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                        Add Credit
+                      </button>
+                    </div>
                     <div className="flex flex-row items-center gap-1">
                       <span className="text-sm font-semibold text-muted-foreground">Powered by</span>
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-8" viewBox="0 0 468 222.5">
@@ -2088,16 +2167,19 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       Add Repository
                     </button>
                   </div>
-                  <div className="overflow-hidden rounded-md border border-border">
+                  <div className="overflow-hidden rounded-md border border-border bg-card">
                     {pluginRepositories.length > 0 ? (
                       <ul className="divide-y divide-border">
                         {pluginRepositories.map((repo) => (
-                          <li key={repo} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                          <li
+                            key={repo}
+                            className="flex items-center justify-between gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
+                          >
                             <span className="truncate text-sm text-foreground">{repo}</span>
                             <button
                               type="button"
                               onClick={() => onRemovePluginRepository?.(repo)}
-                              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground transition-colors hover:bg-muted/60"
+                              className="h-7 shrink-0 rounded-md border border-destructive/35 bg-transparent px-2 text-xs text-destructive transition-colors hover:bg-destructive/10"
                             >
                               Remove
                             </button>
@@ -2426,7 +2508,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       This name appears across your organization and shared workspaces.
                     </p>
                   </div>
-                  <div className="relative max-w-[520px]">
+                  <div className="relative w-full max-w-[680px]">
                     <input
                       type="text"
                       value="Starlight Labs"
@@ -2478,7 +2560,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                       <button
                                         type="button"
                                         onClick={() => handleRemoveClaim(option.id)}
-                                        className="group h-7 rounded-md border border-emerald-500/60 bg-emerald-500/20 px-2 text-xs font-medium text-emerald-300 transition-colors hover:border-rose-500/60 hover:bg-rose-500/15 hover:text-rose-300"
+                                        className="group h-7 rounded-md border border-success/60 bg-success/20 px-2 text-xs font-medium text-success-foreground transition-colors hover:border-destructive/60 hover:bg-destructive/15 hover:text-destructive-foreground"
                                       >
                                         <span className="group-hover:hidden">Claimed</span>
                                         <span className="hidden group-hover:inline">Disconnect</span>
@@ -2513,6 +2595,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 shadow-sm">
                     <button
                       type="button"
+                      onClick={() => setDeleteOrganizationDialogOpen(true)}
                       className="text-sm font-semibold text-destructive hover:text-destructive transition-colors"
                     >
                       Delete Organization
@@ -2522,6 +2605,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
             </div>
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
   <Dialog
@@ -2578,6 +2663,32 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Delete
+        </button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog open={deleteOrganizationDialogOpen} onOpenChange={setDeleteOrganizationDialogOpen}>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Delete organization</DialogTitle>
+        <DialogDescription>
+          Permanently delete &quot;{activeOrgName}&quot; and all of its data? This action cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+        <button
+          type="button"
+          onClick={() => setDeleteOrganizationDialogOpen(false)}
+          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirmDeleteOrganization}
+          className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Delete organization
         </button>
       </DialogFooter>
     </DialogContent>
@@ -2698,7 +2809,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           >
             <rect width="188" height="188" rx="16" fill="#2b2b2b" />
             <path d="M94 36.2002L144 65.0595V122.778L94 151.637L44 122.778V65.0595L94 36.2002Z" fill="#2b2b2b" />
-            <path d="M144 65.0595L94 36.2002L44 65.0595M144 65.0595V122.778L94 151.637M144 65.0595L135.195 70.1417M94 151.637L44 122.778V65.0595M94 151.637V139.295M44 65.0595L52.805 70.1417M94 93.9188L83.5605 87.8933M94 93.9188L104.44 87.8933M94 93.9188V104.809M94 47.4535L52.805 70.1417M94 47.4535L135.195 70.1417M94 47.4535V59.0698M52.805 70.1417V116.425M135.195 70.1417V116.425M94 59.0698L62.7722 75.8946M94 59.0698L125.228 75.8946M62.7722 75.8946L73.121 81.8677M62.7722 75.8946V110.254M125.228 75.8946L114.879 81.8677M125.228 75.8946V110.254M94 70.1417L73.121 81.8677M94 70.1417L114.879 81.8677M94 70.1417V82.0302M73.121 81.8677V104.809M114.879 81.8677V104.809M94 82.0302L83.5605 87.8933M94 82.0302L104.44 87.8933M83.5605 87.8933V98.4565M104.44 87.8933V98.4565M94 139.295L135.195 116.425M94 139.295L52.805 116.425M135.195 116.425L125.228 110.254M94 127.497L125.228 110.254M94 127.497V116.425M94 127.497L62.7722 110.254M94 116.425L114.879 104.809M94 116.425L73.121 104.809M114.879 104.809L104.44 98.4565M73.121 104.809L83.5605 98.4565M62.7722 110.254L52.805 116.425M83.5605 98.4565L94 104.809M104.44 98.4565L94 104.809" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M144 65.0595L94 36.2002L44 65.0595M144 65.0595V122.778L94 151.637M144 65.0595L135.195 70.1417M94 151.637L44 122.778V65.0595M94 151.637V139.295M44 65.0595L52.805 70.1417M94 93.9188L83.5605 87.8933M94 93.9188L104.44 87.8933M94 93.9188V104.809M94 47.4535L52.805 70.1417M94 47.4535L135.195 70.1417M94 47.4535V59.0698M52.805 70.1417V116.425M135.195 70.1417V116.425M94 59.0698L62.7722 75.8946M94 59.0698L125.228 75.8946M62.7722 75.8946L73.121 81.8677M62.7722 75.8946V110.254M125.228 75.8946L114.879 81.8677M125.228 75.8946V110.254M94 70.1417L73.121 81.8677M94 70.1417L114.879 81.8677M94 70.1417V82.0302M73.121 81.8677V104.809M114.879 81.8677V104.809M94 82.0302L83.5605 87.8933M94 82.0302L104.44 87.8933M83.5605 87.8933V98.4565M104.44 87.8933V98.4565M94 139.295L135.195 116.425M94 139.295L52.805 116.425M135.195 116.425L125.228 110.254M94 127.497L125.228 110.254M94 127.497V116.425M94 127.497L62.7722 110.254M94 116.425L114.879 104.809M94 116.425L73.121 104.809M114.879 104.809L104.44 98.4565M73.121 104.809L83.5605 98.4565M62.7722 110.254L52.805 116.425M83.5605 98.4565L94 104.809M104.44 98.4565L94 104.809"
+              stroke="#ffffff"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </div>
         <DialogTitle className="text-xl font-semibold leading-6 text-foreground">
@@ -2770,9 +2886,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <div
         className={`rounded-md px-4 py-3 shadow-lg ${
           toastVariant === 'error'
-            ? 'border border-rose-500/40 bg-rose-500/15 text-rose-100'
+            ? 'border border-destructive/40 bg-destructive/15 text-destructive-foreground'
             : toastVariant === 'success'
-            ? 'border border-emerald-500/40 bg-emerald-500/15 text-emerald-100'
+            ? 'border border-success/40 bg-success/15 text-success-foreground'
             : 'border border-blue-500/40 bg-blue-500/15 text-blue-100'
         }`}
       >

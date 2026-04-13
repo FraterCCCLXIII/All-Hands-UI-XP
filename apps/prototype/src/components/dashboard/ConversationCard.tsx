@@ -161,7 +161,7 @@ export function ConversationCard({
               className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted/60 hover:text-foreground"
               aria-label="Open pull request"
             >
-              <GitPullRequest className="w-3 h-3 text-green-500" />
+              <GitPullRequest className="w-3 h-3 text-success" />
               <span>Pull Request</span>
             </button>
           )}

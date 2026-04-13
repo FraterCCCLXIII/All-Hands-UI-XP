@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
 import { ConversationDrawer } from './components/chat/ConversationDrawer';
 import { Canvas } from './components/canvas/Canvas';
@@ -51,6 +51,7 @@ import {
   registerAppNavigate,
   routeToPath,
 } from './lib/captureNavigation';
+import { usePageTransitions } from './contexts/PageTransitionsContext';
 import { tryNormalizeExtensionsPath } from './lib/extensionsRoutes';
 import { themeAppClassMap as themeClasses } from './theme/themeAppClassMap';
 
@@ -124,6 +125,39 @@ function App() {
   const [enterpriseRequestSubmitted, setEnterpriseRequestSubmitted] = useState(false);
   const [figmaExportRoute, setFigmaExportRoute] = useState<string | null>(null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState('personal');
+
+  const prefersReducedMotion = useReducedMotion();
+  const { pageTransitionsEnabled } = usePageTransitions();
+  const shellMotionActive = pageTransitionsEnabled && !prefersReducedMotion;
+
+  /** Collapse `/settings/...` so tab/sub-route changes do not re-run the shell slide (Settings keeps its own left nav). */
+  const pageTransitionKey = useMemo(() => {
+    const normalizedPath =
+      location.pathname === '/settings' || location.pathname.startsWith('/settings/')
+        ? '/settings'
+        : location.pathname;
+    return [
+      normalizedPath,
+      location.search,
+      figmaExportRoute ?? '',
+      activeFlowPrototype ?? '',
+      activeNavItem,
+      String(isActiveChatView),
+      String(isWelcomeScreenActive),
+    ].join('|');
+  }, [
+    location.pathname,
+    location.search,
+    figmaExportRoute,
+    activeFlowPrototype,
+    activeNavItem,
+    isActiveChatView,
+    isWelcomeScreenActive,
+  ]);
+
+  const pageTransition = shellMotionActive
+    ? { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
+    : { duration: 0 };
 
   useEffect(() => {
     registerAppNavigate(navigate);
@@ -632,8 +666,8 @@ function App() {
                 isHomeRoute={location.pathname === '/'}
               />
             )}
-            <div 
-              className={`flex-1 flex flex-col transition-all duration-200 ${activeFlowPrototype || showFigmaExportView ? '' : 'ml-16'}`}
+            <div
+              className={`flex min-h-0 flex-1 flex-col transition-all duration-200 ${activeFlowPrototype || showFigmaExportView ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
               {showMainApp && !isEmbedded && (
@@ -642,27 +676,37 @@ function App() {
                   onRequestDisable={() => setIsInspectorEnabled(false)}
                 />
               )}
-              {showFigmaExportView ? (
-                <ComponentLibraryScreen
-                  key={`figma-export-${figmaExportRoute}`}
-                  mode="figma"
-                  exportItemId={figmaExportRoute === '__index__' ? null : figmaExportRoute}
-                />
-              ) : showStandaloneFlow ? (
-                activeFlowPrototype === 'new-user-experience' ? (
-                  <LoginScreen onBack={handleExitFlowPrototype} />
-                ) :                 activeFlowPrototype === 'enterprise-learn-more' ? (
-                  <EnterpriseLearnMoreScreen
-                    onBack={handleExitFlowPrototype}
-                    onSubmitComplete={handleEnterpriseRequestSubmitted}
-                  />
-                ) : activeFlowPrototype === 'sign-in-with-ad' ? (
-                  <SignInWithAdScreen onBack={handleExitFlowPrototype} />
-                ) : (
-                  <SaasCreditCardFlow onSkip={handleClaimCreditsSkip} onComplete={handleClaimCreditsComplete} />
-                )
-              ) : (
-                <>
+              <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={pageTransitionKey}
+                    className="flex min-h-0 min-w-0 flex-1 flex-col"
+                    initial={shellMotionActive ? { opacity: 0, x: 28 } : false}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={shellMotionActive ? { opacity: 0, x: -28 } : { opacity: 0 }}
+                    transition={pageTransition}
+                  >
+                    {showFigmaExportView ? (
+                      <ComponentLibraryScreen
+                        key={`figma-export-${figmaExportRoute}`}
+                        mode="figma"
+                        exportItemId={figmaExportRoute === '__index__' ? null : figmaExportRoute}
+                      />
+                    ) : showStandaloneFlow ? (
+                      activeFlowPrototype === 'new-user-experience' ? (
+                        <LoginScreen onBack={handleExitFlowPrototype} />
+                      ) : activeFlowPrototype === 'enterprise-learn-more' ? (
+                        <EnterpriseLearnMoreScreen
+                          onBack={handleExitFlowPrototype}
+                          onSubmitComplete={handleEnterpriseRequestSubmitted}
+                        />
+                      ) : activeFlowPrototype === 'sign-in-with-ad' ? (
+                        <SignInWithAdScreen onBack={handleExitFlowPrototype} />
+                      ) : (
+                        <SaasCreditCardFlow onSkip={handleClaimCreditsSkip} onComplete={handleClaimCreditsComplete} />
+                      )
+                    ) : (
+                      <>
               {showChatView && !isWelcomeScreenActive && !isActiveChatView && !isEmbedded && (
                     <TopBar
                   theme={theme}
@@ -846,8 +890,11 @@ function App() {
                   onClose={() => setShowSharePreview(false)}
                 />
               )}
-                </>
-              )}
+                      </>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
             {showMainApp && showLeftNav && (
               <ConversationDrawer

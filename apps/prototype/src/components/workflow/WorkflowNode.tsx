@@ -44,7 +44,7 @@ const chipClass =
 const chipVariants: Record<string, string> = {
   default: 'border-border bg-muted/40 text-muted-foreground',
   plugin: 'border-blue-500/40 bg-blue-500/15 text-blue-700 dark:text-blue-300',
-  skill: 'border-emerald-500/40 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  skill: 'border-success/40 bg-success/15 text-success dark:text-success-foreground',
 };
 
 type ChipItem = { value: string; variant?: keyof typeof chipVariants };

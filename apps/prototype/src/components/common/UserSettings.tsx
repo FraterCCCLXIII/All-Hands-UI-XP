@@ -46,7 +46,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ getThemeClasses, onClose })
           <div className="flex-1 min-w-[200px]">
             <div className="text-xs text-stone-400 mb-1">Personal Settings</div>
             <div className="text-sm text-stone-200 font-semibold mb-2">robert@all-hands.dev</div>
-            <button className="text-red-400 hover:text-red-300 text-sm font-medium mb-2 flex items-center gap-2"><LogOut className="w-4 h-4" />Log Out</button>
+            <button className="text-destructive hover:text-destructive/80 text-sm font-medium mb-2 flex items-center gap-2"><LogOut className="w-4 h-4" />Log Out</button>
             <button className="text-stone-200 hover:text-white text-sm mb-2 flex items-center gap-2"><Smartphone className="w-4 h-4" />Log In to Mobile</button>
             <button className="text-stone-200 hover:text-white text-sm mb-2 flex items-center gap-2" onClick={() => setOpenPanel('git')}><GitBranch className="w-4 h-4" />Git</button>
             <button className="text-stone-200 hover:text-white text-sm mb-2 flex items-center gap-2" onClick={() => setOpenPanel('application')}><Settings className="w-4 h-4" />Application</button>
@@ -92,7 +92,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ getThemeClasses, onClose })
               <div>
                 <div className="text-lg font-semibold mb-4 text-stone-200">Credits</div>
                 <div className="mb-2">Manage Credits</div>
-                <div className="text-2xl font-bold text-green-400 mb-4">$157.42</div>
+                <div className="text-2xl font-bold text-success-foreground mb-4">$157.42</div>
                 <button className="px-4 py-2 rounded bg-yellow-500 text-stone-900 font-semibold mb-4">Add Funds</button>
                 <div className="mb-2 text-xs text-stone-400">Specify an amount in USD to add - min $10</div>
                 <input type="number" min={10} placeholder="$10.00" className="w-full rounded bg-stone-800 text-stone-200 p-2 mb-2" />

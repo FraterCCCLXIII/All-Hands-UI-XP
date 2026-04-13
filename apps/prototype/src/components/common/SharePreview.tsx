@@ -114,7 +114,7 @@ const SharePreview: React.FC<SharePreviewProps> = ({ shareUrl, onClose }) => {
                 <button onClick={handleCopy} className="ml-2 p-1 rounded hover:bg-stone-700 transition-colors" title="Copy link">
                   <Copy className="w-4 h-4 text-stone-400" />
                 </button>
-                {copied && <span className="ml-2 text-xs text-green-400">Copied!</span>}
+                {copied && <span className="ml-2 text-xs text-success-foreground">Copied!</span>}
               </div>
             </div>
             <div className="mb-2">

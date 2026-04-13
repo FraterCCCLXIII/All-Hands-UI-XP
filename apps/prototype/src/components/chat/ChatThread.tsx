@@ -62,21 +62,21 @@ const messageTypeIcons: Record<MessageType, LucideIcon> = {
 };
 
 const messageTypeColors: Record<MessageType, { text: string; border: string; bg_subtle: string }> = {
-  error: { text: 'text-red-500', border: 'border-red-500', bg_subtle: 'bg-red-500/20' },
+  error: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
   bug: { text: 'text-orange-500', border: 'border-orange-500', bg_subtle: 'bg-orange-500/20' },
   security: { text: 'text-yellow-500', border: 'border-yellow-500', bg_subtle: 'bg-yellow-500/20' },
-  performance: { text: 'text-green-500', border: 'border-green-500', bg_subtle: 'bg-green-500/20' },
+  performance: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
   test: { text: 'text-blue-500', border: 'border-blue-500', bg_subtle: 'bg-blue-500/20' },
   docs: { text: 'text-indigo-500', border: 'border-indigo-500', bg_subtle: 'bg-indigo-500/20' },
   dependency: { text: 'text-purple-500', border: 'border-purple-500', bg_subtle: 'bg-purple-500/20' },
   git: { text: 'text-pink-500', border: 'border-pink-500', bg_subtle: 'bg-pink-500/20' },
-  llm_error: { text: 'text-red-500', border: 'border-red-500', bg_subtle: 'bg-red-500/20' },
-  microagent_ready: { text: 'text-green-500', border: 'border-green-500', bg_subtle: 'bg-green-500/20' },
+  llm_error: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
+  microagent_ready: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
   build: { text: 'text-blue-500', border: 'border-blue-500', bg_subtle: 'bg-blue-500/20' },
   completed: { text: 'text-gray-400', border: 'border-gray-400', bg_subtle: 'bg-gray-400/20' },
   user: { text: '', border: '', bg_subtle: '' },
-  success: { text: 'text-green-500', border: 'border-green-500', bg_subtle: 'bg-green-500/20' },
-  fail: { text: 'text-red-500', border: 'border-red-500', bg_subtle: 'bg-red-500/20' },
+  success: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
+  fail: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
   tetris_game: { text: 'text-purple-500', border: 'border-purple-500', bg_subtle: 'bg-purple-500/20' },
   code: { text: 'text-blue-500', border: 'border-blue-500', bg_subtle: 'bg-blue-500/20' },
 };

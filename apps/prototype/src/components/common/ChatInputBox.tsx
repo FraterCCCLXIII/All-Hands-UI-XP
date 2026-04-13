@@ -196,7 +196,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
                 'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 hover:opacity-90 data-[state=open]:opacity-90 whitespace-nowrap shrink-0',
                 chatMode === 'build' && 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground',
                 chatMode === 'ask' && 'border-blue-500/50 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
-                chatMode === 'plan' && 'border-emerald-500/50 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
+                chatMode === 'plan' && 'border-success/50 bg-success/20 text-success-foreground hover:bg-success/30'
               )}
               aria-label="Chat mode"
               data-testid="mode-pill"

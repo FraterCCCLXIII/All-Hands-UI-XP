@@ -38,12 +38,12 @@ export function AppToaster() {
         className={cn(
           'pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm',
           toast.variant === 'success'
-            ? 'border-emerald-500/35 bg-card text-foreground'
+            ? 'border-success/35 bg-card text-foreground'
             : 'border-destructive/50 bg-card text-foreground'
         )}
       >
         {toast.variant === 'success' ? (
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" aria-hidden />
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden />
         ) : (
           <XCircle className="h-5 w-5 shrink-0 text-destructive" aria-hidden />
         )}
