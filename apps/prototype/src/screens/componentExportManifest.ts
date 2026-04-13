@@ -74,6 +74,7 @@ export const componentExportManifest = [
   'src/components/ui/popover.tsx',
   'src/components/ui/search-input.tsx',
   'src/components/ui/sheet.tsx',
+  'src/components/ui/table.tsx',
   'src/components/workflow/DeleteWorkflowDialog.tsx',
   'src/components/workflow/NewWorkflowWizard.tsx',
   'src/components/workflow/RenameWorkflowDialog.tsx',

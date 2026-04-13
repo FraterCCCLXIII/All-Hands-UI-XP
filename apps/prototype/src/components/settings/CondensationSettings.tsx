@@ -1,3 +1,5 @@
+import { PluginToggle } from '../ui/plugin-toggle';
+
 interface CondensationSettingsProps {
   defaultHistorySize?: number;
   showHeading?: boolean;
@@ -35,44 +37,20 @@ export function CondensationSettings({
       </label>
 
       <label className="flex items-center gap-2 w-fit cursor-pointer">
-        <input
-          hidden
-          type="checkbox"
+        <PluginToggle
           checked={enableCondenser}
-          onChange={(e) => onEnableCondenserChange(e.target.checked)}
+          onCheckedChange={onEnableCondenserChange}
+          aria-label="Enable memory condensation"
         />
-        <div
-          className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${
-            enableCondenser ? 'bg-white' : 'bg-muted border border-border'
-          }`}
-        >
-          <div
-            className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${
-              enableCondenser ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'
-            }`}
-          ></div>
-        </div>
         <span className="text-sm text-foreground">Enable memory condensation</span>
       </label>
 
       <label className="flex items-center gap-2 w-fit cursor-pointer">
-        <input
-          hidden
-          type="checkbox"
+        <PluginToggle
           checked={enableConfirmation}
-          onChange={(e) => onEnableConfirmationChange(e.target.checked)}
+          onCheckedChange={onEnableConfirmationChange}
+          aria-label="Enable confirmation mode"
         />
-        <div
-          className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${
-            enableConfirmation ? 'bg-white' : 'bg-muted border border-border'
-          }`}
-        >
-          <div
-            className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${
-              enableConfirmation ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'
-            }`}
-          ></div>
-        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">Enable Confirmation Mode</span>
           <span className="text-[11px] leading-4 text-black font-medium tracking-tighter bg-white px-1 rounded-full">

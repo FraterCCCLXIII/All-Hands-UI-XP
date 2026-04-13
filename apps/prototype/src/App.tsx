@@ -503,7 +503,8 @@ function App() {
       setActiveNavItem('settings');
       setLastNonDrawerNavItem('settings');
       setIsConversationDrawerOpen(false);
-      let subTab = hash === 'settings' ? null : hash.split('/')[1] ?? null;
+      const subTab =
+        hash === 'settings' ? null : hash.startsWith('settings/') ? hash.slice('settings/'.length) || null : null;
       if (subTab === 'plugins') {
         navigate({ pathname: '/settings/org-plugins', search }, { replace: true });
         return;

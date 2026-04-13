@@ -48,7 +48,7 @@ export function AddRepoExtensionModal({ open, onOpenChange }: AddRepoExtensionMo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add from repository</DialogTitle>
+          <DialogTitle>Add From Repository</DialogTitle>
           <DialogDescription>Paste the Git repository URL to add it.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
@@ -155,7 +155,7 @@ export function AddMcpServerModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit MCP server' : 'Add MCP server'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit MCP Server' : 'Add MCP Server'}</DialogTitle>
           <DialogDescription>
             {isEdit
               ? 'Update connection details. Leave API key blank to keep the existing key.'
@@ -216,7 +216,7 @@ export function AddMcpServerModal({
             Cancel
           </Button>
           <Button type="button" size="sm" disabled={!url.trim()} onClick={submit}>
-            {isEdit ? 'Save' : 'Add server'}
+            {isEdit ? 'Save' : 'Add Server'}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -255,7 +255,7 @@ export function AddHookModal({ open, onOpenChange, onAdd }: AddHookModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add hook</DialogTitle>
+          <DialogTitle>Add Hook</DialogTitle>
           <DialogDescription>
             Name this automation hook and describe what should run when it fires.
           </DialogDescription>
@@ -292,7 +292,7 @@ export function AddHookModal({ open, onOpenChange, onAdd }: AddHookModalProps) {
             Cancel
           </Button>
           <Button type="button" size="sm" disabled={!hookName.trim()} onClick={submit}>
-            Add hook
+            Add Hook
           </Button>
         </DialogFooter>
       </DialogContent>

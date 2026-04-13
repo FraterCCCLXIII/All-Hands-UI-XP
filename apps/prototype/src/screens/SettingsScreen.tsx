@@ -2,16 +2,19 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Building2,
   Cloud,
+  Copy,
   Cpu,
   CreditCard,
   CheckCircle,
   ChevronDown,
+  Eye,
   Key,
   Layers,
   MoreVertical,
   Pencil,
   Plus,
   Puzzle,
+  RefreshCw,
   Settings as SettingsIcon,
   Shield,
   User,
@@ -39,6 +42,15 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
+import {
+  dataTableBodyClassName,
+  dataTableClassName,
+  dataTableHeadRowClassName,
+  dataTableInnerClassName,
+  dataTableRowClassName,
+  dataTableShellClassName,
+  dataTableTh,
+} from '../components/ui/table';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
@@ -128,6 +140,36 @@ const settingsTabs = [
   { id: 'manage-team', label: 'Organization Members', icon: Users },
 ];
 
+type SecretsView = 'list' | 'add' | 'edit';
+
+function parseSettingsRoute(tab: string | undefined): {
+  tabId: string;
+  secretsView: SecretsView;
+  editingSecretId: string | null;
+} {
+  if (!tab) {
+    return { tabId: 'api-keys', secretsView: 'list', editingSecretId: null };
+  }
+  if (tab === 'secrets' || tab.startsWith('secrets/')) {
+    if (tab === 'secrets') {
+      return { tabId: 'secrets', secretsView: 'list', editingSecretId: null };
+    }
+    const sub = tab.slice('secrets/'.length);
+    if (sub === 'add') {
+      return { tabId: 'secrets', secretsView: 'add', editingSecretId: null };
+    }
+    if (sub.startsWith('edit/')) {
+      const id = sub.slice('edit/'.length);
+      return { tabId: 'secrets', secretsView: 'edit', editingSecretId: id || null };
+    }
+    return { tabId: 'secrets', secretsView: 'list', editingSecretId: null };
+  }
+  if (settingsTabs.some((t) => t.id === tab)) {
+    return { tabId: tab, secretsView: 'list', editingSecretId: null };
+  }
+  return { tabId: 'api-keys', secretsView: 'list', editingSecretId: null };
+}
+
 const settingsTabDescriptions: Record<string, string> = {
   user: 'View and update your account email address.',
   integrations: 'Connect Git hosts, Slack, Jira, and other services.',
@@ -144,6 +186,15 @@ const settingsTabDescriptions: Record<string, string> = {
   'org-hooks':
     'Define organization hooks and control whether members see them in the UI and whether they run automatically in every new conversation.',
 };
+
+/** Border + padding below the line only. Parent stacks sections with `gap-6`; extra `mt-*` here doubles the gap above the rule. */
+const settingsSectionRule = 'border-t border-border pt-6';
+
+/** Vertical gap between major settings blocks (Tailwind `gap-6`). */
+const settingsSectionStackGap = 'gap-6';
+
+/** Gap under subsection subline (description) to the next control or table — same as `settingsSectionStackGap`. */
+const settingsSublineToContentGap = settingsSectionStackGap;
 
 const settingsLinks: Array<{
   id: string;
@@ -402,7 +453,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onAddPluginRepository,
   onRemovePluginRepository,
 }) => {
-  const [activeTab, setActiveTab] = useState(initialTab ?? 'api-keys');
+  const [activeTab, setActiveTab] = useState(() => parseSettingsRoute(initialTab).tabId);
+  const [secretsView, setSecretsView] = useState<SecretsView>(() => parseSettingsRoute(initialTab).secretsView);
+  const [editingSecretId, setEditingSecretId] = useState<string | null>(
+    () => parseSettingsRoute(initialTab).editingSecretId,
+  );
   const [gitUsername, setGitUsername] = useState('openhands');
   const [gitEmail, setGitEmail] = useState('openhands@all-hands.dev');
   const [userEmail, setUserEmail] = useState('panentheum@gmail.com');
@@ -446,6 +501,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [addMcpModalOpen, setAddMcpModalOpen] = useState(false);
   const [mcpEditingId, setMcpEditingId] = useState<string | null>(null);
   const [settingsMcpServers, setSettingsMcpServers] = useState<SettingsMcpServerRow[]>([]);
+  const [secrets, setSecrets] = useState<Array<{ id: string; name: string; description: string }>>([]);
+  const [newSecretName, setNewSecretName] = useState('');
+  const [newSecretValue, setNewSecretValue] = useState('');
+  const [newSecretDescription, setNewSecretDescription] = useState('');
+  const [secretDeleteTarget, setSecretDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   const orgPluginCatalogRepoOptions = useMemo(() => {
@@ -478,13 +538,34 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   ]);
 
   useEffect(() => {
-    if (initialTab && settingsTabs.some((t) => t.id === initialTab)) {
-      setActiveTab(initialTab);
+    const r = parseSettingsRoute(initialTab);
+    if (settingsTabs.some((t) => t.id === r.tabId)) {
+      setActiveTab(r.tabId);
     }
-  }, [initialTab]);
+    setSecretsView(r.secretsView);
+    setEditingSecretId(r.editingSecretId);
+    if (r.secretsView === 'edit' && r.editingSecretId) {
+      const row = secrets.find((s) => s.id === r.editingSecretId);
+      if (row) {
+        setNewSecretName(row.name);
+        setNewSecretDescription(row.description);
+        setNewSecretValue('');
+      } else {
+        setSecretsView('list');
+        setEditingSecretId(null);
+        onTabChange?.('secrets');
+      }
+    }
+    // secrets read intentionally only when initialTab changes (avoid resetting edit form when list updates)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync route → form on navigation only
+  }, [initialTab, onTabChange]);
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
+    if (tabId === 'secrets') {
+      setSecretsView('list');
+      setEditingSecretId(null);
+    }
     onTabChange?.(tabId);
   };
 
@@ -582,6 +663,22 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setToastMessage(message);
     setToastVariant(variant);
     setToastVisible(true);
+  };
+
+  const handleConfirmDeleteSecret = () => {
+    if (!secretDeleteTarget) return;
+    const id = secretDeleteTarget.id;
+    setSecrets((prev) => prev.filter((s) => s.id !== id));
+    if (editingSecretId === id) {
+      setEditingSecretId(null);
+      setNewSecretName('');
+      setNewSecretValue('');
+      setNewSecretDescription('');
+      setSecretsView('list');
+      onTabChange?.('secrets');
+    }
+    setSecretDeleteTarget(null);
+    showToast('Secret removed.', 'success');
   };
 
   const addInviteEmail = (rawValue: string) => {
@@ -722,9 +819,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   })();
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 gap-10 overflow-hidden pl-8 pr-0">
+    <div className={cn('flex min-h-0 min-w-0 flex-1 overflow-hidden pl-8 pr-0', settingsSectionStackGap)}>
       {/* Left Navigation — vertical inset from CSS vars (independent of main) */}
-      <nav className="flex w-64 shrink-0 flex-col gap-6 pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]">
+      <nav
+        className={cn(
+          'flex w-64 shrink-0 flex-col pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
+          settingsSectionStackGap,
+        )}
+      >
         <div className="flex items-center gap-2 ml-1">
           <h2 className="text-xl font-semibold leading-6 text-foreground">Settings</h2>
         </div>
@@ -869,11 +971,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           mainContentScrollable && 'overflow-y-auto'
         )}
       >
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 pr-8">
+        <div className={cn('mx-auto flex w-full max-w-4xl flex-col pr-8', settingsSectionStackGap)}>
           {activeTabLabel && activeTab !== 'manage-team' && (
             <div className="space-y-1">
               <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
-              {settingsTabDescriptions[activeTab] && (
+              {settingsTabDescriptions[activeTab] &&
+                !(activeTab === 'secrets' && (secretsView === 'add' || secretsView === 'edit')) && (
                 <p className="text-sm text-muted-foreground">{settingsTabDescriptions[activeTab]}</p>
               )}
             </div>
@@ -916,9 +1019,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-6 w-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold leading-6 text-foreground">
+                    <h2 className="text-xl font-semibold leading-6 text-foreground">
                       Organization Members
-                    </h3>
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       Manage access and roles for your organization.
                     </p>
@@ -927,8 +1030,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     type="button"
                     disabled={!canInviteMembers}
                     onClick={() => setInviteModalOpen(true)}
-                    className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="inline-flex h-10 items-center justify-center gap-2 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
+                    <Plus className="h-4 w-4 shrink-0" aria-hidden />
                     Invite Organization Member
                   </button>
                 </div>
@@ -977,7 +1081,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               className="gap-2 text-destructive focus:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
-                              Delete user
+                              Delete User
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -1005,7 +1109,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           {source.icon}
                           <div className="space-y-1 min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-3">
-                              <h3 className="text-xl font-semibold leading-6 text-foreground">{source.name}</h3>
+                              <h3 className="text-base font-semibold leading-snug text-foreground">{source.name}</h3>
                               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
                                 <span
                                   className={`h-2 w-2 rounded-full ${
@@ -1087,7 +1191,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </g>
                     </svg>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold leading-6 text-foreground">Slack</h3>
+                      <h3 className="text-base font-semibold leading-snug text-foreground">Slack</h3>
                       <p className="text-sm text-muted-foreground">
                         Install the OpenHands Slack app to receive notifications in your workspace.
                       </p>
@@ -1108,7 +1212,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <path fill="#2684FF" d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.757a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"/>
                     </svg>
                     <div className="space-y-1">
-                      <h3 className="text-xl font-semibold leading-6 text-foreground">Jira Cloud</h3>
+                      <h3 className="text-base font-semibold leading-snug text-foreground">Jira Cloud</h3>
                       <p className="text-sm text-muted-foreground">
                         Link Jira to sync issues and keep OpenHands aligned with your project tracking.
                       </p>
@@ -1142,65 +1246,50 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </label>
 
                   <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
+                    <PluginToggle
                       checked={enableAnalytics}
-                      onChange={(e) => setEnableAnalytics(e.target.checked)}
+                      onCheckedChange={setEnableAnalytics}
+                      aria-label="Send anonymous usage data"
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableAnalytics ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableAnalytics ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                    </div>
                     <span className="text-sm text-foreground">Send anonymous usage data</span>
                   </label>
 
                   <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
+                    <PluginToggle
                       checked={enableSound}
-                      onChange={(e) => setEnableSound(e.target.checked)}
+                      onCheckedChange={setEnableSound}
+                      aria-label="Sound notifications"
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableSound ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableSound ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                    </div>
                     <span className="text-sm text-foreground">Sound Notifications</span>
                   </label>
 
                   <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
+                    <PluginToggle
                       checked={enableProactive}
-                      onChange={(e) => setEnableProactive(e.target.checked)}
+                      onCheckedChange={setEnableProactive}
+                      aria-label="Suggest tasks on GitHub"
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableProactive ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableProactive ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                    </div>
                     <span className="text-sm text-foreground">Suggest Tasks on GitHub</span>
                   </label>
 
                   <label className="flex items-center gap-2 w-fit cursor-pointer">
-                    <input
-                      hidden
-                      type="checkbox"
+                    <PluginToggle
                       checked={enableSolvability}
-                      onChange={(e) => setEnableSolvability(e.target.checked)}
+                      onCheckedChange={setEnableSolvability}
+                      aria-label="Enable solvability analysis"
                     />
-                    <div className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${enableSolvability ? 'bg-white' : 'bg-muted border border-border'}`}>
-                      <div className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${enableSolvability ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'}`}></div>
-                    </div>
                     <span className="text-sm text-foreground">Enable Solvability Analysis</span>
                   </label>
 
-                  <div className="border-t border-border pt-6 mt-2">
-                    <div className="space-y-1 mb-4">
-                      <h3 className="text-xl font-semibold leading-6 text-foreground">Git Settings</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Configure the username and email that OpenHands uses to commit changes.
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-6">
+                  <div className={settingsSectionRule}>
+                    <div className={cn('flex flex-col', settingsSublineToContentGap)}>
+                      <div className="space-y-1">
+                        <h3 className="text-base font-semibold leading-snug text-foreground">Git Settings</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Configure the username and email that OpenHands uses to commit changes.
+                        </p>
+                      </div>
+                      <div className="flex flex-col gap-6">
                       <label className="flex w-full flex-col gap-2.5">
                         <span className="text-sm text-foreground">Git Username</span>
                         <input
@@ -1221,9 +1310,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           onChange={(e) => setGitEmail(e.target.value)}
                         />
                       </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
                 <div className="flex justify-start gap-6 pt-2">
                 <button
                   disabled
@@ -1243,25 +1333,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               {llmContentOverride ?? (
                 <form className="flex w-full flex-col gap-6">
                   <div className="flex w-full flex-col gap-6">
-                    <label className="flex items-center gap-2 w-fit cursor-pointer">
-                      <input
-                        hidden
-                        type="checkbox"
+                    <label className="flex items-center gap-2 w-fit cursor-pointer" data-testid="advanced-settings-switch">
+                      <PluginToggle
                         checked={advancedLLM}
-                        onChange={(e) => setAdvancedLLM(e.target.checked)}
-                        data-testid="advanced-settings-switch"
+                        onCheckedChange={setAdvancedLLM}
+                        aria-label="Advanced"
                       />
-                      <div
-                        className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${
-                          advancedLLM ? 'bg-white' : 'bg-muted border border-border'
-                        }`}
-                      >
-                        <div
-                          className={`w-3 h-3 rounded-xl transition-all duration-200 ease-in-out ${
-                            advancedLLM ? 'translate-x-6 bg-black' : 'translate-x-0 bg-muted-foreground'
-                          }`}
-                        ></div>
-                      </div>
                       <span className="text-sm text-foreground">Advanced</span>
                     </label>
 
@@ -1424,9 +1501,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <button
                       disabled
                       type="submit"
-                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="inline-flex h-10 items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
-                      Add credit
+                      <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                      Add Credit
                     </button>
                     <div className="flex flex-row items-center gap-1">
                       <span className="text-sm font-semibold text-muted-foreground">Powered by</span>
@@ -1441,27 +1519,191 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           )}
 
           {/* Secrets Content */}
-          {activeTab === 'secrets' && (
+          {activeTab === 'secrets' && (secretsView === 'add' || secretsView === 'edit') && (
             <div className="contents">
-              <div className="flex flex-col gap-5">
+              <form
+                className={cn('flex max-w-xl flex-col', settingsSectionStackGap)}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const name = newSecretName.trim();
+                  if (!name) {
+                    showToast('Enter a name for the secret.', 'error');
+                    return;
+                  }
+                  if (editingSecretId) {
+                    setSecrets((prev) =>
+                      prev.map((s) =>
+                        s.id === editingSecretId
+                          ? { ...s, name, description: newSecretDescription.trim() }
+                          : s,
+                      ),
+                    );
+                    showToast('Secret updated.', 'success');
+                  } else {
+                    setSecrets((prev) => [
+                      ...prev,
+                      {
+                        id: crypto.randomUUID(),
+                        name,
+                        description: newSecretDescription.trim(),
+                      },
+                    ]);
+                    showToast('Secret added.', 'success');
+                  }
+                  setNewSecretName('');
+                  setNewSecretValue('');
+                  setNewSecretDescription('');
+                  setEditingSecretId(null);
+                  setSecretsView('list');
+                  onTabChange?.('secrets');
+                }}
+              >
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="secret-name" className="text-sm text-foreground">
+                    Name
+                  </label>
+                  <input
+                    id="secret-name"
+                    name="name"
+                    autoComplete="off"
+                    placeholder="e.g. OpenAI_API_Key"
+                    value={newSecretName}
+                    onChange={(ev) => setNewSecretName(ev.target.value)}
+                    className="h-10 max-w-[680px] flex-grow rounded-md border border-border bg-muted/40 px-3 text-base text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="secret-value" className="text-sm text-foreground">
+                    Value
+                  </label>
+                  <textarea
+                    id="secret-value"
+                    name="value"
+                    rows={6}
+                    value={newSecretValue}
+                    onChange={(ev) => setNewSecretValue(ev.target.value)}
+                    className="min-h-[140px] w-full max-w-[680px] resize-y rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="secret-description" className="text-sm text-foreground">
+                    Description{' '}
+                    <span className="font-normal text-muted-foreground">(Optional)</span>
+                  </label>
+                  <input
+                    id="secret-description"
+                    name="description"
+                    autoComplete="off"
+                    value={newSecretDescription}
+                    onChange={(ev) => setNewSecretDescription(ev.target.value)}
+                    className="h-10 max-w-[680px] flex-grow rounded-md border border-border bg-muted/40 px-3 text-base text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setNewSecretName('');
+                      setNewSecretValue('');
+                      setNewSecretDescription('');
+                      setEditingSecretId(null);
+                      setSecretsView('list');
+                      onTabChange?.('secrets');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">{editingSecretId ? 'Save changes' : 'Add secret'}</Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'secrets' && secretsView === 'list' && (
+            <div className="contents">
+              <div className="flex flex-col gap-8">
                 <button
                   type="button"
-                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                  className="inline-flex h-10 w-fit shrink-0 items-center justify-center gap-2 px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                  onClick={() => {
+                    setEditingSecretId(null);
+                    setSecretsView('add');
+                    onTabChange?.('secrets/add');
+                  }}
                 >
-                  Add a new secret
+                  <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                  Add A New Secret
                 </button>
-                <div className="border border-border rounded-md overflow-hidden">
-                  <table className="w-full min-w-full table-fixed">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="w-1/4 text-left p-3 text-sm font-medium text-foreground">Name</th>
-                        <th className="w-1/2 text-left p-3 text-sm font-medium text-foreground">Description</th>
-                        <th className="w-1/4 text-right p-3 text-sm font-medium text-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody></tbody>
-                  </table>
-                </div>
+                {secrets.length === 0 ? (
+                  <div
+                    className="rounded-lg border border-border bg-card px-6 py-12 text-center shadow-sm"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                      No secrets yet. Add your first secret to store API keys and other sensitive values for workflows
+                      and automations—they stay encrypted and are never shown in full after creation.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={dataTableShellClassName}>
+                    <div className={dataTableInnerClassName}>
+                      <table className={dataTableClassName}>
+                        <thead>
+                          <tr className={dataTableHeadRowClassName}>
+                            <th scope="col" className={dataTableTh('w-1/4 px-4 text-left')}>
+                              Name
+                            </th>
+                            <th scope="col" className={dataTableTh('w-1/2 px-4 text-left')}>
+                              Description
+                            </th>
+                            <th scope="col" className={dataTableTh('w-1/4 px-4 text-right')}>
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className={dataTableBodyClassName}>
+                          {secrets.map((row) => (
+                            <tr key={row.id} className={dataTableRowClassName}>
+                              <td className="px-4 py-3.5 align-middle text-sm text-foreground">{row.name}</td>
+                              <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
+                                {row.description}
+                              </td>
+                              <td className="px-4 py-3.5 align-middle text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    type="button"
+                                    aria-label={`Edit ${row.name}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() => {
+                                      setEditingSecretId(row.id);
+                                      setNewSecretName(row.name);
+                                      setNewSecretDescription(row.description);
+                                      setNewSecretValue('');
+                                      setSecretsView('edit');
+                                      onTabChange?.(`secrets/edit/${row.id}`);
+                                    }}
+                                  >
+                                    <Pencil className="h-4 w-4" aria-hidden />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label={`Delete ${row.name}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() => setSecretDeleteTarget({ id: row.id, name: row.name })}
+                                  >
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1469,51 +1711,51 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* API Keys Content */}
           {activeTab === 'api-keys' && (
             <div className="contents">
-              <div className="flex flex-col gap-6">
+              <div className={cn('flex flex-col', settingsSectionStackGap)}>
                 {/* OpenHands LLM Key Section */}
-                <div className="border-b border-border pb-6 mb-6 flex flex-col gap-6">
+                <div className="flex flex-col gap-6 border-b border-border pb-6">
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold leading-6 text-foreground">OpenHands LLM Key</h3>
+                    <h3 className="text-base font-semibold leading-snug text-foreground">OpenHands LLM Key</h3>
                     <p className="text-sm text-muted-foreground">
                       Use this key as the LLM API key in OpenHands open-source and CLI; usage is billed to your cloud
-                      account.
+                      account. Do not share this key elsewhere; anyone with it can incur charges on your account.
                     </p>
                   </div>
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                      className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
                     >
+                      <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
                       Refresh API Key
                     </button>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Do not share this key elsewhere; anyone with it can incur charges on your account.
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-muted rounded-md py-2 px-3 flex items-center justify-between">
-                        <span className="text-foreground">••••••••••••••••••••</span>
-                        <div className="flex items-center gap-2">
+                    <div className="flex w-full items-center gap-2">
+                      <div
+                        className="flex h-10 min-h-10 w-full min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:bg-muted/60"
+                        role="group"
+                        aria-label="OpenHands LLM API key"
+                      >
+                        <span className="min-w-0 truncate font-mono text-sm text-foreground">
+                          ••••••••••••••••••••
+                        </span>
+                        <div className="flex shrink-0 items-center gap-0.5">
                           <button
                             type="button"
-                            className="text-foreground hover:text-muted-foreground cursor-pointer"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-label="Show API key"
                             title="Show API key"
                           >
-                            <svg width="20" height="20" viewBox="0 0 576 512" fill="currentColor">
-                              <path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 51.2 66.4 81.6 117.6 67.9s81.6-66.4 67.9-117.6c-11.1-41.5-47.8-69.4-88.6-71.1c-5.8-.2-9.2 6.1-7.4 11.7c2.1 6.4 3.3 13.2 3.3 20.3z"/>
-                            </svg>
+                            <Eye className="h-4 w-4" aria-hidden />
                           </button>
                           <button
                             type="button"
-                            className="text-foreground hover:text-muted-foreground cursor-pointer"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-label="Copy API key"
                             title="Copy API key"
                           >
-                            <svg width="20" height="20" viewBox="0 0 448 512" fill="currentColor">
-                              <path d="M208 0L332.1 0c12.7 0 24.9 5.1 33.9 14.1l67.9 67.9c9 9 14.1 21.2 14.1 33.9L448 336c0 26.5-21.5 48-48 48l-192 0c-26.5 0-48-21.5-48-48l0-288c0-26.5 21.5-48 48-48zM48 128l80 0 0 64-64 0 0 256 192 0 0-32 64 0 0 48c0 26.5-21.5 48-48 48L48 512c-26.5 0-48-21.5-48-48L0 176c0-26.5 21.5-48 48-48z"/>
-                            </svg>
+                            <Copy className="h-4 w-4" aria-hidden />
                           </button>
                         </div>
                       </div>
@@ -1521,84 +1763,97 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
 
-                {/* OpenHands API Keys Section */}
-                <div className="space-y-1">
-                  <h3 className="text-xl font-semibold leading-6 text-foreground">OpenHands API Keys</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Create keys to authenticate with the OpenHands API from your applications and scripts.
-                  </p>
-                </div>
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
-                  >
-                    Create API Key
-                  </button>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Keep your API keys secure; anyone with a key can access your account. For more information on how to use
-                  the API, see our{' '}
-                  <a
-                    href="https://docs.all-hands.dev/usage/cloud/cloud-api"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white hover:underline hover:text-gray-300"
-                  >
-                    API documentation
-                  </a>.
-                </p>
+                {/* OpenHands API Keys Section: intro + CTA grouped */}
+                <div className={cn('flex flex-col', settingsSectionStackGap)}>
+                  <div className={cn('flex flex-col', settingsSectionStackGap)}>
+                    <div className="space-y-1">
+                      <h3 className="text-base font-semibold leading-snug text-foreground">OpenHands API Keys</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Create keys to authenticate with the OpenHands API from your applications and scripts. Keep your
+                        API keys secure; anyone with a key can access your account. For more information on how to use the
+                        API, see our{' '}
+                        <a
+                          href="https://docs.all-hands.dev/usage/cloud/cloud-api"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white hover:underline hover:text-gray-300"
+                        >
+                          API documentation
+                        </a>.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                        Create API Key
+                      </button>
+                    </div>
+                  </div>
 
-                {/* API Keys Table */}
-                <div className="border border-border rounded-md overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="text-left p-3 text-sm font-medium text-foreground">Name</th>
-                        <th className="text-left p-3 text-sm font-medium text-foreground">Created</th>
-                        <th className="text-left p-3 text-sm font-medium text-foreground">Last Used</th>
-                        <th className="text-right p-3 text-sm font-medium text-foreground">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-t border-border">
-                        <td className="p-3 text-sm text-foreground truncate max-w-[160px]" title="CLI 2">
-                          CLI 2
-                        </td>
-                        <td className="p-3 text-sm text-muted-foreground">9/23/2025, 8:58:05 PM</td>
-                        <td className="p-3 text-sm text-muted-foreground">Never</td>
-                        <td className="p-3 text-right">
-                          <button
-                            type="button"
-                            aria-label="Delete CLI 2"
-                            className="cursor-pointer text-foreground hover:text-muted-foreground"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 448 512" fill="currentColor">
-                              <path d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"/>
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                      <tr className="border-t border-border">
-                        <td className="p-3 text-sm text-foreground truncate max-w-[160px]" title="CLI">
-                          CLI
-                        </td>
-                        <td className="p-3 text-sm text-muted-foreground">9/19/2025, 5:09:37 PM</td>
-                        <td className="p-3 text-sm text-muted-foreground">Never</td>
-                        <td className="p-3 text-right">
-                          <button
-                            type="button"
-                            aria-label="Delete CLI"
-                            className="cursor-pointer text-foreground hover:text-muted-foreground"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 448 512" fill="currentColor">
-                              <path d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z"/>
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {/* API Keys Table */}
+                  <div className={dataTableShellClassName}>
+                    <div className={dataTableInnerClassName}>
+                      <table className={dataTableClassName}>
+                        <thead>
+                          <tr className={dataTableHeadRowClassName}>
+                            <th scope="col" className={dataTableTh('px-4 text-left')}>
+                              Name
+                            </th>
+                            <th scope="col" className={dataTableTh('px-4 text-left')}>
+                              Created
+                            </th>
+                            <th scope="col" className={dataTableTh('px-4 text-left')}>
+                              Last Used
+                            </th>
+                            <th scope="col" className={dataTableTh('px-4 text-right')}>
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className={dataTableBodyClassName}>
+                          <tr className={dataTableRowClassName}>
+                            <td className="px-4 py-3.5 align-middle text-sm text-foreground truncate max-w-[160px]" title="CLI 2">
+                              CLI 2
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
+                              9/23/2025, 8:58:05 PM
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">Never</td>
+                            <td className="px-4 py-3.5 align-middle text-right">
+                              <button
+                                type="button"
+                                aria-label="Delete CLI 2"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                              >
+                                <Trash2 className="h-4 w-4" aria-hidden />
+                              </button>
+                            </td>
+                          </tr>
+                          <tr className={dataTableRowClassName}>
+                            <td className="px-4 py-3.5 align-middle text-sm text-foreground truncate max-w-[160px]" title="CLI">
+                              CLI
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
+                              9/19/2025, 5:09:37 PM
+                            </td>
+                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">Never</td>
+                            <td className="px-4 py-3.5 align-middle text-right">
+                              <button
+                                type="button"
+                                aria-label="Delete CLI"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                              >
+                                <Trash2 className="h-4 w-4" aria-hidden />
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1607,7 +1862,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* MCP Content */}
           {activeTab === 'mcp' && (
             <div className="contents">
-              <div className="flex w-full flex-col gap-4">
+              <div className="flex w-full flex-col gap-8">
                 <div className="flex justify-start">
                   <Button
                     type="button"
@@ -1617,7 +1872,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       setAddMcpModalOpen(true);
                     }}
                   >
-                    Add server
+                    <Plus aria-hidden />
+                    Add Server
                   </Button>
                 </div>
                 <AddMcpServerModal
@@ -1660,9 +1916,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     );
                   }}
                 />
-                <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
-                  <div className="min-w-0">
-                    <table className="w-full table-fixed border-collapse text-sm">
+                <div className={dataTableShellClassName}>
+                  <div className={dataTableInnerClassName}>
+                    <table className={dataTableClassName}>
                       <colgroup>
                         <col className="min-w-0" />
                         <col className="w-[6.5rem]" />
@@ -1672,62 +1928,44 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <col className="w-12" />
                       </colgroup>
                       <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th
-                            scope="col"
-                            className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                        <tr className={dataTableHeadRowClassName}>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
                             URL
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-left')}>
                             Type
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-center')}>
                             API key
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-center')}>
                             Visible
                           </th>
                           <th
                             scope="col"
-                            className="px-2 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                            className={dataTableTh('px-2 text-center whitespace-nowrap')}
                             title="All conversations — enable for every new conversation"
                           >
                             All conv.
                           </th>
-                          <th
-                            scope="col"
-                            className="w-12 px-1 py-3.5 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('w-12 px-1 text-right')}>
                             <span className="sr-only">Actions</span>
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border">
+                      <tbody className={dataTableBodyClassName}>
                         {settingsMcpServers.length === 0 ? (
                           <tr>
                             <td
                               colSpan={6}
                               className="px-4 py-10 text-center text-sm text-muted-foreground"
                             >
-                              No servers configured. Use Add server to connect one.
+                              No servers configured. Use Add Server to connect one.
                             </td>
                           </tr>
                         ) : (
                           settingsMcpServers.map((row) => (
-                            <tr
-                              key={row.id}
-                              className="bg-card transition-colors hover:bg-muted/25"
-                            >
+                            <tr key={row.id} className={dataTableRowClassName}>
                               <td className="min-w-0 px-4 py-3.5 align-middle">
                                 <span
                                   className="block truncate font-mono text-xs text-foreground"
@@ -1825,10 +2063,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* Org plugins & skills (Admin / Owner) */}
           {activeTab === 'org-plugins' && (
             <div className="contents">
-              <div className="flex w-full flex-col gap-4">
-                <div className="flex flex-col gap-4">
+              <div className={cn('flex w-full flex-col', settingsSectionStackGap)}>
+                <div className={cn('flex flex-col', settingsSublineToContentGap)}>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold leading-6 text-foreground">Extension repositories</h3>
+                    <h3 className="text-base font-semibold leading-snug text-foreground">Extension repositories</h3>
                     <p className="text-sm text-muted-foreground">
                       Add plugin repositories from Git URLs. Added repositories appear in the plugin marketplace.
                     </p>
@@ -1844,12 +2082,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       type="button"
                       onClick={handleAddPluginRepo}
                       disabled={pluginRepoInput.trim().length === 0}
-                      className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Add repository
+                      <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                      Add Repository
                     </button>
                   </div>
-                  <div className="mb-4 overflow-hidden rounded-md border border-border">
+                  <div className="overflow-hidden rounded-md border border-border">
                     {pluginRepositories.length > 0 ? (
                       <ul className="divide-y divide-border">
                         {pluginRepositories.map((repo) => (
@@ -1872,9 +2111,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="w-full space-y-3">
+                <div className={cn('flex w-full flex-col', settingsSublineToContentGap, settingsSectionRule)}>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold leading-6 text-foreground">Plugins & skills</h3>
+                    <h3 className="text-base font-semibold leading-snug text-foreground">Plugins & skills</h3>
                     <p className="text-sm text-muted-foreground">
                       Search and filter by repository path, plugin vs skill, or narrow by repository.
                     </p>
@@ -1933,10 +2172,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </label>
                     </div>
                   </div>
-                </div>
-                <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
-                  <div className="min-w-0">
-                    <table className="w-full table-fixed border-collapse text-sm">
+                <div className={dataTableShellClassName}>
+                  <div className={dataTableInnerClassName}>
+                    <table className={dataTableClassName}>
                       <colgroup>
                         <col className="min-w-0" />
                         <col className="min-w-0" />
@@ -1945,42 +2183,33 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <col className="w-[7rem]" />
                       </colgroup>
                       <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th
-                            scope="col"
-                            className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                        <tr className={dataTableHeadRowClassName}>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
                             Name
                           </th>
                           <th
                             scope="col"
-                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                            className={dataTableTh('px-3 text-left')}
                             title="Plugin or skill bundle repository"
                           >
                             Repository
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-left')}>
                             Type
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-center')}>
                             Visible
                           </th>
                           <th
                             scope="col"
-                            className="px-2 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                            className={dataTableTh('px-2 text-center whitespace-nowrap')}
                             title="All conversations — enable for every new conversation"
                           >
                             All conv.
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border">
+                      <tbody className={dataTableBodyClassName}>
                         {filteredOrgPluginCatalog.length === 0 ? (
                           <tr>
                             <td
@@ -1992,10 +2221,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           </tr>
                         ) : (
                           filteredOrgPluginCatalog.map((row) => (
-                            <tr
-                              key={row.id}
-                              className="bg-card transition-colors hover:bg-muted/25"
-                            >
+                            <tr key={row.id} className={dataTableRowClassName}>
                               <td className="px-4 py-3.5 align-middle">
                                 <a
                                   href={
@@ -2061,6 +2287,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </table>
                   </div>
                 </div>
+                </div>
               </div>
             </div>
           )}
@@ -2068,10 +2295,11 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* Organization hooks (Admin / Owner) */}
           {activeTab === 'org-hooks' && (
             <div className="contents">
-              <div className="flex w-full flex-col gap-4">
+              <div className="flex w-full flex-col gap-8">
                 <div className="flex justify-start">
                   <Button type="button" size="sm" onClick={() => setAddHookModalOpen(true)}>
-                    Add hook
+                    <Plus aria-hidden />
+                    Add Hook
                   </Button>
                 </div>
                 <AddHookModal
@@ -2090,9 +2318,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     ]);
                   }}
                 />
-                <div className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
-                  <div className="min-w-0">
-                    <table className="w-full table-fixed border-collapse text-sm">
+                <div className={dataTableShellClassName}>
+                  <div className={dataTableInnerClassName}>
+                    <table className={dataTableClassName}>
                       <colgroup>
                         <col className="min-w-0" />
                         <col className="min-w-0" />
@@ -2100,50 +2328,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <col className="w-[7rem]" />
                       </colgroup>
                       <thead>
-                        <tr className="border-b border-border bg-muted/50">
-                          <th
-                            scope="col"
-                            className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                        <tr className={dataTableHeadRowClassName}>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
                             Name
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-left')}>
                             Instructions
                           </th>
-                          <th
-                            scope="col"
-                            className="px-3 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                          >
+                          <th scope="col" className={dataTableTh('px-3 text-center')}>
                             Visible
                           </th>
                           <th
                             scope="col"
-                            className="px-2 py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground whitespace-nowrap"
+                            className={dataTableTh('px-2 text-center whitespace-nowrap')}
                             title="All conversations — enable for every new conversation"
                           >
                             All conv.
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border">
+                      <tbody className={dataTableBodyClassName}>
                         {orgHooks.length === 0 ? (
                           <tr>
                             <td
                               colSpan={4}
                               className="px-4 py-10 text-center text-sm text-muted-foreground"
                             >
-                              No hooks yet. Use Add hook to create one.
+                              No hooks yet. Use Add Hook to create one.
                             </td>
                           </tr>
                         ) : (
                           orgHooks.map((row) => (
-                            <tr
-                              key={row.id}
-                              className="bg-card transition-colors hover:bg-muted/25"
-                            >
+                            <tr key={row.id} className={dataTableRowClassName}>
                               <td className="px-4 py-3.5 align-middle">
                                 <span className="font-medium text-foreground">{row.name}</span>
                               </td>
@@ -2202,88 +2418,107 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {/* Organizations Content */}
           {activeTab === 'organizations' && (
             <div className="contents">
-              <div>
-                <div className="mb-6">
-                  <div>
-                    <div className="space-y-1 mb-3">
-                      <h3 className="text-xl font-semibold leading-6 text-foreground">Organization Name</h3>
+              <div className={cn('flex flex-col', settingsSectionStackGap)}>
+                <div className={cn('flex flex-col', settingsSublineToContentGap)}>
+                  <div className="space-y-1">
+                    <h3 className="text-base font-semibold leading-snug text-foreground">Organization Name</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This name appears across your organization and shared workspaces.
+                    </p>
+                  </div>
+                  <div className="relative max-w-[520px]">
+                    <input
+                      type="text"
+                      value="Starlight Labs"
+                      readOnly
+                      className="w-full h-10 rounded-md border border-border bg-muted/40 px-3 pr-20 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
+                      aria-label="Organization name"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+
+                <div className={settingsSectionRule}>
+                  <div className={cn('flex flex-col', settingsSublineToContentGap)}>
+                    <div className="space-y-1">
+                      <h3 className="text-base font-semibold leading-snug text-foreground">Git Conversation Routing</h3>
                       <p className="text-sm text-muted-foreground">
-                        This name appears across your organization and shared workspaces.
+                        Claim GitHub or GitLab organizations so resolver traffic routes to the correct OpenHands org. If a
+                        requester is not a member of the claiming org, the conversation falls back to their Personal
+                        Workspace. Available organizations are derived from your connected GitHub/GitLab identity. Only
+                        organization admins and owners can manage organization claims.
                       </p>
                     </div>
-                    <div className="mt-3 relative max-w-[520px]">
-                      <input
-                        type="text"
-                        value="Starlight Labs"
-                        readOnly
-                        className="w-full h-10 rounded-md border border-border bg-muted/40 px-3 pr-20 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
-                        aria-label="Organization name"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        Change
-                      </button>
+                    <div className={dataTableShellClassName}>
+                      <div className={dataTableInnerClassName}>
+                        <table className={dataTableClassName}>
+                          <colgroup>
+                            <col className="min-w-0" />
+                            <col className="w-[9rem]" />
+                          </colgroup>
+                          <tbody className={dataTableBodyClassName}>
+                            {claimableOptions.map((option) => {
+                              const claimOwner = claimRegistry[option.id];
+                              const isClaimedByCurrentOrg = claimOwner === activeOrgName;
+
+                              return (
+                                <tr key={option.id} className={dataTableRowClassName}>
+                                  <td className="min-w-0 px-4 py-3.5 align-middle text-sm text-foreground">
+                                    <span className="text-muted-foreground">{option.provider}</span>
+                                    <span className="mx-1 text-muted-foreground">/</span>
+                                    <span>{option.handle}</span>
+                                  </td>
+                                  <td className="px-4 py-3.5 align-middle text-right">
+                                    {isClaimedByCurrentOrg && canManageOrgClaims ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRemoveClaim(option.id)}
+                                        className="group h-7 rounded-md border border-emerald-500/60 bg-emerald-500/20 px-2 text-xs font-medium text-emerald-300 transition-colors hover:border-rose-500/60 hover:bg-rose-500/15 hover:text-rose-300"
+                                      >
+                                        <span className="group-hover:hidden">Claimed</span>
+                                        <span className="hidden group-hover:inline">Disconnect</span>
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleClaim(option.id)}
+                                        className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-muted/60 transition-colors"
+                                      >
+                                        Claim
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   </div>
-                  <button type="button" className="mt-5 text-sm font-semibold text-destructive hover:text-destructive transition-colors">
-                    Delete Organization
-                  </button>
                 </div>
 
-                <div className="space-y-1 mb-2">
-                  <h3 className="text-xl font-semibold leading-6 text-foreground">Git Conversation Routing</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Claim GitHub or GitLab organizations so resolver traffic routes to the correct OpenHands org.
-                  </p>
+                <div className={settingsSectionRule} role="region" aria-labelledby="org-danger-zone-title">
+                  <h3
+                    id="org-danger-zone-title"
+                    className="mb-2 text-sm font-semibold leading-6 text-white"
+                  >
+                    Danger zone
+                  </h3>
+                  <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 shadow-sm">
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-destructive hover:text-destructive transition-colors"
+                    >
+                      Delete Organization
+                    </button>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  If a requester is not a member of the claiming org, the conversation falls back to their Personal
-                  Workspace. Available organizations are derived from your connected GitHub/GitLab identity. Only
-                  organization admins and owners can manage organization claims.
-                </p>
-
-                <div className="overflow-hidden rounded-lg border border-border">
-                  {claimableOptions.map((option) => {
-                    const claimOwner = claimRegistry[option.id];
-                    const isClaimedByCurrentOrg = claimOwner === activeOrgName;
-
-                    return (
-                      <div
-                        key={option.id}
-                        className="flex items-center justify-between gap-3 border-b border-border px-3 py-3 last:border-b-0"
-                      >
-                        <div className="text-sm text-foreground">
-                          <span className="text-muted-foreground">{option.provider}</span>
-                          <span className="mx-1 text-muted-foreground">/</span>
-                          <span>{option.handle}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {isClaimedByCurrentOrg && canManageOrgClaims ? (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveClaim(option.id)}
-                              className="group h-7 rounded-md border border-emerald-500/60 bg-emerald-500/20 px-2 text-xs font-medium text-emerald-300 transition-colors hover:border-rose-500/60 hover:bg-rose-500/15 hover:text-rose-300"
-                            >
-                              <span className="group-hover:hidden">Claimed</span>
-                              <span className="hidden group-hover:inline">Disconnect</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleClaim(option.id)}
-                              className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-muted/60 transition-colors"
-                            >
-                              Claim
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
               </div>
             </div>
           )}
@@ -2311,6 +2546,35 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <button
           type="button"
           onClick={handleMemberDelete}
+          className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          Delete
+        </button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+  <Dialog
+    open={Boolean(secretDeleteTarget)}
+    onOpenChange={(open) => !open && setSecretDeleteTarget(null)}
+  >
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Delete secret</DialogTitle>
+        <DialogDescription>
+          Delete &quot;{secretDeleteTarget?.name}&quot;? This action cannot be undone.
+        </DialogDescription>
+      </DialogHeader>
+      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+        <button
+          type="button"
+          onClick={() => setSecretDeleteTarget(null)}
+          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={handleConfirmDeleteSecret}
           className="h-9 px-4 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Delete
@@ -2415,7 +2679,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           disabled={inviteEmails.length === 0 && inviteInput.trim().length === 0}
           className="h-9 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          Send invites
+          Send Invites
         </button>
       </DialogFooter>
     </DialogContent>
