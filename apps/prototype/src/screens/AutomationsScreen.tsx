@@ -1014,7 +1014,7 @@ function AssociatedResources({
   items: string[];
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card">
+    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -1037,7 +1037,7 @@ function AssociatedResources({
 
 function PromptSection({ prompt }: { prompt: string }) {
   return (
-    <section className="rounded-2xl border border-border bg-card">
+    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -1079,7 +1079,7 @@ function MetadataSection({
   automation: AutomationItem;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card">
+    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -1132,7 +1132,7 @@ function ActivityLogSection({
   onOpenConversation?: (conversationId: string) => void;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card">
+    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <History className="h-4 w-4 text-muted-foreground" />
@@ -1512,7 +1512,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   };
 
   const renderAutomationRow = (automation: AutomationItem) => (
-    <div className="rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/20">
+    <div className="rounded-xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
       <div className="flex items-start justify-between gap-4 p-5">
         <button
           type="button"
@@ -1854,7 +1854,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               <span>Back to Automations</span>
             </button>
 
-            <div className="rounded-2xl border border-border bg-card p-6">
+            <div className="rounded-2xl border border-border bg-card p-6 transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
               <div className="mb-5 space-y-2">
                 <h2 className="text-xl font-semibold text-foreground">Create Automation</h2>
                 <p className="text-sm text-muted-foreground">

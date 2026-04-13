@@ -14,7 +14,7 @@ export function ChatGPTConnectSection({
   onDisconnect,
 }: ChatGPTConnectSectionProps) {
   return (
-    <div className="flex flex-col gap-4 w-full max-w-[680px]">
+    <div className="flex flex-col gap-4 w-full">
       {!isConnected && (
         <div className="flex items-center gap-3 w-full">
           <span className="flex-1 h-px bg-border" aria-hidden />

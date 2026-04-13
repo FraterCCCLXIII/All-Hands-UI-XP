@@ -43,7 +43,7 @@ export function AdvancedLlmForm({
 }: AdvancedLlmFormProps) {
   return (
     <>
-      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+      <label className="flex flex-col gap-2.5 w-full">
         <span className="text-sm text-foreground">Custom Model</span>
         <input
           placeholder="openhands/claude-opus-4-5-20251101"
@@ -60,7 +60,7 @@ export function AdvancedLlmForm({
         )}
       </label>
 
-      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+      <label className="flex flex-col gap-2.5 w-full">
         <span className="text-sm text-foreground">Base URL</span>
         <input
           placeholder="https://api.openai.com"
@@ -77,7 +77,7 @@ export function AdvancedLlmForm({
         )}
       </label>
 
-      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+      <label className="flex flex-col gap-2.5 w-full">
         <span className="text-sm text-foreground">API Key</span>
         <div className="relative w-full">
           <input

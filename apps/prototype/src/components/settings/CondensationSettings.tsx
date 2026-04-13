@@ -20,7 +20,7 @@ export function CondensationSettings({
       {showHeading && (
         <div className="text-lg font-semibold text-foreground">Condensation Settings</div>
       )}
-      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+      <label className="flex flex-col gap-2.5 w-full">
         <span className="text-sm text-foreground">Memory condenser max history size</span>
         <input
           min={20}

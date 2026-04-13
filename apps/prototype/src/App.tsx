@@ -628,6 +628,7 @@ function App() {
                 onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
+                isHomeRoute={location.pathname === '/'}
               />
             )}
             <div 

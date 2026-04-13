@@ -107,6 +107,8 @@ export interface LeftNavProps {
   /** Workspace id from `accountWorkspaceOptions`; non-`personal` shows org chrome on the account button. */
   activeWorkspaceId?: string;
   onActiveWorkspaceChange?: (workspaceId: string) => void;
+  /** True when the app is on `/` (home / create flow); used to highlight the Plus nav item while `activeNavItem` is still `code`. */
+  isHomeRoute?: boolean;
 }
 
 const prototypeMenuEntries = [
@@ -137,6 +139,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onEnterpriseLearnMoreClick,
   activeWorkspaceId = 'personal',
   onActiveWorkspaceChange,
+  isHomeRoute = false,
 }) => {
   const selectedWorkspace =
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
@@ -208,7 +211,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   href={card.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 rounded-lg bg-sidebar-accent/20 p-4 hover:bg-muted/60 transition-colors no-underline"
+                  className="flex-1 rounded-lg p-4 transition-colors hover:bg-muted/60 no-underline"
                 >
                   <div className="mb-3">{card.icon}</div>
                   <div className="text-sm font-semibold text-sidebar-foreground mb-1">{card.title}</div>
@@ -225,7 +228,9 @@ export const LeftNav: React.FC<LeftNavProps> = ({
           const isActive =
             item.action === 'conversations'
               ? isConversationDrawerOpen
-              : activeNavItem === item.action;
+              : item.action === 'new-project'
+                ? activeNavItem === 'new-project' || (activeNavItem === 'code' && isHomeRoute)
+                : activeNavItem === item.action;
           return (
             <button
               key={item.action}
@@ -234,9 +239,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               aria-pressed={isActive}
               data-conversation-toggle={item.action === 'conversations' ? 'true' : undefined}
               onClick={() => onNavItemClick(item.action)}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
-                isActive ? 'bg-sidebar-accent' : 'hover:bg-sidebar-accent'
-              }`}
+              className={cn(
+                'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors',
+                isActive
+                  ? 'bg-sidebar-accent text-sidebar-foreground'
+                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
+              )}
             >
               <span
                 className="inline-flex leading-none transition-transform duration-500 ease-out"

@@ -394,7 +394,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onTabChange,
   llmContentOverride,
   llmTabLabelOverride,
-  llmContentScrollable = true,
+  llmContentScrollable: _llmContentScrollable = true,
   mainContentScrollable = true,
   selectedOrgId: controlledOrgId,
   onOrgChange,
@@ -722,9 +722,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   })();
 
   return (
-    <div className="flex flex-1 overflow-hidden gap-10 p-8">
-      {/* Left Navigation */}
-      <nav className="flex flex-col gap-6 w-64">
+    <div className="flex min-h-0 min-w-0 flex-1 gap-10 overflow-hidden pl-8 pr-0">
+      {/* Left Navigation — vertical inset from CSS vars (independent of main) */}
+      <nav className="flex w-64 shrink-0 flex-col gap-6 pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]">
         <div className="flex items-center gap-2 ml-1">
           <h2 className="text-xl font-semibold leading-6 text-foreground">Settings</h2>
         </div>
@@ -862,9 +862,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         </div>
       </nav>
 
-      {/* Main Content */}
-      <main className={mainContentScrollable ? 'flex-1 overflow-auto' : 'flex-1'}>
-        <div className="flex flex-col gap-6 h-full">
+      {/* Main Content — scrolls at the viewport right edge; inner padding keeps text off the gutter */}
+      <main
+        className={cn(
+          'flex min-h-0 min-w-0 flex-1 flex-col pt-[var(--settings-main-padding-top)] pb-[var(--settings-main-padding-bottom)]',
+          mainContentScrollable && 'overflow-y-auto'
+        )}
+      >
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 pr-8">
           {activeTabLabel && activeTab !== 'manage-team' && (
             <div className="space-y-1">
               <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
@@ -876,7 +881,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* User Content */}
           {activeTab === 'user' && (
-            <div className="flex-1 overflow-auto">
+            <div className="contents">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-2">
@@ -907,7 +912,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Manage Team Content */}
           {activeTab === 'manage-team' && (
-            <div className="flex-1 overflow-auto">
+            <div className="contents">
               <div className="flex flex-col gap-6 w-full">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1">
@@ -1121,10 +1126,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Application Content */}
           {activeTab === 'app' && (
-            <div className="flex-1 overflow-auto">
-              <form className="flex flex-col h-full justify-between">
+            <div className="contents">
+              <form className="flex flex-col gap-6">
                 <div className="flex flex-col gap-6">
-                  <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                  <label className="flex w-full flex-col gap-2.5">
                     <div className="flex items-center gap-1">
                       <span className="text-sm text-foreground">Language</span>
                     </div>
@@ -1196,7 +1201,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </p>
                     </div>
                     <div className="flex flex-col gap-6">
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                      <label className="flex w-full flex-col gap-2.5">
                         <span className="text-sm text-foreground">Git Username</span>
                         <input
                           placeholder="Username for git commits"
@@ -1206,7 +1211,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           onChange={(e) => setGitUsername(e.target.value)}
                         />
                       </label>
-                      <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                      <label className="flex w-full flex-col gap-2.5">
                         <span className="text-sm text-foreground">Git Email</span>
                         <input
                           placeholder="Email for git commits"
@@ -1219,7 +1224,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
               </div>
-              <div className="flex gap-6 py-6 pr-6 justify-start">
+                <div className="flex justify-start gap-6 pt-2">
                 <button
                   disabled
                   type="submit"
@@ -1234,10 +1239,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* LLM Content */}
           {activeTab === 'llm' && (
-            <div className={llmContentScrollable ? 'flex-1 overflow-auto' : 'flex-1'}>
+            <div className="contents">
               {llmContentOverride ?? (
-                <form className="flex flex-col h-full justify-between">
-                  <div className="flex flex-col gap-6">
+                <form className="flex w-full flex-col gap-6">
+                  <div className="flex w-full flex-col gap-6">
                     <label className="flex items-center gap-2 w-fit cursor-pointer">
                       <input
                         hidden
@@ -1262,8 +1267,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
                     {!advancedLLM ? (
                       <>
-                        <div className="flex flex-col gap-6 w-full max-w-[680px]">
-                          <fieldset className="flex flex-col gap-2.5 w-full">
+                        <div className="flex w-full flex-col gap-6">
+                          <fieldset className="flex w-full flex-col gap-2.5">
                             <label className="text-sm text-foreground">LLM Provider</label>
                             <div className="relative w-full">
                               <select
@@ -1288,7 +1293,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               />
                             </div>
                           </fieldset>
-                          <fieldset className="flex flex-col gap-2.5 w-full">
+                          <fieldset className="flex w-full flex-col gap-2.5">
                             <label className="text-sm text-foreground">LLM Model</label>
                             <div className="relative w-full">
                               <select
@@ -1308,7 +1313,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             </div>
                           </fieldset>
                         </div>
-                        <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+                        <label className="flex w-full flex-col gap-2.5">
                           <span className="text-sm text-foreground">API Key</span>
                           <div className="relative w-full">
                             <input
@@ -1366,7 +1371,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       />
                     )}
                   </div>
-                  <div className="flex gap-6 py-6 pr-6 justify-start">
+                  <div className="flex justify-start gap-6 pt-2">
                     <button
                       disabled
                       type="submit"
@@ -1382,7 +1387,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Billing Content */}
           {activeTab === 'billing' && (
-            <div className="flex-1 overflow-auto">
+            <div className="contents">
               <form className="flex flex-col gap-6">
                 <div className="w-[680px] rounded-lg border border-border bg-gradient-to-br from-card to-muted/50 p-6 shadow-sm">
                   <div className="flex items-center justify-between">
@@ -1437,7 +1442,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Secrets Content */}
           {activeTab === 'secrets' && (
-            <div className="flex-1 overflow-auto">
+            <div className="contents">
               <div className="flex flex-col gap-5">
                 <button
                   type="button"
@@ -1463,7 +1468,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* API Keys Content */}
           {activeTab === 'api-keys' && (
-            <div className="flex-1 overflow-auto">
+            <div className="contents">
               <div className="flex flex-col gap-6">
                 {/* OpenHands LLM Key Section */}
                 <div className="border-b border-border pb-6 mb-6 flex flex-col gap-6">
@@ -1601,8 +1606,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* MCP Content */}
           {activeTab === 'mcp' && (
-            <div className="flex-1 overflow-auto">
-              <div className="flex w-full max-w-5xl flex-col gap-4">
+            <div className="contents">
+              <div className="flex w-full flex-col gap-4">
                 <div className="flex justify-start">
                   <Button
                     type="button"
@@ -1819,8 +1824,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Org plugins & skills (Admin / Owner) */}
           {activeTab === 'org-plugins' && (
-            <div className="flex-1 overflow-auto">
-              <div className="flex w-full max-w-5xl flex-col gap-4">
+            <div className="contents">
+              <div className="flex w-full flex-col gap-4">
                 <div className="flex flex-col gap-4">
                   <div className="space-y-1">
                     <h3 className="text-xl font-semibold leading-6 text-foreground">Extension repositories</h3>
@@ -1867,7 +1872,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     )}
                   </div>
                 </div>
-                <div className="w-full max-w-5xl space-y-3">
+                <div className="w-full space-y-3">
                   <div className="space-y-1">
                     <h3 className="text-xl font-semibold leading-6 text-foreground">Plugins & skills</h3>
                     <p className="text-sm text-muted-foreground">
@@ -2062,8 +2067,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Organization hooks (Admin / Owner) */}
           {activeTab === 'org-hooks' && (
-            <div className="flex-1 overflow-auto">
-              <div className="flex w-full max-w-5xl flex-col gap-4">
+            <div className="contents">
+              <div className="flex w-full flex-col gap-4">
                 <div className="flex justify-start">
                   <Button type="button" size="sm" onClick={() => setAddHookModalOpen(true)}>
                     Add hook
@@ -2196,29 +2201,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Organizations Content */}
           {activeTab === 'organizations' && (
-            <div className="flex-1 overflow-auto">
+            <div className="contents">
               <div>
                 <div className="mb-6">
                   <div>
-                    <div className="space-y-1 mb-3">
-                      <h3 className="text-xl font-semibold leading-6 text-foreground">Credits</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Organization-wide balance used for OpenHands Cloud usage.
-                      </p>
-                    </div>
-                    <div className="mt-3 flex items-center gap-3">
-                      <div className="inline-flex items-center rounded-full bg-[#FFE566] px-6 py-2 text-lg font-semibold text-black shadow-sm">
-                        $27.80
-                      </div>
-                      <button
-                        type="button"
-                        className="h-9 rounded-full bg-muted px-4 text-sm font-semibold text-foreground hover:bg-muted/80 transition-colors"
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-6">
                     <div className="space-y-1 mb-3">
                       <h3 className="text-xl font-semibold leading-6 text-foreground">Organization Name</h3>
                       <p className="text-sm text-muted-foreground">

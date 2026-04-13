@@ -60,6 +60,12 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 0% 14%;
     --sidebar-ring: 0 0% 50%;
+
+    /* Settings layout: nav vs main vertical inset (separate sources; edit per axis/region) */
+    --settings-nav-padding-top: 2rem;
+    --settings-nav-padding-bottom: 2rem;
+    --settings-main-padding-top: 2rem;
+    --settings-main-padding-bottom: 2rem;
   }
 
   .dark {
@@ -205,6 +211,130 @@ input[type="search"]::-webkit-search-results-decoration {
   background: hsl(var(--muted-foreground) / 0.7);
 }
 
+/* Default themed scrollbar for Tailwind overflow utilities (same as .custom-scrollbar).
+   Excludes explicit scrollbar variants and surfaces that hide the bar. */
+:is(
+    .overflow-y-auto,
+    .overflow-y-scroll,
+    .overflow-x-auto,
+    .overflow-x-scroll,
+    .overflow-auto,
+    .overflow-scroll
+  ):not(
+    .hide-scrollbar,
+    .scrollbar-hide,
+    .scrollbar-on-hover,
+    .custom-scrollbar,
+    .custom-scrollbar-always,
+    .repo-dropdown-scroll,
+    .dropdown-scroll
+  ) {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+}
+
+:is(
+    .overflow-y-auto,
+    .overflow-y-scroll,
+    .overflow-x-auto,
+    .overflow-x-scroll,
+    .overflow-auto,
+    .overflow-scroll
+  ):not(
+    .hide-scrollbar,
+    .scrollbar-hide,
+    .scrollbar-on-hover,
+    .custom-scrollbar,
+    .custom-scrollbar-always,
+    .repo-dropdown-scroll,
+    .dropdown-scroll
+  )::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+:is(
+    .overflow-y-auto,
+    .overflow-y-scroll,
+    .overflow-x-auto,
+    .overflow-x-scroll,
+    .overflow-auto,
+    .overflow-scroll
+  ):not(
+    .hide-scrollbar,
+    .scrollbar-hide,
+    .scrollbar-on-hover,
+    .custom-scrollbar,
+    .custom-scrollbar-always,
+    .repo-dropdown-scroll,
+    .dropdown-scroll
+  )::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+:is(
+    .overflow-y-auto,
+    .overflow-y-scroll,
+    .overflow-x-auto,
+    .overflow-x-scroll,
+    .overflow-auto,
+    .overflow-scroll
+  ):not(
+    .hide-scrollbar,
+    .scrollbar-hide,
+    .scrollbar-on-hover,
+    .custom-scrollbar,
+    .custom-scrollbar-always,
+    .repo-dropdown-scroll,
+    .dropdown-scroll
+  )::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 9999px;
+}
+
+:is(
+    .overflow-y-auto,
+    .overflow-y-scroll,
+    .overflow-x-auto,
+    .overflow-x-scroll,
+    .overflow-auto,
+    .overflow-scroll
+  ):not(
+    .hide-scrollbar,
+    .scrollbar-hide,
+    .scrollbar-on-hover,
+    .custom-scrollbar,
+    .custom-scrollbar-always,
+    .repo-dropdown-scroll,
+    .dropdown-scroll
+  )::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* Document / viewport scrollbar when html scrolls */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.5) transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border-radius: 9999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.7);
+}
+
 /* Kanban: hide dnd placeholder so it doesn’t show as a visible pattern/shape */
 [data-rfd-placeholder-context-id] {
   background: transparent !important;
@@ -271,6 +401,21 @@ body[data-figma-fixed-canvas='true'] {
 
   body {
     @apply m-0 bg-background text-foreground antialiased;
+  }
+
+  /* Default Lucide icons to secondary grey (muted-foreground); stroke uses currentColor */
+  svg.lucide {
+    color: hsl(var(--muted-foreground));
+  }
+
+  button svg.lucide,
+  [role="button"] svg.lucide,
+  a svg.lucide,
+  [role="menuitem"] svg.lucide,
+  [role="option"] svg.lucide,
+  [role="tab"] svg.lucide,
+  label svg.lucide {
+    color: inherit;
   }
 
   button,

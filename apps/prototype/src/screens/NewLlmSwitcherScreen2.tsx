@@ -276,7 +276,7 @@ export function NewLlmSwitcherScreen2() {
           <span className="text-sm text-foreground">Advanced</span>
         </label>
 
-        <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+        <label className="flex flex-col gap-2.5 w-full">
           <span className="text-sm text-foreground">Display Name</span>
           <input
             placeholder="LLM Display Name"
@@ -289,7 +289,7 @@ export function NewLlmSwitcherScreen2() {
 
         {!addAdvanced ? (
           <>
-            <fieldset className="flex flex-col gap-2.5 w-full max-w-[680px]">
+            <fieldset className="flex flex-col gap-2.5 w-full">
               <label className="text-sm text-foreground">LLM Provider</label>
               <div className="relative w-full">
                 <select
@@ -310,7 +310,7 @@ export function NewLlmSwitcherScreen2() {
                 />
               </div>
             </fieldset>
-            <fieldset className="flex flex-col gap-2.5 w-full max-w-[680px]">
+            <fieldset className="flex flex-col gap-2.5 w-full">
               <label className="text-sm text-foreground">LLM Model</label>
               <div className="relative w-full">
                 <select
@@ -331,7 +331,7 @@ export function NewLlmSwitcherScreen2() {
                 />
               </div>
             </fieldset>
-            <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+            <label className="flex flex-col gap-2.5 w-full">
               <span className="text-sm text-foreground">API Key</span>
               <div className="relative w-full">
                 <input
@@ -532,7 +532,7 @@ export function NewLlmSwitcherScreen2() {
           <h3 className="text-lg font-semibold text-foreground">Edit LLM Profile</h3>
         </div>
 
-        <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+        <label className="flex flex-col gap-2.5 w-full">
           <span className="text-sm text-foreground">Display Name</span>
           <input
             placeholder="Your Display Name"
@@ -543,7 +543,7 @@ export function NewLlmSwitcherScreen2() {
           />
         </label>
 
-        <fieldset className="flex flex-col gap-2.5 w-full max-w-[680px]">
+        <fieldset className="flex flex-col gap-2.5 w-full">
           <label className="text-sm text-foreground">LLM Provider</label>
           <div className="relative w-full">
             <select
@@ -565,7 +565,7 @@ export function NewLlmSwitcherScreen2() {
           </div>
         </fieldset>
 
-        <fieldset className="flex flex-col gap-2.5 w-full max-w-[680px]">
+        <fieldset className="flex flex-col gap-2.5 w-full">
           <label className="text-sm text-foreground">LLM Model</label>
           <div className="relative w-full">
             <select
@@ -587,7 +587,7 @@ export function NewLlmSwitcherScreen2() {
           </div>
         </fieldset>
 
-        <label className="flex flex-col gap-2.5 w-full max-w-[680px]">
+        <label className="flex flex-col gap-2.5 w-full">
           <span className="text-sm text-foreground">API Key</span>
           <div className="relative w-full">
             <input
