@@ -1,0 +1,319 @@
+import React, { useRef, useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Message } from './Message';
+import { MessageInputPanel } from './MessageInputPanel';
+import { GitControls } from '../git/GitControls';
+import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
+import { WelcomeScreen } from './WelcomeScreen';
+import { DrawerTabs, DrawerTab } from './DrawerTabs';
+import { TaskList, Task } from './TaskList';
+import { ChangesView, FileChange } from './ChangesView';
+import { ChatWindowTabId } from './ChatWindowTabs';
+import { ThemeElement, Theme } from '../../types/theme';
+import { Message as MessageType } from '../../types/message';
+
+interface ChatAreaProps {
+  theme: Theme;
+  getThemeClasses: (element: ThemeElement) => string;
+  messages: MessageType[];
+  serverStatus: 'active' | 'stopped' | 'thinking' | 'connecting';
+  projectName: string;
+  branchName: string;
+  userName: string;
+  onSendMessage: (message: string) => void;
+  onServerStatusChange: (status: 'active' | 'stopped' | 'thinking' | 'connecting') => void;
+  onPush: () => void;
+  onPull: () => void;
+  onCreatePR: () => void;
+  onRepoSelect: (repo: string) => void;
+  onBranchSelect: (branch: string) => void;
+  onWelcomeScreenChange?: (isActive: boolean) => void;
+  activeChatWindowTab: ChatWindowTabId;
+  onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
+  disableAutoScroll?: boolean;
+  onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
+  welcomeScreenVariant?: 'default' | 'cards';
+  onEnterpriseLearnMoreClick?: () => void;
+  /** `inline` = in-flow under messages / on welcome (default). `fixed` = bottom-right overlay. */
+  enterpriseCtaPlacement?: 'fixed' | 'inline';
+  /** When true (URL `/`), show the three-column landing again (e.g. after left-nav Plus). */
+  isHomeRoute?: boolean;
+}
+
+export const ChatArea: React.FC<ChatAreaProps> = ({
+  theme,
+  getThemeClasses,
+  messages,
+  serverStatus,
+  projectName,
+  branchName,
+  userName,
+  onSendMessage,
+  onServerStatusChange,
+  onPush,
+  onPull,
+  onCreatePR,
+  onRepoSelect,
+  onBranchSelect,
+  onWelcomeScreenChange,
+  activeChatWindowTab: _activeChatWindowTab,
+  onChatWindowTabChange: _onChatWindowTabChange,
+  disableAutoScroll = false,
+  onEnterpriseCtaVisibilityChange,
+  welcomeScreenVariant = 'default',
+  onEnterpriseLearnMoreClick,
+  enterpriseCtaPlacement = 'inline',
+  isHomeRoute = false,
+}) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(messages.length === 0);
+  const [drawerActiveTab, setDrawerActiveTab] = useState<DrawerTab['id']>('tasks');
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
+  const [showEnterpriseCta, setShowEnterpriseCta] = useState(true);
+  const [tasks, setTasks] = useState<Task[]>([
+    {
+      id: 'analyze_css_modules',
+      title: 'Analyze current CSS modules usage in the project',
+      completed: true,
+    },
+    {
+      id: 'analyze_css_modules_2',
+      title: 'Analyze current CSS modules usage in the project',
+      completed: false,
+    },
+    {
+      id: 'analyze_css_modules_3',
+      title: 'Analyze current CSS modules usage in the project',
+      completed: false,
+    },
+    {
+      id: 'refactor_components',
+      title: 'Refactor component architecture for better modularity',
+      completed: false,
+    },
+    {
+      id: 'implement_tests',
+      title: 'Implement unit tests for core functionality',
+      completed: false,
+    },
+    {
+      id: 'optimize_bundle',
+      title: 'Optimize bundle size and lazy load components',
+      completed: false,
+    },
+    {
+      id: 'update_dependencies',
+      title: 'Update all dependencies to latest stable versions',
+      completed: false,
+    },
+    {
+      id: 'document_api',
+      title: 'Document API endpoints and data structures',
+      completed: true,
+    },
+    {
+      id: 'accessibility_audit',
+      title: 'Perform accessibility audit and fix issues',
+      completed: false,
+    },
+    {
+      id: 'performance_testing',
+      title: 'Run performance testing and optimize bottlenecks',
+      completed: false,
+    },
+  ]);
+
+  const changes = useMemo<FileChange[]>(
+    () => [
+      { name: 'src/components/ChatInterface.tsx', additions: 45, deletions: 12 },
+      { name: 'src/components/TaskList.tsx', additions: 23, deletions: 5 },
+      { name: 'src/index.css', additions: 15, deletions: 3 },
+      { name: 'tailwind.config.ts', additions: 6, deletions: 2 },
+      { name: 'src/components/TaskItem.tsx', additions: 0, deletions: 1 },
+    ],
+    []
+  );
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (!disableAutoScroll) {
+      scrollToBottom();
+    }
+  }, [messages, disableAutoScroll]);
+
+  useEffect(() => {
+    onWelcomeScreenChange?.(showWelcomeScreen);
+  }, [showWelcomeScreen, onWelcomeScreenChange]);
+
+  useEffect(() => {
+    if (isHomeRoute) {
+      setShowWelcomeScreen(true);
+    }
+  }, [isHomeRoute]);
+
+  useEffect(() => {
+    onEnterpriseCtaVisibilityChange?.(showEnterpriseCta);
+  }, [showEnterpriseCta, onEnterpriseCtaVisibilityChange]);
+
+  const handleWelcomeScreenClose = () => {
+    setShowWelcomeScreen(false);
+  };
+
+  const handleTaskToggle = (id: string) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
+  const drawerTabs = useMemo<DrawerTab[]>(() => {
+    const completedCount = tasks.filter((task) => task.completed).length;
+    const totalAdditions = changes.reduce((sum, change) => sum + change.additions, 0);
+    const totalDeletions = changes.reduce((sum, change) => sum + change.deletions, 0);
+
+    return [
+      {
+        id: 'tasks',
+        label: 'Task List',
+        badge: `${completedCount}/${tasks.length} Tasks Completed`,
+      },
+      {
+        id: 'changes',
+        label: 'Changes',
+        stats: {
+          additions: totalAdditions,
+          deletions: totalDeletions,
+          count: changes.length,
+        },
+      },
+    ];
+  }, [tasks, changes]);
+
+  if (showWelcomeScreen) {
+    return (
+      <div className={`relative flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
+        <WelcomeScreen
+          theme={theme}
+          getThemeClasses={getThemeClasses}
+          userName={userName}
+          onRepoSelect={onRepoSelect}
+          onBranchSelect={onBranchSelect}
+          onClose={handleWelcomeScreenClose}
+          variant={welcomeScreenVariant}
+        />
+        <AnimatePresence>
+          {showEnterpriseCta && (
+            <motion.div
+              className={
+                enterpriseCtaPlacement === 'inline'
+                  ? 'mx-auto mt-6 w-[320px] max-w-full'
+                  : 'pointer-events-none fixed bottom-6 right-6 z-50 w-[320px] max-w-[90vw]'
+              }
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <EnterpriseCtaCard
+                className={enterpriseCtaPlacement === 'inline' ? '' : 'pointer-events-auto'}
+                staticLayout={enterpriseCtaPlacement === 'inline'}
+                onDismiss={() => setShowEnterpriseCta(false)}
+                onLearnMoreClick={onEnterpriseLearnMoreClick}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative flex flex-col h-full w-full ${getThemeClasses('bg')}`}>
+      <div className="flex items-center justify-end px-2 pt-2">
+        <span className="sr-only">Chat window tabs (now in the top bar)</span>
+      </div>
+      <div className={`flex-1 overflow-y-auto space-y-4 ${getThemeClasses('scrollbar')}`}>
+        {messages.map((message, index) => (
+          <Message
+            key={index}
+            message={{
+              role: message.role,
+              text: message.text,
+              headerText: message.headerText,
+              actions: message.actions
+            }}
+            theme={theme}
+            getThemeClasses={getThemeClasses}
+          />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+      <AnimatePresence>
+        {showEnterpriseCta && (
+          <motion.div
+            className={
+              enterpriseCtaPlacement === 'inline'
+                ? 'mx-auto mt-6 w-[320px] max-w-full'
+                : 'pointer-events-none fixed bottom-6 right-6 z-50 w-[320px] max-w-[90vw]'
+            }
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+          >
+            <EnterpriseCtaCard
+              className={enterpriseCtaPlacement === 'inline' ? '' : 'pointer-events-auto'}
+              staticLayout={enterpriseCtaPlacement === 'inline'}
+              onDismiss={() => setShowEnterpriseCta(false)}
+              onLearnMoreClick={onEnterpriseLearnMoreClick}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div>
+        <div className="flex-shrink-0 w-full flex justify-center">
+          <div
+            className={`w-full max-w-3xl transition-all duration-300 rounded-t-lg overflow-hidden ${isDrawerCollapsed ? 'h-12' : 'h-80'}`}
+          >
+            <DrawerTabs
+              tabs={drawerTabs}
+              activeTab={drawerActiveTab}
+              onTabChange={setDrawerActiveTab}
+              isCollapsed={isDrawerCollapsed}
+              onToggleCollapse={() => setIsDrawerCollapsed((prev) => !prev)}
+              getThemeClasses={getThemeClasses}
+            />
+            {!isDrawerCollapsed && (
+              <div className="h-[calc(100%-48px)] overflow-hidden">
+                {drawerActiveTab === 'tasks' ? (
+                  <TaskList tasks={tasks} onToggle={handleTaskToggle} getThemeClasses={getThemeClasses} />
+                ) : (
+                  <ChangesView changes={changes} getThemeClasses={getThemeClasses} />
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        <MessageInputPanel
+          getThemeClasses={getThemeClasses}
+          onSendMessage={onSendMessage}
+          serverStatus={serverStatus}
+          onServerStatusChange={onServerStatusChange}
+        />
+        <GitControls
+          theme={theme}
+          getThemeClasses={getThemeClasses}
+          projectName={projectName}
+          branchName={branchName}
+          onPush={onPush}
+          onPull={onPull}
+          onCreatePR={onCreatePR}
+        />
+      </div>
+    </div>
+  );
+}; 
