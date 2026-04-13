@@ -85,7 +85,7 @@ export const NewWorkflowWizard: React.FC<NewWorkflowWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md bg-background text-foreground border-border">
+      <DialogContent className="max-w-md border-border text-foreground">
         <DialogHeader>
           <DialogTitle>New workflow</DialogTitle>
           <DialogDescription>

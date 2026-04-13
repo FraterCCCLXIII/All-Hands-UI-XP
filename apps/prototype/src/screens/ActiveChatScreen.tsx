@@ -27,6 +27,8 @@ import {
   Package,
   ChevronDown,
   ChevronUp,
+  File,
+  Folder,
   Copy,
   Check,
   ListTodo,
@@ -40,6 +42,7 @@ import {
   MessageCircleQuestion,
   RefreshCw,
   Box,
+  ClipboardList,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -85,7 +88,18 @@ interface ActiveChatScreenProps {
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
 
-type TabId = 'changes' | 'code' | 'terminal' | 'app' | 'browser';
+type TabId = 'changes' | 'code' | 'terminal' | 'app' | 'browser' | 'planner';
+
+const CANVAS_TAB_ARIA: Record<TabId, string> = {
+  changes: 'Changes',
+  code: 'Code',
+  terminal: 'Terminal',
+  app: 'App',
+  browser: 'Browser',
+  planner: 'Planner',
+};
+
+const PLAN_PROMPT_FROM_CANVAS = 'Create a plan for this repository.';
 
 const DEFAULT_PINNED: Record<TabId, boolean> = {
   changes: true,
@@ -93,6 +107,7 @@ const DEFAULT_PINNED: Record<TabId, boolean> = {
   terminal: true,
   app: true,
   browser: true,
+  planner: true,
 };
 
 const CONVERSATION_LOAD_DURATION_MS = 2000;
@@ -320,6 +335,8 @@ export function ActiveChatScreen({
   const [serverStatus, setServerStatus] = useState('Starting');
   const [showServerMenu, setShowServerMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('changes');
+  /** When false, the right canvas column is hidden and chat uses full width. */
+  const [canvasOpen, setCanvasOpen] = useState(true);
   const [pinnedTabs, setPinnedTabs] = useState<Record<TabId, boolean>>(() => ({ ...DEFAULT_PINNED }));
   const [chatInput, setChatInput] = useState('');
   const chatInputRef = useRef<HTMLDivElement>(null);
@@ -390,7 +407,21 @@ export function ActiveChatScreen({
   }, []);
 
   const rightPanelWidth = 100 - leftPanelWidth;
+  const effectiveLeftWidth = canvasOpen ? leftPanelWidth : 100;
+  const effectiveRightWidth = canvasOpen ? rightPanelWidth : 0;
   const hasInput = !!chatInput.trim();
+
+  const handleCanvasTabClick = useCallback(
+    (tab: TabId) => {
+      if (tab === activeTab && canvasOpen) {
+        setCanvasOpen(false);
+        return;
+      }
+      setActiveTab(tab);
+      setCanvasOpen(true);
+    },
+    [activeTab, canvasOpen]
+  );
   const conversationTitle = 'Run Code Request';
   const openConversationCliCommand = `openhands --open-conversation "${conversationTitle}"`;
   const filteredCommands = useMemo(() => {
@@ -474,6 +505,17 @@ export function ActiveChatScreen({
       selection.addRange(range);
     }
   }, []);
+
+  const handleCreatePlanFromCanvas = useCallback(() => {
+    setChatMode('plan');
+    setChatInput(PLAN_PROMPT_FROM_CANVAS);
+    const el = chatInputRef.current;
+    if (el) {
+      el.innerText = PLAN_PROMPT_FROM_CANVAS;
+      placeCaretAtEnd(el);
+      el.focus();
+    }
+  }, [placeCaretAtEnd]);
 
   const applyCommandChip = useCallback(
     (command: CommandItem) => {
@@ -666,10 +708,10 @@ export function ActiveChatScreen({
                 <span data-aria-label="Changes">
                   <button
                     type="button"
-                    onClick={() => setActiveTab('changes')}
+                    onClick={() => handleCanvasTabClick('changes')}
                     className={cn(
                       'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                      activeTab === 'changes'
+                      activeTab === 'changes' && canvasOpen
                         ? 'gap-2 pr-2 bg-secondary text-foreground hover:bg-secondary/90'
 : 'gap-0 pr-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   )}
@@ -678,7 +720,7 @@ export function ActiveChatScreen({
                     <span
                       className={cn(
                         'overflow-hidden whitespace-nowrap transition-[opacity,max-width] duration-200',
-                        activeTab === 'changes' ? 'max-w-[100px] opacity-100' : 'max-w-0 opacity-0'
+                        activeTab === 'changes' && canvasOpen ? 'max-w-[100px] opacity-100' : 'max-w-0 opacity-0'
                       )}
                     >
                       Changes
@@ -687,18 +729,51 @@ export function ActiveChatScreen({
                 </span>
               )}
               {pinnedTabs.code && (
-                <TabButton label="Code" active={activeTab === 'code'} onClick={() => setActiveTab('code')} ariaLabel="Code" icon={<Code2 className="w-4 h-4 flex-shrink-0" />} />
+                <TabButton
+                  label="Code"
+                  active={activeTab === 'code' && canvasOpen}
+                  onClick={() => handleCanvasTabClick('code')}
+                  ariaLabel="Code"
+                  icon={<Code2 className="w-4 h-4 flex-shrink-0" />}
+                />
               )}
               {pinnedTabs.terminal && (
                 <span data-aria-label="Terminal (read-only)">
-                  <TabButton label="Terminal" active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} ariaLabel="Terminal (read-only)" icon={<Terminal className="w-4 h-4 flex-shrink-0" />} />
+                  <TabButton
+                    label="Terminal"
+                    active={activeTab === 'terminal' && canvasOpen}
+                    onClick={() => handleCanvasTabClick('terminal')}
+                    ariaLabel="Terminal (read-only)"
+                    icon={<Terminal className="w-4 h-4 flex-shrink-0" />}
+                  />
                 </span>
               )}
               {pinnedTabs.app && (
-                <TabButton label="App" active={activeTab === 'app'} onClick={() => setActiveTab('app')} ariaLabel="App" icon={<Monitor className="w-4 h-4 flex-shrink-0" />} />
+                <TabButton
+                  label="App"
+                  active={activeTab === 'app' && canvasOpen}
+                  onClick={() => handleCanvasTabClick('app')}
+                  ariaLabel="App"
+                  icon={<Monitor className="w-4 h-4 flex-shrink-0" />}
+                />
               )}
               {pinnedTabs.browser && (
-                <TabButton label="Browser" active={activeTab === 'browser'} onClick={() => setActiveTab('browser')} ariaLabel="Browser" icon={<Globe className="w-4 h-4 flex-shrink-0" />} />
+                <TabButton
+                  label="Browser"
+                  active={activeTab === 'browser' && canvasOpen}
+                  onClick={() => handleCanvasTabClick('browser')}
+                  ariaLabel="Browser"
+                  icon={<Globe className="w-4 h-4 flex-shrink-0" />}
+                />
+              )}
+              {pinnedTabs.planner && (
+                <TabButton
+                  label="Planner"
+                  active={activeTab === 'planner' && canvasOpen}
+                  onClick={() => handleCanvasTabClick('planner')}
+                  ariaLabel="Planner"
+                  icon={<ClipboardList className="w-4 h-4 flex-shrink-0" strokeWidth={2} />}
+                />
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -722,6 +797,7 @@ export function ActiveChatScreen({
                       { id: 'terminal' as const, label: 'Terminal (read-only)', icon: <Terminal className="w-4 h-4" /> },
                       { id: 'app' as const, label: 'App', icon: <Monitor className="w-4 h-4" /> },
                       { id: 'browser' as const, label: 'Browser', icon: <Globe className="w-4 h-4" /> },
+                      { id: 'planner' as const, label: 'Planner', icon: <ClipboardList className="w-4 h-4" /> },
                     ] as const
                   ).map(({ id, label, icon }) => {
                     const isPinned = pinnedTabs[id];
@@ -755,8 +831,8 @@ export function ActiveChatScreen({
             <div className="flex flex-1 transition-all duration-300 ease-in-out overflow-hidden min-h-0" style={{ transitionProperty: 'all' }}>
               {/* Left panel: chat */}
               <div
-                className="flex flex-col bg-base overflow-hidden transition-all duration-300 ease-in-out min-h-0"
-                style={{ width: `${leftPanelWidth}%`, transitionProperty: 'all' }}
+                className="flex flex-col bg-background overflow-hidden transition-all duration-300 ease-in-out min-h-0"
+                style={{ width: `${effectiveLeftWidth}%`, transitionProperty: 'all' }}
               >
                 <div className="flex justify-center w-full h-full min-h-0">
                   <div className="w-full transition-all duration-300 ease-in-out max-w-4xl h-full flex flex-col min-h-0">
@@ -1187,7 +1263,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             )}
                           </div>
                         )}
-                        <div className="z-10 h-0 w-full bg-base shrink-0" aria-hidden />
+                        <div className="z-10 h-0 w-full shrink-0 bg-transparent" aria-hidden />
                         <div data-testid="interactive-chat-box" className="relative z-10 -mt-[1px]">
                           {shouldShowStatusBadge && (
                             <div className="absolute left-0 bottom-[calc(100%-8px)] flex items-end gap-1">
@@ -1621,7 +1697,6 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           title={selectedModel}
                                           data-testid="model-trigger"
                                         >
-                                          <ModelChipIcon className="w-3.5 h-3.5 shrink-0" />
                                           <span className="min-w-0 flex-1 truncate text-xs font-normal leading-4">
                                             {selectedModel}
                                           </span>
@@ -1710,15 +1785,15 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <ExternalLink className="w-3 h-3 text-foreground" />
                                     </div>
                                   </a>
-                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-0.5 py-1 rounded-[100px] w-[76px] min-w-[76px] bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
+                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-0.5 py-1 rounded-[100px] w-[76px] min-w-[76px] bg-muted/50 cursor-not-allowed">
                                     <ArrowDownToLine className="w-3 h-3 text-foreground" />
                                     <div className="font-normal text-foreground text-sm leading-5 max-w-[76px] truncate" title="Pull">Pull</div>
                                   </button>
-                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[77px] min-w-[77px] bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
+                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[77px] min-w-[77px] bg-muted/50 cursor-not-allowed">
                                     <ArrowUp className="w-3 h-3 text-foreground" />
                                     <div className="font-normal text-foreground text-sm leading-5 max-w-[77px] truncate" title="Push">Push</div>
                                   </button>
-                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[126px] min-w-[126px] h-7 bg-[rgba(71,74,84,0.50)] cursor-not-allowed">
+                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[126px] min-w-[126px] h-7 bg-muted/50 cursor-not-allowed">
                                     <GitPullRequest className="w-3 h-3 text-foreground" />
                                     <div className="font-normal text-foreground text-sm leading-5 max-w-[126px] truncate" title="Pull Request">Pull Request</div>
                                   </button>
@@ -1786,17 +1861,27 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               </div>
 
               {/* Resizer */}
-              <div className="relative w-1 bg-transparent cursor-ew-resize flex-shrink-0" aria-hidden>
+              <div
+                className={cn(
+                  'relative bg-transparent flex-shrink-0 transition-all duration-300 ease-in-out',
+                  canvasOpen ? 'w-1 cursor-ew-resize' : 'w-0 overflow-hidden pointer-events-none'
+                )}
+                aria-hidden
+              >
                 <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-transparent" />
                 <div className="absolute inset-y-0 -left-1 -right-1" />
               </div>
 
               {/* Right panel: canvas/loading */}
               <div
-                className="transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 opacity-100 min-h-0"
-                style={{ width: `${rightPanelWidth}%`, transitionProperty: 'all' }}
+                className={cn(
+                  'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 min-h-0',
+                  canvasOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                )}
+                style={{ width: `${effectiveRightWidth}%`, transitionProperty: 'all' }}
+                aria-hidden={!canvasOpen}
               >
-                <div className="flex flex-col flex-1 gap-3 min-w-max h-full min-h-0">
+                <div className={cn('flex flex-col flex-1 gap-3 h-full min-h-0', canvasOpen ? 'min-w-max' : 'min-w-0')}>
                   <div className="bg-muted/60 border border-border rounded-xl flex flex-col items-center justify-center h-full w-full min-h-[200px] relative">
                     {showCanvasLoading && (
                       <>
@@ -1822,6 +1907,15 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden />
                         <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
                       </>
+                    )}
+                    {!showCanvasLoading && (
+                      <div
+                        role="tabpanel"
+                        aria-label={CANVAS_TAB_ARIA[activeTab]}
+                        className="absolute inset-0 flex min-h-0 overflow-hidden"
+                      >
+                        <CanvasTabEmptyContent activeTab={activeTab} onCreatePlan={handleCreatePlanFromCanvas} />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -2018,7 +2112,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
         </PopoverContent>
       </Popover>
       <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>
-        <DialogContent className="max-w-md bg-popover text-popover-foreground">
+        <DialogContent className="max-w-md text-foreground">
           <DialogHeader>
             <DialogTitle>Connect your project</DialogTitle>
           </DialogHeader>
@@ -2193,7 +2287,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
         </DialogContent>
       </Dialog>
       <Dialog open={selectedCapability !== null} onOpenChange={(open) => !open && setSelectedCapability(null)}>
-        <DialogContent className="max-w-2xl bg-popover text-popover-foreground">
+        <DialogContent className="max-w-2xl text-foreground">
           {selectedCapability && (
             <div className="space-y-4">
               <DialogHeader className="space-y-3 text-left">
@@ -2288,4 +2382,114 @@ function ChangesIcon({ className }: { className?: string }) {
       </g>
     </svg>
   );
+}
+
+function CodeCanvasPlaceholder() {
+  return (
+    <div className="flex h-full min-h-0 w-full min-w-0 text-left">
+      <div className="flex w-[min(42%,280px)] shrink-0 flex-col overflow-y-auto border-r border-border">
+        <div className="sticky top-0 z-[1] border-b border-border bg-background px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Explorer
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-1 py-2 text-xs">
+          <div className="flex items-center gap-1 rounded px-2 py-1 text-foreground hover:bg-muted/50">
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <Folder className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+            <span className="truncate">src</span>
+          </div>
+          <div className="mt-0.5 space-y-0.5 pl-3">
+            <div className="flex items-center gap-1.5 rounded px-2 py-1 text-foreground bg-muted/50">
+              <File className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="truncate">App.tsx</span>
+            </div>
+            <div className="flex items-center gap-1.5 rounded px-2 py-1 text-muted-foreground hover:bg-muted/60">
+              <File className="size-3.5 shrink-0" aria-hidden />
+              <span className="truncate">main.tsx</span>
+            </div>
+          </div>
+          <div className="mt-1 flex items-center gap-1.5 rounded px-2 py-1 text-muted-foreground hover:bg-muted/60">
+            <File className="size-3.5 shrink-0" aria-hidden />
+            <span className="truncate">package.json</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex shrink-0 items-center border-b border-border px-3 py-2 text-xs">
+          <span className="font-mono text-foreground">App.tsx</span>
+        </div>
+        <pre className="min-h-0 flex-1 overflow-auto p-3 text-left text-xs font-mono leading-relaxed text-muted-foreground whitespace-pre">
+          {`import { useState } from 'react';
+
+export function App() {
+  const [count, setCount] = useState(0);
+  return (
+    <button type="button" onClick={() => setCount((c) => c + 1)}>
+      Count: {count}
+    </button>
+  );
+}`}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
+function CanvasTabEmptyContent({
+  activeTab,
+  onCreatePlan,
+}: {
+  activeTab: TabId;
+  onCreatePlan: () => void;
+}) {
+  const textBlock = (icon: React.ReactNode, body: React.ReactNode) => (
+    <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
+      <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+        {icon}
+      </div>
+      <div className="max-w-md text-sm leading-relaxed text-muted-foreground">{body}</div>
+    </div>
+  );
+
+  switch (activeTab) {
+    case 'changes':
+      return textBlock(
+        <ChangesIcon className="opacity-90" />,
+        <>OpenHands hasn&apos;t made any changes yet</>
+      );
+    case 'terminal':
+      return textBlock(
+        <Terminal strokeWidth={1.75} />,
+        <>No terminal output yet.</>
+      );
+    case 'app':
+      return textBlock(
+        <Monitor strokeWidth={1.75} />,
+        <>
+          No web app running. Ask OpenHands to start your project&apos;s dev server (for example: npm run dev) to see your web application here.
+        </>
+      );
+    case 'browser':
+      return textBlock(
+        <Globe strokeWidth={1.75} />,
+        <>No page loaded yet. Ask OpenHands to open a URL. Example: &quot;Open https://example.com&quot;</>
+      );
+    case 'code':
+      return <CodeCanvasPlaceholder />;
+    case 'planner':
+      return (
+        <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
+          <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+            <ClipboardList strokeWidth={1.75} />
+          </div>
+          <p className="mb-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+            There is currently no plan for this repo
+          </p>
+          <Button type="button" variant="secondary" onClick={onCreatePlan}>
+            Create a plan
+          </Button>
+        </div>
+      );
+    default:
+      return null;
+  }
 }

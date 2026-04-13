@@ -21,7 +21,13 @@ import {
 } from '../../data/hooksCatalog';
 import { mcpCatalogCategories, mcpCatalogEntries, type McpCatalogEntry } from '../../data/mcpCatalog';
 import { navigateAppRoute } from '../../lib/captureNavigation';
-import { EXTENSIONS_PLUGINS_BASE, EXTENSIONS_SKILLS_BASE } from '../../lib/extensionsRoutes';
+import {
+  EXTENSIONS_PLUGINS_BASE,
+  EXTENSIONS_SKILLS_BASE,
+  extensionsMainScrollClassName,
+  extensionsPageContentClassName,
+  extensionsShellRowClassName,
+} from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
@@ -225,7 +231,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
 
   const mcpList = (
     <>
-      <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {filteredMcp.map((entry) => (
           <li
             key={entry.id}
@@ -271,7 +277,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
 
   const hooksList = (
     <>
-      <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {filteredHooks.map((entry) => (
           <li
             key={entry.id}
@@ -320,147 +326,128 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
   );
 
   return (
-    <div className="flex h-full min-w-0 overflow-hidden bg-background">
+    <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
-      <main className="repo-dropdown-scroll flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+      <main className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
+        <div
+          className={cn(
+            extensionsPageContentClassName,
+            /* Wider separation between Skills / Plugins / MCP / Hooks on the combined catalog. */
+            scope === 'all' && 'gap-12',
+          )}
+        >
         {scope === 'all' ? (
-          <div className="p-6">
+          <>
             {showSkillsSection && (scope === 'all' || scope === 'skills') && (
-              <section aria-labelledby="ext-skills-heading">
+              <section aria-labelledby="ext-skills-heading" className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   titleId="ext-skills-heading"
                   title="Skills"
                   description={skillsDescription}
-                  bordered={false}
-                  className="px-0"
                 />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {skillCatalogItems.map(renderMarketplaceCard)}
                 </div>
                 {skillCatalogItems.length === 0 ? (
-                  <p className="mt-4 text-sm text-muted-foreground">No skills match your search.</p>
+                  <p className="text-sm text-muted-foreground">No skills match your search.</p>
                 ) : null}
               </section>
             )}
 
             {showSkillsSection && (scope === 'all' || scope === 'plugins') && (
-              <section
-                aria-labelledby="ext-plugins-heading"
-                className={cn(scope === 'all' ? 'mt-12 border-t border-border pt-10' : 'mt-0')}
-              >
+              <section aria-labelledby="ext-plugins-heading" className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   titleId="ext-plugins-heading"
                   title="Plugins"
                   description={pluginsDescription}
-                  bordered={false}
-                  className="px-0"
                 />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {pluginCatalogItems.map(renderMarketplaceCard)}
                 </div>
                 {pluginCatalogItems.length === 0 ? (
-                  <p className="mt-4 text-sm text-muted-foreground">No plugins match your search.</p>
+                  <p className="text-sm text-muted-foreground">No plugins match your search.</p>
                 ) : null}
               </section>
             )}
 
             {showMcpSection && (
-              <section
-                className={cn(
-                  showSkillsSection && scope === 'all' ? 'mt-12 border-t border-border pt-10' : 'mt-0'
-                )}
-                aria-labelledby="ext-mcp-heading"
-              >
+              <section aria-labelledby="ext-mcp-heading" className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   titleId="ext-mcp-heading"
                   title="MCP servers"
                   description={mcpDescription}
-                  bordered={false}
-                  className="px-0"
                 />
                 <div>{mcpList}</div>
               </section>
             )}
 
             {showHooksSection && (
-              <section
-                className={cn(
-                  (showSkillsSection || showMcpSection) && scope === 'all'
-                    ? 'mt-12 border-t border-border pt-10'
-                    : 'mt-0'
-                )}
-                aria-labelledby="ext-hooks-heading"
-              >
+              <section aria-labelledby="ext-hooks-heading" className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   titleId="ext-hooks-heading"
                   title="Hooks"
                   description={hooksDescription}
-                  bordered={false}
-                  className="px-0"
                 />
                 <div>{hooksList}</div>
               </section>
             )}
-          </div>
+          </>
         ) : (
           <>
             {scope === 'skills' && (
-              <>
+              <section className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   title="Skills"
                   description={skillsDescription}
                   actions={<ExtensionsCatalogAddButton kind="skill" />}
                 />
-                <div className="px-6 pb-6">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {skillCatalogItems.map(renderMarketplaceCard)}
-                  </div>
-                  {skillCatalogItems.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">No skills match your search.</p>
-                  ) : null}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {skillCatalogItems.map(renderMarketplaceCard)}
                 </div>
-              </>
+                {skillCatalogItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No skills match your search.</p>
+                ) : null}
+              </section>
             )}
             {scope === 'plugins' && (
-              <>
+              <section className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   title="Plugins"
                   description={pluginsDescription}
                   actions={<ExtensionsCatalogAddButton kind="plugin" />}
                 />
-                <div className="px-6 pb-6">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {pluginCatalogItems.map(renderMarketplaceCard)}
-                  </div>
-                  {pluginCatalogItems.length === 0 ? (
-                    <p className="mt-4 text-sm text-muted-foreground">No plugins match your search.</p>
-                  ) : null}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {pluginCatalogItems.map(renderMarketplaceCard)}
                 </div>
-              </>
+                {pluginCatalogItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No plugins match your search.</p>
+                ) : null}
+              </section>
             )}
             {scope === 'mcp' && (
-              <>
+              <section className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   title="MCP servers"
                   description={mcpDescription}
                   actions={<ExtensionsCatalogAddButton kind="mcp" />}
                 />
-                <div className="px-6 pb-6">{mcpList}</div>
-              </>
+                {mcpList}
+              </section>
             )}
             {scope === 'hooks' && (
-              <>
+              <section className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
                   title="Hooks"
                   description={hooksDescription}
                   actions={<ExtensionsCatalogAddButton kind="hook" />}
                 />
-                <div className="px-6 pb-6">{hooksList}</div>
-              </>
+                {hooksList}
+              </section>
             )}
           </>
         )}
+        </div>
       </main>
     </div>
   );

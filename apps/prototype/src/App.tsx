@@ -60,6 +60,8 @@ type CanvasTipVariant = 'none' | ProtipVariant;
 const actionSlugs: Record<string, string> = {
   code: 'chat',
   'chat-cards': 'chat-cards',
+  /** Classic ChatArea + default welcome (old default home before chat-cards was primary). */
+  'legacy-chat-home': 'legacy-chat-home',
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
@@ -72,6 +74,19 @@ const actionSlugs: Record<string, string> = {
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
+
+/** Default shell when opening the app or returning from overlays (pathname segment). */
+const DEFAULT_HOME_SLUG = actionSlugs['chat-cards'];
+
+/**
+ * Collapse nested in-app routes so the outer shell slide does not re-run when only the
+ * sub-route changes (left nav + secondary column stay stable; same pattern as Settings).
+ */
+function normalizePathForShellTransition(pathname: string): string {
+  if (pathname === '/settings' || pathname.startsWith('/settings/')) return '/settings';
+  if (pathname === '/extensions' || pathname.startsWith('/extensions/')) return '/extensions';
+  return pathname;
+}
 
 function App() {
   const navigate = useNavigate();
@@ -100,13 +115,13 @@ function App() {
   const [showStatusBadge, setShowStatusBadge] = useState(false);
   const [activeChatAutomationTitle, setActiveChatAutomationTitle] = useState<string | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
-  const [activeNavItem, setActiveNavItem] = useState('code');
+  const [activeNavItem, setActiveNavItem] = useState('chat-cards');
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
   const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
   const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
-  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('code');
+  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('chat-cards');
   const [isEnterpriseCtaVisible, setIsEnterpriseCtaVisible] = useState(true);
   // Canvas resizing state
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
@@ -130,15 +145,14 @@ function App() {
   const { pageTransitionsEnabled } = usePageTransitions();
   const shellMotionActive = pageTransitionsEnabled && !prefersReducedMotion;
 
-  /** Collapse `/settings/...` so tab/sub-route changes do not re-run the shell slide (Settings keeps its own left nav). */
+  /** Collapse `/settings/...` and `/extensions/...` so in-app navigation does not re-run the shell slide. */
   const pageTransitionKey = useMemo(() => {
-    const normalizedPath =
-      location.pathname === '/settings' || location.pathname.startsWith('/settings/')
-        ? '/settings'
-        : location.pathname;
+    const normalizedPath = normalizePathForShellTransition(location.pathname);
+    const searchForKey =
+      normalizedPath === '/extensions' ? '' : location.search;
     return [
       normalizedPath,
-      location.search,
+      searchForKey,
       figmaExportRoute ?? '',
       activeFlowPrototype ?? '',
       activeNavItem,
@@ -162,6 +176,12 @@ function App() {
   useEffect(() => {
     registerAppNavigate(navigate);
   }, [navigate]);
+
+  /** Right-panel canvas: initial spinner clears after 2s so tab empty states can show. */
+  useEffect(() => {
+    const id = window.setTimeout(() => setShowCanvasLoading(false), 2000);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
@@ -288,7 +308,7 @@ function App() {
       if (!open) {
         setActiveConversationId(null);
       }
-      navigateAppRoute(open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
+      navigateAppRoute(open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG);
     },
     [lastNonDrawerNavItem]
   );
@@ -313,7 +333,6 @@ function App() {
       ]);
       setActiveConversationId(conversationId);
       setIsConversationDrawerOpen(true);
-      navigateAppRoute(actionSlugs.conversations);
       return { conversationId, conversationName };
     },
     []
@@ -356,24 +375,34 @@ function App() {
         navigateAppRoute(
           nextOpenState
             ? actionSlugs.conversations
-            : actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code
+            : actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG
         );
         return;
       }
       if (action === 'new-project') {
         setActiveFlowPrototype(null);
         setIsConversationDrawerOpen(false);
+        setActiveNavItem('chat-cards');
+        setLastNonDrawerNavItem('chat-cards');
+        setIsWelcomeScreenActive(true);
+        navigateAppRoute(`/${actionSlugs['chat-cards']}`);
+        return;
+      }
+
+      if (action === 'legacy-chat-home') {
+        setActiveFlowPrototype(null);
+        setIsConversationDrawerOpen(false);
         setActiveNavItem('code');
         setLastNonDrawerNavItem('code');
         setIsWelcomeScreenActive(true);
-        navigateAppRoute('/');
+        navigateAppRoute(`/${actionSlugs['legacy-chat-home']}`);
         return;
       }
 
       setActiveNavItem(action);
       setLastNonDrawerNavItem(action);
       setIsConversationDrawerOpen(false);
-      navigateAppRoute(action === 'settings' ? '/settings' : (actionSlugs[action] ?? actionSlugs.code));
+      navigateAppRoute(action === 'settings' ? '/settings' : (actionSlugs[action] ?? DEFAULT_HOME_SLUG));
       if (action === 'tetris') {
       const tetrisMessage: Message = {
         role: 'ai',
@@ -387,7 +416,7 @@ function App() {
 
   const handleExitFlowPrototype = useCallback(() => {
     setActiveFlowPrototype(null);
-    navigateAppRoute(actionSlugs[lastNonDrawerNavItem] ?? actionSlugs.code);
+    navigateAppRoute(actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG);
   }, [lastNonDrawerNavItem]);
 
   const handleClaimCreditsSkip = useCallback(() => {
@@ -471,11 +500,12 @@ function App() {
       setFigmaExportRoute(null);
       setActiveFlowPrototype(null);
       setIsActiveChatView(false);
-      setActiveNavItem('code');
-      setLastNonDrawerNavItem('code');
+      setActiveNavItem('chat-cards');
+      setLastNonDrawerNavItem('chat-cards');
       setIsConversationDrawerOpen(false);
       setSettingsTab(null);
       setIsWelcomeScreenActive(true);
+      navigate({ pathname: '/chat-cards', search }, { replace: true });
       return;
     }
     if (hash === 'figma' || hash.startsWith('figma/')) {
@@ -524,12 +554,23 @@ function App() {
       navigate({ pathname: '/chat', search }, { replace: true });
       return;
     }
+    if (hash === 'legacy-chat-home') {
+      setActiveNavItem('code');
+      setLastNonDrawerNavItem('code');
+      setIsActiveChatView(false);
+      setIsWelcomeScreenActive(true);
+      setIsConversationDrawerOpen(false);
+      setSettingsTab(null);
+      return;
+    }
     if (hash === 'chat') {
       setIsActiveChatView(true);
       setActiveNavItem('code');
       setLastNonDrawerNavItem('code');
       setIsConversationDrawerOpen(false);
       setSettingsTab(null);
+      const chatParams = new URLSearchParams(search);
+      setChatContentMode(chatParams.get('content') === 'start' ? 'start' : 'conversation');
       return;
     }
     setIsActiveChatView(false);
@@ -567,7 +608,7 @@ function App() {
       setIsConversationDrawerOpen(false);
       return;
     }
-    const action = slugToAction[hash] ?? 'code';
+    const action = slugToAction[hash] ?? 'chat-cards';
     if (action === 'conversations') {
       setIsConversationDrawerOpen(true);
     } else {
@@ -663,7 +704,11 @@ function App() {
                 onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
-                isHomeRoute={location.pathname === '/'}
+                isHomeRoute={
+                  location.pathname === '/chat-cards' ||
+                  location.pathname === '/legacy-chat-home' ||
+                  location.pathname === '/'
+                }
               />
             )}
             <div
@@ -841,7 +886,7 @@ function App() {
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
                         welcomeScreenVariant={activeNavItem === 'chat-cards' ? 'cards' : 'default'}
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
-                        isHomeRoute={location.pathname === '/'}
+                        isHomeRoute={location.pathname === '/chat-cards' || location.pathname === '/legacy-chat-home' || location.pathname === '/'}
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />

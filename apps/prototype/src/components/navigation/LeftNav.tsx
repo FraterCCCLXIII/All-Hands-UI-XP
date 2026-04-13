@@ -113,7 +113,7 @@ export interface LeftNavProps {
 
 const prototypeMenuEntries = [
   { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
-  { id: 'chat-cards', label: 'Chat - Card-based', navAction: 'chat-cards' },
+  { id: 'legacy-chat-home', label: 'Chat — home (legacy)', navAction: 'legacy-chat-home' },
   { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
   { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
   {
@@ -229,7 +229,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             item.action === 'conversations'
               ? isConversationDrawerOpen
               : item.action === 'new-project'
-                ? activeNavItem === 'new-project' || (activeNavItem === 'code' && isHomeRoute)
+                ? activeNavItem === 'new-project' ||
+                  ((activeNavItem === 'code' || activeNavItem === 'chat-cards') && isHomeRoute)
                 : activeNavItem === item.action;
           return (
             <button

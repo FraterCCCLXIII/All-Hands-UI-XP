@@ -45,6 +45,9 @@ import {
   EXTENSIONS_ALL_BASE,
   EXTENSIONS_PLUGINS_BASE,
   EXTENSIONS_SKILLS_BASE,
+  extensionsMainScrollClassName,
+  extensionsPageContentClassName,
+  extensionsShellRowClassName,
 } from '../../lib/extensionsRoutes';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
@@ -474,11 +477,11 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
   const showRepoPage = viewMode === 'repos' && !!selectedRepo && !displayItem;
 
   return (
-    <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
+    <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
-      {/* Main content: spans available width (right panel only when skill selected) */}
-      <main className="flex min-w-0 min-h-0 flex-1 flex-col overflow-y-auto">
+      <main className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
+        <div className={extensionsPageContentClassName}>
         {showMarketplace ? (
           <>
             <ExtensionsCatalogPageHeader
@@ -486,7 +489,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
               description="Discover skills to add to your workspace. Open a card for prompts, curl, and install flows. Filter by category below or search from the sidebar."
               actions={<ExtensionsCatalogAddButton kind="skill" />}
             />
-            <div className="px-6 pb-6">
+            <div className="flex flex-col gap-6">
                   <div className="relative w-full overflow-hidden">
                     {/* Hidden measurement container - all tabs for accurate width calculation on resize */}
                     <div
@@ -591,7 +594,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       </div>
                     </div>
                   </div>
-              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {filteredMarketplaceSkills.map((skill) => {
                   const IconComponent = getSkillIcon(skill.id);
                   const label = skill.skillName ?? skill.title;
@@ -660,7 +663,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
             </div>
             </>
           ) : displayItem ? (
-            <div className="p-6">
+            <div>
               {isMarketplaceSkill && (
                 <button
                   type="button"
@@ -825,7 +828,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
               )}
             </div>
           ) : showRepoPage && selectedRepoGroup && selectedRepoMeta ? (
-            <div className="p-6">
+            <div>
               <div className="space-y-6">
                 <section className="rounded-xl border border-border bg-card p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
@@ -879,6 +882,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
               </div>
             </div>
           ) : null}
+        </div>
       </main>
 
       {displayItem && (

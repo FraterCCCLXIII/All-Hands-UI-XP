@@ -858,7 +858,7 @@ export function ComponentLibraryScreen({
             path: 'components/common/AppToaster.tsx',
             description:
               'Fixed bottom-right toast stack; mount once at app root. Fires on CustomEvent from showAppToast().',
-            usage: `<AppToaster />` + `showAppToast({ variant: 'success', message: '…' })`,
+            usage: `<AppToaster />` + `showAppToast({ variant: 'success' | 'error' | 'info', message: '…' })`,
             preview: (
               <div className="flex flex-wrap items-center gap-3">
                 <p className="text-xs text-muted-foreground">
@@ -878,6 +878,15 @@ export function ComponentLibraryScreen({
                   onClick={() => showAppToast({ variant: 'error', message: 'Something went wrong.' })}
                 >
                   Error toast
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() =>
+                    showAppToast({ variant: 'info', message: 'Notification settings updated.' })
+                  }
+                >
+                  Info toast
                 </Button>
               </div>
             ),

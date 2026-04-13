@@ -29,6 +29,7 @@ export const componentExportManifest = [
   'src/components/common/InfoCard.tsx',
   'src/components/common/InspectorOverlay.tsx',
   'src/components/common/AppToaster.tsx',
+  'src/lib/toastStyles.ts',
   'src/components/common/InviteTeam.tsx',
   'src/components/common/Logo.tsx',
   'src/components/common/ProjectLoading.tsx',

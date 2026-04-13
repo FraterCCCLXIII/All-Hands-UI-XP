@@ -141,7 +141,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const handleStartNewConversation = useCallback(() => {
-    navigateAppRoute('/chat');
+    /** Opens chat with Start screen as active content (see App `syncFromLocation` + `content=start`). */
+    navigateAppRoute('/chat?content=start');
   }, []);
 
   return (
@@ -222,7 +223,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 </button>
 
                 <Dialog open={openRepoModalOpen} onOpenChange={setOpenRepoModalOpen}>
-                  <DialogContent className="bg-card border-border sm:max-w-[480px]">
+                  <DialogContent className="border-border sm:max-w-[480px]">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
                         <Folder className="w-5 h-5" />

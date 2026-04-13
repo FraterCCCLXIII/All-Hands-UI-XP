@@ -1,7 +1,7 @@
 import { BookOpen, Box, Cloud, Package, Sparkles, Webhook } from 'lucide-react';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
-import { EXTENSIONS_ALL_BASE } from '../../lib/extensionsRoutes';
+import { EXTENSIONS_ALL_BASE, extensionsSectionStackGap } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
 import type { LucideIcon } from 'lucide-react';
 
@@ -34,77 +34,84 @@ export function ExtensionsShellSidebar({
   browseControls,
 }: ExtensionsShellSidebarProps) {
   return (
-    <aside className="flex w-64 flex-shrink-0 flex-col">
-      <div className="p-4">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-lg font-semibold text-foreground">Extensions</h1>
-          <a
-            href="https://docs.openhands.dev/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Extensions documentation"
-          >
-            <BookOpen className="h-4 w-4" aria-hidden />
-          </a>
-        </div>
-        {browseControls ? (
-          <>
-            <div className="mt-3">
-              <SearchInput
-                value={browseControls.searchQuery}
-                onValueChange={browseControls.onSearchChange}
-                placeholder="Search…"
-                aria-label="Search extensions"
-                size="sm"
-              />
-            </div>
-            <nav className="mt-3 space-y-1" aria-label="Filter by type">
-              {SCOPE_ITEMS.map(({ id, label, icon: Icon }) => {
-                const isActive = browseControls.scope === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => browseControls.onScopeChange(id)}
-                    className={cn(
-                      'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
-                      isActive
-                        ? 'bg-muted/80 text-foreground'
-                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
-                    )}
-                    aria-current={isActive ? 'page' : undefined}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden />
-                    <span className="min-w-0 truncate">{label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </>
-        ) : (
-          <nav className="mt-4" aria-label="Extensions scope">
-            {isAllActive ? (
-              <div
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm bg-muted/80 text-foreground"
-                aria-current="page"
-              >
-                <Package className="h-4 w-4 shrink-0" aria-hidden />
-                <span>All active</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
-                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm bg-muted/80 text-foreground transition-colors hover:bg-muted/70"
-              >
-                <Package className="h-4 w-4 shrink-0" aria-hidden />
-                <span>All active</span>
-              </button>
-            )}
-          </nav>
-        )}
+    <aside
+      className={cn(
+        'relative z-10 flex w-64 shrink-0 flex-col pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
+        extensionsSectionStackGap,
+      )}
+    >
+      <div className="flex items-center justify-between gap-2 ml-1">
+        <h2 className="text-xl font-semibold leading-6 text-foreground">Extensions</h2>
+        <a
+          href="https://docs.openhands.dev/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Extensions documentation"
+        >
+          <BookOpen className="h-4 w-4" aria-hidden />
+        </a>
       </div>
+      {browseControls ? (
+        <>
+          <SearchInput
+            value={browseControls.searchQuery}
+            onValueChange={browseControls.onSearchChange}
+            placeholder="Search…"
+            aria-label="Search extensions"
+            size="sm"
+          />
+          <nav className="flex flex-col gap-2" aria-label="Filter by type">
+            {SCOPE_ITEMS.map(({ id, label, icon: Icon }) => {
+              const isActive = browseControls.scope === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => browseControls.onScopeChange(id)}
+                  className={cn(
+                    'group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
+                    isActive
+                      ? 'bg-muted/60 text-foreground'
+                      : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon
+                    className={cn(
+                      'h-5 w-5 shrink-0',
+                      isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
+                    )}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 truncate font-normal">{label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </>
+      ) : (
+        <nav aria-label="Extensions scope">
+          {isAllActive ? (
+            <div
+              className="flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm bg-muted/60 text-foreground"
+              aria-current="page"
+            >
+              <Package className="h-5 w-5 shrink-0 text-white" aria-hidden />
+              <span className="font-normal">All active</span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
+              className="group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+            >
+              <Package className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
+              <span className="font-normal group-hover:text-white">All active</span>
+            </button>
+          )}
+        </nav>
+      )}
     </aside>
   );
 }

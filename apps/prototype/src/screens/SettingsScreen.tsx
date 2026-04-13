@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
+import { showAppToast } from '../lib/appToast';
 import {
   dataTableBodyClassName,
   dataTableClassName,
@@ -417,6 +418,18 @@ type SettingsMcpServerRow = {
   availableAllConversations: boolean;
 };
 
+type OpenHandsApiKeyRow = {
+  id: string;
+  name: string;
+  created: string;
+  lastUsed: string;
+};
+
+const initialOpenHandsApiKeys: OpenHandsApiKeyRow[] = [
+  { id: 'api-key-cli-2', name: 'CLI 2', created: '9/23/2025, 8:58:05 PM', lastUsed: 'Never' },
+  { id: 'api-key-cli', name: 'CLI', created: '9/19/2025, 5:09:37 PM', lastUsed: 'Never' },
+];
+
 export interface SettingsScreenProps {
   /** Initial tab from route (e.g. llm for #/settings/llm) */
   initialTab?: string;
@@ -485,9 +498,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [inviteInput, setInviteInput] = useState('');
   const [inviteEmails, setInviteEmails] = useState<string[]>([]);
   const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastVariant, setToastVariant] = useState<'info' | 'success' | 'error'>('info');
-  const [toastVisible, setToastVisible] = useState(false);
   const [gitSourceStatus, setGitSourceStatus] = useState<Record<GitSourceId, GitConnectionStatus>>(
     initialGitSourceStatus,
   );
@@ -510,6 +520,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [secretDeleteTarget, setSecretDeleteTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteOrganizationDialogOpen, setDeleteOrganizationDialogOpen] = useState(false);
   const [addCreditAmount, setAddCreditAmount] = useState('');
+  const [openHandsApiKeys, setOpenHandsApiKeys] = useState<OpenHandsApiKeyRow[]>(initialOpenHandsApiKeys);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   const canAddCredit = useMemo(() => {
@@ -671,9 +682,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const showToast = (message: string, variant: 'info' | 'success' | 'error' = 'info') => {
-    setToastMessage(message);
-    setToastVariant(variant);
-    setToastVisible(true);
+    showAppToast({ message, variant });
   };
 
   const handleConfirmDeleteSecret = () => {
@@ -745,11 +754,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     showToast(`Invites sent to ${uniqueEmails.length} email${uniqueEmails.length === 1 ? '' : 's'}.`);
   };
 
-  useEffect(() => {
-    if (!toastVisible) return;
-    const timer = window.setTimeout(() => setToastVisible(false), 3000);
-    return () => window.clearTimeout(timer);
-  }, [toastVisible]);
   const handleOrgChange = (orgId: string) => {
     if (controlledOrgId === undefined) {
       setUncontrolledOrgId(orgId);
@@ -1143,76 +1147,77 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   const isConnecting = status === 'connecting';
                   return (
                     <div key={source.id} className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                      <div className="mb-4 flex items-center justify-between gap-4">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          {source.icon}
-                          <div className="space-y-1 min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-col gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="shrink-0 pt-0.5 text-foreground">{source.icon}</div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                               <h3 className="text-base font-semibold leading-snug text-foreground">{source.name}</h3>
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border w-fit">
+                              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5">
                                 <span
-                                  className={`h-2 w-2 rounded-full ${
+                                  className={`h-2 w-2 shrink-0 rounded-full ${
                                     isConnected
                                       ? 'bg-success'
                                       : isConnecting
-                                      ? 'bg-amber-400 animate-pulse'
+                                      ? 'animate-pulse bg-amber-400'
                                       : 'bg-destructive'
                                   }`}
                                   aria-hidden
                                 />
-                                <span className="font-normal text-xs text-muted-foreground">
+                                <span className="text-xs font-normal text-muted-foreground">
                                   {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
                                 </span>
                               </div>
                             </div>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm leading-relaxed text-muted-foreground">
                               Connect your {source.name} account to authorize repositories and configure access for
                               OpenHands.
                             </p>
                           </div>
+                          {isConnected && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  type="button"
+                                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                                  aria-label={`Open actions for ${source.name}`}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-44">
+                                <DropdownMenuItem
+                                  onClick={() => setGitSourceDisconnectTarget(source.id)}
+                                  className="gap-2 text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Disconnect
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
-                        {isConnected && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                className="h-8 w-8 rounded-md border border-border bg-background text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors flex items-center justify-center"
-                                aria-label={`Open actions for ${source.name}`}
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem
-                                onClick={() => setGitSourceDisconnectTarget(source.id)}
-                                className="gap-2 text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                Disconnect
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        {isConnected ? (
-                          <button
-                            type="button"
-                            onClick={() => handleGitSourceConfigure(source.id)}
-                            className="h-10 flex items-center justify-center px-4 text-sm rounded-md border border-border bg-background text-foreground hover:bg-muted/60 transition-colors"
-                          >
-                            Configure Repositories
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => void handleGitSourceConnect(source.id)}
-                            disabled={isConnecting}
-                            className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {isConnecting ? 'Connecting...' : source.connectLabel}
-                          </button>
-                        )}
+                        {/* Aligns with title/description column: icon w-6 (24px) + gap-3 (12px) = pl-9 */}
+                        <div className="flex flex-wrap items-center gap-3 pl-9">
+                          {isConnected ? (
+                            <button
+                              type="button"
+                              onClick={() => handleGitSourceConfigure(source.id)}
+                              className="flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm text-foreground transition-colors hover:bg-muted/60"
+                            >
+                              Configure Repositories
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void handleGitSourceConnect(source.id)}
+                              disabled={isConnecting}
+                              className="flex h-10 items-center justify-center rounded-md bg-white px-4 text-sm text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {isConnecting ? 'Connecting...' : source.connectLabel}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1714,36 +1719,40 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <Plus className="h-4 w-4 shrink-0" aria-hidden />
                   Add A New Secret
                 </button>
-                {secrets.length === 0 ? (
-                  <div
-                    className="rounded-lg border border-border bg-card px-6 py-12 text-center shadow-sm"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                      No secrets yet. Add your first secret to store API keys and other sensitive values for workflows
-                      and automations—they stay encrypted and are never shown in full after creation.
-                    </p>
-                  </div>
-                ) : (
-                  <div className={dataTableShellClassName}>
-                    <div className={dataTableInnerClassName}>
-                      <table className={dataTableClassName}>
-                        <thead>
-                          <tr className={dataTableHeadRowClassName}>
-                            <th scope="col" className={dataTableTh('w-1/4 px-4 text-left')}>
-                              Name
-                            </th>
-                            <th scope="col" className={dataTableTh('w-1/2 px-4 text-left')}>
-                              Description
-                            </th>
-                            <th scope="col" className={dataTableTh('w-1/4 px-4 text-right')}>
-                              Actions
-                            </th>
+                <div className={dataTableShellClassName}>
+                  <div className={dataTableInnerClassName}>
+                    <table className={dataTableClassName}>
+                      <thead>
+                        <tr className={dataTableHeadRowClassName}>
+                          <th scope="col" className={dataTableTh('w-1/4 px-4 text-left')}>
+                            Name
+                          </th>
+                          <th scope="col" className={dataTableTh('w-1/2 px-4 text-left')}>
+                            Description
+                          </th>
+                          <th scope="col" className={dataTableTh('w-1/4 px-4 text-right')}>
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className={dataTableBodyClassName}>
+                        {secrets.length === 0 ? (
+                          <tr className="bg-card">
+                            <td
+                              colSpan={3}
+                              className="px-4 py-12 text-center"
+                              role="status"
+                              aria-live="polite"
+                            >
+                              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                                No secrets yet. Add your first secret to store API keys and other sensitive values for
+                                workflows and automations—they stay encrypted and are never shown in full after
+                                creation.
+                              </p>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody className={dataTableBodyClassName}>
-                          {secrets.map((row) => (
+                        ) : (
+                          secrets.map((row) => (
                             <tr key={row.id} className={dataTableRowClassName}>
                               <td className="px-4 py-3.5 align-middle text-sm text-foreground">{row.name}</td>
                               <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
@@ -1777,12 +1786,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                 </div>
                               </td>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           )}
@@ -1893,42 +1902,48 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           </tr>
                         </thead>
                         <tbody className={dataTableBodyClassName}>
-                          <tr className={dataTableRowClassName}>
-                            <td className="px-4 py-3.5 align-middle text-sm text-foreground truncate max-w-[160px]" title="CLI 2">
-                              CLI 2
-                            </td>
-                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
-                              9/23/2025, 8:58:05 PM
-                            </td>
-                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">Never</td>
-                            <td className="px-4 py-3.5 align-middle text-right">
-                              <button
-                                type="button"
-                                aria-label="Delete CLI 2"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          {openHandsApiKeys.length === 0 ? (
+                            <tr className="bg-card">
+                              <td
+                                colSpan={4}
+                                className="px-4 py-12 text-center"
+                                role="status"
+                                aria-live="polite"
                               >
-                                <Trash2 className="h-4 w-4" aria-hidden />
-                              </button>
-                            </td>
-                          </tr>
-                          <tr className={dataTableRowClassName}>
-                            <td className="px-4 py-3.5 align-middle text-sm text-foreground truncate max-w-[160px]" title="CLI">
-                              CLI
-                            </td>
-                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
-                              9/19/2025, 5:09:37 PM
-                            </td>
-                            <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">Never</td>
-                            <td className="px-4 py-3.5 align-middle text-right">
-                              <button
-                                type="button"
-                                aria-label="Delete CLI"
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                              >
-                                <Trash2 className="h-4 w-4" aria-hidden />
-                              </button>
-                            </td>
-                          </tr>
+                                <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                                  No API keys yet. Create a key to authenticate with the OpenHands API from your
+                                  applications and scripts.
+                                </p>
+                              </td>
+                            </tr>
+                          ) : (
+                            openHandsApiKeys.map((row) => (
+                              <tr key={row.id} className={dataTableRowClassName}>
+                                <td
+                                  className="max-w-[160px] truncate px-4 py-3.5 align-middle text-sm text-foreground"
+                                  title={row.name}
+                                >
+                                  {row.name}
+                                </td>
+                                <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">{row.created}</td>
+                                <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
+                                  {row.lastUsed}
+                                </td>
+                                <td className="px-4 py-3.5 align-middle text-right">
+                                  <button
+                                    type="button"
+                                    aria-label={`Delete ${row.name}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() =>
+                                      setOpenHandsApiKeys((prev) => prev.filter((k) => k.id !== row.id))
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>
@@ -2796,7 +2811,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     </DialogContent>
   </Dialog>
   <Dialog open={createOrgModalOpen} onOpenChange={setCreateOrgModalOpen}>
-    <DialogContent className="sm:max-w-xl bg-card text-foreground border border-border">
+    <DialogContent className="sm:max-w-xl border border-border text-foreground">
       <DialogHeader>
         <div className="flex justify-start pb-4">
           <svg
@@ -2875,27 +2890,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </DialogFooter>
     </DialogContent>
   </Dialog>
-  {toastMessage && (
-    <div
-      className={`fixed bottom-6 right-6 z-50 transition-all ${
-        toastVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
-      }`}
-      role="status"
-      aria-live="polite"
-    >
-      <div
-        className={`rounded-md px-4 py-3 shadow-lg ${
-          toastVariant === 'error'
-            ? 'border border-destructive/40 bg-destructive/15 text-destructive-foreground'
-            : toastVariant === 'success'
-            ? 'border border-success/40 bg-success/15 text-success-foreground'
-            : 'border border-blue-500/40 bg-blue-500/15 text-blue-100'
-        }`}
-      >
-        <div className="text-sm">{toastMessage}</div>
-      </div>
-    </div>
-  )}
     </div>
   );
 };

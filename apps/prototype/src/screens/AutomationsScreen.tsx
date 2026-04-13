@@ -23,6 +23,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { SearchInput } from '../components/ui/search-input';
+import { NativeSelect } from '../components/ui/native-select';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { Spinner } from '../components/common/Spinner';
 import { Button } from '../components/ui/button';
@@ -745,11 +746,11 @@ function MultiSelectBubbleInput({
               variant="ghost"
               size="sm"
               disabled={menuTriggerMode ? false : availableOptions.length === 0}
-              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-transparent hover:!text-black"
+              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-white hover:!text-black"
               aria-label={addActionLabel}
             >
-              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:!text-black" />
-              <span className="text-xs font-medium text-muted-foreground transition-colors duration-200 group-hover:!text-black">
+              <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-black" />
+              <span className="text-xs font-medium text-muted-foreground transition-colors duration-200 group-hover:text-black">
                 {addActionLabel}
               </span>
             </Button>
@@ -874,7 +875,7 @@ function AddAutomationRepositoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-border bg-background text-foreground sm:max-w-[425px]">
+      <DialogContent className="max-w-md border-border text-foreground sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add repository</DialogTitle>
           <DialogDescription>
@@ -990,12 +991,12 @@ function RepositoryTargetsBubbleField({
           type="button"
           variant="ghost"
           size="sm"
-          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-transparent hover:!text-black"
+          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-white hover:!text-black"
           aria-label="Add repository"
           onClick={onRequestAdd}
         >
-          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:!text-black" />
-          <span className="text-xs font-medium text-muted-foreground transition-colors duration-200 group-hover:!text-black">
+          <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-black" />
+          <span className="text-xs font-medium text-muted-foreground transition-colors duration-200 group-hover:text-black">
             Add repository
           </span>
         </Button>
@@ -1014,7 +1015,7 @@ function AssociatedResources({
   items: string[];
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
+    <section className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -1037,7 +1038,7 @@ function AssociatedResources({
 
 function PromptSection({ prompt }: { prompt: string }) {
   return (
-    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
+    <section className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -1045,9 +1046,7 @@ function PromptSection({ prompt }: { prompt: string }) {
         </div>
       </div>
       <div className="px-5 py-4">
-        <div className="rounded-xl bg-background/40">
-          <p className="text-sm leading-6 text-foreground">{prompt}</p>
-        </div>
+        <p className="text-sm leading-6 text-foreground">{prompt}</p>
       </div>
     </section>
   );
@@ -1079,7 +1078,7 @@ function MetadataSection({
   automation: AutomationItem;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
+    <section className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -1132,7 +1131,7 @@ function ActivityLogSection({
   onOpenConversation?: (conversationId: string) => void;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
+    <section className="rounded-2xl border border-border bg-card">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <History className="h-4 w-4 text-muted-foreground" />
@@ -1146,7 +1145,7 @@ function ActivityLogSection({
       ) : (
         <>
           <div
-            className="hidden border-b border-border bg-muted/20 px-5 py-2 sm:grid sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_auto] sm:items-center sm:gap-4 sm:[&>*]:min-w-0"
+            className="hidden border-b border-border bg-muted/20 px-5 py-2 sm:grid sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(12rem,auto)] sm:items-center sm:gap-4 sm:[&>*]:min-w-0"
             aria-hidden
           >
             <span className="text-left text-xs font-medium text-muted-foreground">Time</span>
@@ -1165,7 +1164,7 @@ function ActivityLogSection({
               return (
                 <li
                   key={run.id}
-                  className="grid grid-cols-1 gap-2 px-5 py-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_auto] sm:items-center sm:gap-4 sm:[&>*]:min-w-0"
+                  className="grid grid-cols-1 gap-2 px-5 py-3 sm:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(12rem,auto)] sm:items-center sm:gap-4 sm:[&>*]:min-w-0"
                 >
                   <div className="text-left">
                     <div className="text-left text-xs font-medium text-muted-foreground sm:hidden">Time</div>
@@ -1625,7 +1624,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       </Popover>
 
       <Dialog open={isAddAutomationGuideModalOpen} onOpenChange={setIsAddAutomationGuideModalOpen}>
-        <DialogContent className="flex max-h-[min(90vh,40rem)] max-w-lg flex-col gap-0 overflow-hidden bg-popover p-0 text-popover-foreground sm:max-w-lg">
+        <DialogContent className="flex max-h-[min(90vh,40rem)] max-w-lg flex-col gap-0 overflow-hidden p-0 text-foreground sm:max-w-lg">
           <DialogHeader className="shrink-0 border-b border-border px-6 pb-4 pt-6 text-left">
             <DialogTitle>How to create an Automation</DialogTitle>
           </DialogHeader>
@@ -1715,7 +1714,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     return (
       <>
       <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
-        <div className="mx-auto w-full max-w-5xl">
+        <div className="mx-auto w-full max-w-4xl">
         <button
           type="button"
           onClick={() => setSelectedAutomationId(null)}
@@ -1841,7 +1840,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     return (
       <>
         <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
-          <div className="mx-auto w-full max-w-5xl">
+          <div className="mx-auto w-full max-w-4xl">
             <button
               type="button"
               onClick={() => {
@@ -1854,7 +1853,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               <span>Back to Automations</span>
             </button>
 
-            <div className="rounded-2xl border border-border bg-card p-6 transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
+            <div className="rounded-2xl border border-border bg-card p-6">
               <div className="mb-5 space-y-2">
                 <h2 className="text-xl font-semibold text-foreground">Create Automation</h2>
                 <p className="text-sm text-muted-foreground">
@@ -1954,17 +1953,17 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                   <span className="flex h-5 items-center text-sm font-medium leading-none text-foreground">
                     Model
                   </span>
-                  <select
+                  <NativeSelect
+                    aria-label="Model"
                     value={newAutomationModel}
                     onChange={(event) => setNewAutomationModel(event.target.value)}
-                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
                   >
                     {automationModelOptions.map((model) => (
                       <option key={model} value={model}>
                         {model}
                       </option>
                     ))}
-                  </select>
+                  </NativeSelect>
                 </label>
                 <div className="space-y-2">
                   <div className="flex h-5 items-center gap-1.5">
@@ -2039,7 +2038,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         </div>
 
         <Dialog open={scheduleModalOpen} onOpenChange={setScheduleModalOpen}>
-          <DialogContent className="max-w-md border-border bg-background text-foreground sm:max-w-[425px]">
+          <DialogContent className="max-w-md border-border text-foreground sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Schedule</DialogTitle>
               <DialogDescription>
@@ -2049,19 +2048,19 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             <div className="space-y-5">
               <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Days</span>
-                <select
+                <NativeSelect
+                  aria-label="Days"
                   value={scheduleDraft.days}
                   onChange={(event) =>
                     setScheduleDraft((previous) => ({ ...previous, days: event.target.value }))
                   }
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
                 >
                   {scheduleDayChoices.map((day) => (
                     <option key={day} value={day}>
                       {day}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </label>
               <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Time</span>
@@ -2076,19 +2075,19 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               </label>
               <label className="space-y-2">
                 <span className="text-sm font-medium text-foreground">Timezone</span>
-                <select
+                <NativeSelect
+                  aria-label="Timezone"
                   value={scheduleDraft.timezone}
                   onChange={(event) =>
                     setScheduleDraft((previous) => ({ ...previous, timezone: event.target.value }))
                   }
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
                 >
                   {scheduleTimezoneChoices.map((tz) => (
                     <option key={tz} value={tz}>
                       {tz}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               </label>
             </div>
             <DialogFooter className="gap-2 sm:gap-0">
@@ -2127,7 +2126,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   return (
     <>
     <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-4xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">

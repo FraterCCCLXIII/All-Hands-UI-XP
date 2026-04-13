@@ -6,6 +6,8 @@
 @layer base {
   :root {
     --background: 0 0% 5%;
+    /** Modal / dialog surfaces — matches app shell; set explicitly to diverge from `--background`. */
+    --modal-background: var(--background);
     --foreground: 0 0% 98%;
 
     --card: 0 0% 7%;

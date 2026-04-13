@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Bell, CheckCircle2, Info, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toastVariantSurfaceClasses } from '../lib/toastStyles';
+import { cn } from '../lib/utils';
 
 const Tooltip: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => {
   const [visible, setVisible] = useState(false);
@@ -123,23 +125,32 @@ export const ClaimStatesScreen = () => {
         <section className="rounded-lg border border-border bg-card p-5">
           <h3 className="text-sm font-semibold text-foreground">Toast Notifications</h3>
           <div className="mt-4 space-y-3">
-            <div className="rounded-md px-4 py-3 shadow-lg border border-blue-500/40 bg-blue-500/15 text-blue-100">
-              <div className="text-sm flex items-center gap-2">
-                <Info className="h-4 w-4" />
-                Notification settings updated.
-              </div>
+            <div
+              className={cn(
+                'flex items-center gap-2 rounded-md px-4 py-3 text-sm shadow-lg',
+                toastVariantSurfaceClasses.info,
+              )}
+            >
+              <Info className="h-4 w-4 shrink-0" aria-hidden />
+              Notification settings updated.
             </div>
-            <div className="rounded-md px-4 py-3 shadow-lg border border-success/40 bg-success/15 text-success-foreground">
-              <div className="text-sm flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4" />
-                Organization claimed successfully.
-              </div>
+            <div
+              className={cn(
+                'flex items-center gap-2 rounded-md px-4 py-3 text-sm shadow-lg',
+                toastVariantSurfaceClasses.success,
+              )}
+            >
+              <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
+              Organization claimed successfully.
             </div>
-            <div className="rounded-md px-4 py-3 shadow-lg border border-destructive/40 bg-destructive/15 text-destructive-foreground">
-              <div className="text-sm flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4" />
-                Disconnect failed. Try again.
-              </div>
+            <div
+              className={cn(
+                'flex items-center gap-2 rounded-md px-4 py-3 text-sm shadow-lg',
+                toastVariantSurfaceClasses.error,
+              )}
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
+              Disconnect failed. Try again.
             </div>
           </div>
         </section>

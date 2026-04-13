@@ -10,7 +10,7 @@ export type ExtensionsCatalogPageHeaderProps = {
   actions?: ReactNode;
   /** Extra controls below the description (e.g. search + filters). */
   children?: ReactNode;
-  /** When true, use page padding (standalone top). When false, spacing only (nested under a padded parent). */
+  /** When true, add bottom padding after the title row (use when not wrapped in a parent with `gap-6`). */
   bordered?: boolean;
   className?: string;
 };
@@ -21,22 +21,23 @@ export function ExtensionsCatalogPageHeader({
   description,
   actions,
   children,
-  bordered = true,
+  bordered = false,
   className,
 }: ExtensionsCatalogPageHeaderProps) {
   return (
     <header
       className={cn(
-        bordered ? 'px-6 py-6' : 'mb-6',
+        /* Parent sections typically use `gap-6` (see Settings); optional extra tail padding when standalone. */
+        bordered && 'pb-6',
         className
       )}
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="min-w-0 flex-1">
-          <h2 id={titleId} className="text-2xl font-semibold text-foreground">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1 space-y-1">
+          <h2 id={titleId} className="text-xl font-semibold leading-6 text-foreground">
             {title}
           </h2>
-          <div className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</div>
+          <div className="max-w-2xl text-sm text-muted-foreground">{description}</div>
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center justify-start gap-2 sm:justify-end sm:pt-0.5">
@@ -44,7 +45,7 @@ export function ExtensionsCatalogPageHeader({
           </div>
         ) : null}
       </div>
-      {children ? <div className="mt-6">{children}</div> : null}
+      {children ? <div className="mt-4">{children}</div> : null}
     </header>
   );
 }

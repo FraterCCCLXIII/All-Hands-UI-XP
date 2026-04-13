@@ -18,7 +18,15 @@ import {
 import { InfoCard } from '../../components/common/InfoCard';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
 import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '../../lib/captureNavigation';
-import { EXTENSIONS_ALL_BASE, EXTENSIONS_PLUGINS_BASE } from '../../lib/extensionsRoutes';
+import {
+  EXTENSIONS_ALL_BASE,
+  EXTENSIONS_PLUGINS_BASE,
+  extensionsMainNoScrollClassName,
+  extensionsMainScrollClassName,
+  extensionsPageContentClassName,
+  extensionsShellRowClassName,
+  extensionsWidePageContentClassName,
+} from '../../lib/extensionsRoutes';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
@@ -237,17 +245,19 @@ ${skill.initialPrompt}
     });
 
   return (
-    <div className="flex h-full w-full min-w-0 overflow-hidden bg-background">
+    <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
       <main
         className={cn(
-          'flex min-w-0 min-h-0 flex-1 flex-col',
-          selectedPlugin ? 'overflow-hidden' : 'overflow-y-auto'
+          selectedPlugin ? extensionsMainNoScrollClassName : extensionsMainScrollClassName,
+          !selectedPlugin && 'repo-dropdown-scroll',
         )}
       >
         {selectedPlugin ? (
-          <div className="flex min-h-0 flex-1 flex-col p-6">
+          <div
+            className={cn(extensionsWidePageContentClassName, 'flex min-h-0 flex-1 flex-col')}
+          >
             <div className="flex h-full min-h-0 gap-4">
               <div className="repo-dropdown-scroll min-w-0 flex-1 overflow-y-auto pr-1">
                 <button
@@ -268,7 +278,7 @@ ${skill.initialPrompt}
                 <div className="my-6">
                   <div className="flex items-start justify-between gap-4 min-w-0">
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-2xl font-semibold text-foreground">
+                      <h2 className="text-xl font-semibold leading-6 text-foreground">
                         {selectedPlugin.skillName ?? selectedPlugin.title}
                       </h2>
                       <p className="mt-2 text-sm text-muted-foreground">{selectedPlugin.description}</p>
@@ -316,7 +326,7 @@ ${skill.initialPrompt}
 
                 <section className="mt-4">
                   <h3 className="text-sm font-semibold text-foreground">Skills in this plugin bundle</h3>
-                  <div className="mt-3 grid grid-cols-1 gap-4">
+                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {pluginBundleSkills.map((skill) => (
                       <InfoCard
                         key={skill.id}
@@ -378,23 +388,20 @@ ${skill.initialPrompt}
             </div>
           </div>
         ) : (
-          <>
-            <ExtensionsCatalogPageHeader
-              title="Plugins"
-              description="Enable plugin bundles that ship multiple skills together. Open a pack for files, toggles, and bundled skills."
-              actions={<ExtensionsCatalogAddButton kind="plugin" />}
-            />
-            <div className="px-6 pb-6">
-              <section aria-labelledby="plugins-marketplace-heading">
-                <h3 id="plugins-marketplace-heading" className="sr-only">
-                  Available plugins
-                </h3>
-                {filteredSkills.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No marketplace plugins match your search.
-                  </p>
-                )}
-                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+          <div className={extensionsPageContentClassName}>
+            <section aria-labelledby="plugins-marketplace-heading" className="flex flex-col gap-4">
+              <ExtensionsCatalogPageHeader
+                title="Plugins"
+                description="Enable plugin bundles that ship multiple skills together. Open a pack for files, toggles, and bundled skills."
+                actions={<ExtensionsCatalogAddButton kind="plugin" />}
+              />
+              <h3 id="plugins-marketplace-heading" className="sr-only">
+                Available plugins
+              </h3>
+              {filteredSkills.length === 0 && (
+                <p className="text-sm text-muted-foreground">No marketplace plugins match your search.</p>
+              )}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {filteredSkills.map((skill) => {
                     const pluginLabel = skill.skillName ?? skill.title;
                     const locked = skill.switchLocked === true;
@@ -452,8 +459,7 @@ ${skill.initialPrompt}
                   })}
                 </div>
               </section>
-            </div>
-          </>
+          </div>
         )}
       </main>
     </div>

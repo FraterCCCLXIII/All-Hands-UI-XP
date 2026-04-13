@@ -31,7 +31,7 @@ export const DeleteWorkflowDialog: React.FC<DeleteWorkflowDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-background text-foreground border-border sm:max-w-[425px]">
+      <DialogContent className="max-w-md border-border text-foreground sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Delete {entityLabel}</DialogTitle>
           <DialogDescription>

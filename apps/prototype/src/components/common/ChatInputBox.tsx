@@ -234,7 +234,6 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
               title={selectedModel}
               data-testid="model-trigger"
             >
-              <Microchip className="w-4 h-4 shrink-0" aria-hidden="true" />
               <span className="text-xs font-normal leading-4 truncate">{selectedModel}</span>
               <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" aria-hidden="true" />
             </button>

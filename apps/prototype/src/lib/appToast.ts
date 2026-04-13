@@ -1,8 +1,10 @@
+import type { ToastVariant } from './toastStyles';
+
 /** Dispatched on `window` for global toasts (see `AppToaster`). */
 export const APP_TOAST_EVENT = 'app-toast';
 
 export type AppToastPayload = {
-  variant: 'success' | 'error';
+  variant: ToastVariant;
   message: string;
 };
 

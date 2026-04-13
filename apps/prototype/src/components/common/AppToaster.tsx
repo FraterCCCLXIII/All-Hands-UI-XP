@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, Info, XCircle } from 'lucide-react';
 import { APP_TOAST_EVENT, type AppToastPayload } from '../../lib/appToast';
+import {
+  TOAST_SURFACE_APP_CLASS,
+  TOAST_VIEWPORT_CLASS,
+  toastIconAccentClasses,
+  toastVariantSurfaceClasses,
+} from '../../lib/toastStyles';
 import { cn } from '../../lib/utils';
 
 type ToastItem = AppToastPayload & { id: number };
@@ -27,27 +33,22 @@ export function AppToaster() {
 
   if (!toast) return null;
 
+  const variant = toast.variant;
+
   return (
-    <div
-      className="pointer-events-none fixed bottom-6 right-6 z-[200] flex max-w-sm flex-col gap-2 sm:max-w-md"
-      role="status"
-      aria-live="polite"
-    >
+    <div className={TOAST_VIEWPORT_CLASS} role="status" aria-live="polite">
       <div
         key={toast.id}
-        className={cn(
-          'pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm',
-          toast.variant === 'success'
-            ? 'border-success/35 bg-card text-foreground'
-            : 'border-destructive/50 bg-card text-foreground'
-        )}
+        className={cn(TOAST_SURFACE_APP_CLASS, toastVariantSurfaceClasses[variant])}
       >
-        {toast.variant === 'success' ? (
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden />
+        {variant === 'success' ? (
+          <CheckCircle2 className={cn('h-5 w-5 shrink-0', toastIconAccentClasses.success)} aria-hidden />
+        ) : variant === 'error' ? (
+          <XCircle className={cn('h-5 w-5 shrink-0', toastIconAccentClasses.error)} aria-hidden />
         ) : (
-          <XCircle className="h-5 w-5 shrink-0 text-destructive" aria-hidden />
+          <Info className={cn('h-5 w-5 shrink-0', toastIconAccentClasses.info)} aria-hidden />
         )}
-        <p className="text-sm leading-snug">{toast.message}</p>
+        <p className="min-w-0 flex-1 text-sm leading-snug">{toast.message}</p>
       </div>
     </div>
   );

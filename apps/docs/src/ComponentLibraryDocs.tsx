@@ -1,6 +1,14 @@
 import { useMemo } from 'react';
 import { PrLabel, type PrLabelStatus } from '../../prototype/src/components/dashboard/PrLabel';
-import { ChevronDown, Copy, EllipsisVertical, FileCode, FolderOpen, Wrench } from 'lucide-react';
+import {
+  ChevronDown,
+  Copy,
+  EllipsisVertical,
+  FileCode,
+  FolderOpen,
+  LoaderCircle,
+  Wrench,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,6 +108,32 @@ export function ComponentLibraryDocs() {
                       }}
                       showFooter={false}
                     />
+                  </div>
+                ),
+              },
+              {
+                id: 'canvas-loading-panel',
+                name: 'Canvas loading panel',
+                description:
+                  'Full-height loading state for canvas/preview columns. Implemented in `Canvas.tsx` when `isContentLoading` is true; `ActiveChatScreen` adds an optional absolutely positioned bottom slot for protips (tailwindcss-animate in/out). Status copy uses the `gradient-flow` utility from `apps/prototype/src/index.css`.',
+                usage: `<div className="flex flex-col flex-1 gap-3 min-w-max h-full min-h-0">
+  <div className="bg-muted/60 border border-border rounded-xl flex flex-col items-center justify-center h-full w-full min-h-[200px] relative">
+    {/* Optional (ActiveChatScreen): bottom tip — absolute bottom-4, animate-in/out */}
+    <LoaderCircle className="w-16 h-16 text-foreground animate-spin" aria-hidden />
+    <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
+  </div>
+</div>`,
+                preview: (
+                  <div className="flex h-[240px] w-full max-w-md min-h-0 flex-col gap-3">
+                    <div className="relative flex h-full w-full min-h-[200px] flex-col items-center justify-center rounded-xl border border-border bg-muted/60">
+                      <LoaderCircle
+                        className="h-16 w-16 animate-spin text-foreground"
+                        aria-hidden
+                      />
+                      <span className="gradient-flow p-4 text-sm font-normal leading-5">
+                        Loading...
+                      </span>
+                    </div>
                   </div>
                 ),
               },

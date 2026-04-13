@@ -4,6 +4,7 @@ import { SearchInput } from '../../components/ui/search-input';
 import { Button } from '../../components/ui/button';
 import { mcpCatalogCategories, mcpCatalogEntries, type McpCatalogEntry } from '../../data/mcpCatalog';
 import { navigateAppRoute } from '../../lib/captureNavigation';
+import { extensionsMainScrollClassName, extensionsPageContentClassName } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
@@ -50,54 +51,54 @@ export function ExtensionsMcpPanel() {
   );
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-y-auto">
-      <ExtensionsCatalogPageHeader
-        title="MCP servers"
-        description={description}
-        actions={<ExtensionsCatalogAddButton kind="mcp" />}
-      >
-        <div className="max-w-lg">
-          <SearchInput
-            value={searchQuery}
-            onValueChange={setSearchQuery}
-            placeholder="Search by name, tag, or description"
-            aria-label="Search MCP catalog"
-            size="lg"
-          />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter by category">
-          <button
-            type="button"
-            onClick={() => setCategorySlug(null)}
-            className={cn(
-              'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-              categorySlug === null
-                ? 'border-primary bg-primary text-primary-foreground'
-                : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted/60'
-            )}
-          >
-            All
-          </button>
-          {mcpCatalogCategories.map((cat) => (
+    <div className={cn(extensionsMainScrollClassName, 'h-full min-h-0 flex-1')}>
+      <div className={extensionsPageContentClassName}>
+        <ExtensionsCatalogPageHeader
+          title="MCP servers"
+          description={description}
+          actions={<ExtensionsCatalogAddButton kind="mcp" />}
+        >
+          <div className="max-w-lg">
+            <SearchInput
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              placeholder="Search by name, tag, or description"
+              aria-label="Search MCP catalog"
+              size="lg"
+            />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter by category">
             <button
-              key={cat.slug}
               type="button"
-              onClick={() => setCategorySlug(cat.slug === categorySlug ? null : cat.slug)}
+              onClick={() => setCategorySlug(null)}
               className={cn(
                 'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                categorySlug === cat.slug
+                categorySlug === null
                   ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted/60'
+                  : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted/60',
               )}
             >
-              {cat.name}
+              All
             </button>
-          ))}
-        </div>
-      </ExtensionsCatalogPageHeader>
+            {mcpCatalogCategories.map((cat) => (
+              <button
+                key={cat.slug}
+                type="button"
+                onClick={() => setCategorySlug(cat.slug === categorySlug ? null : cat.slug)}
+                className={cn(
+                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  categorySlug === cat.slug
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted/60',
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </ExtensionsCatalogPageHeader>
 
-      <div className="flex-1 px-6 py-6">
-        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {filtered.map((entry) => (
             <li
               key={entry.id}
@@ -114,12 +115,7 @@ export function ExtensionsMcpPanel() {
               </div>
               <p className="mt-3 line-clamp-4 text-sm text-muted-foreground">{entry.description}</p>
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="default"
-                  onClick={() => navigateAppRoute('/settings/mcp')}
-                >
+                <Button type="button" size="sm" variant="default" onClick={() => navigateAppRoute('/settings/mcp')}>
                   Add in Settings
                 </Button>
                 {entry.docsUrl ? (
@@ -137,21 +133,21 @@ export function ExtensionsMcpPanel() {
         {filtered.length === 0 ? (
           <p className="py-12 text-center text-sm text-muted-foreground">No servers match your search.</p>
         ) : null}
-      </div>
 
-      <footer className="border-t border-border px-6 py-4">
-        <p className="text-sm text-muted-foreground">
-          Configure installed servers under{' '}
-          <button
-            type="button"
-            className="font-medium text-foreground transition-colors hover:text-foreground/90"
-            onClick={() => navigateAppRoute('/settings/mcp')}
-          >
-            Settings → MCP
-          </button>
-          .
-        </p>
-      </footer>
+        <footer className="border-t border-border pt-6">
+          <p className="text-sm text-muted-foreground">
+            Configure installed servers under{' '}
+            <button
+              type="button"
+              className="font-medium text-foreground transition-colors hover:text-foreground/90"
+              onClick={() => navigateAppRoute('/settings/mcp')}
+            >
+              Settings → MCP
+            </button>
+            .
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
