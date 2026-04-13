@@ -141,8 +141,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   };
 
   const handleStartNewConversation = useCallback(() => {
-    /** Opens chat with Start screen as active content (see App `syncFromLocation` + `content=start`). */
-    navigateAppRoute('/chat?content=start');
+    navigateAppRoute('/chat?content=start&repository=disconnected&canvas=closed');
   }, []);
 
   return (

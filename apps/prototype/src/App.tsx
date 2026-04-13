@@ -115,6 +115,10 @@ function App() {
   const [showStatusBadge, setShowStatusBadge] = useState(false);
   const [activeChatAutomationTitle, setActiveChatAutomationTitle] = useState<string | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
+  const chatCanvasDefaultOpen = useMemo(
+    () => new URLSearchParams(location.search).get('canvas') !== 'closed',
+    [location.search]
+  );
   const [activeNavItem, setActiveNavItem] = useState('chat-cards');
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
@@ -571,6 +575,14 @@ function App() {
       setSettingsTab(null);
       const chatParams = new URLSearchParams(search);
       setChatContentMode(chatParams.get('content') === 'start' ? 'start' : 'conversation');
+      const repositoryParam = chatParams.get('repository');
+      setRepositoryStatus(
+        repositoryParam === 'disconnected'
+          ? 'disconnected'
+          : repositoryParam === 'connect'
+            ? 'connect'
+            : 'connected'
+      );
       return;
     }
     setIsActiveChatView(false);
@@ -789,6 +801,7 @@ function App() {
                       onToggleStatusBadge={() => setShowStatusBadge((prev) => !prev)}
                       automationContextTitle={activeChatAutomationTitle}
                       onAutomationContextTitleChange={setActiveChatAutomationTitle}
+                      initialCanvasOpen={chatCanvasDefaultOpen}
                     />
                   </div>
                 )}

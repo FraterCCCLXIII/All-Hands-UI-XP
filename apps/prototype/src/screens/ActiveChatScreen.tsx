@@ -3,6 +3,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import {
   Loader2,
   ArrowUp,
+  ArrowDown,
   ArrowDownToLine,
   MoreHorizontal,
   Paperclip,
@@ -33,6 +34,7 @@ import {
   Check,
   ListTodo,
   Circle,
+  CheckCircle2,
   Settings,
   Pencil,
   Download,
@@ -46,7 +48,9 @@ import {
   ClipboardList,
   History,
   GitCompare,
+  FileDiff,
   FilePlus,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -88,6 +92,7 @@ interface ActiveChatScreenProps {
   /** When set, shows automation icon + title above the chat header. */
   automationContextTitle: string | null;
   onAutomationContextTitleChange: (title: string | null) => void;
+  initialCanvasOpen?: boolean;
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
@@ -345,6 +350,7 @@ export function ActiveChatScreen({
   onToggleStatusBadge,
   automationContextTitle,
   onAutomationContextTitleChange,
+  initialCanvasOpen = true,
 }: ActiveChatScreenProps) {
   const [leftPanelWidth, setLeftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
   const splitRowRef = useRef<HTMLDivElement>(null);
@@ -354,7 +360,7 @@ export function ActiveChatScreen({
   const [showServerMenu, setShowServerMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('changes');
   /** When false, the right canvas column is hidden and chat uses full width. */
-  const [canvasOpen, setCanvasOpen] = useState(true);
+  const [canvasOpen, setCanvasOpen] = useState(initialCanvasOpen);
   const [pinnedTabs, setPinnedTabs] = useState<Record<TabId, boolean>>(() => ({ ...DEFAULT_PINNED }));
   /** Per-tab prototype: off = empty state, on = filled sample content (gear menu). */
   const [canvasTabFilled, setCanvasTabFilled] = useState<Record<TabId, boolean>>({
@@ -369,6 +375,7 @@ export function ActiveChatScreen({
   const chatInputRef = useRef<HTMLDivElement>(null);
   /** User-dragged cap (px) between min and max line heights; null = use max lines. */
   const [chatInputMaxHeightPx, setChatInputMaxHeightPx] = useState<number | null>(null);
+  const [chatInputHasMultipleLines, setChatInputHasMultipleLines] = useState(false);
   const chatInputGripResizeRef = useRef<{ startY: number; startMaxPx: number } | null>(null);
   const [isChatInputGripDragging, setIsChatInputGripDragging] = useState(false);
   const [conversationLoaded, setConversationLoaded] = useState(false);
@@ -379,11 +386,15 @@ export function ActiveChatScreen({
   const [changesExpanded, setChangesExpanded] = useState(false);
   const [taskListDrawerVisible, setTaskListDrawerVisible] = useState(false);
   const [changesDrawerVisible, setChangesDrawerVisible] = useState(false);
+  const [selectedChangeFileId, setSelectedChangeFileId] = useState<ChangeFileId | null>(null);
+  const [changeNavigationRequest, setChangeNavigationRequest] = useState(0);
   const [selectedModel, setSelectedModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [chatMode, setChatMode] = useState<'build' | 'ask' | 'plan'>('build');
   const [projectReadExpanded, setProjectReadExpanded] = useState(false);
   const [packageJsonReadExpanded, setPackageJsonReadExpanded] = useState(false);
   const [ranCommandExpanded, setRanCommandExpanded] = useState(false);
+  const [attachmentPreviewsEnabled, setAttachmentPreviewsEnabled] = useState(true);
+  const [composerAttachments, setComposerAttachments] = useState<ComposerAttachmentPreview[]>([]);
   const shouldShowStatusBadge = showStatusBadge || !conversationLoaded;
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedRepository, setSelectedRepository] = useState('');
@@ -401,6 +412,7 @@ export function ActiveChatScreen({
   const canvasTipLabel = CANVAS_TIP_OPTIONS.find((option) => option.id === canvasTipVariant)?.label ?? 'None';
   const automationContextLabel =
     AUTOMATION_CONTEXT_OPTIONS.find((o) => o.title === automationContextTitle)?.label ?? 'None';
+  const repoActionRowClassName = 'flex w-full min-w-0 flex-nowrap items-center justify-between gap-2.5 overflow-x-hidden';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -427,6 +439,10 @@ export function ActiveChatScreen({
     const id = window.setTimeout(() => setDrawersAnimatedIn(true), 50);
     return () => window.clearTimeout(id);
   }, [conversationLoaded]);
+
+  useEffect(() => {
+    setCanvasOpen(initialCanvasOpen);
+  }, [initialCanvasOpen]);
 
   useEffect(() => {
     if (!isCanvasResizeDragging) return;
@@ -489,6 +505,7 @@ export function ActiveChatScreen({
     const next = Math.min(Math.max(scrollH, lh), maxCap);
     el.style.height = `${next}px`;
     el.style.overflowY = scrollH > maxCap ? 'auto' : 'hidden';
+    setChatInputHasMultipleLines(scrollH > lh + 1);
   }, [chatInputMaxHeightPx]);
 
   useLayoutEffect(() => {
@@ -560,6 +577,26 @@ export function ActiveChatScreen({
     },
     [activeTab, canvasOpen]
   );
+
+  const handleChangeDrawerItemSelect = useCallback((fileId: ChangeFileId) => {
+    setSelectedChangeFileId(fileId);
+    setChangeNavigationRequest((prev) => prev + 1);
+    setCanvasTabFilled((prev) => ({ ...prev, changes: true }));
+    setActiveTab('changes');
+    setCanvasOpen(true);
+  }, []);
+  const handleAttachmentClick = useCallback(() => {
+    if (!attachmentPreviewsEnabled) return;
+    setComposerAttachments(COMPOSER_ATTACHMENT_ITEMS);
+  }, [attachmentPreviewsEnabled]);
+  const handleRemoveComposerAttachment = useCallback((attachmentId: string) => {
+    setComposerAttachments((prev) => prev.filter((attachment) => attachment.id !== attachmentId));
+  }, []);
+
+  useEffect(() => {
+    if (attachmentPreviewsEnabled) return;
+    setComposerAttachments([]);
+  }, [attachmentPreviewsEnabled]);
   const conversationTitle = 'Run Code Request';
   const openConversationCliCommand = `openhands --open-conversation "${conversationTitle}"`;
   const filteredCommands = useMemo(() => {
@@ -869,7 +906,7 @@ export function ActiveChatScreen({
                           : 'gap-0 pr-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60'
                       )}
                     >
-                      <ChangesIcon className="w-4 h-4 flex-shrink-0 text-inherit" />
+                      <FileDiff className="w-4 h-4 flex-shrink-0 text-inherit" />
                       <span
                         className={cn(
                           'overflow-hidden whitespace-nowrap transition-[opacity,max-width] duration-200',
@@ -952,7 +989,7 @@ export function ActiveChatScreen({
                 >
                   {(
                     [
-                      { id: 'changes' as const, label: 'Changes', icon: <ChangesIcon className="w-4 h-4" /> },
+                      { id: 'changes' as const, label: 'Changes', icon: <FileDiff className="w-4 h-4" /> },
                       { id: 'code' as const, label: 'Code', icon: <Code2 className="w-4 h-4" /> },
                       { id: 'terminal' as const, label: 'Terminal (read-only)', icon: <Terminal className="w-4 h-4" /> },
                       { id: 'app' as const, label: 'App', icon: <Monitor className="w-4 h-4" /> },
@@ -1328,25 +1365,21 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               'relative z-0 w-full flex flex-col gap-0 shrink-0 overflow-visible transition-opacity duration-300 ease-out -mb-2 -mt-6',
                               drawersAnimatedIn ? 'opacity-100' : 'opacity-0 pointer-events-none'
                             )}
-                            style={{
-                              transform:
-                                taskListDrawerVisible && !changesDrawerVisible
-                                  ? 'translateY(0)'
-                                  : 'translateY(16px)',
-                            }}
+                            style={{ transform: 'translateY(16px)' }}
                             aria-hidden={!drawersAnimatedIn}
                           >
                             {taskListDrawerVisible && (
                             <div
                               className={cn(
-                                'relative z-0 flex flex-col border border-border border-b-0 bg-card rounded-t-xl overflow-hidden transition-transform duration-300 ease-out -mb-px',
+                                'relative flex flex-col border border-border border-b-0 bg-card rounded-t-xl overflow-hidden transition-transform duration-300 ease-out -mb-px',
+                                changesDrawerVisible ? 'z-0' : 'z-[1]',
                                 drawersAnimatedIn
                                   ? changesDrawerVisible
                                     ? 'translate-y-[1.45rem]'
-                                    : 'translate-y-0'
+                                    : 'translate-y-2'
                                   : 'translate-y-full'
                               )}
-                              style={{ transitionDelay: '100ms' }}
+                              style={{ transitionDelay: changesDrawerVisible ? '100ms' : '0ms' }}
                               data-testid="drawer-task-list"
                             >
                               <div
@@ -1380,13 +1413,10 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 aria-hidden={!taskListExpanded}
                               >
                                 <div className={cn('min-h-0 overflow-hidden', taskListExpanded && 'border-t border-border')}>
-                                  <div className="px-4 py-3 pb-[1.45rem] space-y-2 bg-card">
-                                  {['Fix module imports', 'Fix TopBar props', 'Fix Canvas props', 'Fix ChatThread', 'Test build'].map((label, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-sm text-foreground">
-                                      <Circle className="w-3 h-3 shrink-0 text-muted-foreground" />
-                                      <span>{label}</span>
-                                    </div>
-                                  ))}
+                                  <div className="space-y-1.5 bg-card px-4 py-3 pb-[1.45rem]">
+                                    {TASK_LIST_DRAWER_ITEMS.map((task) => (
+                                      <TaskListDrawerItem key={task.label} label={task.label} status={task.status} />
+                                    ))}
                                   </div>
                                 </div>
                               </div>
@@ -1434,10 +1464,20 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 aria-hidden={!changesExpanded}
                               >
                                 <div className={cn('min-h-0 overflow-hidden', changesExpanded && 'border-t border-border')}>
-                                  <div className="px-4 py-3 pb-[1.45rem] space-y-2 bg-card text-sm text-foreground">
-                                    <div>src/App.tsx</div>
-                                    <div>src/components/canvas/Canvas.tsx</div>
-                                    <div>src/screens/ActiveChatScreen.tsx</div>
+                                  <div className="space-y-1.5 bg-card px-4 py-3 pb-[1.45rem]">
+                                    {CHANGE_FILE_ITEMS.filter((file) => CHANGE_DRAWER_FILE_IDS.includes(file.id)).map((file) => (
+                                      <button
+                                        key={file.id}
+                                        type="button"
+                                        className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-sm text-foreground transition-colors hover:bg-muted/40"
+                                        onClick={() => handleChangeDrawerItemSelect(file.id)}
+                                      >
+                                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                                        <span className="min-w-0 flex-1 truncate">{file.path}</span>
+                                        <span className="shrink-0 text-xs text-success">+{file.additions}</span>
+                                        <span className="shrink-0 text-xs text-destructive">-{file.deletions}</span>
+                                      </button>
+                                    ))}
                                   </div>
                                 </div>
                               </div>
@@ -1448,10 +1488,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <div className="z-10 h-0 w-full shrink-0 bg-transparent" aria-hidden />
                         <div
                           data-testid="interactive-chat-box"
-                          className={cn(
-                            'relative z-10',
-                            taskListDrawerVisible && !changesDrawerVisible ? 'mt-2' : '-mt-[1px]'
-                          )}
+                          className="relative z-10 -mt-[1px]"
                         >
                           {shouldShowStatusBadge && (
                             <div className="absolute left-0 bottom-[calc(100%-8px)] flex items-end gap-1">
@@ -1590,27 +1627,49 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   </div>
                                 </div>
                               )}
-                              <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20" id="resize-grip">
-                                <div
-                                  className={cn(
-                                    'absolute top-1 left-0 w-full h-px bg-white cursor-ns-resize z-10 transition-opacity duration-200',
-                                    isChatInputGripDragging ? 'opacity-100' : 'opacity-0'
-                                  )}
-                                  style={{ userSelect: 'none' }}
-                                  role="separator"
-                                  aria-orientation="horizontal"
-                                  aria-label="Resize chat input height"
-                                  onMouseDown={handleChatInputGripMouseDown}
-                                />
-                              </div>
+                              {chatInputHasMultipleLines && (
+                                <div className="absolute -top-3 left-0 z-20 h-6 w-full lg:h-3" id="resize-grip">
+                                  <div
+                                    className={cn(
+                                      'absolute top-1 left-0 z-10 h-px w-full bg-white cursor-ns-resize transition-opacity duration-200',
+                                      isChatInputGripDragging ? 'opacity-100' : 'opacity-0'
+                                    )}
+                                    style={{ userSelect: 'none' }}
+                                    role="separator"
+                                    aria-orientation="horizontal"
+                                    aria-label="Resize chat input height"
+                                    onMouseDown={handleChatInputGripMouseDown}
+                                  />
+                                </div>
+                              )}
                               <div className="border border-border box-border content-stretch flex flex-col items-start justify-center relative rounded-xl w-full bg-[#141414]" style={{ padding: '.75rem' }}>
+                                {composerAttachments.length > 0 && (
+                                  <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-3">
+                                    <div className="flex w-max min-w-full items-center gap-2">
+                                      {composerAttachments.map((attachment) => (
+                                        <ComposerAttachmentChip
+                                          key={attachment.id}
+                                          attachment={attachment}
+                                          onRemove={handleRemoveComposerAttachment}
+                                        />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                                 <div className="box-border content-stretch flex flex-row items-end justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
                                   <div className="relative min-w-0 flex-1 box-border content-stretch flex flex-row gap-4 items-end justify-start p-0">
                                     <button
                                       type="button"
-                                      className="flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200 hover:scale-105 hover:bg-muted active:scale-95 cursor-not-allowed text-muted-foreground"
+                                      className={cn(
+                                        'flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200',
+                                        attachmentPreviewsEnabled
+                                          ? 'cursor-pointer text-muted-foreground hover:scale-105 hover:bg-muted hover:text-foreground active:scale-95'
+                                          : 'cursor-not-allowed text-muted-foreground/60'
+                                      )}
                                       data-testid="paperclip-icon"
                                       aria-label="Attach"
+                                      aria-disabled={!attachmentPreviewsEnabled}
+                                      onClick={handleAttachmentClick}
                                     >
                                       <Paperclip className="w-4 h-4" />
                                     </button>
@@ -1676,13 +1735,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <DropdownMenuTrigger asChild>
                                     <button
                                       type="button"
-                                      className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
+                                      className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
                                       aria-label="Tools"
                                       data-testid="tools-trigger"
                                     >
-                                      <Wrench className="w-4 h-4 shrink-0" />
+                                      <Wrench className="h-[13px] w-[13px] shrink-0" />
                                       <span className="text-xs font-normal leading-4">Tools</span>
-                                      <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+                                      <ChevronDown className="h-[11px] w-[11px] shrink-0 opacity-50" />
                                     </button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
@@ -1817,19 +1876,19 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         <button
                                           type="button"
                                           className={cn(
-                                            'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 hover:opacity-90 data-[state=open]:opacity-90 whitespace-nowrap shrink-0',
-                                            chatMode === 'build' && 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                                            'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 whitespace-nowrap shrink-0',
+                                            chatMode === 'build' && 'border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground',
                                             chatMode === 'ask' && 'border-blue-500/50 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
                                             chatMode === 'plan' && 'border-success/50 bg-success/20 text-success-foreground hover:bg-success/30'
                                           )}
                                           aria-label="Chat mode"
                                           data-testid="mode-pill"
                                         >
-                                          {chatMode === 'build' && <CodeModeIcon className="w-3.5 h-3.5 shrink-0" />}
-                                          {chatMode === 'ask' && <MessageCircleQuestion className="w-4 h-4 shrink-0" aria-hidden />}
-                                          {chatMode === 'plan' && <PlanModeIcon className="w-3.5 h-3.5 shrink-0" />}
+                                          {chatMode === 'build' && <CodeModeIcon className="h-[11px] w-[11px] shrink-0" />}
+                                          {chatMode === 'ask' && <MessageCircleQuestion className="h-[13px] w-[13px] shrink-0" aria-hidden />}
+                                          {chatMode === 'plan' && <PlanModeIcon className="h-[11px] w-[11px] shrink-0" />}
                                           <span>{chatMode === 'build' ? 'Code' : chatMode === 'ask' ? 'Ask' : 'Plan'}</span>
-                                          <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" />
+                                          <ChevronDown className="h-[11px] w-[11px] shrink-0 opacity-50" />
                                         </button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
@@ -1890,7 +1949,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="flex min-w-0 items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
+                                          className="flex min-w-0 items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
                                           aria-label="Select model"
                                           title={selectedModel}
                                           data-testid="model-trigger"
@@ -1898,7 +1957,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           <span className="min-w-0 flex-1 truncate text-xs font-normal leading-4">
                                             {selectedModel}
                                           </span>
-                                          <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" aria-hidden />
+                                          <ChevronDown className="h-[11px] w-[11px] shrink-0 opacity-50" aria-hidden />
                                         </button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
@@ -1947,104 +2006,104 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           </div>
                         </div>
                         <div className="mt-4">
-                          <div className="flex flex-row items-center">
-                            <div className="flex flex-row gap-2.5 items-center overflow-x-auto flex-wrap md:flex-nowrap relative scrollbar-hide">
+                          <div className="flex w-full min-w-0 flex-row items-center">
+                            <div className={repoActionRowClassName}>
                               {repositoryStatus === 'connected' ? (
                                 <>
-                                  <a
-                                    href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
-                                  >
-                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                      <Github className="w-3 h-3 text-foreground" />
-                                    </div>
-                                    <div className="font-normal text-foreground text-sm leading-5 truncate flex-1 min-w-0" title="FraterCCCLXIII/All-Hands-UI-XP">
-                                      FraterCCCLXIII/All-Hands-UI-XP
-                                    </div>
-                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-1/2 -translate-y-1/2 h-full w-10.5 pr-2.5 justify-end">
-                                      <ExternalLink className="w-3 h-3 text-foreground" />
-                                    </div>
-                                  </a>
-                                  <a
-                                    href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP/tree/feature/kanban-drawer"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
-                                  >
-                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                      <GitBranch className="w-3 h-3 text-foreground" />
-                                    </div>
-                                    <div className="font-normal text-foreground text-sm leading-5 truncate" title="feature/kanban-drawer">
-                                      feature/kanban-drawer
-                                    </div>
-                                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 absolute right-0 top-1/2 -translate-y-1/2 h-full w-10.5 pr-2.5 justify-end">
-                                      <ExternalLink className="w-3 h-3 text-foreground" />
-                                    </div>
-                                  </a>
-                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-0.5 py-1 rounded-[100px] w-[76px] min-w-[76px] bg-muted/50 cursor-not-allowed">
-                                    <ArrowDownToLine className="w-3 h-3 text-foreground" />
-                                    <div className="font-normal text-foreground text-sm leading-5 max-w-[76px] truncate" title="Pull">Pull</div>
-                                  </button>
-                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[77px] min-w-[77px] bg-muted/50 cursor-not-allowed">
-                                    <ArrowUp className="w-3 h-3 text-foreground" />
-                                    <div className="font-normal text-foreground text-sm leading-5 max-w-[77px] truncate" title="Push">Push</div>
-                                  </button>
-                                  <button type="button" disabled className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] w-[126px] min-w-[126px] h-7 bg-muted/50 cursor-not-allowed">
-                                    <GitPullRequest className="w-3 h-3 text-foreground" />
-                                    <div className="font-normal text-foreground text-sm leading-5 max-w-[126px] truncate" title="Pull Request">Pull Request</div>
-                                  </button>
+                                  <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
+                                    <a
+                                      href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center justify-between gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate hover:border-muted-foreground/30 hover:text-foreground cursor-pointer"
+                                    >
+                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                        <Github className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
+                                      </div>
+                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0 transition-colors group-hover:text-foreground" title="FraterCCCLXIII/All-Hands-UI-XP">
+                                        FraterCCCLXIII/All-Hands-UI-XP
+                                      </div>
+                                      <div className="absolute right-0 top-1/2 flex h-full w-12 -translate-y-1/2 items-center justify-end rounded-r-[100px] bg-gradient-to-l from-background via-background/80 to-transparent pr-2.5 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
+                                        <ExternalLink className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
+                                      </div>
+                                    </a>
+                                    <a
+                                      href="https://github.com/FraterCCCLXIII/All-Hands-UI-XP/tree/feature/kanban-drawer"
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="group flex min-w-0 max-w-[220px] flex-row items-center justify-between gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate hover:border-muted-foreground/30 hover:text-foreground cursor-pointer"
+                                    >
+                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                        <GitBranch className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
+                                      </div>
+                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate transition-colors group-hover:text-foreground" title="feature/kanban-drawer">
+                                        feature/kanban-drawer
+                                      </div>
+                                      <div className="absolute right-0 top-1/2 flex h-full w-12 -translate-y-1/2 items-center justify-end rounded-r-[100px] bg-gradient-to-l from-background via-background/80 to-transparent pr-2.5 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
+                                        <ExternalLink className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
+                                      </div>
+                                    </a>
+                                  </div>
+                                  <div className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-2.5">
+                                    <button
+                                      type="button"
+                                      aria-disabled="true"
+                                      className="flex flex-row gap-1 items-center justify-center rounded-[100px] border border-transparent bg-muted/50 px-0.5 py-1 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground w-[76px] min-w-[76px]"
+                                    >
+                                      <ArrowDown className="w-3 h-3" />
+                                      <div className="font-normal text-xs leading-4 max-w-[76px] truncate" title="Pull">Pull</div>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      aria-disabled="true"
+                                      className="flex flex-row gap-1 items-center justify-center rounded-[100px] border border-transparent bg-muted/50 px-2 py-1 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground w-[77px] min-w-[77px]"
+                                    >
+                                      <ArrowUp className="w-3 h-3" />
+                                      <div className="font-normal text-xs leading-4 max-w-[77px] truncate" title="Push">Push</div>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      aria-disabled="true"
+                                      className="flex h-7 flex-row gap-1 items-center justify-center rounded-[100px] border border-transparent bg-muted/50 px-2 py-1 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground w-[126px] min-w-[126px]"
+                                    >
+                                      <GitPullRequest className="w-3 h-3" />
+                                      <div className="font-normal text-xs leading-4 max-w-[126px] truncate" title="Pull Request">Pull Request</div>
+                                    </button>
+                                  </div>
                                 </>
                               ) : repositoryStatus === 'connect' ? (
                                 <>
-                                  <div className="flex flex-row items-center">
-                                    <div className="flex flex-row gap-2.5 items-center overflow-x-auto flex-wrap md:flex-nowrap relative scrollbar-hide">
-                                      <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[170px]">
-                                        <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                          <Github className="w-3 h-3 text-muted-foreground" />
-                                        </div>
-                                        <div className="font-normal text-muted-foreground text-sm leading-5 truncate flex-1 min-w-0" title="No Repo Connected">
-                                          No Repo Connected
-                                        </div>
+                                  <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
+                                    <div className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate cursor-not-allowed">
+                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                        <Github className="w-3 h-3 text-muted-foreground" />
                                       </div>
-                                      <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[108px]">
-                                        <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                          <GitBranch className="w-3 h-3 text-muted-foreground" />
-                                        </div>
-                                        <div className="font-normal text-muted-foreground text-sm leading-5 truncate" title="No Branch">
-                                          No Branch
-                                        </div>
+                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0" title="No Repo Connected">
+                                        No Repo Connected
                                       </div>
                                     </div>
+                                    <button
+                                      type="button"
+                                      className="flex h-7 min-w-[76px] shrink-0 flex-row items-center justify-center gap-1 rounded-[100px] border border-transparent bg-muted/50 px-2 py-1 text-xs font-normal leading-4 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground"
+                                      onClick={() => setIsConnectModalOpen(true)}
+                                    >
+                                      <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                        <ArrowUpIcon className="w-3 h-3 rotate-90" />
+                                      </span>
+                                      Connect
+                                    </button>
                                   </div>
-                                  <button
-                                    type="button"
-                                    className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-[100px] text-sm font-normal leading-5 h-7 min-w-[76px] bg-[#9E28B0] hover:bg-[#8a2399] text-white border-0"
-                                    onClick={() => setIsConnectModalOpen(true)}
-                                  >
-                                    <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                      <Github className="w-3 h-3 text-white" />
-                                    </span>
-                                    Connect
-                                  </button>
                                 </>
                               ) : (
                                 <>
-                                  <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] flex-1 truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[170px]">
-                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                      <Github className="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <div className="font-normal text-muted-foreground text-sm leading-5 truncate flex-1 min-w-0" title="No Repo Connected">
-                                      No Repo Connected
-                                    </div>
-                                  </div>
-                                  <div className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-[100px] w-fit flex-shrink-0 max-w-[200px] truncate relative border border-border/60 bg-transparent cursor-not-allowed min-w-[108px]">
-                                    <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                      <GitBranch className="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <div className="font-normal text-muted-foreground text-sm leading-5 truncate" title="No Branch">
-                                      No Branch
+                                  <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
+                                    <div className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate cursor-not-allowed">
+                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                                        <Github className="w-3 h-3 text-muted-foreground" />
+                                      </div>
+                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0" title="No Repo Connected">
+                                        No Repo Connected
+                                      </div>
                                     </div>
                                   </div>
                                 </>
@@ -2108,6 +2167,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           activeTab={activeTab}
                           onCreatePlan={handleCreatePlanFromCanvas}
                           filled={canvasTabFilled[activeTab]}
+                          selectedChangeFileId={selectedChangeFileId}
+                          changeNavigationRequest={changeNavigationRequest}
                         />
                       </div>
                     )}
@@ -2329,6 +2390,26 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 className={cn(
                   'h-4 w-4 rounded-full bg-background shadow transition-transform',
                   showStatusBadge ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Attachment Previews</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={attachmentPreviewsEnabled}
+              onClick={() => setAttachmentPreviewsEnabled((prev) => !prev)}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                attachmentPreviewsEnabled ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  attachmentPreviewsEnabled ? 'translate-x-4' : 'translate-x-0'
                 )}
               />
             </button>
@@ -2682,21 +2763,6 @@ function TabButton({
   return button;
 }
 
-function ChangesIcon({ className }: { className?: string }) {
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <g transform="scale(1.3) translate(-3, -3)">
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          d="M8.21875 9.04H7.42L6.25 7.85875L7.04875 7.07125L7.825 7.83625L9.41125 6.25L10.21 7.04875L8.21875 9.04ZM11.8637 7.375H20.8637V8.5H11.8637V7.375ZM11.8637 10.75H20.8637V11.875H11.8637V10.75ZM20.8637 14.125H11.8637V15.25H20.8637V14.125ZM11.8637 17.5H20.8637V18.625H11.8637V17.5ZM7.42 12.415H8.21875L10.21 10.4237L9.41125 9.63625L7.825 11.2225L7.04875 10.4462L6.25 11.245L7.42 12.415ZM8.21875 15.8012H7.42L6.25 14.6312L7.04875 13.8325L7.825 14.6088L9.41125 13.0113L10.21 13.81L8.21875 15.8012ZM7.42 19.1875H8.21875L10.21 17.1962L9.41125 16.3975L7.825 17.995L7.04875 17.2188L6.25 18.0062L7.42 19.1875Z"
-          fill="currentColor"
-        />
-      </g>
-    </svg>
-  );
-}
-
 function CodeCanvasPlaceholder() {
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 text-left">
@@ -2906,45 +2972,371 @@ This approach is simple, self-contained, and requires no build tools or addition
 
 ## Step 2: Add embedded CSS styles
 - **Goal**: Style the page with a modern, clean design
-- **Method**: Add a \`<style>\` block in the head with nested list items for reset, typography, colors, and media queries.
+- **Method**: Add a \`<style>\` block in the head with:
+  - CSS reset/normalize basics
+  - Typography styles
+  - Color scheme (modern blues/grays)
+  - Responsive media queries
 - **Reference**: \`/workspace/project/index.html\` (style section)
 
+## Step 3: Build the page content
+- **Goal**: Create the visual sections of the page
+- **Method**: Add HTML markup for:
+  - Navigation header with site title
+  - Hero section with headline and call-to-action button
+  - Features/services section with 3 cards
+  - Footer with copyright
+- **Reference**: \`/workspace/project/index.html\` (body section)
+
+## Step 4: Start a local server to serve the site
+- **Goal**: Make the site accessible via the provided URL
+- **Method**: Use Python's built-in HTTP server on port 12000
+- **Reference**: Command: \`python -m http.server 12000\`
+
 # 5. TESTING AND VALIDATION
-- **Visual verification**: Open the preview URL in a browser
-- **Responsive check**: Layout should adapt on smaller screens
+
+- **Visual verification**: Open \`https://work-1-vfxjwippckczyquz.prod-runtime.all-hands.dev/\` in a browser
+- **Expected result**: A clean, modern landing page should display with:
+  - A navigation bar at the top
+  - A hero section with a headline and button
+  - Three feature cards in a row (stacking on mobile)
+  - A footer at the bottom
+- **Responsive check**: The layout should adapt gracefully when viewed on smaller screens
 `;
 
+/** VS Code–style dark editor surface (Monaco diff mock). */
+const CHANGES_EDITOR_SURFACE_CLASS = 'bg-[#1e1e1e] text-[#d4d4d4]';
+
+const CHANGES_EDITOR_HEIGHT_STYLE = {
+  '--editor-height': 'min(520px, 55vh)',
+} as React.CSSProperties;
+
+type ChangeFileId = 'index' | 'app' | 'canvas' | 'active-chat';
+
+interface ChangeFileDiffLine {
+  kind: 'context' | 'add' | 'del';
+  oldLine: number | null;
+  newLine: number | null;
+  text: string;
+}
+
+interface ChangeFileItem {
+  id: ChangeFileId;
+  path: string;
+  additions: number;
+  deletions: number;
+  lines: ChangeFileDiffLine[];
+}
+
+interface ComposerAttachmentPreview {
+  id: string;
+  kind: 'file' | 'image';
+  name: string;
+  extensionLabel?: string;
+}
+
+const CHANGE_FILE_ITEMS: ChangeFileItem[] = [
+  {
+    id: 'index',
+    path: 'index.html',
+    additions: 23,
+    deletions: 0,
+    lines: [
+      { kind: 'add', oldLine: null, newLine: 1, text: '<!doctype html>' },
+      { kind: 'add', oldLine: null, newLine: 8, text: '<main class="page-shell">' },
+      { kind: 'add', oldLine: null, newLine: 19, text: '  <section class="hero">...</section>' },
+      { kind: 'add', oldLine: null, newLine: 37, text: '  <section class="features">...</section>' },
+      { kind: 'add', oldLine: null, newLine: 58, text: '</main>' },
+    ],
+  },
+  {
+    id: 'app',
+    path: 'src/App.tsx',
+    additions: 10,
+    deletions: 3,
+    lines: [
+      { kind: 'context', oldLine: 12, newLine: 12, text: 'return (' },
+      { kind: 'del', oldLine: 13, newLine: null, text: '  <LegacySidebar />' },
+      { kind: 'add', oldLine: null, newLine: 13, text: '  <ConversationDrawer />' },
+      { kind: 'add', oldLine: null, newLine: 14, text: '  <StatusIndicator />' },
+      { kind: 'context', oldLine: 15, newLine: 16, text: ');' },
+    ],
+  },
+  {
+    id: 'canvas',
+    path: 'src/components/canvas/Canvas.tsx',
+    additions: 18,
+    deletions: 6,
+    lines: [
+      { kind: 'context', oldLine: 41, newLine: 41, text: 'export function Canvas(props: CanvasProps) {' },
+      { kind: 'del', oldLine: 63, newLine: null, text: '  className="canvas-root p-6"' },
+      { kind: 'add', oldLine: null, newLine: 63, text: '  className="canvas-root p-4 md:p-6"' },
+      { kind: 'add', oldLine: null, newLine: 64, text: '  data-testid="canvas-shell"' },
+      { kind: 'context', oldLine: 78, newLine: 79, text: '}' },
+    ],
+  },
+  {
+    id: 'active-chat',
+    path: 'src/screens/ActiveChatScreen.tsx',
+    additions: 26,
+    deletions: 14,
+    lines: [
+      { kind: 'context', oldLine: 138, newLine: 138, text: '<div className="drawer-changes">' },
+      { kind: 'del', oldLine: 143, newLine: null, text: '  <div>src/App.tsx</div>' },
+      { kind: 'del', oldLine: 144, newLine: null, text: '  <div>src/components/canvas/Canvas.tsx</div>' },
+      { kind: 'add', oldLine: null, newLine: 143, text: '  <button data-testid="changes-drawer-item-app">...</button>' },
+      { kind: 'add', oldLine: null, newLine: 144, text: '  <button data-testid="changes-drawer-item-canvas">...</button>' },
+      { kind: 'add', oldLine: null, newLine: 145, text: '  <button data-testid="changes-drawer-item-active-chat">...</button>' },
+      { kind: 'context', oldLine: 151, newLine: 154, text: '</div>' },
+    ],
+  },
+];
+
+const CHANGE_DRAWER_FILE_IDS: ChangeFileId[] = ['app', 'canvas', 'active-chat'];
+
+const COMPOSER_ATTACHMENT_ITEMS: ComposerAttachmentPreview[] = [
+  { id: 'project-brief', kind: 'file', name: 'project-brief.md', extensionLabel: 'MD' },
+  { id: 'design-export', kind: 'file', name: 'design-export.json', extensionLabel: 'JSON' },
+  { id: 'sample-data', kind: 'file', name: 'sample-data.csv', extensionLabel: 'CSV' },
+  { id: 'screenshot', kind: 'image', name: 'screenshot.png' },
+];
+
+/** Inline tokens: **bold**, `code` — rest is default foreground. */
+function changesPlanHighlightInline(text: string, keyPrefix: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) {
+      nodes.push(
+        <span key={`${keyPrefix}-t-${i++}`}>{text.slice(last, m.index)}</span>
+      );
+    }
+    const tok = m[0];
+    if (tok.startsWith('**')) {
+      nodes.push(
+        <span key={`${keyPrefix}-b-${i++}`} className="font-semibold text-[#4ec9b0]">
+          {tok.slice(2, -2)}
+        </span>
+      );
+    } else {
+      nodes.push(
+        <span key={`${keyPrefix}-c-${i++}`} className="text-[#9cdcfe]">
+          {tok.slice(1, -1)}
+        </span>
+      );
+    }
+    last = re.lastIndex;
+  }
+  if (last < text.length) {
+    nodes.push(<span key={`${keyPrefix}-t-${i++}`}>{text.slice(last)}</span>);
+  }
+  return nodes;
+}
+
+function changesPlanHighlightLine(line: string, keyPrefix: string): ReactNode {
+  const header = /^(#{1,6}\s)/.test(line);
+  const inner = changesPlanHighlightInline(line, keyPrefix);
+  if (header) {
+    return <span className="text-[#569cd6]">{inner}</span>;
+  }
+  return <span className="text-[#cccccc]">{inner}</span>;
+}
+
 function ChangesPlanDiffMock({ viewMode }: { viewMode: ChangesDiffViewMode }) {
+  const diffRows = useMemo(() => {
+    const lines = CHANGES_PLAN_MD_SAMPLE.split('\n');
+    return ['', ...lines];
+  }, []);
+
   if (viewMode === 'old') {
     return (
-      <div className="flex min-h-[220px] items-center justify-center bg-muted/30 p-4 font-mono text-xs text-muted-foreground">
+      <div
+        className={cn(
+          'flex min-h-[220px] items-center justify-center p-4 font-mono text-xs text-muted-foreground',
+          CHANGES_EDITOR_SURFACE_CLASS
+        )}
+      >
         (empty file)
       </div>
     );
   }
   if (viewMode === 'new') {
     return (
-      <div className="max-h-[min(520px,55vh)] min-h-[220px] overflow-auto bg-muted/30 p-4">
-        <pre className="whitespace-pre-wrap font-mono text-[11px] leading-[18px] text-foreground">{CHANGES_PLAN_MD_SAMPLE}</pre>
+      <div
+        className={cn(
+          'w-full overflow-auto',
+          CHANGES_EDITOR_SURFACE_CLASS,
+          'h-[var(--editor-height)] min-h-[220px]'
+        )}
+        style={CHANGES_EDITOR_HEIGHT_STYLE}
+      >
+        <div className="p-4 font-mono text-[12px] leading-[18px]">
+          {CHANGES_PLAN_MD_SAMPLE.split('\n').map((line, i) => (
+            <div key={i} className="min-h-[18px] whitespace-pre-wrap break-all">
+              {changesPlanHighlightLine(line, `n-${i}`)}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
+
   return (
-    <div className="flex max-h-[min(520px,55vh)] min-h-[220px] min-w-0 w-full overflow-hidden border-t border-border">
-      <div className="flex w-[min(32%,140px)] shrink-0 flex-col border-r border-border bg-destructive/10">
-        <div className="min-h-[200px] w-full" aria-hidden />
-      </div>
-      <div className="min-h-0 min-w-0 flex-1 overflow-auto bg-success/5">
-        <pre className="whitespace-pre-wrap p-4 font-mono text-[11px] leading-[18px] text-foreground">{CHANGES_PLAN_MD_SAMPLE}</pre>
+    <div
+      className={cn(
+        'monaco-diff-editor-mock flex w-full flex-col overflow-hidden',
+        CHANGES_EDITOR_SURFACE_CLASS,
+        'h-[var(--editor-height)] min-h-[220px] min-w-0'
+      )}
+      style={CHANGES_EDITOR_HEIGHT_STYLE}
+    >
+      <section
+        className="flex min-h-0 flex-1 overflow-y-auto text-left"
+        style={{ width: '100%', height: '100%' }}
+      >
+        <div className="flex min-h-0 min-w-0 flex-1 flex-row items-stretch">
+          {/* Original pane — 36px, delete strip + diagonal fill (Monaco “original”) */}
+          <div
+            className="flex w-9 shrink-0 flex-col border-r border-neutral-700"
+            aria-hidden
+          >
+            <div className="h-[18px] shrink-0 border-b border-neutral-700/80 bg-[#542124]/90" />
+            <div className="min-h-[18px] flex-1 bg-[repeating-linear-gradient(-45deg,rgba(255,80,80,0.07)_0px,rgba(255,80,80,0.07)_3px,transparent_3px,transparent_6px)]" />
+          </div>
+
+          {/* Modified pane: gutter (46px) + lines + overview ruler */}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-row">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-auto">
+              {diffRows.map((line, rowIdx) => {
+                const isDeleteRow = rowIdx === 0;
+                const lineNo = rowIdx + 1;
+                return (
+                  <div
+                    key={rowIdx}
+                    className={cn(
+                      'flex min-h-[18px] w-full min-w-0 flex-row font-mono text-[12px] leading-[18px]',
+                      isDeleteRow
+                        ? 'bg-[#542124]/55'
+                        : 'bg-[rgba(40,80,40,0.35)]'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex w-[46px] shrink-0 select-none items-center justify-end gap-1 border-r border-neutral-700/90 pr-1.5 tabular-nums',
+                        isDeleteRow ? 'text-red-400' : 'text-emerald-500'
+                      )}
+                    >
+                      <span className="w-2.5 text-center font-normal">
+                        {isDeleteRow ? '−' : '+'}
+                      </span>
+                      <span className="text-[11px] text-[#858585]">{lineNo}</span>
+                    </div>
+                    <div className="min-w-0 flex-1 whitespace-pre-wrap break-all px-1.5 py-0">
+                      {line ? changesPlanHighlightLine(line, `d-${rowIdx}`) : '\u00a0'}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Diff overview ruler (minimap strip) */}
+            <div
+              className="w-3.5 shrink-0 border-l border-neutral-700 bg-[#252526]"
+              aria-hidden
+            >
+              <div
+                className="h-full w-full"
+                style={{
+                  background:
+                    'linear-gradient(to bottom, rgba(220,80,80,0.65) 0%, rgba(220,80,80,0.65) 1.4%, rgba(45,160,90,0.45) 1.4%, rgba(45,160,90,0.45) 100%)',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ChangesCodeDiffMock({ lines }: { lines: ChangeFileDiffLine[] }) {
+  return (
+    <div
+      className={cn(
+        'monaco-diff-editor-mock flex w-full flex-col overflow-hidden',
+        CHANGES_EDITOR_SURFACE_CLASS,
+        'h-[var(--editor-height)] min-h-[220px] min-w-0'
+      )}
+      style={CHANGES_EDITOR_HEIGHT_STYLE}
+    >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-auto">
+        {lines.map((line, rowIdx) => (
+          <div
+            key={rowIdx}
+            className={cn(
+              'flex min-h-[18px] w-full min-w-0 flex-row font-mono text-[12px] leading-[18px]',
+              line.kind === 'add'
+                ? 'bg-[rgba(40,80,40,0.35)]'
+                : line.kind === 'del'
+                  ? 'bg-[#542124]/55'
+                  : 'bg-transparent'
+            )}
+          >
+            <div className="flex w-[38px] shrink-0 items-center justify-end border-r border-neutral-700/90 pr-1.5 text-[11px] text-[#858585] tabular-nums">
+              {line.oldLine ?? ''}
+            </div>
+            <div className="flex w-[38px] shrink-0 items-center justify-end border-r border-neutral-700/90 pr-1.5 text-[11px] text-[#858585] tabular-nums">
+              {line.newLine ?? ''}
+            </div>
+            <div
+              className={cn(
+                'flex w-6 shrink-0 items-center justify-center border-r border-neutral-700/90',
+                line.kind === 'add'
+                  ? 'text-emerald-500'
+                  : line.kind === 'del'
+                    ? 'text-red-400'
+                    : 'text-[#858585]'
+              )}
+            >
+              {line.kind === 'add' ? '+' : line.kind === 'del' ? '-' : ''}
+            </div>
+            <div className="min-w-0 flex-1 whitespace-pre-wrap break-all px-2 py-0 text-[#cccccc]">{line.text || '\u00a0'}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function ChangesCanvasFilled() {
+function ChangesCanvasFilled({
+  selectedChangeFileId,
+  changeNavigationRequest,
+}: {
+  selectedChangeFileId: ChangeFileId | null;
+  changeNavigationRequest: number;
+}) {
   const [viewMode, setViewMode] = useState<ChangesDiffViewMode>('diff');
   const [planExpanded, setPlanExpanded] = useState(true);
-  const [indexExpanded, setIndexExpanded] = useState(false);
+  const [expandedFiles, setExpandedFiles] = useState<Record<ChangeFileId, boolean>>({
+    index: false,
+    app: false,
+    canvas: false,
+    'active-chat': false,
+  });
+  const fileRefs = useRef<Partial<Record<ChangeFileId, HTMLDivElement | null>>>({});
+
+  useEffect(() => {
+    if (!selectedChangeFileId) return;
+    setPlanExpanded(false);
+    setViewMode('diff');
+    setExpandedFiles((prev) => ({ ...prev, [selectedChangeFileId]: true }));
+    window.requestAnimationFrame(() => {
+      fileRefs.current[selectedChangeFileId]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  }, [selectedChangeFileId, changeNavigationRequest]);
 
   const viewModeButton = (mode: ChangesDiffViewMode, testId: string, Icon: typeof History) => (
     <button
@@ -2968,7 +3360,11 @@ function ChangesCanvasFilled() {
     <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
         <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'justify-between gap-2')}>
-          <span className="text-xs font-medium leading-none text-foreground">Changes</span>
+          <span className="flex items-center gap-2 text-xs font-medium leading-none text-foreground">
+            Changes
+            <span className="text-success">+89</span>
+            <span className="text-destructive">-23</span>
+          </span>
           <button
             type="button"
             className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -3002,6 +3398,8 @@ function ChangesCanvasFilled() {
                   <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-foreground">
                     <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                     <strong className="min-w-0 truncate font-medium">.agents_tmp/PLAN.md</strong>
+                    <span className="shrink-0 text-xs text-success">+12</span>
+                    <span className="shrink-0 text-xs text-destructive">-0</span>
                   </span>
                   {planExpanded && (
                     <span
@@ -3028,31 +3426,53 @@ function ChangesCanvasFilled() {
                 )}
               </div>
 
-              <div data-testid="file-diff-viewer-outer" className="flex w-full min-w-0 flex-col">
-                <div
-                  role="button"
-                  tabIndex={0}
-                  data-testid="changes-file-row-index"
-                  className="flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                  aria-expanded={indexExpanded}
-                  aria-label={indexExpanded ? 'Collapse index.html' : 'Expand index.html'}
-                  onClick={() => setIndexExpanded((x) => !x)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setIndexExpanded((x) => !x);
-                    }
-                  }}
-                >
-                  <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-foreground">
-                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                    <strong className="min-w-0 truncate font-medium">index.html</strong>
-                  </span>
-                  <span className="pointer-events-none shrink-0 text-muted-foreground">
-                    <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', indexExpanded && 'rotate-180')} aria-hidden />
-                  </span>
-                </div>
-              </div>
+              {CHANGE_FILE_ITEMS.map((file) => {
+                const isExpanded = expandedFiles[file.id];
+                return (
+                  <div
+                    key={file.id}
+                    data-testid="file-diff-viewer-outer"
+                    className="flex w-full min-w-0 flex-col"
+                    ref={(node) => {
+                      fileRefs.current[file.id] = node;
+                    }}
+                  >
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      data-testid={`changes-file-row-${file.id}`}
+                      className={cn(
+                        'flex min-h-9 flex-wrap items-center justify-between gap-2 border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                        isExpanded ? 'rounded-t-md border-b-0' : 'rounded-md'
+                      )}
+                      aria-expanded={isExpanded}
+                      aria-label={isExpanded ? `Collapse ${file.path}` : `Expand ${file.path}`}
+                      onClick={() => setExpandedFiles((prev) => ({ ...prev, [file.id]: !prev[file.id] }))}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setExpandedFiles((prev) => ({ ...prev, [file.id]: !prev[file.id] }));
+                        }
+                      }}
+                    >
+                      <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-foreground">
+                        <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                        <strong className="min-w-0 truncate font-medium">{file.path}</strong>
+                        <span className="shrink-0 text-xs text-success">+{file.additions}</span>
+                        <span className="shrink-0 text-xs text-destructive">-{file.deletions}</span>
+                      </span>
+                      <span className="pointer-events-none shrink-0 text-muted-foreground">
+                        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', isExpanded && 'rotate-180')} aria-hidden />
+                      </span>
+                    </div>
+                    {isExpanded && (
+                      <div className="w-full overflow-hidden rounded-b-md border border-t-0 border-border">
+                        <ChangesCodeDiffMock lines={file.lines} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </main>
           </div>
         </div>
@@ -3063,6 +3483,86 @@ function ChangesCanvasFilled() {
 
 const BROWSER_CANVAS_URL = 'https://github.com/OpenHands/OpenHands';
 const APP_CANVAS_URL = 'http://localhost:5173/';
+
+const TASK_LIST_DRAWER_ITEMS = [
+  { label: 'Fix module imports', status: 'completed' as const },
+  { label: 'Fix TopBar props', status: 'in_progress' as const },
+  { label: 'Fix Canvas props', status: 'pending' as const },
+  { label: 'Fix ChatThread', status: 'cancelled' as const },
+  { label: 'Test build', status: 'pending' as const },
+];
+
+function TaskListDrawerItem({ label, status }: { label: string; status: 'completed' | 'in_progress' | 'pending' | 'cancelled' }) {
+  const icon =
+    status === 'completed' ? (
+      <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+    ) : status === 'in_progress' ? (
+      <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" aria-hidden />
+    ) : status === 'cancelled' ? (
+      <X className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+    ) : (
+      <Circle className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+    );
+
+  return (
+    <div className="flex items-center gap-2 rounded-md px-1 py-0.5 text-sm text-foreground">
+      {icon}
+      <span
+        className={cn(
+          'min-w-0 flex-1 truncate',
+          status === 'completed' && 'text-muted-foreground line-through',
+          status === 'cancelled' && 'text-muted-foreground/80 line-through'
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function ComposerAttachmentChip({
+  attachment,
+  onRemove,
+}: {
+  attachment: ComposerAttachmentPreview;
+  onRemove: (id: string) => void;
+}) {
+  if (attachment.kind === 'image') {
+    return (
+      <div className="group relative flex h-[54px] w-[54px] shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/60">
+        <button
+          type="button"
+          onClick={() => onRemove(attachment.id)}
+          className="absolute right-1 top-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-background/90 text-muted-foreground opacity-0 transition-opacity duration-200 hover:bg-muted hover:text-foreground group-hover:opacity-100"
+          aria-label={`Remove ${attachment.name}`}
+        >
+          <X className="h-2.5 w-2.5" aria-hidden />
+        </button>
+        <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden />
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative flex h-[54px] max-w-[184px] shrink-0 flex-col justify-between rounded-lg border border-border bg-muted/60 px-3 py-2">
+      <button
+        type="button"
+        onClick={() => onRemove(attachment.id)}
+        className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-background/90 text-muted-foreground opacity-0 transition-opacity duration-200 hover:bg-muted hover:text-foreground group-hover:opacity-100"
+        aria-label={`Remove ${attachment.name}`}
+      >
+        <X className="h-2.5 w-2.5" aria-hidden />
+      </button>
+      <div className="min-w-0 pr-4">
+        <span className="block min-w-0 truncate text-xs font-medium leading-4 text-foreground">{attachment.name}</span>
+      </div>
+      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        <File className="h-3 w-3 shrink-0" aria-hidden />
+        <span>{attachment.extensionLabel}</span>
+      </div>
+    </div>
+  );
+}
 
 /** Shared height and padding for canvas panel top bars (browser, terminal, changes, planner). */
 const CANVAS_PANEL_HEADER_CLASS = 'flex h-10 w-full shrink-0 items-center border-b border-border px-3';
@@ -3278,11 +3778,15 @@ function CanvasTabEmptyContent({
   activeTab,
   onCreatePlan,
   filled,
+  selectedChangeFileId,
+  changeNavigationRequest,
 }: {
   activeTab: TabId;
   onCreatePlan: () => void;
   /** When true, show sample “filled” content for the active tab; when false, empty state. */
   filled: boolean;
+  selectedChangeFileId: ChangeFileId | null;
+  changeNavigationRequest: number;
 }) {
   const textBlock = (icon: React.ReactNode, body: React.ReactNode) => (
     <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
@@ -3297,11 +3801,16 @@ function CanvasTabEmptyContent({
     case 'changes':
       if (!filled) {
         return textBlock(
-          <ChangesIcon className="opacity-90" />,
+          <FileDiff className="opacity-90" />,
           <>OpenHands hasn&apos;t made any changes yet</>
         );
       }
-      return <ChangesCanvasFilled />;
+      return (
+        <ChangesCanvasFilled
+          selectedChangeFileId={selectedChangeFileId}
+          changeNavigationRequest={changeNavigationRequest}
+        />
+      );
     case 'terminal':
       if (!filled) {
         return (
