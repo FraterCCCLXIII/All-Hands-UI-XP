@@ -25,20 +25,31 @@ interface WelcomeScreenProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   userName: string;
-  onRepoSelect: (repo: string) => void;
-  onBranchSelect: (branch: string) => void;
-  onClose: () => void;
   variant?: 'default' | 'cards';
 }
 
-function buildChatRoute(options: { repository: 'connected' | 'disconnected'; skillName?: string | null }) {
+function buildChatRoute(options: {
+  repository: 'connected' | 'disconnected';
+  skillName?: string | null;
+  repo?: string | null;
+  branch?: string | null;
+  canvas?: 'closed' | null;
+}) {
   const params = new URLSearchParams({
     content: 'start',
     repository: options.repository,
-    canvas: 'closed',
   });
+  if (options.canvas) {
+    params.set('canvas', options.canvas);
+  }
   if (options.skillName) {
     params.set('skill', options.skillName);
+  }
+  if (options.repo) {
+    params.set('repo', options.repo);
+  }
+  if (options.branch) {
+    params.set('branch', options.branch);
   }
   return `/chat?${params.toString()}`;
 }
@@ -80,9 +91,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   theme,
   getThemeClasses,
   userName,
-  onRepoSelect,
-  onBranchSelect,
-  onClose,
   variant = 'default',
 }) => {
   const [repoInput, setRepoInput] = useState('');
@@ -174,20 +182,26 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   }, []);
 
   const handleOpenConversationDrawer = useCallback(() => {
-    navigateAppRoute('/conversations');
+    const backgroundRoute = `${window.location.pathname}${window.location.search}`;
+    navigateAppRoute(`/conversations?from=${encodeURIComponent(backgroundRoute)}`);
   }, []);
 
-  const handleLaunch = () => {
+  const handleLaunch = useCallback(() => {
     const repo = repoInput.trim();
     const branch = branchInput.trim();
     if (!repo || !branch) return;
-    onRepoSelect(repo);
-    onBranchSelect(branch);
-    onClose();
-  };
+    setOpenRepoModalOpen(false);
+    navigateAppRoute(
+      buildChatRoute({
+        repository: 'connected',
+        repo,
+        branch,
+      })
+    );
+  }, [branchInput, repoInput]);
 
   const handleStartNewConversation = useCallback(() => {
-    navigateAppRoute(buildChatRoute({ repository: 'disconnected' }));
+    navigateAppRoute(buildChatRoute({ repository: 'disconnected', canvas: 'closed' }));
   }, []);
 
   const handleOpenSkillLaunchModal = useCallback((skill: (typeof marketplaceSkills)[number]) => {
@@ -200,16 +214,27 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     const repo = repoInput.trim();
     const branch = branchInput.trim();
     if (!repo || !branch) return;
-    onRepoSelect(repo);
-    onBranchSelect(branch);
     setOpenSkillLaunchModalOpen(false);
-    navigateAppRoute(buildChatRoute({ repository: 'connected', skillName: selectedHomepageSkill.skillName ?? selectedHomepageSkill.title }));
-  }, [branchInput, onBranchSelect, onRepoSelect, repoInput, selectedHomepageSkill]);
+    navigateAppRoute(
+      buildChatRoute({
+        repository: 'connected',
+        skillName: selectedHomepageSkill.skillName ?? selectedHomepageSkill.title,
+        repo,
+        branch,
+      })
+    );
+  }, [branchInput, repoInput, selectedHomepageSkill]);
 
   const handleLaunchSkillWithoutRepository = useCallback(() => {
     if (!selectedHomepageSkill) return;
     setOpenSkillLaunchModalOpen(false);
-    navigateAppRoute(buildChatRoute({ repository: 'disconnected', skillName: selectedHomepageSkill.skillName ?? selectedHomepageSkill.title }));
+    navigateAppRoute(
+      buildChatRoute({
+        repository: 'disconnected',
+        skillName: selectedHomepageSkill.skillName ?? selectedHomepageSkill.title,
+        canvas: 'closed',
+      })
+    );
   }, [selectedHomepageSkill]);
 
   return (
@@ -919,12 +944,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         key={conversation.id}
                         type="button"
                         onClick={() => {
-                          navigateAppRoute('/chat');
-                          if (conversation.repo !== 'No Repository') {
-                            onRepoSelect(conversation.repo);
-                            if (conversation.branch) onBranchSelect(conversation.branch);
-                          }
-                          onClose();
+                          navigateAppRoute(
+                            buildChatRoute({
+                              repository: conversation.repo === 'No Repository' ? 'disconnected' : 'connected',
+                              repo: conversation.repo === 'No Repository' ? null : conversation.repo,
+                              branch: conversation.branch ?? null,
+                            })
+                          );
                         }}
                         className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
                       >

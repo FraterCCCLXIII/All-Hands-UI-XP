@@ -1261,9 +1261,6 @@ export function ComponentLibraryScreen({
                     theme="dark"
                     getThemeClasses={previewThemeClasses}
                     userName="User"
-                    onRepoSelect={() => {}}
-                    onBranchSelect={() => {}}
-                    onClose={() => setShowWelcome(false)}
                   />
                 )}
               </div>
@@ -1332,8 +1329,6 @@ export function ComponentLibraryScreen({
                   onPush={() => {}}
                   onPull={() => {}}
                   onCreatePR={() => {}}
-                  onRepoSelect={() => {}}
-                  onBranchSelect={() => {}}
                   activeChatWindowTab={chatWindowTab}
                   onChatWindowTabChange={setChatWindowTab}
                   disableAutoScroll

@@ -79,7 +79,7 @@ export function NewTaskDialog({ activeRepo, branches, modelOptions, repositories
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 bg-white text-black hover:bg-muted hover:text-black">
+        <Button variant="light" className="gap-2">
           <Plus className="h-4 w-4" />
           New Task
         </Button>

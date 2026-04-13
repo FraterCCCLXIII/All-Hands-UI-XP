@@ -60,8 +60,6 @@ type CanvasTipVariant = 'none' | ProtipVariant;
 const actionSlugs: Record<string, string> = {
   code: 'chat',
   'chat-cards': 'chat-cards',
-  /** Classic ChatArea + default welcome (old default home before chat-cards was primary). */
-  'legacy-chat-home': 'legacy-chat-home',
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
@@ -86,6 +84,21 @@ function normalizePathForShellTransition(pathname: string): string {
   if (pathname === '/settings' || pathname.startsWith('/settings/')) return '/settings';
   if (pathname === '/extensions' || pathname.startsWith('/extensions/')) return '/extensions';
   return pathname;
+}
+
+function getConversationDrawerBackgroundRoute(search: string, fallbackRoute: string): string {
+  const params = new URLSearchParams(search);
+  const from = params.get('from');
+  return from && from.startsWith('/') ? from : fallbackRoute;
+}
+
+function parseAppRoute(route: string): { pathname: string; search: string; hash: string } {
+  const url = new URL(route, 'http://localhost');
+  return {
+    pathname: url.pathname,
+    search: url.search,
+    hash: url.pathname.replace(/^\/+/, '') || '',
+  };
 }
 
 function App() {
@@ -149,13 +162,25 @@ function App() {
 
   const prefersReducedMotion = useReducedMotion();
   const { pageTransitionsEnabled } = usePageTransitions();
-  const shellMotionActive = pageTransitionsEnabled && !prefersReducedMotion;
+  const shellMotionActive =
+    pageTransitionsEnabled &&
+    !prefersReducedMotion &&
+    location.pathname !== '/conversations';
 
   /** Collapse `/settings/...` and `/extensions/...` so in-app navigation does not re-run the shell slide. */
   const pageTransitionKey = useMemo(() => {
-    const normalizedPath = normalizePathForShellTransition(location.pathname);
+    const transitionRoute =
+      location.pathname === '/conversations'
+        ? parseAppRoute(
+            getConversationDrawerBackgroundRoute(
+              location.search,
+              `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+            )
+          )
+        : { pathname: location.pathname, search: location.search };
+    const normalizedPath = normalizePathForShellTransition(transitionRoute.pathname);
     const searchForKey =
-      normalizedPath === '/extensions' ? '' : location.search;
+      normalizedPath === '/extensions' ? '' : transitionRoute.search;
     return [
       normalizedPath,
       searchForKey,
@@ -173,6 +198,7 @@ function App() {
     activeNavItem,
     isActiveChatView,
     isWelcomeScreenActive,
+    lastNonDrawerNavItem,
   ]);
 
   const pageTransition = shellMotionActive
@@ -314,9 +340,17 @@ function App() {
       if (!open) {
         setActiveConversationId(null);
       }
-      navigateAppRoute(open ? actionSlugs.conversations : actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG);
+      const backgroundRoute = getConversationDrawerBackgroundRoute(
+        location.search,
+        `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+      );
+      navigateAppRoute(
+        open
+          ? `/conversations?from=${encodeURIComponent(backgroundRoute)}`
+          : backgroundRoute
+      );
     },
-    [lastNonDrawerNavItem]
+    [lastNonDrawerNavItem, location.search]
   );
 
   const handleAutomationRunNow = useCallback(
@@ -347,8 +381,12 @@ function App() {
   const handleOpenAutomationConversation = useCallback((conversationId: string) => {
     setActiveConversationId(conversationId);
     setIsConversationDrawerOpen(true);
-    navigateAppRoute(actionSlugs.conversations);
-  }, []);
+    const backgroundRoute = getConversationDrawerBackgroundRoute(
+      location.search,
+      `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+    );
+    navigateAppRoute(`/conversations?from=${encodeURIComponent(backgroundRoute)}`);
+  }, [lastNonDrawerNavItem, location.search]);
 
   const handleNavItemClick = useCallback(
     (action: string) => {
@@ -378,10 +416,14 @@ function App() {
       if (action === 'conversations') {
         const nextOpenState = !isConversationDrawerOpen;
         setIsConversationDrawerOpen(nextOpenState);
+        const backgroundRoute = getConversationDrawerBackgroundRoute(
+          location.search,
+          `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+        );
         navigateAppRoute(
           nextOpenState
-            ? actionSlugs.conversations
-            : actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG
+            ? `/conversations?from=${encodeURIComponent(backgroundRoute)}`
+            : backgroundRoute
         );
         return;
       }
@@ -392,16 +434,6 @@ function App() {
         setLastNonDrawerNavItem('chat-cards');
         setIsWelcomeScreenActive(true);
         navigateAppRoute(`/${actionSlugs['chat-cards']}`);
-        return;
-      }
-
-      if (action === 'legacy-chat-home') {
-        setActiveFlowPrototype(null);
-        setIsConversationDrawerOpen(false);
-        setActiveNavItem('code');
-        setLastNonDrawerNavItem('code');
-        setIsWelcomeScreenActive(true);
-        navigateAppRoute(`/${actionSlugs['legacy-chat-home']}`);
         return;
       }
 
@@ -501,8 +533,16 @@ function App() {
       return;
     }
     const route = normalizedCaptureRoute ? normalizedCaptureRoute : pathname || legacyHash;
-    const hash = route.split('?')[0];
-    if (!hash && !normalizedCaptureRoute) {
+    const routeHash = route.split('?')[0];
+    const drawerFallbackRoute = `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`;
+    const drawerShouldBeOpen = routeHash === 'conversations';
+    const drawerBackgroundRoute = drawerShouldBeOpen
+      ? getConversationDrawerBackgroundRoute(search, drawerFallbackRoute)
+      : null;
+    const effectiveRoute = drawerBackgroundRoute ? parseAppRoute(drawerBackgroundRoute) : null;
+    const hash = effectiveRoute?.hash ?? routeHash;
+    const routeSearch = effectiveRoute?.search ?? search;
+    if (!routeHash && !normalizedCaptureRoute) {
       setFigmaExportRoute(null);
       setActiveFlowPrototype(null);
       setIsActiveChatView(false);
@@ -561,21 +601,26 @@ function App() {
       return;
     }
     if (hash === 'legacy-chat-home') {
-      setActiveNavItem('code');
-      setLastNonDrawerNavItem('code');
-      setIsActiveChatView(false);
-      setIsWelcomeScreenActive(true);
-      setIsConversationDrawerOpen(false);
-      setSettingsTab(null);
+      const legacyChatSearch = new URLSearchParams({
+        content: 'start',
+        repository: 'connected',
+      });
+      navigate(
+        {
+          pathname: '/chat',
+          search: `?${legacyChatSearch.toString()}`,
+        },
+        { replace: true }
+      );
       return;
     }
     if (hash === 'chat') {
       setIsActiveChatView(true);
       setActiveNavItem('code');
       setLastNonDrawerNavItem('code');
-      setIsConversationDrawerOpen(false);
+      setIsConversationDrawerOpen(drawerShouldBeOpen);
       setSettingsTab(null);
-      const chatParams = new URLSearchParams(search);
+      const chatParams = new URLSearchParams(routeSearch);
       setChatContentMode(chatParams.get('content') === 'start' ? 'start' : 'conversation');
       const repositoryParam = chatParams.get('repository');
       setRepositoryStatus(
@@ -594,7 +639,7 @@ function App() {
     if (hash === 'settings' || hash.startsWith('settings/')) {
       setActiveNavItem('settings');
       setLastNonDrawerNavItem('settings');
-      setIsConversationDrawerOpen(false);
+      setIsConversationDrawerOpen(drawerShouldBeOpen);
       const subTab =
         hash === 'settings' ? null : hash.startsWith('settings/') ? hash.slice('settings/'.length) || null : null;
       if (subTab === 'plugins') {
@@ -611,7 +656,7 @@ function App() {
     if (hash === 'workflows') {
       setActiveNavItem('workflows');
       setLastNonDrawerNavItem('workflows');
-      setIsConversationDrawerOpen(false);
+      setIsConversationDrawerOpen(drawerShouldBeOpen);
       setSettingsTab(null);
       return;
     }
@@ -622,18 +667,14 @@ function App() {
     if (hash === 'extensions' || hash.startsWith('extensions/')) {
       setActiveNavItem('extensions');
       setLastNonDrawerNavItem('extensions');
-      setIsConversationDrawerOpen(false);
+      setIsConversationDrawerOpen(drawerShouldBeOpen);
       return;
     }
     const action = slugToAction[hash] ?? 'chat-cards';
-    if (action === 'conversations') {
-      setIsConversationDrawerOpen(true);
-    } else {
-      setActiveNavItem(action);
-      setLastNonDrawerNavItem(action);
-      setIsConversationDrawerOpen(false);
-    }
-  }, [navigate]);
+    setActiveNavItem(action);
+    setLastNonDrawerNavItem(action);
+    setIsConversationDrawerOpen(drawerShouldBeOpen);
+  }, [lastNonDrawerNavItem, navigate]);
 
   useEffect(() => {
     syncFromLocation();
@@ -722,9 +763,7 @@ function App() {
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
                 isHomeRoute={
-                  location.pathname === '/chat-cards' ||
-                  location.pathname === '/legacy-chat-home' ||
-                  location.pathname === '/'
+                  location.pathname === '/chat-cards' || location.pathname === '/'
                 }
               />
             )}
@@ -900,13 +939,11 @@ function App() {
                         onPush={handlePush}
                         onPull={handlePull}
                         onCreatePR={handleCreatePR}
-                        onRepoSelect={handleRepoSelect}
-                        onBranchSelect={handleBranchSelect}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
                         welcomeScreenVariant={activeNavItem === 'chat-cards' ? 'cards' : 'default'}
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
-                        isHomeRoute={location.pathname === '/chat-cards' || location.pathname === '/legacy-chat-home' || location.pathname === '/'}
+                        isHomeRoute={location.pathname === '/chat-cards' || location.pathname === '/'}
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />
@@ -1019,14 +1056,6 @@ const handlePull = () => {
 
 const handleCreatePR = () => {
   console.log('Create PR clicked');
-};
-
-const handleRepoSelect = (repo: string) => {
-  console.log('Repo selected:', repo);
-};
-
-const handleBranchSelect = (branch: string) => {
-  console.log('Branch selected:', branch);
 };
 
 export default App; 

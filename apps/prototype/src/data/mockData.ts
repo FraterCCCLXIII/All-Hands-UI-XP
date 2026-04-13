@@ -40,7 +40,7 @@ export const initialColumns: KanbanColumn[] = [
         number: 9001,
         title: 'Audit onboarding copy for clarity',
         repo: 'No Repository',
-        sourceType: 'task',
+        sourceType: 'automation',
         linkedPrId: null,
         linkedPrIds: [],
         author: {

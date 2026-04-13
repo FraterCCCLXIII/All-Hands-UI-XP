@@ -144,7 +144,6 @@ export interface LeftNavProps {
 
 const prototypeMenuEntries = [
   { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
-  { id: 'legacy-chat-home', label: 'Chat — home (legacy)', navAction: 'legacy-chat-home' },
   { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
   { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
   {

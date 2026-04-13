@@ -11,6 +11,7 @@ interface KanbanColumnProps {
   onCardClick: (cardId: string) => void;
   onRenameColumn: (columnId: string, title: string) => void;
   onDeleteColumn: (columnId: string) => void;
+  activeDraggedCardId?: string | null;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
   isDragDisabled?: boolean;
 }
@@ -20,6 +21,7 @@ export function KanbanColumn({
   onCardClick,
   onRenameColumn,
   onDeleteColumn: _onDeleteColumn,
+  activeDraggedCardId = null,
   dragHandleProps: _dragHandleProps,
   isDragDisabled = false,
 }: KanbanColumnProps) {
@@ -92,13 +94,18 @@ export function KanbanColumn({
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              'flex-1 min-h-0 space-y-2 p-2 pb-6 mb-4 rounded-lg transition-colors duration-200 overflow-y-auto',
+              'flex-1 min-h-0 space-y-2 p-2 pb-6 mb-4 rounded-modal transition-colors duration-200 overflow-y-auto',
               'bg-card border-0',
               snapshot.isDraggingOver && 'ring-1 ring-foreground/20 bg-background'
             )}
           >
             {column.cards.map((card, index) => (
-              <Draggable key={card.id} draggableId={card.id} index={index} isDragDisabled={isDragDisabled}>
+              <Draggable
+                key={card.id}
+                draggableId={card.id}
+                index={index}
+                isDragDisabled={isDragDisabled || (activeDraggedCardId !== null && activeDraggedCardId !== card.id)}
+              >
                 {(provided, snapshot) => (
                   <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
                     <PRCardComponent card={card} onClick={() => onCardClick(card.id)} isDragging={snapshot.isDragging} />

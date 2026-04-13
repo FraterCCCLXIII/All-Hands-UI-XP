@@ -30,7 +30,7 @@ export interface PRCard {
   number: number;
   title: string;
   repo: string;
-  sourceType?: 'pr' | 'task';
+  sourceType?: 'pr' | 'task' | 'automation';
   linkedPrId?: string | null;
   linkedPrIds?: string[];
   linkedIssueId?: string | null;

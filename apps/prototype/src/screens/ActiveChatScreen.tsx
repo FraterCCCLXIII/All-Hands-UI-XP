@@ -60,6 +60,7 @@ import { AutomationGlyph } from '../components/icons/AutomationGlyph';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { Protip, type ProtipVariant } from '../components/canvas/Protip';
 import { ChatStartScreen } from '../components/chat/ChatStartScreen';
+import { RepositoryActionStrip } from '../components/chat/RepositoryActionStrip';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import {
@@ -420,7 +421,6 @@ export function ActiveChatScreen({
   const connectedBranchName = branchName ?? 'feature/kanban-drawer';
   const connectedRepoUrl = `https://github.com/${connectedRepoName}`;
   const connectedBranchUrl = `${connectedRepoUrl}/tree/${encodeURIComponent(connectedBranchName)}`;
-  const repoActionRowClassName = 'flex w-full min-w-0 flex-nowrap items-center justify-between gap-2.5 overflow-x-hidden';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setConversationLoaded(true), CONVERSATION_LOAD_DURATION_MS);
@@ -850,13 +850,13 @@ export function ActiveChatScreen({
                 <div className="text-foreground leading-5 w-fit max-w-fit truncate" data-testid="conversation-name-title" title={conversationTitle}>
                   {conversationTitle}
                 </div>
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 cursor-help lowercase bg-muted text-muted-foreground">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold shrink-0 cursor-help lowercase bg-muted text-muted-foreground">
                   V1
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button data-testid="ellipsis-button" type="button" className="cursor-pointer p-0.5 text-muted-foreground hover:text-foreground">
-                      <MoreHorizontal className="w-6 h-6" />
+                      <MoreHorizontal className="h-4 w-4" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -1908,13 +1908,19 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       >
                                         <DropdownMenuItem
                                           data-testid="code-option"
-                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
+                                          className={cn(
+                                            'rounded p-2 text-left data-[highlighted]:bg-muted/60',
+                                            chatMode === 'build' && 'bg-muted/60'
+                                          )}
                                           onSelect={() => setChatMode('build')}
                                         >
                                           <div className="flex w-full flex-col gap-1">
-                                            <div className="flex items-center gap-3">
-                                              <CodeModeIcon className="h-4 w-4 shrink-0" />
-                                              <span className="text-sm text-foreground">Code</span>
+                                            <div className="flex items-center justify-between gap-3">
+                                              <div className="flex items-center gap-3">
+                                                <CodeModeIcon className="h-4 w-4 shrink-0" />
+                                                <span className="text-sm text-foreground">Code</span>
+                                              </div>
+                                              {chatMode === 'build' ? <Check className="h-3.5 w-3.5 shrink-0 text-foreground" /> : null}
                                             </div>
                                             <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Write, edit, and debug with AI assistance in real time.
@@ -1923,13 +1929,19 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                           data-testid="ask-option"
-                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
+                                          className={cn(
+                                            'rounded p-2 text-left data-[highlighted]:bg-muted/60',
+                                            chatMode === 'ask' && 'bg-blue-500/10'
+                                          )}
                                           onSelect={() => setChatMode('ask')}
                                         >
                                           <div className="flex w-full flex-col gap-1">
-                                            <div className="flex items-center gap-3">
-                                              <MessageCircleQuestion className="h-4 w-4 shrink-0" />
-                                              <span className="text-sm text-foreground">Ask</span>
+                                            <div className="flex items-center justify-between gap-3">
+                                              <div className="flex items-center gap-3">
+                                                <MessageCircleQuestion className="h-4 w-4 shrink-0" />
+                                                <span className="text-sm text-foreground">Ask</span>
+                                              </div>
+                                              {chatMode === 'ask' ? <Check className="h-3.5 w-3.5 shrink-0 text-blue-200" /> : null}
                                             </div>
                                             <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Explore ideas, ask questions, and get guidance before making changes.
@@ -1938,13 +1950,19 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                           data-testid="plan-option"
-                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
+                                          className={cn(
+                                            'rounded p-2 text-left data-[highlighted]:bg-muted/60',
+                                            chatMode === 'plan' && 'bg-success/10'
+                                          )}
                                           onSelect={() => setChatMode('plan')}
                                         >
                                           <div className="flex w-full flex-col gap-1">
-                                            <div className="flex items-center gap-3">
-                                              <PlanModeIcon className="h-4 w-4 shrink-0" />
-                                              <span className="text-sm text-foreground">Plan</span>
+                                            <div className="flex items-center justify-between gap-3">
+                                              <div className="flex items-center gap-3">
+                                                <PlanModeIcon className="h-4 w-4 shrink-0" />
+                                                <span className="text-sm text-foreground">Plan</span>
+                                              </div>
+                                              {chatMode === 'plan' ? <Check className="h-3.5 w-3.5 shrink-0 text-success-foreground" /> : null}
                                             </div>
                                             <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Outline goals, structure tasks, and map your next steps.
@@ -2014,110 +2032,14 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           </div>
                         </div>
                         <div className="mt-4">
-                          <div className="flex w-full min-w-0 flex-row items-center">
-                            <div className={repoActionRowClassName}>
-                              {repositoryStatus === 'connected' ? (
-                                <>
-                                  <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
-                                    <a
-                                      href={connectedRepoUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center justify-between gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate hover:border-muted-foreground/30 hover:text-foreground cursor-pointer"
-                                    >
-                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                        <Github className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
-                                      </div>
-                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0 transition-colors group-hover:text-foreground" title={connectedRepoName}>
-                                        {connectedRepoName}
-                                      </div>
-                                      <div className="absolute right-0 top-1/2 flex h-full w-12 -translate-y-1/2 items-center justify-end rounded-r-[100px] bg-gradient-to-l from-background via-background/80 to-transparent pr-2.5 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
-                                        <ExternalLink className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
-                                      </div>
-                                    </a>
-                                    <a
-                                      href={connectedBranchUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="group flex min-w-0 max-w-[220px] flex-row items-center justify-between gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate hover:border-muted-foreground/30 hover:text-foreground cursor-pointer"
-                                    >
-                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                        <GitBranch className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
-                                      </div>
-                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate transition-colors group-hover:text-foreground" title={connectedBranchName}>
-                                        {connectedBranchName}
-                                      </div>
-                                      <div className="absolute right-0 top-1/2 flex h-full w-12 -translate-y-1/2 items-center justify-end rounded-r-[100px] bg-gradient-to-l from-background via-background/80 to-transparent pr-2.5 opacity-0 transition-opacity duration-0 group-hover:opacity-100">
-                                        <ExternalLink className="w-3 h-3 text-muted-foreground transition-colors group-hover:text-foreground" />
-                                      </div>
-                                    </a>
-                                  </div>
-                                  <div className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-2.5">
-                                    <button
-                                      type="button"
-                                      aria-disabled="true"
-                                      className="flex flex-row gap-1 items-center justify-center rounded-[100px] border border-transparent bg-muted/50 px-0.5 py-1 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground w-[76px] min-w-[76px]"
-                                    >
-                                      <ArrowDown className="w-3 h-3" />
-                                      <div className="font-normal text-xs leading-4 max-w-[76px] truncate" title="Pull">Pull</div>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      aria-disabled="true"
-                                      className="flex flex-row gap-1 items-center justify-center rounded-[100px] border border-transparent bg-muted/50 px-2 py-1 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground w-[77px] min-w-[77px]"
-                                    >
-                                      <ArrowUp className="w-3 h-3" />
-                                      <div className="font-normal text-xs leading-4 max-w-[77px] truncate" title="Push">Push</div>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      aria-disabled="true"
-                                      className="flex h-7 flex-row gap-1 items-center justify-center rounded-[100px] border border-transparent bg-muted/50 px-2 py-1 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground w-[126px] min-w-[126px]"
-                                    >
-                                      <GitPullRequest className="w-3 h-3" />
-                                      <div className="font-normal text-xs leading-4 max-w-[126px] truncate" title="Pull Request">Pull Request</div>
-                                    </button>
-                                  </div>
-                                </>
-                              ) : repositoryStatus === 'connect' ? (
-                                <>
-                                  <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
-                                    <div className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate cursor-not-allowed">
-                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                        <Github className="w-3 h-3 text-muted-foreground" />
-                                      </div>
-                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0" title="No Repo Connected">
-                                        No Repo Connected
-                                      </div>
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="flex h-7 min-w-[76px] shrink-0 flex-row items-center justify-center gap-1 rounded-[100px] border border-transparent bg-muted/50 px-2 py-1 text-xs font-normal leading-4 text-muted-foreground transition-colors hover:border-border hover:bg-muted/70 hover:text-foreground"
-                                      onClick={() => setIsConnectModalOpen(true)}
-                                    >
-                                      <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                        <ArrowUpIcon className="w-3 h-3 rotate-90" />
-                                      </span>
-                                      Connect
-                                    </button>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
-                                    <div className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center gap-2 rounded-[100px] border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate cursor-not-allowed">
-                                      <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                                        <Github className="w-3 h-3 text-muted-foreground" />
-                                      </div>
-                                      <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0" title="No Repo Connected">
-                                        No Repo Connected
-                                      </div>
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
+                          <RepositoryActionStrip
+                            status={repositoryStatus}
+                            repoName={connectedRepoName}
+                            repoUrl={connectedRepoUrl}
+                            branchName={connectedBranchName}
+                            branchUrl={connectedBranchUrl}
+                            onConnect={() => setIsConnectModalOpen(true)}
+                          />
                         </div>
                       </div>
                     </div>

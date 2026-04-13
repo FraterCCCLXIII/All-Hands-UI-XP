@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult, DragStart } from '@hello-pangea/dnd';
 import { KanbanColumn as KanbanColumnType, PRCard, AgentMessage, Conversation } from '../../types/pr';
 import { KanbanColumn } from './KanbanColumn';
 import { AgentPanel } from './AgentPanel';
 import { NewTaskDialog } from './NewTaskDialog';
 import { availablePullRequests, initialColumns } from '../../data/mockData';
 import { Button } from '../ui/button';
-import { Menu } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 interface KanbanBoardProps {
   activeRepo: string;
@@ -25,6 +25,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
   const [columns, setColumns] = useState<KanbanColumnType[]>(initialColumns);
   const [selectedCard, setSelectedCard] = useState<PRCard | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [activeDraggedCardId, setActiveDraggedCardId] = useState<string | null>(null);
   const isFiltered = activeRepo !== 'all';
   const visibleColumns = useMemo(() => {
     if (!isFiltered) return columns;
@@ -64,8 +65,15 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
     repositorySet.add('No Repository');
     return Array.from(repositorySet);
   }, [allPullRequests]);
+  const handleDragStart = useCallback((start: DragStart) => {
+    if (start.type !== 'COLUMN') {
+      setActiveDraggedCardId(start.draggableId);
+    }
+  }, []);
+
   const handleDragEnd = useCallback(
     (result: DropResult) => {
+      setActiveDraggedCardId(null);
       const { destination, source } = result;
 
       if (!destination) return;
@@ -353,7 +361,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex items-center justify-between px-4 pb-3 gap-2 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             {onToggleRepoList && (
@@ -363,9 +371,9 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
                 onClick={onToggleRepoList}
                 aria-label={isRepoListOpen ? 'Hide repository list' : 'Show repository list'}
                 aria-expanded={isRepoListOpen}
-                className="shrink-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
               >
-                <Menu className="w-4 h-4" />
+                {isRepoListOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
               </Button>
             )}
             <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">
@@ -390,7 +398,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
         </div>
         <Droppable droppableId="board" direction="horizontal" type="COLUMN">
           {(provided) => (
-            <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-1 min-h-0 gap-4 overflow-x-auto px-4 hide-scrollbar items-stretch">
+            <div ref={provided.innerRef} {...provided.droppableProps} className="custom-scrollbar-always flex flex-1 min-h-0 gap-4 overflow-x-auto px-4 items-stretch">
               {visibleColumns.map((column, index) => (
                 <Draggable key={column.id} draggableId={column.id} index={index} isDragDisabled>
                   {(provided) => (
@@ -400,6 +408,7 @@ export function KanbanBoard({ activeRepo, isRepoListOpen = true, onToggleRepoLis
                         onCardClick={handleCardClick}
                         onRenameColumn={handleRenameColumn}
                         onDeleteColumn={handleDeleteColumn}
+                        activeDraggedCardId={activeDraggedCardId}
                         dragHandleProps={null}
                         isDragDisabled={false}
                       />

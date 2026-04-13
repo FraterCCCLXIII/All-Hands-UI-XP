@@ -7,7 +7,7 @@ import {
   Github,
   GitPullRequest,
   Layers3,
-  Menu,
+  PanelLeftOpen,
   MessageSquare,
   Plus,
   XCircle,
@@ -163,11 +163,11 @@ export function DashboardScreen() {
         <div className="flex items-center justify-between px-4 pb-3 gap-2 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <button
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 w-10 shrink-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
               aria-label="Show repository list"
               aria-expanded="false"
             >
-              <Menu className="w-4 h-4" aria-hidden="true" />
+              <PanelLeftOpen className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
             <h2 className="text-lg font-semibold tracking-tight text-foreground truncate">All</h2>
             <DropdownMenu>

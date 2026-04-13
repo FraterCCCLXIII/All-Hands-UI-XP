@@ -112,21 +112,23 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
       </div>
 
       {/* Toolbar row */}
-      <div className="w-full flex items-center gap-2 flex-nowrap overflow-hidden">
+      <div className="w-full flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
         {/* Tools dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
+              className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
               aria-label="Tools"
               data-testid="tools-trigger"
             >
-              <Wrench className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <Wrench className="h-[13px] w-[13px] shrink-0" aria-hidden="true" />
               <span className="text-xs font-normal leading-4">Tools</span>
+              <ChevronDown className="h-[11px] w-[11px] shrink-0 opacity-50" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-[200px] rounded-[6px] py-[6px] px-1 z-[100]">
+          <DropdownMenuContent side="bottom" align="start" sideOffset={8} className="min-w-[200px] rounded-[6px] py-[6px] px-1 z-[100]">
             <DropdownMenuSub>
               <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
                 <GitBranch className="h-4 w-4 shrink-0" />
@@ -193,8 +195,8 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
             <button
               type="button"
               className={cn(
-                'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 hover:opacity-90 data-[state=open]:opacity-90 whitespace-nowrap shrink-0',
-                chatMode === 'build' && 'border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                'flex items-center gap-1 cursor-pointer rounded-[100px] border border-transparent px-2 py-0.5 transition-colors text-xs font-normal leading-4 whitespace-nowrap shrink-0',
+                chatMode === 'build' && 'bg-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground',
                 chatMode === 'ask' && 'border-blue-500/50 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
                 chatMode === 'plan' && 'border-success/50 bg-success/20 text-success-foreground hover:bg-success/30'
               )}
@@ -208,7 +210,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
               <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-[8rem] rounded-[6px] py-[6px] px-1 z-[100]">
+          <DropdownMenuContent side="bottom" align="start" sideOffset={8} className="min-w-[8rem] rounded-[6px] py-[6px] px-1 z-[100]">
             <DropdownMenuItem className="gap-2 cursor-pointer" onSelect={() => setChatMode('build')}>
               <Hammer className="h-4 w-4 shrink-0" />
               Build
@@ -229,16 +231,17 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-border bg-muted/30 px-2 py-0.5 transition-colors hover:bg-muted/50 hover:text-foreground active:bg-muted/60 active:text-foreground data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
+              className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
               aria-label="Select model"
               title={selectedModel}
               data-testid="model-trigger"
             >
+              <Microchip className="h-[13px] w-[13px] shrink-0" aria-hidden="true" />
               <span className="text-xs font-normal leading-4 truncate">{selectedModel}</span>
               <ChevronDown className="w-3.5 h-3.5 shrink-0 opacity-50" aria-hidden="true" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start" sideOffset={8} className="min-w-[200px] rounded-[6px] py-[6px] px-1 z-[100]">
+          <DropdownMenuContent side="bottom" align="start" sideOffset={8} className="min-w-[200px] rounded-[6px] py-[6px] px-1 z-[100]">
             {LLM_MODELS.map((model) => (
               <DropdownMenuItem key={model} className="gap-2 cursor-pointer" onSelect={() => setSelectedModel(model)}>
                 <Microchip className="h-4 w-4 shrink-0" />
@@ -257,6 +260,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { PRCard as PRCardType } from '../../types/pr';
 import { Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
+import { AutomationGlyph } from '../icons/AutomationGlyph';
 
 interface PRCardProps {
   card: PRCardType;
@@ -26,15 +27,20 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
     <motion.div
       onClick={onClick}
       className={cn(
-        'group relative bg-card border border-border rounded-md p-3 cursor-pointer',
+        'group relative bg-card border border-border rounded-modal p-4 cursor-pointer',
         'hover:border-muted-foreground/30 transition-all duration-200',
         isDragging && 'shadow-lg shadow-black/50 rotate-2'
       )}
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="mb-2">
-        <div className="flex items-start gap-2">
+      {card.sourceType === 'automation' ? (
+        <span className="absolute right-4 top-4 inline-flex items-center justify-center text-muted-foreground">
+          <AutomationGlyph className="h-4 w-4" />
+        </span>
+      ) : null}
+      <div className="mb-3">
+        <div className="flex items-start gap-2.5">
           <div className="mt-[0.32rem] h-2 w-2 shrink-0 rounded-full bg-success" />
           <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {card.title}
@@ -45,22 +51,20 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
       {(() => {
         const firstActive = (card.conversations ?? []).find((c) => c.activity);
         return firstActive ? (
-          <div className="mb-2 space-y-1">
-            <div key={`${card.id}-activity-${firstActive.id}`} className="p-2 rounded bg-muted/50 border border-border">
-              <p className="text-xs text-muted-foreground font-mono truncate">
-                <span className="gradient-flow">{firstActive.activity}</span>
-              </p>
-            </div>
+          <div className="mb-3" key={`${card.id}-activity-${firstActive.id}`}>
+            <p className="text-xs text-muted-foreground truncate">
+              <span className="gradient-flow">{firstActive.activity}</span>
+            </p>
           </div>
         ) : null;
       })()}
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <span className="font-medium text-success">+{card.additions}</span>
           <span className="font-medium text-destructive">-{card.deletions}</span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <Clock className="w-3 h-3" />
           {formatTimeAgo(card.updatedAt)}
         </div>

@@ -7,6 +7,7 @@ import {
   Minus, Plus, X,
 } from 'lucide-react';
 import { ChatInputBox } from '../common/ChatInputBox';
+import { RepositoryActionStrip } from '../chat/RepositoryActionStrip';
 
 interface ToolStep {
   action: 'Read' | 'Ran' | 'Write' | 'Browse';
@@ -106,8 +107,10 @@ export function AgentPanel({
   if (!card) return null;
 
   const metadataCard = prDetails ?? card;
-  const repoUrl = `https://github.com/FraterCCCLXIII/${card.repo.split('/').pop() ?? 'repo'}`;
-  const branchUrl = `${repoUrl}/tree/${prDetails?.branch ?? 'main'}`;
+  const hasConnectedRepo = metadataCard.repo.includes('/');
+  const repoUrl = hasConnectedRepo ? `https://github.com/${metadataCard.repo}` : null;
+  const branchName = prDetails?.branch ?? 'main';
+  const branchUrl = repoUrl ? `${repoUrl}/tree/${encodeURIComponent(branchName)}` : null;
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -276,54 +279,13 @@ export function AgentPanel({
           <ChatInputBox />
 
           {showGitActions && (
-            <div className="flex flex-row gap-2 items-center overflow-x-auto flex-wrap">
-              <a
-                href={repoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-row items-center justify-between gap-2 pl-2.5 pr-2.5 py-1 rounded-full flex-1 min-w-0 truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
-              >
-                <GitBranch className="w-3 h-3 text-foreground shrink-0" aria-hidden="true" />
-                <span className="font-normal text-foreground text-xs leading-5 truncate flex-1 min-w-0">
-                  {card.repo}
-                </span>
-                <ExternalLink className="w-3 h-3 text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true" />
-              </a>
-              <a
-                href={branchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-row items-center gap-2 pl-2.5 pr-2.5 py-1 rounded-full flex-shrink-0 max-w-[160px] truncate relative border border-border bg-transparent hover:border-muted-foreground/30 cursor-pointer"
-              >
-                <GitBranch className="w-3 h-3 text-foreground shrink-0" aria-hidden="true" />
-                <span className="font-normal text-foreground text-xs leading-5 truncate">{prDetails?.branch ?? 'main'}</span>
-                <ExternalLink className="w-3 h-3 text-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" aria-hidden="true" />
-              </a>
-              <button
-                type="button"
-                disabled
-                className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-full bg-muted/50 text-muted-foreground cursor-not-allowed shrink-0"
-              >
-                <ArrowDown className="w-3 h-3" aria-hidden="true" />
-                <span className="text-xs leading-5">Pull</span>
-              </button>
-              <button
-                type="button"
-                disabled
-                className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-full bg-muted/50 text-muted-foreground cursor-not-allowed shrink-0"
-              >
-                <ArrowUp className="w-3 h-3" aria-hidden="true" />
-                <span className="text-xs leading-5">Push</span>
-              </button>
-              <button
-                type="button"
-                disabled
-                className="flex flex-row gap-1 items-center justify-center px-2 py-1 rounded-full bg-muted/50 text-muted-foreground cursor-not-allowed shrink-0"
-              >
-                <GitPullRequest className="w-3 h-3" aria-hidden="true" />
-                <span className="text-xs leading-5">Pull Request</span>
-              </button>
-            </div>
+            <RepositoryActionStrip
+              status={repoUrl ? 'connected' : 'disconnected'}
+              repoName={repoUrl ? metadataCard.repo : 'No Repo Connected'}
+              repoUrl={repoUrl}
+              branchName={branchName}
+              branchUrl={branchUrl}
+            />
           )}
         </div>
       </SheetContent>

@@ -1,4 +1,4 @@
-import { BookOpen, Box, Cloud, Package, Webhook } from 'lucide-react';
+import { BookOpen, Box, Cloud, Layers3, Webhook } from 'lucide-react';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
@@ -17,7 +17,7 @@ export type ExtensionsBrowseControls = {
 };
 
 const SCOPE_ITEMS: { id: ExtensionsCatalogScope; label: string; icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }> }[] = [
-  { id: 'all', label: 'All active', icon: Package },
+  { id: 'all', label: 'All active', icon: Layers3 },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
   { id: 'plugins', label: 'Plugins', icon: Box },
   { id: 'mcp', label: 'MCP servers', icon: Cloud },
@@ -99,7 +99,7 @@ export function ExtensionsShellSidebar({
               className="flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm bg-muted/60 text-foreground"
               aria-current="page"
             >
-              <Package className="h-5 w-5 shrink-0 text-white" aria-hidden />
+              <Layers3 className="h-5 w-5 shrink-0 text-white" aria-hidden />
               <span className="font-normal">All active</span>
             </div>
           ) : (
@@ -108,7 +108,7 @@ export function ExtensionsShellSidebar({
               onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
               className="group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
             >
-              <Package className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
+              <Layers3 className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
               <span className="font-normal group-hover:text-white">All active</span>
             </button>
           )}

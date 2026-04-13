@@ -25,8 +25,6 @@ interface ChatAreaProps {
   onPush: () => void;
   onPull: () => void;
   onCreatePR: () => void;
-  onRepoSelect: (repo: string) => void;
-  onBranchSelect: (branch: string) => void;
   onWelcomeScreenChange?: (isActive: boolean) => void;
   activeChatWindowTab: ChatWindowTabId;
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
@@ -53,8 +51,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onPush,
   onPull,
   onCreatePR,
-  onRepoSelect,
-  onBranchSelect,
   onWelcomeScreenChange,
   activeChatWindowTab: _activeChatWindowTab,
   onChatWindowTabChange: _onChatWindowTabChange,
@@ -158,10 +154,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     onEnterpriseCtaVisibilityChange?.(showEnterpriseCta);
   }, [showEnterpriseCta, onEnterpriseCtaVisibilityChange]);
 
-  const handleWelcomeScreenClose = () => {
-    setShowWelcomeScreen(false);
-  };
-
   const handleTaskToggle = (id: string) => {
     setTasks((prev) =>
       prev.map((task) =>
@@ -200,9 +192,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           theme={theme}
           getThemeClasses={getThemeClasses}
           userName={userName}
-          onRepoSelect={onRepoSelect}
-          onBranchSelect={onBranchSelect}
-          onClose={handleWelcomeScreenClose}
           variant={welcomeScreenVariant}
         />
         <AnimatePresence>
