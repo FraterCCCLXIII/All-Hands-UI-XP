@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import type { KeyboardEvent } from 'react';
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import {
   Loader2,
   ArrowUp,
@@ -41,8 +41,12 @@ import {
   Trash2,
   MessageCircleQuestion,
   RefreshCw,
+  RotateCw,
   Box,
   ClipboardList,
+  History,
+  GitCompare,
+  FilePlus,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -87,6 +91,12 @@ interface ActiveChatScreenProps {
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
+/** Chat column min/max width (% of the split row) — canvas gets the remainder. */
+const MIN_LEFT_PANEL_PCT = 28;
+const MAX_LEFT_PANEL_PCT = 78;
+
+const CHAT_INPUT_MAX_LINES = 4;
+const CHAT_INPUT_MIN_LINES = 1;
 
 type TabId = 'changes' | 'code' | 'terminal' | 'app' | 'browser' | 'planner';
 
@@ -99,6 +109,9 @@ const CANVAS_TAB_ARIA: Record<TabId, string> = {
   planner: 'Planner',
 };
 
+/** Opens in a new tab from the Code tab external-link control */
+const CODE_EXTERNAL_REPO_URL = 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP';
+
 const PLAN_PROMPT_FROM_CANVAS = 'Create a plan for this repository.';
 
 const DEFAULT_PINNED: Record<TabId, boolean> = {
@@ -109,6 +122,8 @@ const DEFAULT_PINNED: Record<TabId, boolean> = {
   browser: true,
   planner: true,
 };
+
+const CANVAS_TAB_ORDER: TabId[] = ['changes', 'code', 'terminal', 'app', 'browser', 'planner'];
 
 const CONVERSATION_LOAD_DURATION_MS = 2000;
 const DEFAULT_LLM_MODEL = 'Claude 3.5 Sonnet';
@@ -288,7 +303,7 @@ function CopyableBlock({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-border bg-card [&_textarea]:min-h-[100px]',
+        'overflow-hidden rounded-md border border-border bg-card [&_textarea]:min-h-[100px]',
         className
       )}
     >
@@ -331,15 +346,31 @@ export function ActiveChatScreen({
   automationContextTitle,
   onAutomationContextTitleChange,
 }: ActiveChatScreenProps) {
-  const [leftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
+  const splitRowRef = useRef<HTMLDivElement>(null);
+  const canvasResizeDragRef = useRef<{ startX: number; startLeftPct: number } | null>(null);
+  const [isCanvasResizeDragging, setIsCanvasResizeDragging] = useState(false);
   const [serverStatus, setServerStatus] = useState('Starting');
   const [showServerMenu, setShowServerMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('changes');
   /** When false, the right canvas column is hidden and chat uses full width. */
   const [canvasOpen, setCanvasOpen] = useState(true);
   const [pinnedTabs, setPinnedTabs] = useState<Record<TabId, boolean>>(() => ({ ...DEFAULT_PINNED }));
+  /** Per-tab prototype: off = empty state, on = filled sample content (gear menu). */
+  const [canvasTabFilled, setCanvasTabFilled] = useState<Record<TabId, boolean>>({
+    changes: false,
+    code: false,
+    terminal: false,
+    app: false,
+    browser: false,
+    planner: false,
+  });
   const [chatInput, setChatInput] = useState('');
   const chatInputRef = useRef<HTMLDivElement>(null);
+  /** User-dragged cap (px) between min and max line heights; null = use max lines. */
+  const [chatInputMaxHeightPx, setChatInputMaxHeightPx] = useState<number | null>(null);
+  const chatInputGripResizeRef = useRef<{ startY: number; startMaxPx: number } | null>(null);
+  const [isChatInputGripDragging, setIsChatInputGripDragging] = useState(false);
   const [conversationLoaded, setConversationLoaded] = useState(false);
   const [chatStatusIndex, setChatStatusIndex] = useState(0);
   const [statusIndicatorExiting, setStatusIndicatorExiting] = useState(false);
@@ -396,6 +427,113 @@ export function ActiveChatScreen({
     const id = window.setTimeout(() => setDrawersAnimatedIn(true), 50);
     return () => window.clearTimeout(id);
   }, [conversationLoaded]);
+
+  useEffect(() => {
+    if (!isCanvasResizeDragging) return;
+    const prevUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+    return () => {
+      document.body.style.userSelect = prevUserSelect;
+      document.body.style.cursor = '';
+    };
+  }, [isCanvasResizeDragging]);
+
+  useEffect(() => {
+    if (!isChatInputGripDragging) return;
+    const prevUserSelect = document.body.style.userSelect;
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ns-resize';
+    return () => {
+      document.body.style.userSelect = prevUserSelect;
+      document.body.style.cursor = '';
+    };
+  }, [isChatInputGripDragging]);
+
+  useEffect(() => {
+    if (!isChatInputGripDragging) return;
+
+    const onMove = (e: MouseEvent) => {
+      const el = chatInputRef.current;
+      const ref = chatInputGripResizeRef.current;
+      if (!el || !ref) return;
+      const lh = parseFloat(getComputedStyle(el).lineHeight) || 20;
+      const minPx = lh * CHAT_INPUT_MIN_LINES;
+      const maxPx = lh * CHAT_INPUT_MAX_LINES;
+      const delta = e.clientY - ref.startY;
+      const next = Math.min(maxPx, Math.max(minPx, ref.startMaxPx + delta));
+      setChatInputMaxHeightPx(next);
+    };
+
+    const onUp = () => {
+      chatInputGripResizeRef.current = null;
+      setIsChatInputGripDragging(false);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, [isChatInputGripDragging]);
+
+  const adjustChatInputHeight = useCallback(() => {
+    const el = chatInputRef.current;
+    if (!el) return;
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || 20;
+    const maxCap = chatInputMaxHeightPx ?? lh * CHAT_INPUT_MAX_LINES;
+    el.style.maxHeight = `${maxCap}px`;
+    el.style.height = 'auto';
+    const scrollH = el.scrollHeight;
+    const next = Math.min(Math.max(scrollH, lh), maxCap);
+    el.style.height = `${next}px`;
+    el.style.overflowY = scrollH > maxCap ? 'auto' : 'hidden';
+  }, [chatInputMaxHeightPx]);
+
+  useLayoutEffect(() => {
+    adjustChatInputHeight();
+  }, [adjustChatInputHeight, chatInput]);
+
+  useEffect(() => {
+    if (!isCanvasResizeDragging) return;
+
+    const onMove = (e: MouseEvent) => {
+      const wrap = splitRowRef.current;
+      const drag = canvasResizeDragRef.current;
+      if (!wrap || !drag) return;
+      const rowWidth = wrap.getBoundingClientRect().width;
+      if (rowWidth <= 0) return;
+      const deltaPct = ((e.clientX - drag.startX) / rowWidth) * 100;
+      const next = Math.min(
+        MAX_LEFT_PANEL_PCT,
+        Math.max(MIN_LEFT_PANEL_PCT, drag.startLeftPct + deltaPct)
+      );
+      setLeftPanelWidth(next);
+    };
+
+    const onUp = () => {
+      canvasResizeDragRef.current = null;
+      setIsCanvasResizeDragging(false);
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, [isCanvasResizeDragging]);
+
+  const handleCanvasResizeMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!canvasOpen) return;
+      e.preventDefault();
+      canvasResizeDragRef.current = { startX: e.clientX, startLeftPct: leftPanelWidth };
+      setIsCanvasResizeDragging(true);
+    },
+    [canvasOpen, leftPanelWidth]
+  );
 
   const togglePinned = useCallback((id: TabId) => {
     setPinnedTabs((prev) => {
@@ -470,12 +608,24 @@ export function ActiveChatScreen({
     const text = chatInputRef.current?.innerText?.trim() ?? chatInput.trim();
     if (text) {
       setChatInput('');
+      setChatInputMaxHeightPx(null);
       if (chatInputRef.current) chatInputRef.current.innerText = '';
       setIsCommandMenuOpen(false);
       setCommandQuery('');
+      requestAnimationFrame(() => adjustChatInputHeight());
       // Could wire to parent or local messages state here
     }
-  }, [chatInput]);
+  }, [chatInput, adjustChatInputHeight]);
+
+  const handleChatInputGripMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const el = chatInputRef.current;
+    if (!el) return;
+    const lh = parseFloat(getComputedStyle(el).lineHeight) || 20;
+    const currentMax = chatInputMaxHeightPx ?? lh * CHAT_INPUT_MAX_LINES;
+    chatInputGripResizeRef.current = { startY: e.clientY, startMaxPx: currentMax };
+    setIsChatInputGripDragging(true);
+  }, [chatInputMaxHeightPx]);
 
   const handleCopyCliCommand = useCallback(() => {
     void navigator.clipboard.writeText(openConversationCliCommand);
@@ -514,8 +664,9 @@ export function ActiveChatScreen({
       el.innerText = PLAN_PROMPT_FROM_CANVAS;
       placeCaretAtEnd(el);
       el.focus();
+      requestAnimationFrame(() => adjustChatInputHeight());
     }
-  }, [placeCaretAtEnd]);
+  }, [placeCaretAtEnd, adjustChatInputHeight]);
 
   const applyCommandChip = useCallback(
     (command: CommandItem) => {
@@ -558,8 +709,9 @@ export function ActiveChatScreen({
       setChatInput(input.innerText);
       setIsCommandMenuOpen(false);
       setCommandQuery('');
+      requestAnimationFrame(() => adjustChatInputHeight());
     },
-    [placeCaretAtEnd]
+    [placeCaretAtEnd, adjustChatInputHeight]
   );
 
   const handleCommandNavigation = useCallback(
@@ -705,37 +857,41 @@ export function ActiveChatScreen({
             </div>
             <div className="relative w-full flex flex-row justify-start lg:justify-end items-center gap-1">
               {pinnedTabs.changes && (
-                <span data-aria-label="Changes">
-                  <button
-                    type="button"
-                    onClick={() => handleCanvasTabClick('changes')}
-                    className={cn(
-                      'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                      activeTab === 'changes' && canvasOpen
-                        ? 'gap-2 pr-2 bg-secondary text-foreground hover:bg-secondary/90'
-: 'gap-0 pr-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60'
-                  )}
-                >
-                  <ChangesIcon className="w-4 h-4 flex-shrink-0 text-inherit" />
-                    <span
+                <CanvasNavTooltip label={CANVAS_TAB_ARIA.changes}>
+                  <span data-aria-label="Changes">
+                    <button
+                      type="button"
+                      onClick={() => handleCanvasTabClick('changes')}
                       className={cn(
-                        'overflow-hidden whitespace-nowrap transition-[opacity,max-width] duration-200',
-                        activeTab === 'changes' && canvasOpen ? 'max-w-[100px] opacity-100' : 'max-w-0 opacity-0'
+                        'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                        activeTab === 'changes' && canvasOpen
+                          ? 'gap-2 pr-2 bg-secondary text-foreground hover:bg-secondary/90'
+                          : 'gap-0 pr-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60'
                       )}
                     >
-                      Changes
-                    </span>
-                  </button>
-                </span>
+                      <ChangesIcon className="w-4 h-4 flex-shrink-0 text-inherit" />
+                      <span
+                        className={cn(
+                          'overflow-hidden whitespace-nowrap transition-[opacity,max-width] duration-200',
+                          activeTab === 'changes' && canvasOpen ? 'max-w-[100px] opacity-100' : 'max-w-0 opacity-0'
+                        )}
+                      >
+                        Changes
+                      </span>
+                    </button>
+                  </span>
+                </CanvasNavTooltip>
               )}
               {pinnedTabs.code && (
-                <TabButton
-                  label="Code"
-                  active={activeTab === 'code' && canvasOpen}
-                  onClick={() => handleCanvasTabClick('code')}
-                  ariaLabel="Code"
-                  icon={<Code2 className="w-4 h-4 flex-shrink-0" />}
-                />
+                <CanvasNavTooltip label={CANVAS_TAB_ARIA.code} externalRepoUrl={CODE_EXTERNAL_REPO_URL}>
+                  <TabButton
+                    label="Code"
+                    active={activeTab === 'code' && canvasOpen}
+                    onClick={() => handleCanvasTabClick('code')}
+                    ariaLabel="Code"
+                    icon={<Code2 className="w-4 h-4 flex-shrink-0" />}
+                  />
+                </CanvasNavTooltip>
               )}
               {pinnedTabs.terminal && (
                 <span data-aria-label="Terminal (read-only)">
@@ -745,6 +901,7 @@ export function ActiveChatScreen({
                     onClick={() => handleCanvasTabClick('terminal')}
                     ariaLabel="Terminal (read-only)"
                     icon={<Terminal className="w-4 h-4 flex-shrink-0" />}
+                    tooltip={CANVAS_TAB_ARIA.terminal}
                   />
                 </span>
               )}
@@ -755,6 +912,7 @@ export function ActiveChatScreen({
                   onClick={() => handleCanvasTabClick('app')}
                   ariaLabel="App"
                   icon={<Monitor className="w-4 h-4 flex-shrink-0" />}
+                  tooltip={CANVAS_TAB_ARIA.app}
                 />
               )}
               {pinnedTabs.browser && (
@@ -764,6 +922,7 @@ export function ActiveChatScreen({
                   onClick={() => handleCanvasTabClick('browser')}
                   ariaLabel="Browser"
                   icon={<Globe className="w-4 h-4 flex-shrink-0" />}
+                  tooltip={CANVAS_TAB_ARIA.browser}
                 />
               )}
               {pinnedTabs.planner && (
@@ -773,6 +932,7 @@ export function ActiveChatScreen({
                   onClick={() => handleCanvasTabClick('planner')}
                   ariaLabel="Planner"
                   icon={<ClipboardList className="w-4 h-4 flex-shrink-0" strokeWidth={2} />}
+                  tooltip={CANVAS_TAB_ARIA.planner}
                 />
               )}
               <DropdownMenu>
@@ -828,11 +988,24 @@ export function ActiveChatScreen({
 
           {/* Main two-panel layout */}
           <div className="h-full flex flex-col overflow-hidden flex-1 min-h-0">
-            <div className="flex flex-1 transition-all duration-300 ease-in-out overflow-hidden min-h-0" style={{ transitionProperty: 'all' }}>
+            <div
+              ref={splitRowRef}
+              className={cn(
+                'relative flex flex-1 overflow-hidden min-h-0',
+                !isCanvasResizeDragging && 'transition-all duration-300 ease-in-out'
+              )}
+              style={{ transitionProperty: isCanvasResizeDragging ? 'none' : 'all' }}
+            >
               {/* Left panel: chat */}
               <div
-                className="flex flex-col bg-background overflow-hidden transition-all duration-300 ease-in-out min-h-0"
-                style={{ width: `${effectiveLeftWidth}%`, transitionProperty: 'all' }}
+                className={cn(
+                  'flex flex-col bg-background overflow-hidden min-h-0',
+                  !isCanvasResizeDragging && 'transition-all duration-300 ease-in-out'
+                )}
+                style={{
+                  width: `${effectiveLeftWidth}%`,
+                  transitionProperty: isCanvasResizeDragging ? 'none' : 'all',
+                }}
               >
                 <div className="flex justify-center w-full h-full min-h-0">
                   <div className="w-full transition-all duration-300 ease-in-out max-w-4xl h-full flex flex-col min-h-0">
@@ -887,7 +1060,7 @@ export function ActiveChatScreen({
                         >
                           <article
                             data-testid="user-message"
-                            className="rounded-xl relative w-fit max-w-full last:mb-4 flex flex-col gap-2 p-3 bg-muted self-end"
+                            className="rounded-md relative w-fit max-w-full last:mb-4 flex flex-col gap-2 p-3 bg-muted self-end"
                           >
                             <div className="text-sm" style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
                               <p className="py-1.5 first:pt-0 last:pb-0">run this</p>
@@ -895,7 +1068,7 @@ export function ActiveChatScreen({
                           </article>
                           <article
                             data-testid="agent-message"
-                            className="rounded-xl relative last:mb-4 flex flex-col gap-2 mt-6 w-full max-w-full bg-transparent"
+                            className="rounded-md relative last:mb-4 flex flex-col gap-2 mt-6 w-full max-w-full bg-transparent"
                           >
                             <div className="text-sm w-full" style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
                               {/* File read block: project/ */}
@@ -1116,7 +1289,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 I see many TypeScript errors that need to be fixed for the Vercel build. Let me create a task plan and fix them systematically.
                               </p>
                               {/* Tasks panel */}
-                              <div className="flex flex-col overflow-clip bg-card border border-border rounded-xl w-full mt-4">
+                              <div className="flex flex-col overflow-clip bg-card border border-border rounded-md w-full mt-4">
                                 <div className="flex gap-1 items-center border-b border-border h-[41px] px-2 shrink-0">
                                   <ListTodo className="shrink-0 w-4 h-4 text-muted-foreground" aria-hidden />
                                   <span className="text-[11px] text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px] whitespace-pre">
@@ -1155,14 +1328,23 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               'relative z-0 w-full flex flex-col gap-0 shrink-0 overflow-visible transition-opacity duration-300 ease-out -mb-2 -mt-6',
                               drawersAnimatedIn ? 'opacity-100' : 'opacity-0 pointer-events-none'
                             )}
-                            style={{ transform: 'translateY(16px)' }}
+                            style={{
+                              transform:
+                                taskListDrawerVisible && !changesDrawerVisible
+                                  ? 'translateY(0)'
+                                  : 'translateY(16px)',
+                            }}
                             aria-hidden={!drawersAnimatedIn}
                           >
                             {taskListDrawerVisible && (
                             <div
                               className={cn(
                                 'relative z-0 flex flex-col border border-border border-b-0 bg-card rounded-t-xl overflow-hidden transition-transform duration-300 ease-out -mb-px',
-                                drawersAnimatedIn ? 'translate-y-[1.45rem]' : 'translate-y-full'
+                                drawersAnimatedIn
+                                  ? changesDrawerVisible
+                                    ? 'translate-y-[1.45rem]'
+                                    : 'translate-y-0'
+                                  : 'translate-y-full'
                               )}
                               style={{ transitionDelay: '100ms' }}
                               data-testid="drawer-task-list"
@@ -1264,7 +1446,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           </div>
                         )}
                         <div className="z-10 h-0 w-full shrink-0 bg-transparent" aria-hidden />
-                        <div data-testid="interactive-chat-box" className="relative z-10 -mt-[1px]">
+                        <div
+                          data-testid="interactive-chat-box"
+                          className={cn(
+                            'relative z-10',
+                            taskListDrawerVisible && !changesDrawerVisible ? 'mt-2' : '-mt-[1px]'
+                          )}
+                        >
                           {shouldShowStatusBadge && (
                             <div className="absolute left-0 bottom-[calc(100%-8px)] flex items-end gap-1">
                               <div
@@ -1371,7 +1559,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               )}
                               {isCliCommandVisible && (
                                 <div className="absolute left-0 right-0 bottom-full mb-3 z-20" data-testid="cli-open-command-panel">
-                                  <div className="w-full rounded-xl border border-border bg-popover text-popover-foreground shadow-lg px-3 py-2">
+                                  <div className="w-full rounded-md border border-border bg-popover text-popover-foreground shadow-lg px-3 py-2">
                                     <div className="flex items-start justify-between gap-3">
                                       <div className="min-w-0">
                                         <p className="text-xs font-medium text-foreground">Open Conversation in CLI</p>
@@ -1402,12 +1590,22 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   </div>
                                 </div>
                               )}
-                              <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20 group" id="resize-grip">
-                                <div className="absolute top-1 left-0 w-full h-[3px] bg-white cursor-ns-resize z-10 transition-opacity duration-200 opacity-0 group-hover:opacity-100" style={{ userSelect: 'none' }} />
+                              <div className="absolute -top-3 left-0 w-full h-6 lg:h-3 z-20" id="resize-grip">
+                                <div
+                                  className={cn(
+                                    'absolute top-1 left-0 w-full h-px bg-white cursor-ns-resize z-10 transition-opacity duration-200',
+                                    isChatInputGripDragging ? 'opacity-100' : 'opacity-0'
+                                  )}
+                                  style={{ userSelect: 'none' }}
+                                  role="separator"
+                                  aria-orientation="horizontal"
+                                  aria-label="Resize chat input height"
+                                  onMouseDown={handleChatInputGripMouseDown}
+                                />
                               </div>
-                              <div className="border border-border box-border content-stretch flex flex-col items-start justify-center relative rounded-[15px] w-full bg-[#141414]" style={{ padding: '.75rem' }}>
-                                <div className="box-border content-stretch flex flex-row items-center justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
-                                  <div className="basis-0 box-border content-stretch flex flex-row gap-4 grow items-center justify-start min-h-px min-w-px p-0 relative shrink-0">
+                              <div className="border border-border box-border content-stretch flex flex-col items-start justify-center relative rounded-xl w-full bg-[#141414]" style={{ padding: '.75rem' }}>
+                                <div className="box-border content-stretch flex flex-row items-end justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
+                                  <div className="relative min-w-0 flex-1 box-border content-stretch flex flex-row gap-4 items-end justify-start p-0">
                                     <button
                                       type="button"
                                       className="flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200 hover:scale-105 hover:bg-muted active:scale-95 cursor-not-allowed text-muted-foreground"
@@ -1416,14 +1614,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     >
                                       <Paperclip className="w-4 h-4" />
                                     </button>
-                                    <div className="box-border content-stretch flex flex-row items-center justify-start min-h-6 p-0 relative shrink-0 flex-1">
+                                    <div className="min-w-0 flex-1 box-border flex flex-row items-start justify-start min-h-6 p-0">
                                       <div
                                         ref={chatInputRef}
                                         contentEditable
                                         data-placeholder="What do you want to build?"
                                         data-testid="chat-input"
-                                        className="chat-input bg-transparent text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 max-h-[400px] w-full block whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
-                                        style={{ height: 20, overflowY: 'hidden' }}
+                                        className="chat-input min-w-0 max-w-full bg-transparent text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 w-full block break-words whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                                         role="textbox"
                                         aria-multiline="true"
                                         aria-expanded={isCommandMenuOpen}
@@ -1432,6 +1629,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           const value = (e.target as HTMLDivElement).innerText;
                                           setChatInput(value);
                                           updateCommandMenuState(value);
+                                          adjustChatInputHeight();
                                         }}
                                         onKeyDown={(e) => {
                                           const handled = handleCommandNavigation(e);
@@ -1734,8 +1932,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     </DropdownMenu>
                                   </div>
                                   <div className="flex items-center gap-1 min-w-0 ml-2 md:ml-3">
-                                    <span className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate" title="An error occurred. Please try again.">
-                                      An error occurred. Please try again.
+                                    <span className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate" title="Error. Retry.">
+                                      Error. Retry.
                                     </span>
                                     <div className="bg-muted box-border flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 rounded-[100px] shrink-0 size-6">
                                       <div data-testid="agent-loading-spinner">
@@ -1860,25 +2058,17 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 </div>
               </div>
 
-              {/* Resizer */}
-              <div
-                className={cn(
-                  'relative bg-transparent flex-shrink-0 transition-all duration-300 ease-in-out',
-                  canvasOpen ? 'w-1 cursor-ew-resize' : 'w-0 overflow-hidden pointer-events-none'
-                )}
-                aria-hidden
-              >
-                <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-transparent" />
-                <div className="absolute inset-y-0 -left-1 -right-1" />
-              </div>
-
               {/* Right panel: canvas/loading */}
               <div
                 className={cn(
-                  'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 min-h-0',
+                  'overflow-hidden flex-shrink-0 min-h-0',
+                  !isCanvasResizeDragging && 'transition-all duration-300 ease-in-out',
                   canvasOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 )}
-                style={{ width: `${effectiveRightWidth}%`, transitionProperty: 'all' }}
+                style={{
+                  width: `${effectiveRightWidth}%`,
+                  transitionProperty: isCanvasResizeDragging ? 'none' : 'all',
+                }}
                 aria-hidden={!canvasOpen}
               >
                 <div className={cn('flex flex-col flex-1 gap-3 h-full min-h-0', canvasOpen ? 'min-w-max' : 'min-w-0')}>
@@ -1914,12 +2104,42 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         aria-label={CANVAS_TAB_ARIA[activeTab]}
                         className="absolute inset-0 flex min-h-0 overflow-hidden"
                       >
-                        <CanvasTabEmptyContent activeTab={activeTab} onCreatePlan={handleCreatePlanFromCanvas} />
+                        <CanvasTabEmptyContent
+                          activeTab={activeTab}
+                          onCreatePlan={handleCreatePlanFromCanvas}
+                          filled={canvasTabFilled[activeTab]}
+                        />
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Canvas split grip: white line on the boundary between chat and canvas */}
+              {canvasOpen && (
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label="Resize canvas"
+                  aria-valuemin={MIN_LEFT_PANEL_PCT}
+                  aria-valuemax={MAX_LEFT_PANEL_PCT}
+                  aria-valuenow={Math.round(leftPanelWidth)}
+                  tabIndex={0}
+                  onMouseDown={handleCanvasResizeMouseDown}
+                  className="group absolute inset-y-0 z-20 flex w-3 -translate-x-1/2 cursor-col-resize items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  style={{ left: `${leftPanelWidth}%` }}
+                >
+                  <span
+                    className={cn(
+                      'h-full w-px bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.2)] transition-opacity duration-150',
+                      isCanvasResizeDragging
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
+                    )}
+                    aria-hidden
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1932,7 +2152,11 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
             }
           />
         </PopoverTrigger>
-        <PopoverContent side="top" align="end" className="w-64 p-3 space-y-3">
+        <PopoverContent
+          side="top"
+          align="end"
+          className="w-72 max-h-[min(28rem,75vh)] overflow-y-auto p-3 space-y-3"
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Refresh Notification</div>
             <button
@@ -2109,6 +2333,36 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               />
             </button>
           </div>
+          <div className="border-t border-border pt-3 space-y-2">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Canvas tabs</div>
+            <p className="text-[11px] leading-snug text-muted-foreground">Off = empty state, on = filled sample.</p>
+            {CANVAS_TAB_ORDER.map((tabId) => (
+              <div key={tabId} className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-foreground">{CANVAS_TAB_ARIA[tabId]}</div>
+                  <div className="text-[11px] text-muted-foreground">{canvasTabFilled[tabId] ? 'Filled' : 'Empty'}</div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-label={`${CANVAS_TAB_ARIA[tabId]} canvas: ${canvasTabFilled[tabId] ? 'filled' : 'empty'}`}
+                  aria-checked={canvasTabFilled[tabId]}
+                  onClick={() => setCanvasTabFilled((prev) => ({ ...prev, [tabId]: !prev[tabId] }))}
+                  className={cn(
+                    'h-6 w-10 shrink-0 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                    canvasTabFilled[tabId] ? 'bg-foreground/80' : 'bg-muted/60'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                      canvasTabFilled[tabId] ? 'translate-x-4' : 'translate-x-0'
+                    )}
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
         </PopoverContent>
       </Popover>
       <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>
@@ -2204,7 +2458,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         </li>
                       ))}
                     </ul>
-                    <div className="flex-shrink-0 border-t border-border p-1 rounded-b-lg bg-card">
+                    <div className="flex-shrink-0 border-t border-border p-1 rounded-b-md bg-card">
                       <a
                         href="https://github.com/apps/openhands-ai/installations/new"
                         target="_blank"
@@ -2333,20 +2587,75 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
   );
 }
 
+function CanvasNavTooltip({
+  label,
+  children,
+  externalRepoUrl,
+}: {
+  label: string;
+  children: React.ReactNode;
+  /** When set, shows an external-link control in the tooltip (e.g. Code → open repo). */
+  externalRepoUrl?: string;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+
+  return (
+    <span
+      className="relative inline-flex group"
+      onMouseLeave={() => setDismissed(false)}
+      onPointerDownCapture={() => setDismissed(true)}
+      onClickCapture={() => setDismissed(true)}
+    >
+      {children}
+      {/* pt-1.5 bridges the gap so hover is not lost moving from trigger to tooltip; pointer-events follow group-hover */}
+      <span
+        className={cn(
+          'pointer-events-none absolute left-1/2 top-full z-[60] flex -translate-x-1/2 flex-col items-center pt-1.5 opacity-0 transition-opacity duration-150',
+          'group-hover:pointer-events-auto group-hover:opacity-100 group-hover:delay-75',
+          dismissed &&
+            '!pointer-events-none !opacity-0 group-hover:!pointer-events-none group-hover:!opacity-0'
+        )}
+      >
+        <span
+          role="tooltip"
+          className="flex items-center gap-2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+        >
+          <span>{label}</span>
+          {externalRepoUrl ? (
+            <a
+              href={externalRepoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex shrink-0 items-center rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              aria-label="Open repository on GitHub"
+              title="Open repository on GitHub"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+            </a>
+          ) : null}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 function TabButton({
   active,
   onClick,
   label,
   ariaLabel,
   icon,
+  tooltip,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
   ariaLabel?: string;
   icon: React.ReactNode;
+  tooltip?: string;
 }) {
-  return (
+  const button = (
     <button
       type="button"
       onClick={onClick}
@@ -2367,6 +2676,10 @@ function TabButton({
       </span>
     </button>
   );
+  if (tooltip) {
+    return <CanvasNavTooltip label={tooltip}>{button}</CanvasNavTooltip>;
+  }
+  return button;
 }
 
 function ChangesIcon({ className }: { className?: string }) {
@@ -2388,7 +2701,12 @@ function CodeCanvasPlaceholder() {
   return (
     <div className="flex h-full min-h-0 w-full min-w-0 text-left">
       <div className="flex w-[min(42%,280px)] shrink-0 flex-col overflow-y-auto border-r border-border">
-        <div className="sticky top-0 z-[1] border-b border-border bg-background px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <div
+          className={cn(
+            CANVAS_PANEL_HEADER_CLASS,
+            'sticky top-0 z-[1] text-[11px] font-medium uppercase tracking-wide text-muted-foreground'
+          )}
+        >
           Explorer
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-1 py-2 text-xs">
@@ -2414,8 +2732,8 @@ function CodeCanvasPlaceholder() {
         </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex shrink-0 items-center border-b border-border px-3 py-2 text-xs">
-          <span className="font-mono text-foreground">App.tsx</span>
+        <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'text-xs')}>
+          <span className="font-mono leading-none text-foreground">App.tsx</span>
         </div>
         <pre className="min-h-0 flex-1 overflow-auto p-3 text-left text-xs font-mono leading-relaxed text-muted-foreground whitespace-pre">
           {`import { useState } from 'react';
@@ -2434,12 +2752,537 @@ export function App() {
   );
 }
 
+/** Inline code tokens for planner / markdown-style previews (matches chat code chips). */
+const plannerCodeClass =
+  'rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground';
+
+function PlannerFilledPlanSample() {
+  return (
+    <div data-testid="markdown-renderer" className="text-sm">
+      <h1 className="mt-3 first:mt-0 mb-1.5 text-lg font-bold leading-6 text-foreground">1. OBJECTIVE</h1>
+      <p className="py-2.5 text-muted-foreground first:pt-0 last:pb-0">
+        Create a simple, clean, responsive HTML website with a modern design. The site will be a single-page layout with placeholder content, basic styling, and mobile-friendly design.
+      </p>
+      <h1 className="mt-3 first:mt-0 mb-1.5 text-lg font-bold leading-6 text-foreground">2. CONTEXT SUMMARY</h1>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>
+          <strong className="font-semibold text-foreground">Project directory</strong>:{' '}
+          <code className={plannerCodeClass}>/workspace/project</code> (currently empty)
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Output</strong>: A standalone HTML file with embedded CSS (no external dependencies)
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Hosting</strong>: Can be previewed at{' '}
+          <code className={plannerCodeClass}>https://work-1-vfxjwippckczyquz.prod-runtime.all-hands.dev/</code> (port 12000)
+        </li>
+      </ul>
+      <h1 className="mt-3 first:mt-0 mb-1.5 text-lg font-bold leading-6 text-foreground">3. APPROACH OVERVIEW</h1>
+      <p className="py-2.5 text-muted-foreground first:pt-0 last:pb-0">
+        Create a single <code className={plannerCodeClass}>index.html</code> file with:
+      </p>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>Embedded CSS for styling (no external dependencies)</li>
+        <li>Modern, clean design with a hero section, features section, and footer</li>
+        <li>Responsive layout that works on desktop and mobile</li>
+        <li>Placeholder text and content that can be easily customized</li>
+      </ul>
+      <p className="py-2.5 text-muted-foreground first:pt-0 last:pb-0">
+        This approach is simple, self-contained, and requires no build tools or additional setup.
+      </p>
+      <h1 className="mt-3 first:mt-0 mb-1.5 text-lg font-bold leading-6 text-foreground">4. IMPLEMENTATION STEPS</h1>
+      <h2 className="mt-2.5 first:mt-0 mb-1 text-base font-semibold leading-5 text-foreground">Step 1: Create the HTML file structure</h2>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>
+          <strong className="font-semibold text-foreground">Goal</strong>: Set up the basic HTML5 document structure
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Method</strong>: Create <code className={plannerCodeClass}>index.html</code> with proper doctype, head, and body sections
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Reference</strong>: <code className={plannerCodeClass}>/workspace/project/index.html</code>
+        </li>
+      </ul>
+      <h2 className="mt-2.5 first:mt-0 mb-1 text-base font-semibold leading-5 text-foreground">Step 2: Add embedded CSS styles</h2>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>
+          <strong className="font-semibold text-foreground">Goal</strong>: Style the page with a modern, clean design
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Method</strong>: Add a <code className={plannerCodeClass}>&lt;style&gt;</code> block in the head with:
+          <ul className="ml-5 mt-1 list-disc pl-2">
+            <li>CSS reset/normalize basics</li>
+            <li>Typography styles</li>
+            <li>Color scheme (modern blues/grays)</li>
+            <li>Responsive media queries</li>
+          </ul>
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Reference</strong>: <code className={plannerCodeClass}>/workspace/project/index.html</code> (style section)
+        </li>
+      </ul>
+      <h2 className="mt-2.5 first:mt-0 mb-1 text-base font-semibold leading-5 text-foreground">Step 3: Build the page content</h2>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>
+          <strong className="font-semibold text-foreground">Goal</strong>: Create the visual sections of the page
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Method</strong>: Add HTML markup for:
+          <ul className="ml-5 mt-1 list-disc pl-2">
+            <li>Navigation header with site title</li>
+            <li>Hero section with headline and call-to-action button</li>
+            <li>Features/services section with 3 cards</li>
+            <li>Footer with copyright</li>
+          </ul>
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Reference</strong>: <code className={plannerCodeClass}>/workspace/project/index.html</code> (body section)
+        </li>
+      </ul>
+      <h2 className="mt-2.5 first:mt-0 mb-1 text-base font-semibold leading-5 text-foreground">Step 4: Start a local server to serve the site</h2>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>
+          <strong className="font-semibold text-foreground">Goal</strong>: Make the site accessible via the provided URL
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Method</strong>: Use Python&apos;s built-in HTTP server on port 12000
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Reference</strong>: Command: <code className={plannerCodeClass}>python -m http.server 12000</code>
+        </li>
+      </ul>
+      <h1 className="mt-3 first:mt-0 mb-1.5 text-lg font-bold leading-6 text-foreground">5. TESTING AND VALIDATION</h1>
+      <ul className="ml-5 list-disc whitespace-normal pl-2 text-muted-foreground">
+        <li>
+          <strong className="font-semibold text-foreground">Visual verification</strong>: Open{' '}
+          <code className={plannerCodeClass}>https://work-1-vfxjwippckczyquz.prod-runtime.all-hands.dev/</code> in a browser
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Expected result</strong>: A clean, modern landing page should display with:
+          <ul className="ml-5 mt-1 list-disc pl-2">
+            <li>A navigation bar at the top</li>
+            <li>A hero section with a headline and button</li>
+            <li>Three feature cards in a row (stacking on mobile)</li>
+            <li>A footer at the bottom</li>
+          </ul>
+        </li>
+        <li>
+          <strong className="font-semibold text-foreground">Responsive check</strong>: The layout should adapt gracefully when viewed on smaller screens
+        </li>
+      </ul>
+    </div>
+  );
+}
+
+type ChangesDiffViewMode = 'old' | 'diff' | 'new';
+
+/** Sample PLAN.md body for the changes canvas diff preview (matches planner plan content). */
+const CHANGES_PLAN_MD_SAMPLE = `# 1. OBJECTIVE
+
+Create a simple, clean, responsive HTML website with a modern design. The site will be a single-page layout with placeholder content, basic styling, and mobile-friendly design.
+
+# 2. CONTEXT SUMMARY
+
+- **Project directory**: \`/workspace/project\` (currently empty)
+- **Output**: A standalone HTML file with embedded CSS (no external dependencies)
+- **Hosting**: Can be previewed at \`https://work-1-vfxjwippckczyquz.prod-runtime.all-hands.dev/\` (port 12000)
+
+# 3. APPROACH OVERVIEW
+
+Create a single \`index.html\` file with:
+- Embedded CSS for styling (no external dependencies)
+- Modern, clean design with a hero section, features section, and footer
+- Responsive layout that works on desktop and mobile
+- Placeholder text and content that can be easily customized
+
+This approach is simple, self-contained, and requires no build tools or additional setup.
+
+# 4. IMPLEMENTATION STEPS
+
+## Step 1: Create the HTML file structure
+- **Goal**: Set up the basic HTML5 document structure
+- **Method**: Create \`index.html\` with proper doctype, head, and body sections
+- **Reference**: \`/workspace/project/index.html\`
+
+## Step 2: Add embedded CSS styles
+- **Goal**: Style the page with a modern, clean design
+- **Method**: Add a \`<style>\` block in the head with nested list items for reset, typography, colors, and media queries.
+- **Reference**: \`/workspace/project/index.html\` (style section)
+
+# 5. TESTING AND VALIDATION
+- **Visual verification**: Open the preview URL in a browser
+- **Responsive check**: Layout should adapt on smaller screens
+`;
+
+function ChangesPlanDiffMock({ viewMode }: { viewMode: ChangesDiffViewMode }) {
+  if (viewMode === 'old') {
+    return (
+      <div className="flex min-h-[220px] items-center justify-center bg-muted/30 p-4 font-mono text-xs text-muted-foreground">
+        (empty file)
+      </div>
+    );
+  }
+  if (viewMode === 'new') {
+    return (
+      <div className="max-h-[min(520px,55vh)] min-h-[220px] overflow-auto bg-muted/30 p-4">
+        <pre className="whitespace-pre-wrap font-mono text-[11px] leading-[18px] text-foreground">{CHANGES_PLAN_MD_SAMPLE}</pre>
+      </div>
+    );
+  }
+  return (
+    <div className="flex max-h-[min(520px,55vh)] min-h-[220px] min-w-0 w-full overflow-hidden border-t border-border">
+      <div className="flex w-[min(32%,140px)] shrink-0 flex-col border-r border-border bg-destructive/10">
+        <div className="min-h-[200px] w-full" aria-hidden />
+      </div>
+      <div className="min-h-0 min-w-0 flex-1 overflow-auto bg-success/5">
+        <pre className="whitespace-pre-wrap p-4 font-mono text-[11px] leading-[18px] text-foreground">{CHANGES_PLAN_MD_SAMPLE}</pre>
+      </div>
+    </div>
+  );
+}
+
+function ChangesCanvasFilled() {
+  const [viewMode, setViewMode] = useState<ChangesDiffViewMode>('diff');
+  const [planExpanded, setPlanExpanded] = useState(true);
+  const [indexExpanded, setIndexExpanded] = useState(false);
+
+  const viewModeButton = (mode: ChangesDiffViewMode, testId: string, Icon: typeof History) => (
+    <button
+      type="button"
+      data-testid={testId}
+      className={cn(
+        'rounded p-1 transition-colors',
+        viewMode === mode
+          ? 'bg-muted text-foreground'
+          : 'cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+      )}
+      aria-pressed={viewMode === mode}
+      aria-label={mode === 'old' ? 'Previous version' : mode === 'diff' ? 'Diff view' : 'New file'}
+      onClick={() => setViewMode(mode)}
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+    </button>
+  );
+
+  return (
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent">
+        <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'justify-between gap-2')}>
+          <span className="text-xs font-medium leading-none text-foreground">Changes</span>
+          <button
+            type="button"
+            className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label="Refresh"
+          >
+            <RotateCw className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-md">
+          <div className="absolute inset-0 flex flex-col">
+            <main className="custom-scrollbar-always flex h-full min-h-0 flex-col items-stretch gap-3 overflow-y-auto p-4">
+              <div data-testid="file-diff-viewer-outer" className="flex w-full min-w-0 flex-col">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  data-testid="changes-file-row-plan"
+                  className={cn(
+                    'flex min-h-9 flex-wrap items-center justify-between gap-2 border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    planExpanded ? 'rounded-t-md border-b-0' : 'rounded-md'
+                  )}
+                  aria-expanded={planExpanded}
+                  aria-label={planExpanded ? 'Collapse plan' : 'Expand plan'}
+                  onClick={() => setPlanExpanded((x) => !x)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPlanExpanded((x) => !x);
+                    }
+                  }}
+                >
+                  <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-foreground">
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <strong className="min-w-0 truncate font-medium">.agents_tmp/PLAN.md</strong>
+                  </span>
+                  {planExpanded && (
+                    <span
+                      className="flex shrink-0 items-center gap-0.5"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
+                      {viewModeButton('old', 'view-mode-old', History)}
+                      {viewModeButton('diff', 'view-mode-diff', GitCompare)}
+                      {viewModeButton('new', 'view-mode-new', FilePlus)}
+                    </span>
+                  )}
+                  <span className="pointer-events-none shrink-0 text-muted-foreground">
+                    <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', planExpanded && 'rotate-180')} aria-hidden />
+                  </span>
+                </div>
+                {planExpanded && (
+                  <div
+                    data-testid="editor-container"
+                    className="w-full overflow-hidden rounded-b-md border border-t-0 border-border"
+                  >
+                    <ChangesPlanDiffMock viewMode={viewMode} />
+                  </div>
+                )}
+              </div>
+
+              <div data-testid="file-diff-viewer-outer" className="flex w-full min-w-0 flex-col">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  data-testid="changes-file-row-index"
+                  className="flex min-h-9 flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  aria-expanded={indexExpanded}
+                  aria-label={indexExpanded ? 'Collapse index.html' : 'Expand index.html'}
+                  onClick={() => setIndexExpanded((x) => !x)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setIndexExpanded((x) => !x);
+                    }
+                  }}
+                >
+                  <span className="flex min-w-0 flex-1 items-center gap-1.5 text-xs text-foreground">
+                    <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <strong className="min-w-0 truncate font-medium">index.html</strong>
+                  </span>
+                  <span className="pointer-events-none shrink-0 text-muted-foreground">
+                    <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', indexExpanded && 'rotate-180')} aria-hidden />
+                  </span>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const BROWSER_CANVAS_URL = 'https://github.com/OpenHands/OpenHands';
+const APP_CANVAS_URL = 'http://localhost:5173/';
+
+/** Shared height and padding for canvas panel top bars (browser, terminal, changes, planner). */
+const CANVAS_PANEL_HEADER_CLASS = 'flex h-10 w-full shrink-0 items-center border-b border-border px-3';
+
+function AppCanvasShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'gap-2')}>
+        <span
+          className="min-w-0 flex-1 truncate font-sans text-xs font-medium leading-none text-foreground"
+          title={APP_CANVAS_URL}
+        >
+          {APP_CANVAS_URL}
+        </span>
+        <button
+          type="button"
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Refresh app preview"
+        >
+          <RotateCw className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function BrowserCanvasShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+      <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'gap-2')}>
+        <span
+          className="min-w-0 flex-1 truncate font-sans text-xs font-medium leading-none text-foreground"
+          title={BROWSER_CANVAS_URL}
+        >
+          {BROWSER_CANVAS_URL}
+        </span>
+        <button
+          type="button"
+          className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          aria-label="Refresh page"
+        >
+          <RotateCw className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
+    </div>
+  );
+}
+
+function BrowserCanvasDemoApp() {
+  return <div className="min-h-0 flex-1" />;
+}
+
+/** Sample transcript for the filled terminal canvas (xterm-style session). */
+const TERMINAL_FILLED_SAMPLE = `$ cd /workspace/project && python -m http.server 12000 
+> /tmp/server.log 2>&1 &
+[1] 571
+$ curl -s -o /dev/null -w "%{http_code}" http://localhost:12000/
+200
+$ ps aux | grep "http.server" | grep -v grep
+openhan+     573  0.0  0.1 103164 20096 pts/1    S    04:57   0:00 python -m http.server 12000
+$ curl -s http://localhost:12000/ | head -20
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Landing Page</title>
+    <style>
+        /* Reset and base styles */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+$ pkill -f "http.server 12000" 2>/dev/null; cd /workspace/project && python -m http.server 12000
+ `;
+
+function highlightUrlsAndQuotes(text: string): ReactNode {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
+    if (part.startsWith('http')) {
+      return (
+        <span key={i} className="text-[hsl(var(--info))]">
+          {part}
+        </span>
+      );
+    }
+    return (
+      <span key={i}>
+        {part.split(/("[^"]*")/g).map((q, j) =>
+          q.startsWith('"') ? (
+            <span key={j} className="text-success">
+              {q}
+            </span>
+          ) : (
+            <span key={j}>{q}</span>
+          )
+        )}
+      </span>
+    );
+  });
+}
+
+function highlightUrlsOnly(text: string): ReactNode {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, i) =>
+    part.startsWith('http') ? (
+      <span key={i} className="text-[hsl(var(--info))]">
+        {part}
+      </span>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
+function highlightPsLine(line: string): ReactNode {
+  const idx = line.lastIndexOf(' python');
+  if (idx === -1) {
+    return <span className="text-muted-foreground">{line}</span>;
+  }
+  return (
+    <>
+      <span className="text-muted-foreground">{line.slice(0, idx)}</span>
+      <span className="text-success">{line.slice(idx)}</span>
+    </>
+  );
+}
+
+function TerminalHighlightedLine({ line }: { line: string }) {
+  const t = line.trim();
+  const lead = line.trimStart();
+
+  if (/^\d{3}$/.test(t)) {
+    const code = parseInt(t, 10);
+    if (code >= 200 && code < 300) return <span className="text-success">{line}</span>;
+    if (code >= 400) return <span className="text-destructive">{line}</span>;
+    return <span className="text-foreground">{line}</span>;
+  }
+  if (/^\[\d+\] \d+$/.test(t)) {
+    return <span className="text-muted-foreground">{line}</span>;
+  }
+  if (line.startsWith('$ ')) {
+    return (
+      <>
+        <span className="text-success">$ </span>
+        {highlightUrlsAndQuotes(line.slice(2))}
+      </>
+    );
+  }
+  if (line.startsWith('>')) {
+    return <span className="text-muted-foreground">{line}</span>;
+  }
+  if (lead.startsWith('<')) {
+    return <span className="text-sky-400">{line}</span>;
+  }
+  if (line.trim().startsWith('/*') || line.trim().startsWith('*/')) {
+    return <span className="text-muted-foreground">{line}</span>;
+  }
+  const looksLikeCss =
+    !lead.startsWith('<') &&
+    (line.includes('{') ||
+      line.includes('}') ||
+      /[a-z-]+:\s*[^;]+;?\s*$/i.test(t) ||
+      (lead.startsWith('*') && line.includes('::')) ||
+      (lead.startsWith(',') && line.includes('::')));
+  if (looksLikeCss) {
+    return <span className="text-amber-200/90">{line}</span>;
+  }
+  if (line.includes('pts/') && line.includes('python')) {
+    return highlightPsLine(line);
+  }
+  return <span>{highlightUrlsOnly(line)}</span>;
+}
+
+function TerminalCanvasShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-transparent">
+      <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'justify-between')}>
+        <span className="text-xs font-medium leading-none text-foreground">Terminal (read-only)</span>
+      </div>
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-md">
+        <div className="absolute inset-0 flex min-h-0 flex-col">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function TerminalCanvasFilledOutput() {
+  const lines = TERMINAL_FILLED_SAMPLE.split('\n');
+  return (
+    <pre
+      data-testid="terminal-viewport"
+      className="custom-scrollbar-always min-h-0 min-w-0 flex-1 overflow-auto p-4 text-left font-mono text-[13px] leading-[1.25rem] text-foreground"
+    >
+      {lines.map((line, i) => (
+        <span key={i} className="block whitespace-pre-wrap">
+          <TerminalHighlightedLine line={line} />
+        </span>
+      ))}
+    </pre>
+  );
+}
+
 function CanvasTabEmptyContent({
   activeTab,
   onCreatePlan,
+  filled,
 }: {
   activeTab: TabId;
   onCreatePlan: () => void;
+  /** When true, show sample “filled” content for the active tab; when false, empty state. */
+  filled: boolean;
 }) {
   const textBlock = (icon: React.ReactNode, body: React.ReactNode) => (
     <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
@@ -2452,41 +3295,118 @@ function CanvasTabEmptyContent({
 
   switch (activeTab) {
     case 'changes':
-      return textBlock(
-        <ChangesIcon className="opacity-90" />,
-        <>OpenHands hasn&apos;t made any changes yet</>
-      );
+      if (!filled) {
+        return textBlock(
+          <ChangesIcon className="opacity-90" />,
+          <>OpenHands hasn&apos;t made any changes yet</>
+        );
+      }
+      return <ChangesCanvasFilled />;
     case 'terminal':
-      return textBlock(
-        <Terminal strokeWidth={1.75} />,
-        <>No terminal output yet.</>
+      if (!filled) {
+        return (
+          <TerminalCanvasShell>
+            <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
+              <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+                <Terminal strokeWidth={1.75} />
+              </div>
+              <div className="max-w-md text-sm leading-relaxed text-muted-foreground">No terminal output yet.</div>
+            </div>
+          </TerminalCanvasShell>
+        );
+      }
+      return (
+        <TerminalCanvasShell>
+          <TerminalCanvasFilledOutput />
+        </TerminalCanvasShell>
       );
     case 'app':
-      return textBlock(
-        <Monitor strokeWidth={1.75} />,
-        <>
-          No web app running. Ask OpenHands to start your project&apos;s dev server (for example: npm run dev) to see your web application here.
-        </>
+      if (!filled) {
+        return (
+          <AppCanvasShell>
+            <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
+              <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+                <Monitor strokeWidth={1.75} />
+              </div>
+              <div className="max-w-md text-sm leading-relaxed text-muted-foreground">
+                No web app running. Ask OpenHands to start your project&apos;s dev server (for example: npm run dev) to see your web application here.
+              </div>
+            </div>
+          </AppCanvasShell>
+        );
+      }
+      return (
+        <AppCanvasShell>
+          <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto">
+            <BrowserCanvasDemoApp />
+          </div>
+        </AppCanvasShell>
       );
     case 'browser':
-      return textBlock(
-        <Globe strokeWidth={1.75} />,
-        <>No page loaded yet. Ask OpenHands to open a URL. Example: &quot;Open https://example.com&quot;</>
+      if (!filled) {
+        return (
+          <BrowserCanvasShell>
+            <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
+              <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+                <Globe strokeWidth={1.75} />
+              </div>
+              <div className="max-w-md text-sm leading-relaxed text-muted-foreground">
+                No page loaded yet. Ask OpenHands to open a URL. Example: &quot;Open https://example.com&quot;
+              </div>
+            </div>
+          </BrowserCanvasShell>
+        );
+      }
+      return (
+        <BrowserCanvasShell>
+          <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto">
+            <BrowserCanvasDemoApp />
+          </div>
+        </BrowserCanvasShell>
       );
     case 'code':
+      if (!filled) {
+        return textBlock(
+          <Code2 strokeWidth={1.75} />,
+          <>No file open. Ask OpenHands to create or open a file in the repository.</>
+        );
+      }
       return <CodeCanvasPlaceholder />;
     case 'planner':
-      return (
-        <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
-          <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
-            <ClipboardList strokeWidth={1.75} />
+      if (!filled) {
+        return (
+          <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
+            <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+              <ClipboardList strokeWidth={1.75} />
+            </div>
+            <p className="mb-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+              There is currently no plan for this repo
+            </p>
+            <Button type="button" variant="secondary" onClick={onCreatePlan}>
+              Create a plan
+            </Button>
           </div>
-          <p className="mb-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-            There is currently no plan for this repo
-          </p>
-          <Button type="button" variant="secondary" onClick={onCreatePlan}>
-            Create a plan
-          </Button>
+        );
+      }
+      return (
+        <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-transparent text-left">
+          <div className={cn(CANVAS_PANEL_HEADER_CLASS, 'justify-between gap-2')}>
+            <span className="text-xs font-medium leading-none text-foreground">Planner</span>
+            <button
+              type="button"
+              className="flex h-7 min-w-[4.25rem] cursor-pointer items-center justify-center rounded-md bg-primary px-2 text-primary-foreground transition-opacity hover:opacity-90"
+              data-testid="planner-tab-build-button"
+              aria-label="Build plan"
+              onClick={onCreatePlan}
+            >
+              <span className="text-[11px] font-medium leading-5">Build ⌘↩</span>
+            </button>
+          </div>
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-md">
+            <div className="absolute inset-0 flex flex-col overflow-auto p-4">
+              <PlannerFilledPlanSample />
+            </div>
+          </div>
         </div>
       );
     default:

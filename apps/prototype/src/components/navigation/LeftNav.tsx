@@ -89,6 +89,37 @@ const navItems = [
   { icon: SquareKanban, label: 'Dashboard view', action: 'dashboard' },
 ];
 
+/** Hover/focus tooltip to the right of the trigger; hides after click until pointer leaves. */
+function LeftNavTooltip({ label, children }: { label: string; children: React.ReactNode }) {
+  const [dismissed, setDismissed] = useState(false);
+
+  return (
+    <span
+      className="relative inline-flex group"
+      onMouseLeave={() => setDismissed(false)}
+      onClickCapture={() => setDismissed(true)}
+    >
+      {children}
+      <span
+        className={cn(
+          'pointer-events-none absolute left-full top-1/2 z-[60] ml-1 flex -translate-y-1/2 flex-col justify-center pl-1 opacity-0 transition-opacity duration-150',
+          'group-hover:pointer-events-auto group-hover:opacity-100 group-hover:delay-75',
+          'group-focus-within:pointer-events-auto group-focus-within:opacity-100',
+          dismissed &&
+            '!pointer-events-none !opacity-0 group-hover:!pointer-events-none group-hover:!opacity-0 group-focus-within:!pointer-events-none group-focus-within:!opacity-0'
+        )}
+      >
+        <span
+          role="tooltip"
+          className="whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+        >
+          {label}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 export interface LeftNavProps {
   theme: Theme;
   getThemeClasses: (element: ThemeElement) => string;
@@ -233,26 +264,25 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   ((activeNavItem === 'code' || activeNavItem === 'chat-cards') && isHomeRoute)
                 : activeNavItem === item.action;
           return (
-            <button
-              key={item.action}
-              type="button"
-              aria-label={item.label}
-              aria-pressed={isActive}
-              data-conversation-toggle={item.action === 'conversations' ? 'true' : undefined}
-              onClick={() => onNavItemClick(item.action)}
-              className={cn(
-                'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-foreground'
-                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
-              )}
-            >
-              <span
-                className="inline-flex leading-none transition-transform duration-500 ease-out"
+            <LeftNavTooltip key={item.action} label={item.label}>
+              <button
+                type="button"
+                aria-label={item.label}
+                aria-pressed={isActive}
+                data-conversation-toggle={item.action === 'conversations' ? 'true' : undefined}
+                onClick={() => onNavItemClick(item.action)}
+                className={cn(
+                  'inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors',
+                  isActive
+                    ? 'bg-sidebar-accent text-sidebar-foreground'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                )}
               >
-                <Icon className="w-5 h-5" />
-              </span>
-            </button>
+                <span className="inline-flex leading-none transition-transform duration-500 ease-out">
+                  <Icon className="w-5 h-5" />
+                </span>
+              </button>
+            </LeftNavTooltip>
           );
         })}
       </div>

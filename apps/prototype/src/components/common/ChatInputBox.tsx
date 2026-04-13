@@ -59,14 +59,14 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
   return (
     <div
       className={cn(
-        'border border-border box-border flex flex-col items-start justify-center relative rounded-[15px] w-full bg-[#141414]',
+        'border border-border box-border flex flex-col items-start justify-center relative rounded-xl w-full bg-[#141414]',
         className
       )}
       style={{ padding: '0.75rem' }}
     >
       {/* Input row */}
-      <div className="box-border flex flex-row items-center justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
-        <div className="basis-0 flex flex-row gap-4 grow items-center justify-start min-h-px min-w-px p-0 relative shrink-0">
+      <div className="box-border flex flex-row items-end justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
+        <div className="relative min-w-0 flex-1 flex flex-row gap-4 items-end justify-start p-0">
           <button
             type="button"
             className="flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200 hover:scale-105 hover:bg-muted active:scale-95 cursor-not-allowed text-muted-foreground"
@@ -74,13 +74,13 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
           >
             <Paperclip className="w-4 h-4" aria-hidden="true" />
           </button>
-          <div className="flex flex-row items-center justify-start min-h-6 p-0 relative shrink-0 flex-1">
+          <div className="min-w-0 flex-1 flex flex-row items-start justify-start min-h-6 p-0">
             <div
               ref={inputRef}
               contentEditable
               data-placeholder={placeholder}
               data-testid="chat-input"
-              className="chat-input bg-transparent text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 max-h-[400px] w-full block whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+              className="chat-input min-w-0 max-w-full bg-transparent text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 max-h-[400px] w-full block break-words whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
               style={{ height: 20, overflowY: 'hidden' }}
               role="textbox"
               aria-multiline="true"
