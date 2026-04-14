@@ -125,13 +125,15 @@ function App() {
   const [canvasVisible, setCanvasVisible] = useState(false);
   const [canvasContentType, setCanvasContentType] = useState<'preview' | 'code' | 'docs' | 'share' | 'run'>('preview');
   const [showRefreshNotification, setShowRefreshNotification] = useState(false);
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [canvasTipVariant, setCanvasTipVariant] = useState<CanvasTipVariant>('none');
   const [showCanvasLoading, setShowCanvasLoading] = useState(true);
   const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
   const [activeChatRepositoryName, setActiveChatRepositoryName] = useState<string | null>(null);
   const [activeChatBranchName, setActiveChatBranchName] = useState<string | null>(null);
-  const [statusBadgeState, setStatusBadgeState] = useState<StatusBadgeState>('off');
+  const [inputStatusBadgeState, setInputStatusBadgeState] = useState<StatusBadgeState>('off');
+  const [composerStatusBadgeState, setComposerStatusBadgeState] = useState<StatusBadgeState>('off');
   const [activeChatAutomationTitle, setActiveChatAutomationTitle] = useState<string | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const chatCanvasDefaultOpen = useMemo(
@@ -871,6 +873,8 @@ function App() {
                       getThemeClasses={getThemeClasses}
                       showRefreshNotification={showRefreshNotification}
                       onToggleRefreshNotification={() => setShowRefreshNotification((prev) => !prev)}
+                      showErrorNotification={showErrorNotification}
+                      onToggleErrorNotification={() => setShowErrorNotification((prev) => !prev)}
                       canvasTipVariant={canvasTipVariant}
                       onCanvasTipVariantChange={setCanvasTipVariant}
                       showCanvasLoading={showCanvasLoading}
@@ -881,8 +885,10 @@ function App() {
                       onRepositoryStatusChange={setRepositoryStatus}
                       repositoryName={activeChatRepositoryName}
                       branchName={activeChatBranchName}
-                      statusBadgeState={statusBadgeState}
-                      onStatusBadgeStateChange={setStatusBadgeState}
+                      inputStatusBadgeState={inputStatusBadgeState}
+                      onInputStatusBadgeStateChange={setInputStatusBadgeState}
+                      composerStatusBadgeState={composerStatusBadgeState}
+                      onComposerStatusBadgeStateChange={setComposerStatusBadgeState}
                       automationContextTitle={activeChatAutomationTitle}
                       onAutomationContextTitleChange={setActiveChatAutomationTitle}
                       initialCanvasOpen={chatCanvasDefaultOpen}

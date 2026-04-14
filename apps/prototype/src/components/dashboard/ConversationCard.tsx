@@ -10,7 +10,7 @@ import {
   Pause,
   Play,
   StopCircle,
-  Trash,
+  Trash2,
 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 import { cn } from '../../lib/utils';
@@ -107,7 +107,7 @@ export function ConversationCard({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem className="gap-2 text-white">
-                    <Trash className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -128,7 +128,7 @@ export function ConversationCard({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border" />
                 <DropdownMenuItem className="gap-2 text-white">
-                  <Trash className="h-4 w-4" />
+                  <Trash2 className="h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>

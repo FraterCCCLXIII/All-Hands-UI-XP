@@ -122,7 +122,7 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
+              className=""
               onClick={onDeleteClick}
             >
               <Trash2 className="mr-2 h-4 w-4" />

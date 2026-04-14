@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Download, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { Download, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
   DropdownMenu,
@@ -406,18 +406,13 @@ export function ConversationDrawer({
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-border" />
                       <DropdownMenuItem
-                        className={cn(
-                          conversationMenuItemClass,
-                          'text-destructive [&_svg]:text-destructive',
-                          'data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive',
-                          'focus:bg-destructive/10 focus:text-destructive',
-                        )}
+                        className={cn(conversationMenuItemClass)}
                         onSelect={(event) => {
                           event.preventDefault();
                           setDeleteTarget(conversation);
                         }}
                       >
-                        <Trash className="h-4 w-4" strokeWidth={2} />
+                        <Trash2 className="h-4 w-4" />
                         Delete Conversation
                       </DropdownMenuItem>
                     </DropdownMenuContent>

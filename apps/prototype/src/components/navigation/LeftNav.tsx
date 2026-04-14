@@ -89,14 +89,14 @@ const navItems = [
   { icon: SquareKanban, label: 'Workspaces', action: 'dashboard' },
 ];
 
-/** Hover/focus tooltip to the right of the trigger; hides after click until pointer leaves. */
+/** Hover/focus tooltip to the right of the trigger; hides after click until pointer re-enters. */
 function LeftNavTooltip({ label, children }: { label: string; children: React.ReactNode }) {
   const [dismissed, setDismissed] = useState(false);
 
   return (
     <span
       className="relative inline-flex group"
-      onMouseLeave={() => setDismissed(false)}
+      onMouseEnter={() => setDismissed(false)}
       onClickCapture={() => setDismissed(true)}
     >
       {children}

@@ -92,6 +92,8 @@ interface ActiveChatScreenProps {
   getThemeClasses: (element: ThemeElement) => string;
   showRefreshNotification: boolean;
   onToggleRefreshNotification: () => void;
+  showErrorNotification: boolean;
+  onToggleErrorNotification: () => void;
   canvasTipVariant: 'none' | ProtipVariant;
   onCanvasTipVariantChange: (variant: 'none' | ProtipVariant) => void;
   showCanvasLoading: boolean;
@@ -102,8 +104,12 @@ interface ActiveChatScreenProps {
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
   repositoryName?: string | null;
   branchName?: string | null;
-  statusBadgeState: StatusBadgeState;
-  onStatusBadgeStateChange: (state: StatusBadgeState) => void;
+  /** Rotating status pill above the chat input (loading phase + prototype state). */
+  inputStatusBadgeState: StatusBadgeState;
+  onInputStatusBadgeStateChange: (state: StatusBadgeState) => void;
+  /** Label + icon badge next to model/tools in the composer row. */
+  composerStatusBadgeState: StatusBadgeState;
+  onComposerStatusBadgeStateChange: (state: StatusBadgeState) => void;
   /** When set, shows automation icon + title above the chat header. */
   automationContextTitle: string | null;
   onAutomationContextTitleChange: (title: string | null) => void;
@@ -428,6 +434,8 @@ export function ActiveChatScreen({
   getThemeClasses,
   showRefreshNotification,
   onToggleRefreshNotification,
+  showErrorNotification,
+  onToggleErrorNotification,
   canvasTipVariant,
   onCanvasTipVariantChange,
   showCanvasLoading,
@@ -438,8 +446,10 @@ export function ActiveChatScreen({
   onRepositoryStatusChange,
   repositoryName,
   branchName,
-  statusBadgeState,
-  onStatusBadgeStateChange,
+  inputStatusBadgeState,
+  onInputStatusBadgeStateChange,
+  composerStatusBadgeState,
+  onComposerStatusBadgeStateChange,
   automationContextTitle,
   onAutomationContextTitleChange,
   initialCanvasOpen = true,
@@ -488,7 +498,7 @@ export function ActiveChatScreen({
   const [ranCommandExpanded, setRanCommandExpanded] = useState(false);
   const [attachmentPreviewsEnabled, setAttachmentPreviewsEnabled] = useState(true);
   const [composerAttachments, setComposerAttachments] = useState<ComposerAttachmentPreview[]>([]);
-  const shouldShowStatusBadge = statusBadgeState !== 'off' || !conversationLoaded;
+  const shouldShowInputStatusBadge = inputStatusBadgeState !== 'off' || !conversationLoaded;
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedRepository, setSelectedRepository] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('main');
@@ -530,12 +540,12 @@ export function ActiveChatScreen({
   }, [conversationLoaded]);
 
   useEffect(() => {
-    if (!shouldShowStatusBadge) return;
+    if (!shouldShowInputStatusBadge) return;
     const id = window.setInterval(() => {
       setChatStatusIndex((i) => (i + 1) % CHAT_STATUS_MESSAGES.length);
     }, CHAT_STATUS_CYCLE_MS);
     return () => window.clearInterval(id);
-  }, [shouldShowStatusBadge]);
+  }, [shouldShowInputStatusBadge]);
 
   useEffect(() => {
     if (!conversationLoaded) return;
@@ -1058,6 +1068,7 @@ export function ActiveChatScreen({
                       <X className="w-4 h-4 shrink-0" />
                       Close Conversation (Stop Runtime)
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem data-testid="delete-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
                       <Trash2 className="w-4 h-4 shrink-0" />
                       Delete Conversation
@@ -1550,7 +1561,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               'relative z-0 w-full flex flex-col gap-0 shrink-0 overflow-visible transition-opacity duration-300 ease-out -mb-2 -mt-6',
                               drawersAnimatedIn ? 'opacity-100' : 'opacity-0 pointer-events-none'
                             )}
-                            style={{ transform: 'translateY(16px)' }}
+                            style={{ transform: 'translateY(-2px)' }}
                             aria-hidden={!drawersAnimatedIn}
                           >
                             {taskListDrawerVisible && (
@@ -1675,8 +1686,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           data-testid="interactive-chat-box"
                           className="relative z-10 -mt-[1px]"
                         >
-                          {shouldShowStatusBadge && (
-                            <div className="absolute left-0 bottom-[calc(100%-8px)] flex items-end gap-1">
+                          {shouldShowInputStatusBadge && (
+                            <div className="absolute left-0 z-20 bottom-[calc(100%+6px)] flex items-end gap-1">
                               <div
                                 data-testid="chat-status-indicator"
                                 className={cn(
@@ -1698,31 +1709,54 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               </div>
                             </div>
                           )}
-                          <div className="w-full">
+                          <div className="flex flex-col">
                           <div
                             role="status"
                             aria-live="polite"
                             aria-hidden={!showRefreshNotification}
                             className={cn(
-                              'w-full rounded-lg border border-teal-300 bg-teal-200 text-teal-950 px-3 py-2 mb-2 flex items-center gap-2 overflow-hidden',
-                              'transition-[max-height,opacity,margin] duration-200',
+                              'w-full rounded-lg bg-muted text-foreground px-3 flex items-center gap-2 overflow-hidden',
+                              'transition-[max-height,opacity,margin,padding,border] duration-200',
                               showRefreshNotification
-                                ? 'animate-in fade-in-0 slide-in-from-top-1 max-h-24 opacity-100'
-                                : 'animate-out fade-out-0 slide-out-to-top-1 max-h-0 opacity-0 mb-0 pointer-events-none'
+                                ? 'border border-muted-foreground/30 animate-in fade-in-0 slide-in-from-top-1 max-h-24 opacity-100 py-2 mb-2'
+                                : 'border-0 animate-out fade-out-0 slide-out-to-top-1 max-h-0 opacity-0 py-0 mb-0 pointer-events-none'
                             )}
                             data-testid="reconnect-banner"
                           >
-                            <RefreshCw className="w-4 h-4 text-teal-900 shrink-0" aria-hidden />
+                            <RefreshCw className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
                             <span className="text-sm font-medium flex-1 text-left">Refresh the page to update session</span>
                             <button
                               type="button"
-                              className="inline-flex items-center gap-1 rounded-md bg-teal-300/70 px-2 py-1 text-xs font-semibold text-teal-950 hover:bg-teal-300"
+                              className="inline-flex items-center gap-1 rounded-md border border-muted-foreground/30 bg-transparent px-2 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-muted-hover hover:border-muted-foreground/50"
                               onClick={() => window.location.reload()}
                             >
                               Refresh
                             </button>
                           </div>
-                            {statusBadgeState !== 'off' && (
+                          <div
+                            role="status"
+                            aria-live="polite"
+                            aria-hidden={!showErrorNotification}
+                            className={cn(
+                              'w-full rounded-lg bg-muted text-foreground px-3 flex items-center gap-2 overflow-hidden',
+                              'transition-[max-height,opacity,margin,padding,border] duration-200',
+                              showErrorNotification
+                                ? 'border border-muted-foreground/30 animate-in fade-in-0 slide-in-from-top-1 max-h-24 opacity-100 py-2 mb-2'
+                                : 'border-0 animate-out fade-out-0 slide-out-to-top-1 max-h-0 opacity-0 py-0 mb-0 pointer-events-none'
+                            )}
+                            data-testid="error-banner"
+                          >
+                            <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden />
+                            <span className="text-sm font-medium flex-1 text-left">An Unknown Error Occurred</span>
+                            <button
+                              type="button"
+                              className="inline-flex items-center gap-1 rounded-md border border-muted-foreground/30 bg-transparent px-2 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-muted-hover hover:border-muted-foreground/50"
+                              onClick={onToggleErrorNotification}
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                            {(inputStatusBadgeState !== 'off' || composerStatusBadgeState !== 'off') && (
                               <div className="sr-only" />
                             )}
                             <div className="relative w-full">
@@ -2193,7 +2227,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
-                                  <AgentStatusBadge state={statusBadgeState} />
+                                  <AgentStatusBadge state={composerStatusBadgeState} />
                                 </div>
                               </div>
                             </div>
@@ -2307,7 +2341,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
         <PopoverTrigger asChild>
           <PrototypeControlsFab
             isActive={
-              showRefreshNotification || showCanvasTip || showCanvasLoading || Boolean(automationContextTitle)
+              showRefreshNotification || showErrorNotification || showCanvasTip || showCanvasLoading || Boolean(automationContextTitle)
             }
           />
         </PopoverTrigger>
@@ -2332,6 +2366,26 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 className={cn(
                   'h-4 w-4 rounded-full bg-background shadow transition-transform',
                   showRefreshNotification ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Error Notification</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={showErrorNotification}
+              onClick={onToggleErrorNotification}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                showErrorNotification ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  showErrorNotification ? 'translate-x-4' : 'translate-x-0'
                 )}
               />
             </button>
@@ -2473,15 +2527,17 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
             </DropdownMenu>
           </div>
           <div className="flex items-center justify-between gap-3">
-            <div className="text-sm font-medium text-foreground">Status Badge</div>
+            <div className="text-sm font-medium text-foreground">Status pill (above input)</div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
-                  aria-label="Status badge state"
+                  aria-label="Input area status pill state"
                 >
-                  <span className="capitalize">{statusBadgeState === 'off' ? 'Off' : STATUS_BADGE_LABELS[statusBadgeState]}</span>
+                  <span className="capitalize">
+                    {inputStatusBadgeState === 'off' ? 'Off' : STATUS_BADGE_LABELS[inputStatusBadgeState]}
+                  </span>
                   <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
@@ -2490,10 +2546,39 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <DropdownMenuItem
                     key={option.value}
                     className="cursor-pointer gap-2"
-                    onSelect={() => onStatusBadgeStateChange(option.value)}
+                    onSelect={() => onInputStatusBadgeStateChange(option.value)}
                   >
                     {option.label}
-                    {statusBadgeState === option.value && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-foreground" />}
+                    {inputStatusBadgeState === option.value && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-foreground" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Status badge (composer)</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
+                  aria-label="Composer status badge state"
+                >
+                  <span className="capitalize">
+                    {composerStatusBadgeState === 'off' ? 'Off' : STATUS_BADGE_LABELS[composerStatusBadgeState]}
+                  </span>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[140px] rounded-[6px] py-[6px] px-1">
+                {STATUS_BADGE_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    className="cursor-pointer gap-2"
+                    onSelect={() => onComposerStatusBadgeStateChange(option.value)}
+                  >
+                    {option.label}
+                    {composerStatusBadgeState === option.value && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-foreground" />}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

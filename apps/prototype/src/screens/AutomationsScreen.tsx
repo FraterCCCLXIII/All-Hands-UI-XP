@@ -1576,9 +1576,10 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 <Power className="h-4 w-4" />
                 {displayAutomationStatus(automation) === 'active' ? 'Turn off' : 'Turn on'}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setDeleteTargetId(automation.id)}
-                className="gap-2 text-destructive focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                className="gap-2"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
@@ -1776,9 +1777,10 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                   <Power className="h-4 w-4" />
                   {displayAutomationStatus(selectedAutomation) === 'active' ? 'Turn off' : 'Turn on'}
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setDeleteTargetId(selectedAutomation.id)}
-                  className="gap-2 text-destructive focus:text-destructive data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                  className="gap-2"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete

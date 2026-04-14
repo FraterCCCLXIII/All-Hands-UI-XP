@@ -120,6 +120,8 @@ const ActiveChatPreview = () => (
     getThemeClasses={getThemeClasses}
     showRefreshNotification
     onToggleRefreshNotification={() => {}}
+    showErrorNotification={false}
+    onToggleErrorNotification={() => {}}
     canvasTipVariant={'none' as ProtipVariant}
     onCanvasTipVariantChange={() => {}}
     showCanvasLoading={false}
@@ -128,8 +130,10 @@ const ActiveChatPreview = () => (
     onChatContentModeChange={() => {}}
     repositoryStatus="connected"
     onRepositoryStatusChange={() => {}}
-    statusBadgeState="off"
-    onStatusBadgeStateChange={() => {}}
+    inputStatusBadgeState="off"
+    onInputStatusBadgeStateChange={() => {}}
+    composerStatusBadgeState="off"
+    onComposerStatusBadgeStateChange={() => {}}
     automationContextTitle="PR Triage Digest"
     onAutomationContextTitleChange={() => {}}
   />
