@@ -23,7 +23,7 @@ export function DashboardHeader(_: DashboardHeaderProps = {}) {
             <input
               type="text"
               placeholder="Search PRs, repos, or authors"
-              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
+              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
             />
           </div>
         </div>

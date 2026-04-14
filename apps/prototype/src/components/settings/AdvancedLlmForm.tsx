@@ -47,7 +47,7 @@ export function AdvancedLlmForm({
         <span className="text-sm text-foreground">Custom Model</span>
         <input
           placeholder="openhands/claude-opus-4-5-20251101"
-          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
           type="text"
           value={model}
           onChange={(e) => onModelChange(e.target.value)}
@@ -64,7 +64,7 @@ export function AdvancedLlmForm({
         <span className="text-sm text-foreground">Base URL</span>
         <input
           placeholder="https://api.openai.com"
-          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
           type="text"
           value={baseUrl}
           onChange={(e) => onBaseUrlChange(e.target.value)}
@@ -82,7 +82,7 @@ export function AdvancedLlmForm({
         <div className="relative w-full">
           <input
             placeholder={apiKeyPlaceholder}
-            className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+            className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
             type="password"
             value={apiKeyValue}
             onChange={onApiKeyChange ? (event) => onApiKeyChange(event.target.value) : undefined}
@@ -103,7 +103,7 @@ export function AdvancedLlmForm({
           href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
           rel="noreferrer noopener"
           target="_blank"
-          className="underline underline-offset-2 text-white hover:text-gray-300"
+          className="underline underline-offset-2 text-white hover:text-muted-foreground"
         >
           Click here for instructions
         </a>

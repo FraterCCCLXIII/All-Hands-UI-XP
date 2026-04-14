@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenHands Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:hsl(0 0% 5%);
+  --card:hsl(0 0% 7%);
+  --secondary:hsl(0 0% 8%);
+  --muted:hsl(0 0% 12%);
+  --border:hsl(0 0% 14%);
+  --muted-hover:hsl(0 0% 18%);
+  --fg:hsl(0 0% 98%);
+  --fg-muted:hsl(0 0% 55%);
+  --primary:hsl(0 0% 100%);
+  --primary-fg:hsl(0 0% 0%);
+  --success:#22c55e;
+  --success-fg:#86efac;
+  --warning:#f59e0b;
+  --info:#3b82f6;
+  --destructive:#dc2626;
+  --destructive-fg:#fafafa;
+  --ring:#cccccc;
+  --shadow-card:0 1px 2px 0 hsl(0 0% 0% / 0.3);
+  --font-sans:'Inter',system-ui,sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+
+html{scroll-behavior:smooth}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--fg);line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* Nav */
+.nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;flex-wrap:nowrap;gap:16px;padding:0 24px 0 16px;height:56px;background:hsl(0 0% 5% / 0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);overflow:hidden}
+.nav-start{display:flex;align-items:center;flex-wrap:nowrap;gap:12px;flex-shrink:0;min-width:0}
+.nav-github{display:inline-flex;align-items:center;gap:6px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--fg-muted);text-decoration:none;padding:4px 10px;border-radius:6px;border:1px solid var(--border);transition:all 0.2s;flex-shrink:0}
+.nav-github:hover{background:var(--muted);color:var(--fg);border-color:hsl(0 0% 24%)}
+.nav-links{display:flex;flex:1;justify-content:flex-end;gap:4px;list-style:none;margin:0;padding:0;min-width:0;flex-wrap:nowrap}
+.nav-links a{font-size:13px;color:var(--fg-muted);text-decoration:none;padding:6px 12px;border-radius:6px;transition:all 0.2s}
+.nav-links a:hover{color:var(--fg);background:var(--muted)}
+.nav-logo{display:flex;align-items:center;flex-shrink:0;opacity:0.85;transition:opacity 0.2s}
+.nav-logo:hover{opacity:1}
+.nav-logo svg{height:22px;width:auto;display:block}
+/* Hero */
+.hero{text-align:center;padding:80px 24px 64px;max-width:720px;margin:0 auto}
+.hero h1{font-size:48px;font-weight:600;line-height:1.1;letter-spacing:-1.5px;margin-bottom:16px}
+.hero p{font-size:16px;color:var(--fg-muted);line-height:1.6;max-width:520px;margin:0 auto 32px}
+.hero-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+/* Buttons */
+.btn-primary{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;font-size:14px;font-weight:400;border-radius:6px;text-decoration:none;transition:all 0.2s;background:var(--secondary);color:var(--fg);border:1px solid var(--border)}
+.btn-primary:hover{background:var(--muted-hover);border-color:hsl(0 0% 24%)}
+.btn-dark{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;font-size:14px;font-weight:400;border-radius:6px;text-decoration:none;transition:all 0.2s;background:var(--primary);color:var(--primary-fg)}
+.btn-dark:hover{opacity:0.85}
+.btn-ghost{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;font-size:14px;font-weight:400;border-radius:6px;text-decoration:none;transition:all 0.2s;color:var(--fg-muted);background:transparent}
+.btn-ghost:hover{color:var(--fg);background:var(--muted)}
+.btn-destructive{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;font-size:14px;font-weight:400;border-radius:6px;text-decoration:none;transition:all 0.2s;background:var(--destructive);color:var(--destructive-fg)}
+.btn-destructive:hover{opacity:0.85}
+.btn-outline{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;font-size:14px;font-weight:400;border-radius:6px;text-decoration:none;transition:all 0.2s;color:var(--fg);background:var(--bg);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--muted);color:var(--fg)}
+.btn-muted{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 20px;font-size:14px;font-weight:400;border-radius:6px;text-decoration:none;transition:all 0.2s;color:var(--fg-muted);background:var(--muted)}
+.btn-muted:hover{background:var(--muted-hover);color:var(--fg)}
+.btn-pill{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 12px;font-size:12px;font-weight:500;border-radius:9999px;text-decoration:none;transition:all 0.2s;background:var(--muted);color:var(--fg-muted)}
+.btn-pill:hover{color:var(--fg);background:var(--muted-hover)}
+
+/* Sections */
+.section{max-width:1100px;margin:0 auto;padding:64px 24px}
+.section-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:1.5px;color:var(--fg-muted);margin-bottom:8px}
+.section-title{font-size:28px;font-weight:600;letter-spacing:-0.5px;margin-bottom:40px}
+.section-divider{border:none;border-top:1px solid var(--border);margin:0}
+
+/* Color swatches */
+.color-group-label{font-size:13px;font-weight:500;color:var(--fg-muted);margin-bottom:12px;margin-top:32px}
+.color-group-label:first-of-type{margin-top:0}
+.color-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.color-swatch{border-radius:10px;overflow:hidden;border:1px solid var(--border);background:var(--card);transition:transform 0.2s}
+.color-swatch:hover{transform:translateY(-2px)}
+.color-swatch-block{height:80px}
+.color-swatch-info{padding:10px 12px}
+.color-swatch-name{font-size:13px;font-weight:500;margin-bottom:2px}
+.color-swatch-hex{font-family:var(--font-mono);font-size:11px;color:var(--fg-muted)}
+.color-swatch-role{font-size:11px;color:var(--fg-muted);margin-top:4px}
+
+/* Typography */
+.type-sample{padding:20px 0;border-bottom:1px solid var(--border)}
+.type-sample:last-child{border-bottom:none}
+.type-meta{font-size:12px;color:var(--fg-muted);margin-top:8px;font-family:var(--font-mono)}
+
+/* Buttons section */
+.button-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.button-item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.button-label{font-size:11px;color:var(--fg-muted);text-align:center}
+
+/* Cards */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:24px;transition:all 0.2s}
+.card:hover{border-color:hsl(0 0% 24%)}
+.card h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.card p{font-size:14px;color:var(--fg-muted);line-height:1.6}
+.card-badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:9999px;margin-bottom:12px}
+
+/* Forms */
+.form-group{max-width:480px;margin-bottom:24px}
+.form-label{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
+.form-input,.form-textarea{width:100%;height:40px;padding:0 12px;font-size:14px;font-family:var(--font-sans);color:var(--fg);background:hsl(0 0% 12% / 0.4);border:1px solid var(--border);border-radius:6px;outline:none;transition:all 0.2s}
+.form-input::placeholder,.form-textarea::placeholder{color:var(--fg-muted)}
+.form-input:hover,.form-textarea:hover{background:hsl(0 0% 12% / 0.6)}
+.form-input:focus,.form-textarea:focus{background:hsl(0 0% 12% / 0.6);box-shadow:0 0 0 1px var(--ring),0 0 0 3px var(--bg)}
+.form-input--focus{background:hsl(0 0% 12% / 0.6) !important;box-shadow:0 0 0 1px var(--ring),0 0 0 3px var(--bg) !important}
+.form-input--error{border-color:var(--destructive) !important;box-shadow:0 0 0 1px var(--destructive),0 0 0 3px var(--bg) !important}
+.form-textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.form-state-label{font-size:11px;color:var(--fg-muted);margin-top:6px}
+
+/* Spacing */
+.spacing-row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end}
+.spacing-item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.spacing-block{height:40px;background:var(--primary);border-radius:3px;min-width:2px}
+.spacing-value{font-family:var(--font-mono);font-size:11px;color:var(--fg-muted)}
+
+/* Radius */
+.radius-row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.radius-item{display:flex;flex-direction:column;align-items:center;gap:8px}
+.radius-box{width:64px;height:64px;border:2px solid var(--fg-muted);background:var(--card)}
+.radius-label{font-family:var(--font-mono);font-size:12px;color:var(--fg)}
+.radius-context{font-size:11px;color:var(--fg-muted)}
+
+/* Elevation */
+.elevation-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.elevation-card{background:var(--card);border-radius:10px;padding:24px;min-height:100px;display:flex;flex-direction:column;justify-content:flex-end}
+.elevation-label{font-size:13px;font-weight:500;margin-bottom:4px}
+.elevation-desc{font-size:12px;color:var(--fg-muted)}
+
+/* Footer */
+.footer{text-align:center;padding:48px 24px;font-size:13px;color:var(--fg-muted);border-top:1px solid var(--border)}
+.footer a{color:var(--fg-muted);text-decoration:none;transition:color 0.2s}
+.footer a:hover{color:var(--fg)}
+
+/* Responsive */
+@media(max-width:768px){
+  .nav-links{display:none}
+  .hero h1{font-size:32px}
+  .color-grid{grid-template-columns:repeat(2,1fr)}
+  .card-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-start">
+    <a class="nav-logo" href="https://github.com/FraterCCCLXIII/OpenHands-Design.md" target="_blank" rel="noopener noreferrer" aria-label="OpenHands">
+      <svg viewBox="0 0 599.09 99.17" fill="#fff" aria-hidden="true"><path d="M159.74,53.71c0-18.39,11.81-31.21,28.17-31.21s28.17,12.82,28.17,31.21-11.81,31.21-28.17,31.21-28.17-12.82-28.17-31.21ZM205.29,53.71c0-13.16-7.17-21.68-17.38-21.68s-17.38,8.52-17.38,21.68,7.17,21.68,17.38,21.68,17.38-8.52,17.38-21.68Z"/><path d="M246.07,84.92c-5.74,0-9.95-2.28-12.74-5.57v19.82h-10.12v-59.47h10.12v4.72c2.78-3.29,7-5.57,12.74-5.57,12.4,0,19.48,10.46,19.48,23.03s-7.09,23.03-19.48,23.03ZM233.08,60.63v2.61c0,8.18,4.72,12.82,10.97,12.82,7.34,0,11.3-5.74,11.3-14.17s-3.96-14.17-11.3-14.17c-6.24,0-10.97,4.56-10.97,12.91Z"/><path d="M291.26,84.92c-12.65,0-21.51-9.36-21.51-23.03s8.77-23.03,21.09-23.03,19.65,9.7,19.65,21.85v3.37h-31.04c.76,7.59,5.32,12.23,11.81,12.23,4.98,0,8.94-2.53,10.29-7.09l8.69,3.29c-3.12,7.76-10.12,12.4-18.98,12.4ZM290.76,47.38c-5.23,0-9.28,3.12-10.8,9.11h20.33c-.08-4.89-3.12-9.11-9.53-9.11Z"/><path d="M317.25,83.99v-44.29h10.12v4.72c2.53-2.95,6.49-5.57,12.23-5.57,9.28,0,14.85,6.41,14.85,15.94v29.19h-10.12v-26.23c0-5.48-2.19-9.45-7.76-9.45-4.55,0-9.19,3.37-9.19,9.7v25.98h-10.12Z"/><path d="M404.17,23.43h10.8v60.57h-10.8v-26.49h-29.02v26.49h-10.8V23.43h10.8v24.63h29.02v-24.63Z"/><path d="M436.93,84.75c-8.43,0-14.93-5.15-14.93-13.07,0-8.44,6.33-12.15,14.85-13.92l12.23-2.53v-.76c0-4.22-2.19-6.83-7.59-6.83-4.81,0-7.34,2.19-8.52,6.5l-9.53-2.19c2.19-7.34,8.69-13.07,18.47-13.07,10.63,0,17.04,5.06,17.04,15.27v19.06c0,2.53,1.1,3.29,3.88,2.95v7.84c-7.34.84-11.22-.59-12.74-4.22-2.78,3.12-7.42,4.98-13.16,4.98ZM449.08,68.39v-5.4l-9.53,2.02c-4.3.93-7.51,2.28-7.51,6.24,0,3.46,2.53,5.4,6.41,5.4,5.4,0,10.63-2.87,10.63-8.27Z"/><path d="M469.17,83.99v-44.29h10.12v4.72c2.53-2.95,6.49-5.57,12.23-5.57,9.28,0,14.85,6.41,14.85,15.94v29.19h-10.12v-26.23c0-5.48-2.19-9.45-7.76-9.45-4.56,0-9.2,3.37-9.2,9.7v25.98h-10.12Z"/><path d="M532.56,84.92c-12.4,0-19.48-10.46-19.48-23.03s7.08-23.03,19.48-23.03c5.74,0,9.95,2.28,12.74,5.57v-21h10.12v60.57h-10.12v-4.64c-2.78,3.29-7,5.57-12.74,5.57ZM545.55,60.63c0-8.35-4.72-12.91-10.96-12.91-7.34,0-11.3,5.74-11.3,14.17s3.96,14.17,11.3,14.17c6.24,0,10.96-4.64,10.96-12.82v-2.61Z"/><path d="M560.54,75.56l7.59-6.07c2.62,4.3,7.68,7.17,12.82,7.17,4.3,0,8.27-1.52,8.27-5.48s-3.71-4.22-10.71-5.65c-7-1.43-15.01-3.21-15.01-12.65,0-8.1,7.09-14,17.29-14,7.76,0,14.68,3.46,17.88,8.35l-6.83,6.16c-2.53-3.96-6.75-6.24-11.64-6.24-4.13,0-6.83,1.86-6.83,4.81,0,3.21,3.2,3.8,8.77,4.98,7.51,1.6,16.95,3.21,16.95,13.33,0,8.94-8.18,14.68-18.22,14.68-8.18,0-16.36-3.29-20.33-9.36Z"/><path d="M64.97,14.8V1.93c0-1.07.86-1.93,1.93-1.93s1.93.86,1.93,1.93v12.87c0,1.07-.86,1.93-1.93,1.93s-1.93-.86-1.93-1.93Z"/><path d="M74.95,16.72l6.43-11.15c.53-.92,1.71-1.24,2.64-.71.92.53,1.24,1.71.71,2.64l-6.43,11.15c-.53.92-1.71,1.24-2.64.71-.92-.53-1.24-1.71-.71-2.64Z"/><path d="M58.85,16.72l-6.43-11.15c-.53-.92-1.71-1.24-2.64-.71-.92.53-1.24,1.71-.71,2.64l6.43,11.15c.53.92,1.71,1.24,2.64.71.92-.53,1.24-1.71.71-2.64Z"/><path d="M128.77,56.65c0-3.35.9-13.3,1.19-16.58.19-2.22-.07-3.44-.43-4.06-.26-.46-.67-.78-1.66-.84-.71-.05-1.49.16-2.07.68-.54.49-1.15,1.48-1.15,3.47v.11s-.89,15.12-.89,15.12c-.03.54-.29,1.05-.72,1.39-.42.34-.97.49-1.51.4l-9.29-1.47-10.02-1.33c-.93-.12-1.63-.89-1.67-1.82l-.55-11.95v-.1c-.25-4.76-.49-9.1-.49-10.44,0-3.75-.63-5.33-1.19-5.99-.44-.53-1.08-.76-2.44-.76-.49,0-.83.1-1.09.25-.25.15-.54.41-.82.94-.59,1.12-1.02,3.22-.86,6.88.21,4.76.53,8.31.85,11.51.32,3.2.63,6.1.81,9.47.27,5.28.25,8.92.03,11.39-.11,1.23-.27,2.23-.48,3.02-.2.75-.51,1.51-1.04,2.07-.64.69-1.56,1.02-2.52.79-.76-.18-1.29-.66-1.58-.97-.61-.64-1.04-1.46-1.21-1.89-.98-2.47-4.01-8.22-8.12-11.46-1.2-.95-2.07-1.22-2.62-1.26-.52-.04-.89.11-1.19.35-.33.26-.57.63-.69.99-.04.13-.06.22-.07.27,1.11,1.88,5.53,8.77,7.61,15.76,1.55,5.21,5.29,10.52,8.09,12.8,2.71,2.2,7.57,3.57,13.05,3.84,5.42.27,11.01-.57,14.95-2.33,7.6-3.41,9.14-10.91,9.84-14.16.54-2.52.55-5.22.4-7.72-.07-1.25-.18-2.41-.27-3.49-.09-1.04-.17-2.05-.17-2.88ZM110.59,24.28c0-1.17-.31-2.21-.83-2.91-.47-.63-1.16-1.07-2.26-1.07-.91,0-1.52.11-1.94.29-.39.16-.71.42-1,.9-.68,1.1-1.18,3.3-1.18,7.69l.48,10.39c.18,3.47.37,7.22.49,10.35l6.25.83v-26.47ZM114.45,51.31l5.58.88.76-12.93v-9.97c0-1.37-.56-2.21-1.22-2.74-.74-.6-1.6-.81-2-.81-.74,0-1.5.11-2.05.5-.42.3-1.07,1.01-1.07,3.05v22.01ZM124.65,32c1.15-.58,2.39-.76,3.48-.69,1.97.13,3.71.96,4.75,2.77.95,1.65,1.15,3.83.93,6.31-.3,3.43-1.18,13.11-1.18,16.25,0,.63.06,1.47.16,2.54.09,1.05.21,2.28.28,3.6.15,2.63.16,5.72-.48,8.75-.67,3.15-2.49,12.6-12.03,16.88-4.64,2.08-10.87,2.95-16.72,2.66-5.79-.28-11.64-1.73-15.29-4.7-3.44-2.8-7.59-8.79-9.35-14.69-1.99-6.67-6.29-13.24-7.36-15.11-.63-1.1-.43-2.4-.14-3.27.33-.98.98-2,1.94-2.77,1-.79,2.32-1.29,3.88-1.18,1.53.12,3.11.81,4.72,2.08,4.14,3.27,7.18,8.43,8.67,11.59.02-.15.03-.3.05-.46.19-2.21.23-5.65-.04-10.86-.17-3.26-.47-6.05-.79-9.29-.32-3.24-.65-6.87-.87-11.72-.17-3.88.23-6.82,1.31-8.86.56-1.06,1.32-1.9,2.28-2.46.96-.56,2.01-.78,3.04-.78,1.53,0,3.43.22,4.95,1.66.13-.29.28-.56.44-.81.7-1.13,1.63-1.93,2.77-2.42,1.1-.47,2.29-.6,3.46-.6,2.36,0,4.19,1.04,5.36,2.63.76,1.03,1.22,2.23,1.44,3.46,1.25-.57,2.51-.64,3.28-.64,1.31,0,3.02.53,4.43,1.68,1.49,1.21,2.65,3.11,2.65,5.74v2.71Z"/><path d="M5.12,56.65c0-3.35-.9-13.3-1.19-16.58-.19-2.22.07-3.44.43-4.06.26-.46.67-.78,1.66-.84.71-.05,1.49.16,2.07.68.54.49,1.15,1.48,1.15,3.47v.11s.89,15.12.89,15.12c.03.54.29,1.05.72,1.39.42.34.97.49,1.51.4l9.29-1.47,10.02-1.33c.93-.12,1.63-.89,1.67-1.82l.55-11.95v-.1c.25-4.76.48-9.1.48-10.44,0-3.75.63-5.33,1.19-5.99.44-.53,1.08-.76,2.44-.76.49,0,.83.1,1.09.25.25.15.54.41.82.94.59,1.12,1.02,3.22.86,6.88-.21,4.76-.53,8.31-.85,11.51-.32,3.2-.63,6.1-.81,9.47-.27,5.28-.25,8.92-.03,11.39.11,1.23.27,2.23.48,3.02.2.75.51,1.51,1.04,2.07.65.69,1.56,1.02,2.52.79.76-.18,1.29-.66,1.58-.97.61-.64,1.04-1.46,1.21-1.89.98-2.47,4.01-8.22,8.12-11.46,1.2-.95,2.07-1.22,2.62-1.26.52-.04.89.11,1.19.35.33.26.57.63.69.99.04.13.06.22.07.27-1.11,1.88-5.53,8.77-7.61,15.76-1.55,5.21-5.29,10.52-8.09,12.8-2.71,2.2-7.57,3.57-13.05,3.84-5.43.27-11.01-.57-14.95-2.33-7.6-3.41-9.15-10.91-9.84-14.16-.54-2.52-.55-5.22-.4-7.72.07-1.25.18-2.41.27-3.49.09-1.04.17-2.05.17-2.88ZM23.29,24.28c0-1.17.31-2.21.83-2.91.47-.63,1.16-1.07,2.26-1.07.91,0,1.52.11,1.95.29.39.16.71.42,1,.9.68,1.1,1.18,3.3,1.18,7.69l-.48,10.39c-.18,3.47-.37,7.22-.49,10.35l-6.25.83v-26.47ZM19.43,51.31l-5.58.88-.76-12.93v-9.97c0-1.37.56-2.21,1.22-2.74.74-.6,1.59-.81,2-.81.74,0,1.5.11,2.05.5.42.3,1.07,1.01,1.07,3.05v22.01ZM9.24,32c-1.15-.58-2.39-.76-3.48-.69-1.97.13-3.7.96-4.75,2.77-.95,1.65-1.15,3.83-.93,6.31.3,3.43,1.18,13.11,1.18,16.25,0,.63-.07,1.47-.16,2.54-.09,1.05-.21,2.28-.28,3.6-.15,2.63-.16,5.72.48,8.75.67,3.15,2.49,12.6,12.04,16.88,4.64,2.08,10.87,2.95,16.72,2.66,5.79-.28,11.65-1.73,15.29-4.7,3.44-2.8,7.59-8.79,9.35-14.69,1.99-6.67,6.29-13.24,7.36-15.11.63-1.1.43-2.4.14-3.27-.33-.98-.98-2-1.94-2.77-1-.79-2.32-1.29-3.88-1.18-1.53.12-3.11.81-4.72,2.08-4.14,3.27-7.18,8.43-8.67,11.59-.02-.15-.03-.3-.05-.46-.19-2.21-.23-5.65.04-10.86.17-3.26.47-6.05.79-9.29.32-3.24.65-6.87.87-11.72.17-3.88-.23-6.82-1.31-8.86-.56-1.06-1.32-1.9-2.28-2.46-.96-.56-2.01-.78-3.04-.78-1.53,0-3.43.22-4.95,1.66-.13-.29-.28-.56-.44-.81-.7-1.13-1.63-1.93-2.77-2.42-1.1-.47-2.28-.6-3.46-.6-2.36,0-4.19,1.04-5.36,2.63-.76,1.03-1.22,2.23-1.44,3.46-1.25-.57-2.51-.64-3.27-.64-1.31,0-3.02.53-4.43,1.68-1.49,1.21-2.64,3.11-2.64,5.74v2.71Z"/></svg>
+    </a>
+    <a class="nav-github" href="https://github.com/FraterCCCLXIII/OpenHands-Design.md" target="_blank" rel="noopener noreferrer" aria-label="OpenHands-Design.md on GitHub">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2 .37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      OpenHands-Design.md
+    </a>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#colors">Colors</a></li>
+    <li><a href="#typography">Typography</a></li>
+    <li><a href="#buttons">Buttons</a></li>
+    <li><a href="#cards">Cards</a></li>
+    <li><a href="#forms">Forms</a></li>
+    <li><a href="#spacing">Spacing</a></li>
+    <li><a href="#radius">Radius</a></li>
+    <li><a href="#elevation">Elevation</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <h1>OpenHands<br>Design System</h1>
+  <p>A design token catalog generated from DESIGN.md. Every color, font, component, and spacing value, visualized on the near-black monochrome canvas.</p>
+  <div class="hero-buttons">
+    <a class="btn-dark" href="https://github.com/FraterCCCLXIII/OpenHands-Design.md" target="_blank">View Repository</a>
+    <a class="btn-primary" href="#colors">Explore Tokens</a>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== COLORS ==================== -->
+<section class="section" id="colors">
+  <div class="section-label">01 / Colors</div>
+  <h2 class="section-title">Color Palette</h2>
+
+  <div class="color-group-label">Core Surfaces</div>
+  <div class="color-grid">
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#0d0d0d"></div><div class="color-swatch-info"><div class="color-swatch-name">background</div><div class="color-swatch-hex">#0d0d0d</div><div class="color-swatch-role">Page background, app shell</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#121212"></div><div class="color-swatch-info"><div class="color-swatch-name">card</div><div class="color-swatch-hex">#121212</div><div class="color-swatch-role">Card surfaces, elevated containers</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#141414"></div><div class="color-swatch-info"><div class="color-swatch-name">secondary</div><div class="color-swatch-hex">#141414</div><div class="color-swatch-role">Secondary surfaces, sidebar accent</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#1f1f1f"></div><div class="color-swatch-info"><div class="color-swatch-name">muted</div><div class="color-swatch-hex">#1f1f1f</div><div class="color-swatch-role">Hover fills, badges, tooltips</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#242424"></div><div class="color-swatch-info"><div class="color-swatch-name">border</div><div class="color-swatch-hex">#242424</div><div class="color-swatch-role">Borders, input borders, dividers</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#2e2e2e"></div><div class="color-swatch-info"><div class="color-swatch-name">muted-hover</div><div class="color-swatch-hex">#2e2e2e</div><div class="color-swatch-role">Hover on muted surfaces</div></div></div>
+  </div>
+
+  <div class="color-group-label">Core Text</div>
+  <div class="color-grid">
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#fafafa"></div><div class="color-swatch-info"><div class="color-swatch-name">foreground</div><div class="color-swatch-hex">#fafafa</div><div class="color-swatch-role">Primary text, headings</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#8c8c8c"></div><div class="color-swatch-info"><div class="color-swatch-name">muted-foreground</div><div class="color-swatch-hex">#8c8c8c</div><div class="color-swatch-role">Secondary text, labels, placeholders</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#ffffff;border-bottom:1px solid hsl(0 0% 14%)"></div><div class="color-swatch-info"><div class="color-swatch-name">primary</div><div class="color-swatch-hex">#ffffff</div><div class="color-swatch-role">Maximum emphasis, button bg</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#000000"></div><div class="color-swatch-info"><div class="color-swatch-name">primary-foreground</div><div class="color-swatch-hex">#000000</div><div class="color-swatch-role">Text on white buttons</div></div></div>
+  </div>
+
+  <div class="color-group-label">Semantic / Status</div>
+  <div class="color-grid">
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#22c55e"></div><div class="color-swatch-info"><div class="color-swatch-name">success</div><div class="color-swatch-hex">#22c55e</div><div class="color-swatch-role">Success states, running</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#86efac"></div><div class="color-swatch-info"><div class="color-swatch-name">success-foreground</div><div class="color-swatch-hex">#86efac</div><div class="color-swatch-role">Success text on dark</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#f59e0b"></div><div class="color-swatch-info"><div class="color-swatch-name">warning</div><div class="color-swatch-hex">#f59e0b</div><div class="color-swatch-role">Warning, caution badges</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#3b82f6"></div><div class="color-swatch-info"><div class="color-swatch-name">info</div><div class="color-swatch-hex">#3b82f6</div><div class="color-swatch-role">Informational, links</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#dc2626"></div><div class="color-swatch-info"><div class="color-swatch-name">destructive</div><div class="color-swatch-hex">#dc2626</div><div class="color-swatch-role">Error, danger, delete</div></div></div>
+    <div class="color-swatch"><div class="color-swatch-block" style="background:#cccccc"></div><div class="color-swatch-info"><div class="color-swatch-name">ring</div><div class="color-swatch-hex">#cccccc</div><div class="color-swatch-role">Focus rings (1px, keyboard-only)</div></div></div>
+  </div>
+
+  <div class="color-group-label">Surface Scale (5% &rarr; 18% lightness)</div>
+  <div style="display:flex;border-radius:10px;overflow:hidden;height:64px;border:1px solid var(--border);margin-bottom:24px">
+    <div style="flex:1;background:#0d0d0d" title="5% — background"></div>
+    <div style="flex:1;background:#121212" title="7% — card"></div>
+    <div style="flex:1;background:#141414" title="8% — secondary"></div>
+    <div style="flex:1;background:#1f1f1f" title="12% — muted"></div>
+    <div style="flex:1;background:#242424" title="14% — border"></div>
+    <div style="flex:1;background:#2e2e2e" title="18% — muted-hover"></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:11px;color:var(--fg-muted);margin-bottom:8px">
+    <span>5%</span><span>7%</span><span>8%</span><span>12%</span><span>14%</span><span>18%</span>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== TYPOGRAPHY ==================== -->
+<section class="section" id="typography">
+  <div class="section-label">02 / Typography</div>
+  <h2 class="section-title">Typography Scale</h2>
+
+  <div class="type-sample"><div style="font-size:30px;font-weight:600;line-height:1.2;letter-spacing:-0.5px">Hero Heading (text-3xl)</div><div class="type-meta">30px / 600 / 1.2 / -0.5px / Inter</div></div>
+  <div class="type-sample"><div style="font-size:24px;font-weight:600;line-height:1.25;letter-spacing:-0.3px">Page Heading (text-2xl)</div><div class="type-meta">24px / 600 / 1.25 / -0.3px / Inter</div></div>
+  <div class="type-sample"><div style="font-size:20px;font-weight:600;line-height:1.3">Sub-heading (text-xl)</div><div class="type-meta">20px / 600 / 1.3 / Inter</div></div>
+  <div class="type-sample"><div style="font-size:18px;font-weight:600;line-height:1.4">Section Title (text-lg)</div><div class="type-meta">18px / 600 / 1.4 / Inter</div></div>
+  <div class="type-sample"><div style="font-size:16px;font-weight:400;line-height:1.5">Body Large — Larger body text for chat messages and hero content. (text-base)</div><div class="type-meta">16px / 400 / 1.5 / Inter</div></div>
+  <div class="type-sample"><div style="font-size:14px;font-weight:400;line-height:1.5">Body — Standard UI text for labels, descriptions, and interface elements. (text-sm)</div><div class="type-meta">14px / 400 / 1.5 / Inter — primary body size (711 uses)</div></div>
+  <div class="type-sample"><div style="font-size:14px;font-weight:500;line-height:1.5">Label — Form labels, nav items, and badges. (text-sm font-medium)</div><div class="type-meta">14px / 500 / 1.5 / Inter — label weight (304 uses)</div></div>
+  <div class="type-sample"><div style="font-size:12px;font-weight:400;line-height:1.5;color:var(--fg-muted)">Secondary — Metadata, captions, and small labels. (text-xs)</div><div class="type-meta">12px / 400 / 1.5 / Inter — secondary size (427 uses)</div></div>
+  <div class="type-sample"><div style="font-family:var(--font-mono);font-size:14px;font-weight:400;line-height:1.6">const design = await openHands.init({ tokens: true });</div><div class="type-meta">14px / 400 / 1.6 / JetBrains Mono — code / technical text</div></div>
+  <div class="type-sample"><div style="font-size:11px;font-weight:500;line-height:1.27;text-transform:uppercase;letter-spacing:1.5px;color:var(--fg-muted)">SYSTEM CATEGORY</div><div class="type-meta">11px / 500 / uppercase / tracking-wide — section labels</div></div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== BUTTONS ==================== -->
+<section class="section" id="buttons">
+  <div class="section-label">03 / Buttons</div>
+  <h2 class="section-title">Button Variants</h2>
+  <div class="button-row">
+    <div class="button-item"><a class="btn-dark" href="#">Save Changes</a><div class="button-label">default</div></div>
+    <div class="button-item"><a class="btn-destructive" href="#">Delete</a><div class="button-label">destructive</div></div>
+    <div class="button-item"><a class="btn-outline" href="#">Cancel</a><div class="button-label">outline</div></div>
+    <div class="button-item"><a class="btn-primary" href="#">Settings</a><div class="button-label">secondary</div></div>
+    <div class="button-item"><a class="btn-muted" href="#">Archive</a><div class="button-label">muted</div></div>
+    <div class="button-item"><a class="btn-ghost" href="#">Learn More</a><div class="button-label">ghost</div></div>
+    <div class="button-item"><a href="#" style="font-size:14px;color:var(--primary);text-decoration:none;text-underline-offset:4px" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">View docs</a><div class="button-label">link</div></div>
+  </div>
+
+  <div style="margin-top:40px">
+    <div class="color-group-label">Status Pills</div>
+    <div class="button-row">
+      <div class="button-item"><span style="display:inline-block;background:hsl(142 71% 45% / 0.1);color:var(--success-fg);padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:500">Success</span><div class="button-label">success</div></div>
+      <div class="button-item"><span style="display:inline-block;background:hsl(38 92% 50% / 0.15);color:var(--warning);padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:500">Warning</span><div class="button-label">warning</div></div>
+      <div class="button-item"><span style="display:inline-block;background:hsl(217 91% 60% / 0.15);color:var(--info);padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:500">Info</span><div class="button-label">info</div></div>
+      <div class="button-item"><span style="display:inline-block;background:hsl(0 72% 51% / 0.1);color:var(--destructive);padding:3px 10px;border-radius:9999px;font-size:12px;font-weight:500">Error</span><div class="button-label">destructive</div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== CARDS ==================== -->
+<section class="section" id="cards">
+  <div class="section-label">04 / Cards</div>
+  <h2 class="section-title">Card Examples</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-badge" style="background:hsl(142 71% 45% / 0.1);color:var(--success-fg)">Standard</div>
+      <h3>Standard Card</h3>
+      <p>bg-card border border-border rounded-lg p-4. The workhorse container for settings panels, content sections, and list items.</p>
+    </div>
+    <div class="card" style="box-shadow:var(--shadow-card);border-radius:12px;padding:24px">
+      <div class="card-badge" style="background:hsl(217 91% 60% / 0.15);color:var(--info)">Elevated</div>
+      <h3>Elevated Card</h3>
+      <p>bg-card border border-border rounded-xl p-6 shadow-lg. For modals, dialogs, and featured content that needs to float above the surface.</p>
+    </div>
+    <div class="card" style="border-color:hsl(0 0% 24%)">
+      <div class="card-badge" style="background:hsl(38 92% 50% / 0.15);color:var(--warning)">Interactive</div>
+      <h3>Interactive Card</h3>
+      <p>hover:border-white/30. Cards that respond to hover with a subtle border brightening to indicate they are clickable.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== FORMS ==================== -->
+<section class="section" id="forms">
+  <div class="section-label">05 / Forms</div>
+  <h2 class="section-title">Form Elements</h2>
+  <div class="form-group"><label class="form-label">Project Name</label><input class="form-input" type="text" placeholder="my-openhands-project"><div class="form-state-label">Default (border-border, bg-muted/40)</div></div>
+  <div class="form-group"><label class="form-label">Repository</label><input class="form-input form-input--focus" type="text" value="openhands/agent"><div class="form-state-label">Focus (ring-1, ring-ring, bg-muted/60)</div></div>
+  <div class="form-group"><label class="form-label">API Key</label><input class="form-input form-input--error" type="text" value="invalid-key-123"><div class="form-state-label">Error (border-destructive)</div></div>
+  <div class="form-group"><label class="form-label">Instructions</label><textarea class="form-textarea" placeholder="Describe the task for the agent..."></textarea></div>
+  <div class="form-group">
+    <label class="form-label">Framework</label>
+    <div style="position:relative">
+      <select class="form-input" style="appearance:none;padding-right:36px;cursor:pointer">
+        <option>React + Tailwind</option>
+        <option>Next.js</option>
+        <option>Vue</option>
+      </select>
+      <svg style="position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+    <div class="form-state-label">NativeSelect (appearance: none, chevron overlay)</div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== SPACING ==================== -->
+<section class="section" id="spacing">
+  <div class="section-label">06 / Spacing</div>
+  <h2 class="section-title">Spacing Scale</h2>
+  <div class="spacing-row">
+    <div class="spacing-item"><div class="spacing-block" style="width:4px"></div><div class="spacing-value">4 (gap-1)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:6px"></div><div class="spacing-value">6 (gap-1.5)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:8px"></div><div class="spacing-value">8 (gap-2)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:12px"></div><div class="spacing-value">12 (gap-3)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:16px"></div><div class="spacing-value">16 (gap-4)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:24px"></div><div class="spacing-value">24 (gap-6)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:32px"></div><div class="spacing-value">32 (gap-8)</div></div>
+    <div class="spacing-item"><div class="spacing-block" style="width:48px"></div><div class="spacing-value">48 (gap-12)</div></div>
+  </div>
+
+  <div style="margin-top:40px">
+    <div class="color-group-label">Padding Patterns</div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:12px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--fg-muted)">px-3 py-2 <span style="color:var(--fg)">compact</span></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-size:12px;color:var(--fg-muted)">px-4 py-2 <span style="color:var(--fg)">standard</span></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;font-size:12px;color:var(--fg-muted)">p-4 <span style="color:var(--fg)">card</span></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:24px;font-size:12px;color:var(--fg-muted)">p-6 <span style="color:var(--fg)">dialog</span></div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== RADIUS ==================== -->
+<section class="section" id="radius">
+  <div class="section-label">07 / Radius</div>
+  <h2 class="section-title">Border Radius Scale</h2>
+  <div class="radius-row">
+    <div class="radius-item"><div class="radius-box" style="border-radius:2px"></div><div class="radius-label">2px</div><div class="radius-context">rounded-sm</div></div>
+    <div class="radius-item"><div class="radius-box" style="border-radius:4px"></div><div class="radius-label">4px</div><div class="radius-context">rounded-md</div></div>
+    <div class="radius-item"><div class="radius-box" style="border-radius:6px"></div><div class="radius-label">6px</div><div class="radius-context">rounded-lg</div></div>
+    <div class="radius-item"><div class="radius-box" style="border-radius:12px"></div><div class="radius-label">12px</div><div class="radius-context">rounded-modal</div></div>
+    <div class="radius-item"><div class="radius-box" style="border-radius:16px"></div><div class="radius-label">16px</div><div class="radius-context">rounded-2xl</div></div>
+    <div class="radius-item"><div class="radius-box" style="border-radius:9999px"></div><div class="radius-label">9999px</div><div class="radius-context">rounded-full</div></div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- ==================== ELEVATION ==================== -->
+<section class="section" id="elevation">
+  <div class="section-label">08 / Elevation</div>
+  <h2 class="section-title">Elevation &amp; Depth</h2>
+  <div class="elevation-grid">
+    <div class="elevation-card" style="border:1px solid var(--border)"><div class="elevation-label">Level 0: Flat</div><div class="elevation-desc">No shadow, bg-background</div></div>
+    <div class="elevation-card" style="border:1px solid var(--border);box-shadow:0 1px 2px 0 hsl(0 0% 0% / 0.3)"><div class="elevation-label">Level 1: Surface</div><div class="elevation-desc">shadow-card + border</div></div>
+    <div class="elevation-card" style="border:1px solid var(--border);box-shadow:0 4px 6px -1px hsl(0 0% 0% / 0.3),0 2px 4px -2px hsl(0 0% 0% / 0.3)"><div class="elevation-label">Level 2: Raised</div><div class="elevation-desc">shadow-md — dropdowns, popovers</div></div>
+    <div class="elevation-card" style="border:1px solid var(--border);box-shadow:0 10px 15px -3px hsl(0 0% 0% / 0.3),0 4px 6px -4px hsl(0 0% 0% / 0.3)"><div class="elevation-label">Level 3: Floating</div><div class="elevation-desc">shadow-lg — modals, dialogs</div></div>
+    <div class="elevation-card" style="border:1px solid var(--border);box-shadow:0 20px 25px -5px hsl(0 0% 0% / 0.3),0 8px 10px -6px hsl(0 0% 0% / 0.3)"><div class="elevation-label">Level 4: Overlay</div><div class="elevation-desc">shadow-xl — full-screen overlays</div></div>
+    <div class="elevation-card" style="border:1px solid var(--border);box-shadow:0 0 0 1px var(--ring),0 0 0 3px var(--bg)"><div class="elevation-label">Focus Ring</div><div class="elevation-desc">ring-1 ring-ring ring-offset-2</div></div>
+  </div>
+</section>
+
+<footer class="footer">
+  <a href="https://github.com/FraterCCCLXIII/OpenHands-Design.md" target="_blank" rel="noopener noreferrer">OpenHands-Design.md</a> &mdash; Design tokens for the OpenHands UI
+</footer>
+
+</body>
+</html>

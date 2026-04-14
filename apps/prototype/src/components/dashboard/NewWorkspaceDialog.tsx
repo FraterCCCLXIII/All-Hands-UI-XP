@@ -67,7 +67,7 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="xs" type="button" className="h-8 px-2.5 text-[11px]">
+        <Button variant="secondary" size="xs" type="button" className="h-8 px-2.5 text-xs">
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />
           New
         </Button>
@@ -91,7 +91,7 @@ export function NewWorkspaceDialog({ repositories, onCreateWorkspace }: NewWorks
                   aria-labelledby="workspace-repo-label workspace-repo"
                   aria-expanded={isRepositoryDropdownOpen}
                   aria-haspopup="listbox"
-                  className="relative flex h-10 w-full items-center rounded-md border border-border bg-muted/40 px-3 text-left transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="relative flex h-10 w-full items-center rounded-md border border-border bg-muted/40 px-3 text-left transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                 >
                   <Github className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                   <span className="block flex-1 truncate text-sm text-foreground">{selectedRepositoryLabel}</span>

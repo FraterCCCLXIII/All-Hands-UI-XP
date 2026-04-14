@@ -181,7 +181,7 @@ function ToolTableRow({ tool }: { tool: AgentTool }) {
         className={cn(
           'transition-colors cursor-pointer',
           expanded ? 'border-b-0' : 'border-b border-border',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
           'hover:bg-muted/30',
           expanded && 'bg-muted/20'
         )}

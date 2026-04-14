@@ -27,7 +27,7 @@ export function CondensationSettings({
         <input
           min={20}
           step={1}
-          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+          className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
           type="number"
           defaultValue={defaultHistorySize}
         />
@@ -53,7 +53,7 @@ export function CondensationSettings({
         />
         <div className="flex items-center gap-2">
           <span className="text-sm text-foreground">Enable Confirmation Mode</span>
-          <span className="text-[11px] leading-4 text-black font-medium tracking-tighter bg-white px-1 rounded-full">
+          <span className="text-xs leading-4 text-primary-foreground font-medium tracking-tighter bg-primary px-1 rounded-full">
             Beta
           </span>
         </div>

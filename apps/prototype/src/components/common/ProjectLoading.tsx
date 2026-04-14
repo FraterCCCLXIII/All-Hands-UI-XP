@@ -30,9 +30,9 @@ const ProjectLoading: React.FC = () => {
         transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
         className="mb-6"
       >
-        <Loader2 className="w-12 h-12 text-yellow-400 animate-spin" />
+        <Loader2 className="w-12 h-12 text-warning animate-spin" />
       </motion.div>
-      <h2 className="text-2xl font-semibold text-stone-200 mb-2">Project Loading</h2>
+      <h2 className="text-2xl font-semibold text-foreground mb-2">Project Loading</h2>
       <div className="h-8 flex items-center justify-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -41,7 +41,7 @@ const ProjectLoading: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="text-stone-400 text-base text-center min-w-[280px]"
+            className="text-muted-foreground text-base text-center min-w-[280px]"
           >
             {MESSAGES[index]}
           </motion.div>

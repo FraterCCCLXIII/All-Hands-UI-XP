@@ -14,16 +14,16 @@ const tasks = [
 
 const SuggestedTasks: React.FC<SuggestedTasksProps> = () => {
   return (
-    <div className="rounded-xl shadow-lg bg-stone-800 border border-stone-700 w-80 h-full flex flex-col">
+    <div className="rounded-xl shadow-lg bg-card border border-border w-80 h-full flex flex-col">
       <h3 className="p-4 text-lg font-normal">Suggested tasks</h3>
-      <div className="divide-y divide-stone-700 flex-1">
+      <div className="divide-y divide-border flex-1">
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="flex items-center space-x-3 p-3 hover:bg-stone-600 cursor-pointer hover:opacity-90 transition-opacity"
+            className="flex items-center space-x-3 p-3 hover:bg-muted/60 cursor-pointer hover:opacity-90 transition-opacity"
           >
-            <span className="text-sm font-medium text-stone-200">#{task.id}</span>
-            <span className="text-sm text-stone-200">{task.text}</span>
+            <span className="text-sm font-medium text-foreground">#{task.id}</span>
+            <span className="text-sm text-foreground">{task.text}</span>
           </div>
         ))}
       </div>

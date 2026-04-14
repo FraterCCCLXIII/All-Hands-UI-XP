@@ -70,20 +70,20 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
             animate={{ scale: 1 }}
             exit={{ scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-stone-900 border border-stone-700 rounded-xl shadow-xl p-8 w-full max-w-lg relative" 
+            className="bg-background border border-border rounded-xl shadow-xl p-8 w-full max-w-lg relative" 
             ref={modalRef}
           >
-            <button onClick={handleClose} className="absolute top-2 right-2 p-1 rounded-full hover:bg-stone-700 focus:outline-none">
+            <button onClick={handleClose} className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted/60 focus:outline-none">
               <span className="sr-only">Close</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <h2 className="text-2xl font-normal text-stone-200 mb-2">Invite Team Members</h2>
-            <p className="text-stone-400 mb-4 font-normal">Invite team members to your organization by entering their email addresses below. They will receive an invitation to join your organization.</p>
+            <h2 className="text-2xl font-normal text-foreground mb-2">Invite Team Members</h2>
+            <p className="text-muted-foreground mb-4 font-normal">Invite team members to your organization by entering their email addresses below. They will receive an invitation to join your organization.</p>
             <div className="mb-4">
-              <label className="block text-xs text-stone-400 mb-1">Organization</label>
+              <label className="block text-xs text-muted-foreground mb-1">Organization</label>
               <div className="relative">
                 <select
-                  className="w-full rounded bg-stone-800 text-stone-200 p-2 pr-10 appearance-none"
+                  className="w-full rounded bg-card text-foreground p-2 pr-10 appearance-none"
                   value={selectedOrg}
                   onChange={e => setSelectedOrg(e.target.value)}
                 >
@@ -92,25 +92,25 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
                   ))}
                 </select>
                 {/* Dropdown arrow */}
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                 {/* Only show 'Current' pill if selectedOrg is currentOrg */}
                 {selectedOrg === currentOrg && (
-                  <span className="absolute right-10 top-1/2 -translate-y-1/2 bg-yellow-500 text-stone-900 text-xs font-semibold rounded-full px-3 py-1">Current</span>
+                  <span className="absolute right-10 top-1/2 -translate-y-1/2 bg-yellow-500 text-foreground text-xs font-semibold rounded-full px-3 py-1">Current</span>
                 )}
               </div>
             </div>
             <div className="mb-4">
-              <label className="block text-xs text-stone-400 mb-1">Email Addresses</label>
-              <div className="flex flex-wrap items-center gap-2 w-full rounded bg-stone-800 text-stone-200 p-2 min-h-[44px] focus-within:ring-2 ring-yellow-500">
+              <label className="block text-xs text-muted-foreground mb-1">Email Addresses</label>
+              <div className="flex flex-wrap items-center gap-2 w-full rounded bg-card text-foreground p-2 min-h-[44px] focus-within:ring-1 ring-yellow-500">
                 {emails.map(email => (
-                  <span key={email} className="flex items-center bg-stone-700 text-stone-200 rounded-full px-3 py-1 text-sm">
+                  <span key={email} className="flex items-center bg-muted text-foreground rounded-full px-3 py-1 text-sm">
                     {email}
-                    <button className="ml-2 text-stone-400 hover:text-destructive" onClick={() => removeEmail(email)}>&times;</button>
+                    <button className="ml-2 text-muted-foreground hover:text-destructive" onClick={() => removeEmail(email)}>&times;</button>
                   </span>
                 ))}
                 <input
                   type="email"
-                  className="flex-1 min-w-[120px] bg-transparent outline-none text-stone-200 placeholder-stone-400 p-0 m-0 border-none shadow-none"
+                  className="flex-1 min-w-[120px] bg-transparent outline-none text-foreground placeholder:text-muted-foreground p-0 m-0 border-none shadow-none"
                   placeholder="Enter email and press Enter"
                   value={emailInput}
                   onChange={handleInputChange}
@@ -119,7 +119,7 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
               </div>
             </div>
             <button
-              className="w-full py-2 rounded bg-yellow-500 text-stone-900 font-normal text-lg hover:bg-yellow-400 disabled:opacity-50"
+              className="w-full py-2 rounded bg-yellow-500 text-foreground font-normal text-lg hover:bg-yellow-400 disabled:opacity-50"
               disabled={emails.length === 0}
             >
               Send Invites

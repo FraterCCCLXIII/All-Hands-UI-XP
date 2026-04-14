@@ -275,7 +275,7 @@ export function PrototypeLucideIconGrid() {
     <div className="w-full max-w-full">
       <p className="mb-3 text-xs text-muted-foreground">
         {prototypeLucideIconEntries.length} icons — import from{' '}
-        <code className="rounded bg-muted px-1 font-mono text-[11px]">lucide-react</code>
+        <code className="rounded bg-muted px-1 font-mono text-xs">lucide-react</code>
       </p>
       <div className="grid max-h-[min(70vh,520px)] grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-border bg-muted/20 p-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
         {prototypeLucideIconEntries.map(({ name, Icon }) => (
@@ -285,7 +285,7 @@ export function PrototypeLucideIconGrid() {
             title={name}
           >
             <Icon className="h-5 w-5 shrink-0 text-foreground" aria-hidden />
-            <span className="line-clamp-2 w-full break-words text-[10px] leading-tight text-muted-foreground">
+            <span className="line-clamp-2 w-full break-words text-xs leading-tight text-muted-foreground">
               {name}
             </span>
           </div>

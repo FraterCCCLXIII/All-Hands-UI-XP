@@ -68,7 +68,7 @@ export function BubbleSelect({
               type="button"
               onClick={() => handleRemove(item)}
               disabled={disabled}
-              className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none"
+              className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none"
               aria-label={`Remove ${item}`}
             >
               <X className="h-3 w-3" />

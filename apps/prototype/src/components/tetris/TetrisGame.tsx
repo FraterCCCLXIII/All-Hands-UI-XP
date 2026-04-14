@@ -393,7 +393,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ theme, getThemeClasses }
       </div>
 
       <div className="w-full max-w-md">
-        <div className="text-sm text-gray-500 mb-2">Controls:</div>
+        <div className="text-sm text-muted-foreground mb-2">Controls:</div>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>← → : Move</div>
           <div>↑ : Rotate</div>
@@ -405,7 +405,7 @@ export const TetrisGame: React.FC<TetrisGameProps> = ({ theme, getThemeClasses }
 
       {nextPiece && (
         <div className="w-full max-w-md">
-          <div className="text-sm text-gray-500 mb-2">Next Piece:</div>
+          <div className="text-sm text-muted-foreground mb-2">Next Piece:</div>
           <div className="relative w-24 h-24 border rounded-lg overflow-hidden"
             style={{ borderColor: theme === 'dark' ? '#374151' : '#E5E7EB' }}>
             <canvas

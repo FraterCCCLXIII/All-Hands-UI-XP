@@ -59,8 +59,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   thinking: {
     text: 'Processing...',
-    dotColor: 'bg-amber-400',
-    spinnerColor: 'border-amber-400',
+    dotColor: 'bg-warning',
+    spinnerColor: 'border-warning',
     showSpinner: true,
     nextState: 'active',
     duration: 3000,
@@ -68,8 +68,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   connecting: {
     text: 'Connecting...',
-    dotColor: 'bg-amber-400',
-    spinnerColor: 'border-amber-400',
+    dotColor: 'bg-warning',
+    spinnerColor: 'border-warning',
     showSpinner: true,
     nextState: 'active',
     duration: 2000,
@@ -77,8 +77,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   reconnecting: {
     text: 'Reconnecting...',
-    dotColor: 'bg-amber-400',
-    spinnerColor: 'border-amber-400',
+    dotColor: 'bg-warning',
+    spinnerColor: 'border-warning',
     showSpinner: true,
     nextState: 'active',
     duration: 3000,
@@ -140,8 +140,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   maintenance: {
     text: 'Maintenance',
-    dotColor: 'bg-amber-400',
-    spinnerColor: 'border-amber-400',
+    dotColor: 'bg-warning',
+    spinnerColor: 'border-warning',
     showSpinner: true,
     nextState: 'active',
     duration: 3000,
@@ -149,8 +149,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   updating: {
     text: 'Updating...',
-    dotColor: 'bg-amber-400',
-    spinnerColor: 'border-amber-400',
+    dotColor: 'bg-warning',
+    spinnerColor: 'border-warning',
     showSpinner: true,
     nextState: 'active',
     duration: 3000,
@@ -158,8 +158,8 @@ const STATUS_CONFIG: Record<ServerStatusType, StatusConfig> = {
   },
   initializing: {
     text: 'Initializing...',
-    dotColor: 'bg-amber-400',
-    spinnerColor: 'border-amber-400',
+    dotColor: 'bg-warning',
+    spinnerColor: 'border-warning',
     showSpinner: true,
     nextState: 'active',
     duration: 2000,
@@ -249,12 +249,12 @@ export const ServerStatus: React.FC<ServerStatusProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full left-0 mb-2 w-48 rounded-md shadow-lg bg-stone-800 ring-1 ring-black ring-opacity-5 z-50"
+            className="absolute bottom-full left-0 mb-2 w-48 rounded-md shadow-lg bg-card ring-1 ring-black ring-opacity-5 z-50"
           >
             <div className="py-1" role="menu">
               <button
                 onClick={() => handleServerAction('stop')}
-                className="flex items-center w-full px-4 py-2 text-sm text-stone-300 hover:bg-stone-700/50"
+                className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/60"
                 role="menuitem"
               >
                 <Power className="w-4 h-4 mr-2" />
@@ -262,7 +262,7 @@ export const ServerStatus: React.FC<ServerStatusProps> = ({
               </button>
               <button
                 onClick={() => handleServerAction('restart')}
-                className="flex items-center w-full px-4 py-2 text-sm text-stone-300 hover:bg-stone-700/50"
+                className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/60"
                 role="menuitem"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -270,7 +270,7 @@ export const ServerStatus: React.FC<ServerStatusProps> = ({
               </button>
               <button
                 onClick={() => handleServerAction('reset')}
-                className="flex items-center w-full px-4 py-2 text-sm text-stone-300 hover:bg-stone-700/50"
+                className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/60"
                 role="menuitem"
               >
                 <XCircle className="w-4 h-4 mr-2" />
@@ -294,7 +294,7 @@ export const ServerStatus: React.FC<ServerStatusProps> = ({
           {/* Loading Spinner */}
           {config.showSpinner && (
             <div
-              className="absolute -inset-1 rounded-full border-2 border-solid border-transparent border-t-amber-400 animate-spin"
+              className="absolute -inset-1 rounded-full border-2 border-solid border-transparent border-t-warning animate-spin"
             />
           )}
           

@@ -491,7 +491,7 @@ export function ComponentLibraryScreen({
               ].map((swatch) => (
                 <div key={swatch.label} className={`rounded-lg border ${swatch.className} p-3`}>
                   <div className="text-xs font-semibold">{swatch.label}</div>
-                  <div className="text-[11px] opacity-70">Token sample</div>
+                  <div className="text-xs opacity-70">Token sample</div>
                 </div>
               ))}
             </div>
@@ -2353,21 +2353,21 @@ export function ComponentLibraryScreen({
           label: 'Open modal',
           span: 'wide',
           content: (
-            <div className="w-[512px] max-w-full rounded-xl border border-stone-700 bg-stone-900 p-8 shadow-xl">
-              <div className="text-2xl font-normal text-stone-200">Invite Team Members</div>
-              <p className="mt-2 text-sm text-stone-400">
+            <div className="w-[512px] max-w-full rounded-xl border border-border bg-background p-8 shadow-xl">
+              <div className="text-2xl font-normal text-foreground">Invite Team Members</div>
+              <p className="mt-2 text-sm text-muted-foreground">
                 Invite team members to your organization by entering their email addresses below.
               </p>
               <div className="mt-4 space-y-4">
                 <div>
-                  <div className="mb-1 text-xs text-stone-400">Organization</div>
-                  <div className="rounded bg-stone-800 p-2 text-stone-200">Acme Inc.</div>
+                  <div className="mb-1 text-xs text-muted-foreground">Organization</div>
+                  <div className="rounded bg-card p-2 text-foreground">Acme Inc.</div>
                 </div>
                 <div>
-                  <div className="mb-1 text-xs text-stone-400">Email Addresses</div>
-                  <div className="min-h-[44px] rounded bg-stone-800 p-2 text-stone-400">Enter email and press Enter</div>
+                  <div className="mb-1 text-xs text-muted-foreground">Email Addresses</div>
+                  <div className="min-h-[44px] rounded bg-card p-2 text-muted-foreground">Enter email and press Enter</div>
                 </div>
-                <button className="w-full rounded bg-yellow-500 py-2 text-lg font-normal text-stone-900">
+                <button className="w-full rounded bg-yellow-500 py-2 text-lg font-normal text-foreground">
                   Send Invites
                 </button>
               </div>
@@ -2383,18 +2383,18 @@ export function ComponentLibraryScreen({
           label: 'Open modal',
           span: 'wide',
           content: (
-            <div className="w-[448px] max-w-full rounded-xl border border-stone-700 bg-stone-900 p-8 shadow-xl">
-              <div className="text-2xl font-normal text-stone-200">Share Preview</div>
-              <p className="mt-2 text-sm text-stone-400">Share this preview with your team or on social platforms.</p>
+            <div className="w-[448px] max-w-full rounded-xl border border-border bg-background p-8 shadow-xl">
+              <div className="text-2xl font-normal text-foreground">Share Preview</div>
+              <p className="mt-2 text-sm text-muted-foreground">Share this preview with your team or on social platforms.</p>
               <div className="mt-4">
-                <div className="mb-1 text-xs text-stone-400">Share Link</div>
-                <div className="rounded bg-stone-800 px-3 py-2 text-sm text-stone-200">
+                <div className="mb-1 text-xs text-muted-foreground">Share Link</div>
+                <div className="rounded bg-card px-3 py-2 text-sm text-foreground">
                   https://preview.openhands.dev/demo
                 </div>
               </div>
               <div className="mt-6 flex flex-wrap gap-4">
                 {['Slack', 'GitHub', 'Email', 'WhatsApp', 'X', 'Facebook'].map((name) => (
-                  <div key={name} className="rounded-full bg-stone-700 px-4 py-2 text-xs text-stone-200">
+                  <div key={name} className="rounded-full bg-muted px-4 py-2 text-xs text-foreground">
                     {name}
                   </div>
                 ))}
@@ -2411,7 +2411,7 @@ export function ComponentLibraryScreen({
           label: 'Error modal',
           span: 'wide',
           content: (
-            <div className="w-[512px] max-w-full rounded-xl border border-stone-700 bg-stone-900 p-6 shadow-xl">
+            <div className="w-[512px] max-w-full rounded-xl border border-border bg-background p-6 shadow-xl">
               <div className="text-lg font-semibold text-foreground">Canvas error</div>
               <p className="mt-2 text-sm text-muted-foreground">
                 The preview runtime hit an unexpected error. Open the console to inspect the failure.
@@ -2520,7 +2520,7 @@ export function ComponentLibraryScreen({
               </div>
               <a
                 href="/figma/all-components"
-                className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+                className="inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
               >
                 Open All Components Page
               </a>
@@ -2551,7 +2551,7 @@ export function ComponentLibraryScreen({
                             >
                               <div className="text-sm font-semibold text-foreground">{item.name}</div>
                               <div className="mt-1 text-xs text-muted-foreground">{item.description ?? item.path}</div>
-                              <div className="mt-3 text-[11px] font-mono text-muted-foreground">/figma/{item.id}</div>
+                              <div className="mt-3 text-xs font-mono text-muted-foreground">/figma/{item.id}</div>
                             </a>
                           ))}
                         </div>
@@ -2652,7 +2652,7 @@ export function ComponentLibraryScreen({
             </p>
             <a
               href="/figma"
-              className="mt-4 inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+              className="mt-4 inline-flex h-10 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60"
             >
               Back to export index
             </a>
@@ -2719,7 +2719,7 @@ export function ComponentLibraryScreen({
             setLibraryMainTab('components');
             handleScrollTo('component-library-top');
           }}
-          className="flex shrink-0 items-center gap-2 rounded-md text-left outline-none ring-offset-background transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex shrink-0 items-center gap-2 rounded-md text-left outline-none ring-offset-background transition-colors hover:text-primary focus-visible:ring-1 focus-visible:ring-ring"
           aria-label="OpenHands — go to components overview"
         >
           <Logo className="h-8 w-8 shrink-0 text-foreground" />
@@ -2864,7 +2864,7 @@ export function ComponentLibraryScreen({
                                 ) : (
                                   <div className="rounded-md border border-dashed border-border/80 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
                                     <span className="font-medium text-foreground">Stub</span> — no live preview yet.{' '}
-                                    <span className="font-mono text-[11px]">{item.path}</span>
+                                    <span className="font-mono text-xs">{item.path}</span>
                                   </div>
                                 )}
                               </ComponentCard>

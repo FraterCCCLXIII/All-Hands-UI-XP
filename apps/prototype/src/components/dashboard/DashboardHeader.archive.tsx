@@ -41,7 +41,7 @@ export function ArchivedDashboardHeader({ activeTab, onSelectTab }: ArchivedDash
                   aria-selected={isActive}
                   aria-label={tab.label}
                   onClick={() => onSelectTab(tab.id)}
-                  className={`group inline-flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium whitespace-nowrap transition-[color,padding-right] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar ${
+                  className={`group inline-flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium whitespace-nowrap transition-[color,padding-right] duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar ${
                     isActive
                       ? 'gap-2 pr-2 bg-secondary text-foreground hover:bg-secondary/90'
                       : 'gap-0 pr-1.5 bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted/60'
@@ -67,7 +67,7 @@ export function ArchivedDashboardHeader({ activeTab, onSelectTab }: ArchivedDash
             <input
               type="text"
               placeholder="Search PRs, repos, or authors"
-              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
+              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
             />
           </div>
         </div>

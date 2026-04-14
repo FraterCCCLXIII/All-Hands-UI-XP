@@ -43,8 +43,8 @@ const socialLogins = [
   { id: 'github', label: 'Sign in with Github', icon: Github, className: 'bg-[#9E28B0] hover:bg-[#8a2399] text-white border-0' },
   { id: 'gitlab', label: 'Sign in with Gitlab', icon: GitLabIcon, className: 'bg-[#FC6B0E] hover:bg-[#e55f0c] text-white border-0' },
   { id: 'bitbucket', label: 'Sign in with Bitbucket', icon: BitbucketIcon, className: 'bg-[#2684FF] hover:bg-[#1a6ce6] text-white border-0' },
-  { id: 'google', label: 'Sign in with Google', icon: GoogleIcon, className: 'bg-white hover:bg-gray-200 text-gray-800 border border-border' },
-  { id: 'chatgpt', label: 'Sign in with ChatGPT', icon: ChatGPTIcon, className: 'bg-white hover:bg-gray-200 text-black border border-border', iconClassName: 'w-5 h-5' },
+  { id: 'google', label: 'Sign in with Google', icon: GoogleIcon, className: 'bg-primary hover:bg-primary/85 text-primary-foreground border border-border' },
+  { id: 'chatgpt', label: 'Sign in with ChatGPT', icon: ChatGPTIcon, className: 'bg-primary hover:bg-primary/85 text-primary-foreground border border-border', iconClassName: 'w-5 h-5' },
 ];
 
 const ENTERPRISE_BULLETS = [

@@ -8,7 +8,7 @@ export const TOAST_VIEWPORT_CLASS =
 export const toastVariantSurfaceClasses = {
   success: 'border border-success/40 bg-success/15 text-success-foreground',
   error: 'border border-destructive/40 bg-destructive/15 text-destructive-foreground',
-  info: 'border border-blue-500/40 bg-blue-500/15 text-blue-100',
+  info: 'border border-info/40 bg-info/15 text-info',
 } as const;
 
 export type ToastVariant = keyof typeof toastVariantSurfaceClasses;
@@ -20,5 +20,5 @@ export const TOAST_SURFACE_APP_CLASS =
 export const toastIconAccentClasses: Record<ToastVariant, string> = {
   success: 'text-success',
   error: 'text-destructive',
-  info: 'text-blue-300',
+  info: 'text-info',
 };

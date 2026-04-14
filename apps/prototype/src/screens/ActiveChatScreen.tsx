@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode, SyntheticEvent } from 'react';
 import {
   Loader2,
   ArrowUp,
@@ -412,15 +412,15 @@ function AgentStatusBadge({ state }: { state: StatusBadgeState }) {
   return (
     <div className="flex items-center gap-1 min-w-0 ml-2 md:ml-3">
       <span
-        className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate"
+        className="text-xs text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate"
         title={label}
       >
         {label}
       </span>
       <div
         className={cn(
-          'bg-muted box-border flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 rounded-[100px] shrink-0 size-6',
-          state === 'running' && 'cursor-pointer transition-colors hover:bg-muted/80 active:scale-95'
+          'bg-muted box-border flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 rounded-full shrink-0 size-6',
+          state === 'running' && 'cursor-pointer transition-colors hover:bg-muted/60 active:scale-[0.97]'
         )}
       >
         {icon}
@@ -930,7 +930,7 @@ export function ActiveChatScreen({
                 {showServerMenu && (
                   <ul
                     data-testid="server-status-context-menu"
-                    className="absolute bg-popover text-popover-foreground border border-border rounded-[6px] overflow-hidden z-50 shadow-lg py-[6px] px-1 flex flex-col gap-2 top-full left-0 mt-1 w-fit min-w-[10.5rem]"
+                    className="absolute bg-popover text-popover-foreground border border-border rounded-lg overflow-hidden z-50 shadow-lg py-[6px] px-1 flex flex-col gap-2 top-full left-0 mt-1 w-fit min-w-[10.5rem]"
                   >
                     <div className="py-1" data-testid="server-status">
                       <div className="flex items-center px-2">
@@ -955,13 +955,17 @@ export function ActiveChatScreen({
                 <div className="text-foreground leading-5 w-fit max-w-fit truncate" data-testid="conversation-name-title" title={conversationTitle}>
                   {conversationTitle}
                 </div>
-                <span className="inline-flex h-5 w-5 items-center justify-center rounded text-[10px] font-semibold shrink-0 cursor-help lowercase bg-muted text-muted-foreground">
+                <span className="inline-flex h-5 w-5 items-center justify-center rounded text-xs font-semibold shrink-0 cursor-help lowercase bg-muted text-muted-foreground">
                   V1
                 </span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button data-testid="ellipsis-button" type="button" className="cursor-pointer p-0.5 text-muted-foreground hover:text-foreground">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <button
+                      data-testid="ellipsis-button"
+                      type="button"
+                      className="inline-flex shrink-0 size-[22px] items-center justify-center rounded-md cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[color,background-color] duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    >
+                      <MoreHorizontal className="h-4 w-4 shrink-0 text-inherit" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -969,7 +973,7 @@ export function ActiveChatScreen({
                     align="start"
                     side="bottom"
                     sideOffset={8}
-                    className="min-w-[11rem] rounded-[6px] py-[6px] px-1 z-[100]"
+                    className="min-w-[11rem] rounded-lg py-[6px] px-1 z-[100]"
                   >
                     <DropdownMenuItem data-testid="rename-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
                       <Pencil className="w-4 h-4 shrink-0" />
@@ -1039,7 +1043,7 @@ export function ActiveChatScreen({
                             {isCopied && (
                               <div
                                 role="tooltip"
-                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-popover text-popover-foreground border border-border rounded-md shadow-md whitespace-nowrap z-[200] pointer-events-none"
+                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-muted text-foreground border border-border rounded-md shadow-md whitespace-nowrap z-[200] pointer-events-none"
                               >
                                 Conversation address copied
                               </div>
@@ -1085,7 +1089,7 @@ export function ActiveChatScreen({
                       type="button"
                       onClick={() => handleCanvasTabClick('changes')}
                       className={cn(
-                        'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                        'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                         activeTab === 'changes' && canvasOpen
                           ? 'gap-2 pr-2 bg-secondary text-foreground hover:bg-secondary/90'
                           : 'gap-0 pr-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60'
@@ -1171,16 +1175,16 @@ export function ActiveChatScreen({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-md cursor-pointer p-1 pl-0 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[color,background-color] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="inline-flex shrink-0 size-6 items-center justify-center rounded-md cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-[color,background-color] duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                     aria-label="More options"
                   >
-                    <MoreHorizontal className="w-4 h-4" />
+                    <MoreHorizontal className="h-4 w-4 shrink-0 text-inherit" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
                   sideOffset={8}
-                  className="min-w-[11rem] rounded-[6px] py-[6px] px-1"
+                  className="min-w-[11rem] rounded-lg py-[6px] px-1"
                 >
                   {(
                     [
@@ -1198,19 +1202,47 @@ export function ActiveChatScreen({
                       <DropdownMenuItem
                         key={id}
                         data-testid="context-menu-list-item"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          togglePinned(id);
-                        }}
                         className="cursor-pointer gap-2"
+                        onSelect={(event) => {
+                          // Radix often sets target to the menu item, not the click origin — use composedPath
+                          const native = (event as unknown as SyntheticEvent).nativeEvent as
+                            | (Event & { composedPath?: () => EventTarget[] })
+                            | undefined;
+                          const path =
+                            typeof native?.composedPath === 'function' ? native.composedPath() : [];
+                          const pinHit =
+                            path.some(
+                              (node) => node instanceof HTMLElement && node.hasAttribute('data-pin-toggle')
+                            ) ||
+                            (event.target as HTMLElement | null)?.closest?.('[data-pin-toggle]');
+                          if (pinHit) {
+                            event.preventDefault();
+                            togglePinned(id);
+                            return;
+                          }
+                          handleCanvasTabClick(id);
+                        }}
                       >
                         {icon}
                         <span className="flex-1 text-left">{label}</span>
-                        {isPinned ? (
-                          <PinOff className="w-4 h-4 shrink-0 text-muted-foreground" aria-hidden />
-                        ) : (
-                          <Pin className="w-4 h-4 shrink-0 text-muted-foreground" aria-hidden />
-                        )}
+                        <span
+                          data-pin-toggle
+                          data-pinned={isPinned ? 'true' : 'false'}
+                          className={cn(
+                            'inline-flex shrink-0 rounded p-0.5 -m-0.5 hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                            isPinned &&
+                              'bg-primary/15 [&_svg]:text-primary group-hover:[&_svg]:!text-primary'
+                          )}
+                          aria-label={isPinned ? 'Pinned to toolbar — click to unpin' : 'Not pinned — click to pin to toolbar'}
+                          aria-pressed={isPinned}
+                          title={isPinned ? 'Pinned to toolbar (click to unpin)' : 'Not pinned (click to pin)'}
+                        >
+                          {isPinned ? (
+                            <PinOff className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                          ) : (
+                            <Pin className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} aria-hidden />
+                          )}
+                        </span>
                       </DropdownMenuItem>
                     );
                   })}
@@ -1305,10 +1337,10 @@ export function ActiveChatScreen({
                           >
                             <div className="text-sm w-full" style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}>
                               {/* File read block: project/ */}
-                              <div className="flex flex-col gap-2 my-2 py-2 text-sm text-neutral-500 w-full font-sans">
-                                <div className="flex items-center justify-between font-normal text-neutral-500">
+                              <div className="flex flex-col gap-2 my-2 py-2 text-sm text-muted-foreground w-full font-sans">
+                                <div className="flex items-center justify-between font-normal text-muted-foreground">
                                   <div>
-                                    <span className="text-neutral-400">Read</span>{' '}
+                                    <span className="text-muted-foreground">Read</span>{' '}
                                     <span className="font-sans" title="/workspace/project">
                                       project/
                                     </span>
@@ -1320,16 +1352,16 @@ export function ActiveChatScreen({
                                       onClick={() => setProjectReadExpanded((e) => !e)}
                                     >
                                       {projectReadExpanded ? (
-                                        <ChevronUp className="h-4 w-4 ml-2 inline text-neutral-500" />
+                                        <ChevronUp className="h-4 w-4 ml-2 inline text-muted-foreground" />
                                       ) : (
-                                        <ChevronDown className="h-4 w-4 ml-2 inline text-neutral-500" />
+                                        <ChevronDown className="h-4 w-4 ml-2 inline text-muted-foreground" />
                                       )}
                                     </button>
                                   </div>
                                 </div>
                                 {projectReadExpanded && (
                                   <div data-testid="markdown-renderer" className="mt-1">
-                                    <pre className="bg-neutral-800 text-neutral-200 p-4 rounded border border-neutral-600 overflow-auto text-xs font-mono whitespace-pre">
+                                    <pre className="bg-card text-foreground p-4 rounded border border-border overflow-auto text-xs font-mono whitespace-pre">
                                       <code>
                                         {`Here's the files and directories up to 2 levels deep in /workspace/project, excluding hidden items:
 /workspace/project/
@@ -1356,10 +1388,10 @@ export function ActiveChatScreen({
                                 I see there&apos;s a Vite/TypeScript project. Let me check the package.json to see the available scripts and then run it:
                               </p>
                               {/* File read block: package.json */}
-                              <div className="flex flex-col gap-2 my-2 py-2 text-sm text-neutral-500 w-full font-sans">
-                                <div className="flex items-center justify-between font-normal text-neutral-500">
+                              <div className="flex flex-col gap-2 my-2 py-2 text-sm text-muted-foreground w-full font-sans">
+                                <div className="flex items-center justify-between font-normal text-muted-foreground">
                                   <div>
-                                    <span className="text-neutral-400">Read</span>{' '}
+                                    <span className="text-muted-foreground">Read</span>{' '}
                                     <span className="font-sans" title="/workspace/project/All-Hands-UI-XP/package.json">
                                       package.json
                                     </span>
@@ -1371,16 +1403,16 @@ export function ActiveChatScreen({
                                       onClick={() => setPackageJsonReadExpanded((e) => !e)}
                                     >
                                       {packageJsonReadExpanded ? (
-                                        <ChevronUp className="h-4 w-4 ml-2 inline text-neutral-500" />
+                                        <ChevronUp className="h-4 w-4 ml-2 inline text-muted-foreground" />
                                       ) : (
-                                        <ChevronDown className="h-4 w-4 ml-2 inline text-neutral-500" />
+                                        <ChevronDown className="h-4 w-4 ml-2 inline text-muted-foreground" />
                                       )}
                                     </button>
                                   </div>
                                 </div>
                                 {packageJsonReadExpanded && (
                                   <div data-testid="markdown-renderer" className="mt-1">
-                                    <pre className="bg-neutral-800 text-neutral-200 p-4 rounded border border-neutral-600 overflow-auto text-xs font-mono whitespace-pre">
+                                    <pre className="bg-card text-foreground p-4 rounded border border-border overflow-auto text-xs font-mono whitespace-pre">
                                       <code>
                                         {`{
   "name": "all-hands-ui-xp",
@@ -1405,10 +1437,10 @@ export function ActiveChatScreen({
                                 )}
                               </div>
                               {/* Ran command block */}
-                              <div className="flex flex-col gap-2 my-2 py-2 text-sm text-neutral-500 w-full font-sans">
-                                <div className="flex items-center justify-between font-normal text-neutral-500">
+                              <div className="flex flex-col gap-2 my-2 py-2 text-sm text-muted-foreground w-full font-sans">
+                                <div className="flex items-center justify-between font-normal text-muted-foreground">
                                   <div>
-                                    <span className="text-neutral-400">Ran</span>{' '}
+                                    <span className="text-muted-foreground">Ran</span>{' '}
                                     <span className="font-sans" title="sleep 2 && cat /workspace/project/All-Hands-UI-XP/server.log">
                                       cat server.log
                                     </span>
@@ -1420,23 +1452,23 @@ export function ActiveChatScreen({
                                       onClick={() => setRanCommandExpanded((e) => !e)}
                                     >
                                       {ranCommandExpanded ? (
-                                        <ChevronUp className="h-4 w-4 ml-2 inline text-neutral-500" />
+                                        <ChevronUp className="h-4 w-4 ml-2 inline text-muted-foreground" />
                                       ) : (
-                                        <ChevronDown className="h-4 w-4 ml-2 inline text-neutral-500" />
+                                        <ChevronDown className="h-4 w-4 ml-2 inline text-muted-foreground" />
                                       )}
                                     </button>
                                   </div>
                                 </div>
                                 {ranCommandExpanded && (
                                   <div data-testid="markdown-renderer" className="mt-1 space-y-2">
-                                    <p className="text-neutral-400 text-sm">
+                                    <p className="text-muted-foreground text-sm">
                                       Command:{' '}
-                                      <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                                      <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                                         sleep 2 &amp;&amp; cat /workspace/project/All-Hands-UI-XP/server.log
                                       </code>
                                     </p>
-                                    <p className="text-neutral-400 text-sm">Output:</p>
-                                    <pre className="bg-neutral-900 text-neutral-300 p-4 rounded-lg border border-neutral-600 overflow-auto text-xs font-mono whitespace-pre">
+                                    <p className="text-muted-foreground text-sm">Output:</p>
+                                    <pre className="bg-background text-foreground p-4 rounded-lg border border-border overflow-auto text-xs font-mono whitespace-pre">
                                       <code>
                                         {`[1]+  Exit 1                  cd /workspace/project/All-Hands-UI-XP && npm run dev -- --port 12000 --host 0.0.0.0 > server.log 2>&1
 
@@ -1469,7 +1501,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 </p>
                                 <p className="py-2.5 first:pt-0 last:pb-0">
                                   <a
-                                    className="text-blue-500 hover:underline font-normal"
+                                    className="text-info hover:underline font-normal"
                                     href="https://work-1-vliuruphcuvxshgd.prod-runtime.all-hands.dev"
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -1483,32 +1515,32 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 <ol className="list-decimal ml-5 pl-2 whitespace-normal">
                                   <li>
                                     Missing import{' '}
-                                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                                       ./components/chat/ConversationDrawer
                                     </code>{' '}
                                     in App.tsx
                                   </li>
                                   <li>
                                     Missing import{' '}
-                                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                                       ../ui/popover
                                     </code>{' '}
                                     in LeftNav.tsx
                                   </li>
                                   <li>
                                     CSS{' '}
-                                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                                       @import
                                     </code>{' '}
                                     should be placed before{' '}
-                                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                                       @tailwind
                                     </code>{' '}
                                     directives
                                   </li>
                                   <li>
                                     Duplicate{' '}
-                                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                                       style
                                     </code>{' '}
                                     attribute in WavingHand.tsx
@@ -1525,7 +1557,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               <div className="flex flex-col overflow-clip bg-card border border-border rounded-md w-full mt-4">
                                 <div className="flex gap-1 items-center border-b border-border h-[41px] px-2 shrink-0">
                                   <ListTodo className="shrink-0 w-4 h-4 text-muted-foreground" aria-hidden />
-                                  <span className="text-[11px] text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px] whitespace-pre">
+                                  <span className="text-xs text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px] whitespace-pre">
                                     Tasks
                                   </span>
                                 </div>
@@ -1542,8 +1574,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     <div key={i} className="flex gap-[14px] items-center px-4 py-2 w-full" data-name="item">
                                       <Circle className="shrink-0 w-4 h-4 text-foreground" aria-hidden />
                                       <div className="flex flex-col items-start justify-center leading-[20px] text-nowrap whitespace-pre font-normal">
-                                        <span className="font-normal text-[12px] text-foreground">{label}</span>
-                                        <span className="font-normal text-[10px] text-muted-foreground">Notes: </span>
+                                        <span className="font-normal text-xs text-foreground">{label}</span>
+                                        <span className="font-normal text-xs text-muted-foreground">Notes: </span>
                                       </div>
                                     </div>
                                   ))}
@@ -1584,7 +1616,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 onClick={() => { setChangesExpanded(false); setTaskListExpanded((e) => !e); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setChangesExpanded(false); setTaskListExpanded((prev) => !prev); } }}
                                 className={cn(
-                                  'flex items-center justify-between w-full px-4 py-2 min-h-[32px] text-left rounded-t-xl bg-card cursor-pointer group hover:bg-muted/50 transition-colors duration-200',
+                                  'flex items-center justify-between w-full px-4 py-2 min-h-[32px] text-left rounded-t-xl bg-card cursor-pointer group hover:bg-muted/60 transition-colors duration-200',
                                   taskListExpanded ? 'pb-2' : 'pb-6'
                                 )}
                                 aria-expanded={taskListExpanded}
@@ -1633,7 +1665,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 onClick={() => { setTaskListExpanded(false); setChangesExpanded((e) => !e); }}
                                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTaskListExpanded(false); setChangesExpanded((prev) => !prev); } }}
                                 className={cn(
-                                  'flex items-center justify-between w-full px-4 py-2 min-h-[32px] text-left rounded-t-xl bg-card cursor-pointer group hover:bg-muted/50 transition-colors duration-200',
+                                  'flex items-center justify-between w-full px-4 py-2 min-h-[32px] text-left rounded-t-xl bg-card cursor-pointer group hover:bg-muted/60 transition-colors duration-200',
                                   changesExpanded ? 'pb-2' : 'pb-6'
                                 )}
                                 aria-expanded={changesExpanded}
@@ -1665,7 +1697,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <button
                                         key={file.id}
                                         type="button"
-                                        className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-sm text-foreground transition-colors hover:bg-muted/40"
+                                        className="flex w-full items-center gap-2 rounded-md px-1 py-1 text-left text-sm text-foreground transition-colors hover:bg-muted/60"
                                         onClick={() => handleChangeDrawerItemSelect(file.id)}
                                       >
                                         <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -1703,7 +1735,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     )}
                                   />
                                 </span>
-                                <span className="font-normal text-[10px] leading-4 normal-case">
+                                <span className="font-normal text-xs leading-4 normal-case">
                                   {CHAT_STATUS_MESSAGES[chatStatusIndex]}
                                 </span>
                               </div>
@@ -1786,7 +1818,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                                 'w-full text-left px-3 py-2 rounded-md flex items-start text-sm transition-colors',
                                                 isActive
                                                   ? 'bg-muted text-foreground'
-                                                  : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
+                                                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                                               )}
                                               ref={(node) => {
                                                 commandItemRefs.current[index] = node;
@@ -1823,7 +1855,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       </div>
                                       <button
                                         type="button"
-                                        className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                                        className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                                         aria-label="Close CLI command panel"
                                         data-testid="close-cli-command-panel"
                                         onClick={() => setIsCliCommandVisible(false)}
@@ -1835,7 +1867,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <code className="flex-1 min-w-0 truncate text-xs text-foreground">{openConversationCliCommand}</code>
                                       <button
                                         type="button"
-                                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+                                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                                         aria-label="Copy CLI command"
                                         data-testid="copy-cli-command-button"
                                         onClick={handleCopyCliCommand}
@@ -1850,7 +1882,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 <div className="absolute -top-3 left-0 z-20 h-6 w-full lg:h-3" id="resize-grip">
                                   <div
                                     className={cn(
-                                      'absolute top-1 left-0 z-10 h-px w-full bg-white cursor-ns-resize transition-opacity duration-200',
+                                      'absolute top-1 left-0 z-10 h-px w-full bg-foreground cursor-ns-resize transition-opacity duration-200',
                                       isChatInputGripDragging ? 'opacity-100' : 'opacity-0'
                                     )}
                                     style={{ userSelect: 'none' }}
@@ -1861,7 +1893,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   />
                                 </div>
                               )}
-                              <div className="border border-border box-border content-stretch flex flex-col items-start justify-center relative rounded-xl w-full bg-[#141414]" style={{ padding: '.75rem' }}>
+                              <div className="border border-border box-border content-stretch flex flex-col items-start justify-center relative rounded-xl w-full bg-secondary" style={{ padding: '.75rem' }}>
                                 {composerAttachments.length > 0 && (
                                   <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-3">
                                     <div className="flex w-max min-w-full items-center gap-2">
@@ -1882,7 +1914,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       className={cn(
                                         'flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200',
                                         attachmentPreviewsEnabled
-                                          ? 'cursor-pointer text-muted-foreground hover:scale-105 hover:bg-muted hover:text-foreground active:scale-95'
+                                          ? 'cursor-pointer text-muted-foreground hover:scale-105 hover:bg-muted hover:text-foreground active:scale-[0.97]'
                                           : 'cursor-not-allowed text-muted-foreground/60'
                                       )}
                                       data-testid="paperclip-icon"
@@ -1954,7 +1986,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <DropdownMenuTrigger asChild>
                                     <button
                                       type="button"
-                                      className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
+                                      className="flex items-center gap-1 cursor-pointer text-muted-foreground rounded-full border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/60 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground whitespace-nowrap shrink-0"
                                       aria-label="Tools"
                                       data-testid="tools-trigger"
                                     >
@@ -1967,7 +1999,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         side="bottom"
                                         align="start"
                                         sideOffset={8}
-                                        className="min-w-[200px] rounded-[6px] py-[6px] px-1 z-[100]"
+                                        className="min-w-[200px] rounded-lg py-[6px] px-1 z-[100]"
                                         data-testid="tools-context-menu"
                                       >
                                         <DropdownMenuSub>
@@ -1975,7 +2007,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                             <GitBranch className="h-4 w-4 shrink-0" />
                                             Git Tools
                                           </DropdownMenuSubTrigger>
-                                          <DropdownMenuSubContent className="rounded-[6px] min-w-[8rem]">
+                                          <DropdownMenuSubContent className="rounded-lg min-w-[8rem]">
                                             <DropdownMenuItem className="gap-2 cursor-pointer">
                                               <ArrowDownToLine className="h-4 w-4" />
                                               Git Pull
@@ -1999,7 +2031,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                             <Merge className="h-4 w-4 shrink-0" />
                                             Macros
                                           </DropdownMenuSubTrigger>
-                                          <DropdownMenuSubContent className="rounded-[6px] min-w-[8rem]">
+                                          <DropdownMenuSubContent className="rounded-lg min-w-[8rem]">
                                             <DropdownMenuItem className="gap-2 cursor-pointer">
                                               <TestTube className="h-4 w-4" />
                                               Increase test coverage
@@ -2053,7 +2085,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           <DropdownMenuSubContent
                                             sideOffset={6}
                                             alignOffset={-136}
-                                            className="min-w-[240px] rounded-[6px]"
+                                            className="min-w-[240px] rounded-lg"
                                           >
                                             <DropdownMenuLabel className="text-xs text-muted-foreground">
                                               Loaded Skills
@@ -2095,9 +2127,9 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         <button
                                           type="button"
                                           className={cn(
-                                            'flex items-center gap-1 cursor-pointer rounded-[100px] border px-2 py-0.5 transition-colors text-xs font-normal leading-4 whitespace-nowrap shrink-0',
-                                            chatMode === 'build' && 'border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-muted/50 hover:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground',
-                                            chatMode === 'ask' && 'border-blue-500/50 bg-blue-500/20 text-blue-200 hover:bg-blue-500/30',
+                                            'flex items-center gap-1 cursor-pointer rounded-full border px-2 py-0.5 transition-colors text-xs font-normal leading-4 whitespace-nowrap shrink-0',
+                                            chatMode === 'build' && 'border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-muted/60 hover:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground',
+                                            chatMode === 'ask' && 'border-info/50 bg-info/20 text-info hover:bg-info/30',
                                             chatMode === 'plan' && 'border-success/50 bg-success/20 text-success-foreground hover:bg-success/30'
                                           )}
                                           aria-label="Chat mode"
@@ -2114,7 +2146,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         side="bottom"
                                         align="start"
                                         sideOffset={8}
-                                        className="min-w-[195px] max-w-[195px] rounded-[6px] py-[6px] px-1 z-[100]"
+                                        className="min-w-[195px] max-w-[195px] rounded-lg py-[6px] px-1 z-[100]"
                                         data-testid="mode-menu"
                                       >
                                         <DropdownMenuItem
@@ -2133,7 +2165,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                               </div>
                                               {chatMode === 'build' ? <Check className="h-3.5 w-3.5 shrink-0 text-foreground" /> : null}
                                             </div>
-                                            <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
+                                            <span className="pl-7 text-xs font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Write, edit, and debug with AI assistance in real time.
                                             </span>
                                           </div>
@@ -2142,7 +2174,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                           data-testid="ask-option"
                                           className={cn(
                                             'rounded p-2 text-left data-[highlighted]:bg-muted/60',
-                                            chatMode === 'ask' && 'bg-blue-500/10'
+                                            chatMode === 'ask' && 'bg-info/10'
                                           )}
                                           onSelect={() => setChatMode('ask')}
                                         >
@@ -2152,9 +2184,9 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                                 <MessageCircleQuestion className="h-4 w-4 shrink-0" />
                                                 <span className="text-sm text-foreground">Ask</span>
                                               </div>
-                                              {chatMode === 'ask' ? <Check className="h-3.5 w-3.5 shrink-0 text-blue-200" /> : null}
+                                              {chatMode === 'ask' ? <Check className="h-3.5 w-3.5 shrink-0 text-info" /> : null}
                                             </div>
-                                            <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
+                                            <span className="pl-7 text-xs font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Explore ideas, ask questions, and get guidance before making changes.
                                             </span>
                                           </div>
@@ -2175,7 +2207,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                               </div>
                                               {chatMode === 'plan' ? <Check className="h-3.5 w-3.5 shrink-0 text-success-foreground" /> : null}
                                             </div>
-                                            <span className="pl-7 text-[10px] font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
+                                            <span className="pl-7 text-xs font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Outline goals, structure tasks, and map your next steps.
                                             </span>
                                           </div>
@@ -2186,7 +2218,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       <DropdownMenuTrigger asChild>
                                         <button
                                           type="button"
-                                          className="flex min-w-0 items-center gap-1 cursor-pointer text-muted-foreground rounded-[100px] border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
+                                          className="flex min-w-0 items-center gap-1 cursor-pointer text-muted-foreground rounded-full border border-transparent bg-transparent px-2 py-0.5 transition-colors hover:border-border hover:bg-muted/60 hover:text-foreground active:border-border active:bg-muted/60 active:text-foreground data-[state=open]:border-border data-[state=open]:bg-muted/50 data-[state=open]:text-foreground w-fit shrink-0 max-w-[160px]"
                                           aria-label="Select model"
                                           title={selectedModel}
                                           data-testid="model-trigger"
@@ -2201,7 +2233,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         side="bottom"
                                         align="start"
                                         sideOffset={8}
-                                        className="min-w-[200px] rounded-[6px] py-[6px] px-1 z-[100]"
+                                        className="min-w-[200px] rounded-lg py-[6px] px-1 z-[100]"
                                         data-testid="model-menu"
                                       >
                                         {LLM_MODELS.map((model) => (
@@ -2319,12 +2351,12 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   aria-valuenow={Math.round(leftPanelWidth)}
                   tabIndex={0}
                   onMouseDown={handleCanvasResizeMouseDown}
-                  className="group absolute inset-y-0 z-20 flex w-3 -translate-x-1/2 cursor-col-resize items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="group absolute inset-y-0 z-20 flex w-3 -translate-x-1/2 cursor-col-resize items-center justify-center outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   style={{ left: `${leftPanelWidth}%` }}
                 >
                   <span
                     className={cn(
-                      'h-full w-px bg-white shadow-[0_0_0_1px_rgba(0,0,0,0.2)] transition-opacity duration-150',
+                      'h-full w-px bg-foreground shadow-[0_0_0_1px_rgba(0,0,0,0.2)] transition-opacity duration-150',
                       isCanvasResizeDragging
                         ? 'opacity-100'
                         : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
@@ -2403,7 +2435,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <ChevronDown className="h-3 w-3 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
                 {CANVAS_TIP_OPTIONS.map((option) => (
                   <DropdownMenuItem
                     key={option.id}
@@ -2451,7 +2483,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <ChevronDown className="h-3 w-3 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
                 {[
                   { id: 'connected', label: 'Connected' },
                   { id: 'disconnected', label: 'Disconnected' },
@@ -2483,7 +2515,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <ChevronDown className="h-3 w-3 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
                 {[
                   { id: 'conversation', label: 'Example content' },
                   { id: 'skeleton', label: 'Loading skeleton' },
@@ -2513,7 +2545,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px] rounded-[6px] py-[6px] px-1">
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
                 {AUTOMATION_CONTEXT_OPTIONS.map((option) => (
                   <DropdownMenuItem
                     key={option.title ?? 'none'}
@@ -2541,7 +2573,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[140px] rounded-[6px] py-[6px] px-1">
+              <DropdownMenuContent align="end" className="min-w-[140px] rounded-lg py-[6px] px-1">
                 {STATUS_BADGE_OPTIONS.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
@@ -2570,7 +2602,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[140px] rounded-[6px] py-[6px] px-1">
+              <DropdownMenuContent align="end" className="min-w-[140px] rounded-lg py-[6px] px-1">
                 {STATUS_BADGE_OPTIONS.map((option) => (
                   <DropdownMenuItem
                     key={option.value}
@@ -2606,12 +2638,12 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
           </div>
           <div className="border-t border-border pt-3 space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Canvas tabs</div>
-            <p className="text-[11px] leading-snug text-muted-foreground">Off = empty state, on = filled sample.</p>
+            <p className="text-xs leading-snug text-muted-foreground">Off = empty state, on = filled sample.</p>
             {CANVAS_TAB_ORDER.map((tabId) => (
               <div key={tabId} className="flex items-center justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">{CANVAS_TAB_ARIA[tabId]}</div>
-                  <div className="text-[11px] text-muted-foreground">{canvasTabFilled[tabId] ? 'Filled' : 'Empty'}</div>
+                  <div className="text-xs text-muted-foreground">{canvasTabFilled[tabId] ? 'Filled' : 'Empty'}</div>
                 </div>
                 <button
                   type="button"
@@ -2659,7 +2691,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                       </div>
                       <input
                         placeholder="Select Repo"
-                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm cursor-pointer"
+                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 pl-10 pr-10 text-sm cursor-pointer"
                         aria-autocomplete="list"
                         role="combobox"
                         readOnly
@@ -2762,7 +2794,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                       <input
                         placeholder="Select branch..."
                         disabled={!selectedRepository}
-                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm cursor-pointer"
+                        className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm cursor-pointer"
                         value={selectedRepository ? selectedBranch : ''}
                         readOnly
                       />
@@ -2797,7 +2829,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
             </div>
             <DialogFooter className="sm:flex-row sm:justify-start sm:space-x-2 flex flex-row items-center justify-start">
               <Button
-                className="h-10 px-4 py-2 bg-white text-black hover:bg-white/90"
+                className="h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/85"
                 onClick={() => {
                   setIsConnectModalOpen(false);
                   onRepositoryStatusChange('connected');
@@ -2893,7 +2925,7 @@ function CanvasNavTooltip({
       >
         <span
           role="tooltip"
-          className="flex items-center gap-2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+          className="flex items-center gap-2 whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs text-foreground shadow-md"
         >
           <span>{label}</span>
           {externalRepoUrl ? (
@@ -2936,7 +2968,7 @@ function TabButton({
       onClick={onClick}
       aria-label={ariaLabel}
       className={cn(
-        'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        'flex items-center rounded-md cursor-pointer pl-1.5 py-1 text-sm font-medium transition-[color,background-color,padding-right] duration-200 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
         active ? 'gap-2 pr-2 bg-secondary text-foreground hover:bg-secondary/90' : 'gap-0 pr-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/60'
       )}
     >
@@ -2964,13 +2996,13 @@ function CodeCanvasPlaceholder() {
         <div
           className={cn(
             CANVAS_PANEL_HEADER_CLASS,
-            'sticky top-0 z-[1] text-[11px] font-medium uppercase tracking-wide text-muted-foreground'
+            'sticky top-0 z-[1] text-xs font-medium uppercase tracking-wide text-muted-foreground'
           )}
         >
           Explorer
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-1 py-2 text-xs">
-          <div className="flex items-center gap-1 rounded px-2 py-1 text-foreground hover:bg-muted/50">
+          <div className="flex items-center gap-1 rounded px-2 py-1 text-foreground hover:bg-muted/60">
             <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <Folder className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
             <span className="truncate">src</span>
@@ -3367,7 +3399,7 @@ function ChangesPlanDiffMock({ viewMode }: { viewMode: ChangesDiffViewMode }) {
         )}
         style={CHANGES_EDITOR_HEIGHT_STYLE}
       >
-        <div className="p-4 font-mono text-[12px] leading-[18px]">
+        <div className="p-4 font-mono text-xs leading-[18px]">
           {CHANGES_PLAN_MD_SAMPLE.split('\n').map((line, i) => (
             <div key={i} className="min-h-[18px] whitespace-pre-wrap break-all">
               {changesPlanHighlightLine(line, `n-${i}`)}
@@ -3411,7 +3443,7 @@ function ChangesPlanDiffMock({ viewMode }: { viewMode: ChangesDiffViewMode }) {
                   <div
                     key={rowIdx}
                     className={cn(
-                      'flex min-h-[18px] w-full min-w-0 flex-row font-mono text-[12px] leading-[18px]',
+                      'flex min-h-[18px] w-full min-w-0 flex-row font-mono text-xs leading-[18px]',
                       isDeleteRow
                         ? 'bg-[#542124]/55'
                         : 'bg-[rgba(40,80,40,0.35)]'
@@ -3420,13 +3452,13 @@ function ChangesPlanDiffMock({ viewMode }: { viewMode: ChangesDiffViewMode }) {
                     <div
                       className={cn(
                         'flex w-[46px] shrink-0 select-none items-center justify-end gap-1 border-r border-neutral-700/90 pr-1.5 tabular-nums',
-                        isDeleteRow ? 'text-red-400' : 'text-emerald-500'
+                        isDeleteRow ? 'text-destructive' : 'text-success'
                       )}
                     >
                       <span className="w-2.5 text-center font-normal">
                         {isDeleteRow ? '−' : '+'}
                       </span>
-                      <span className="text-[11px] text-[#858585]">{lineNo}</span>
+                      <span className="text-xs text-[#858585]">{lineNo}</span>
                     </div>
                     <div className="min-w-0 flex-1 whitespace-pre-wrap break-all px-1.5 py-0">
                       {line ? changesPlanHighlightLine(line, `d-${rowIdx}`) : '\u00a0'}
@@ -3471,7 +3503,7 @@ function ChangesCodeDiffMock({ lines }: { lines: ChangeFileDiffLine[] }) {
           <div
             key={rowIdx}
             className={cn(
-              'flex min-h-[18px] w-full min-w-0 flex-row font-mono text-[12px] leading-[18px]',
+              'flex min-h-[18px] w-full min-w-0 flex-row font-mono text-xs leading-[18px]',
               line.kind === 'add'
                 ? 'bg-[rgba(40,80,40,0.35)]'
                 : line.kind === 'del'
@@ -3479,19 +3511,19 @@ function ChangesCodeDiffMock({ lines }: { lines: ChangeFileDiffLine[] }) {
                   : 'bg-transparent'
             )}
           >
-            <div className="flex w-[38px] shrink-0 items-center justify-end border-r border-neutral-700/90 pr-1.5 text-[11px] text-[#858585] tabular-nums">
+            <div className="flex w-[38px] shrink-0 items-center justify-end border-r border-neutral-700/90 pr-1.5 text-xs text-[#858585] tabular-nums">
               {line.oldLine ?? ''}
             </div>
-            <div className="flex w-[38px] shrink-0 items-center justify-end border-r border-neutral-700/90 pr-1.5 text-[11px] text-[#858585] tabular-nums">
+            <div className="flex w-[38px] shrink-0 items-center justify-end border-r border-neutral-700/90 pr-1.5 text-xs text-[#858585] tabular-nums">
               {line.newLine ?? ''}
             </div>
             <div
               className={cn(
                 'flex w-6 shrink-0 items-center justify-center border-r border-neutral-700/90',
                 line.kind === 'add'
-                  ? 'text-emerald-500'
+                  ? 'text-success'
                   : line.kind === 'del'
-                    ? 'text-red-400'
+                    ? 'text-destructive'
                     : 'text-[#858585]'
               )}
             >
@@ -3540,7 +3572,7 @@ function ChangesCanvasFilled({
         'rounded p-1 transition-colors',
         viewMode === mode
           ? 'bg-muted text-foreground'
-          : 'cursor-pointer text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+          : 'cursor-pointer text-muted-foreground hover:bg-muted/60 hover:text-foreground'
       )}
       aria-pressed={viewMode === mode}
       aria-label={mode === 'old' ? 'Previous version' : mode === 'diff' ? 'Diff view' : 'New file'}
@@ -3576,7 +3608,7 @@ function ChangesCanvasFilled({
                   tabIndex={0}
                   data-testid="changes-file-row-plan"
                   className={cn(
-                    'flex min-h-9 flex-wrap items-center justify-between gap-2 border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                    'flex min-h-9 flex-wrap items-center justify-between gap-2 border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                     planExpanded ? 'rounded-t-md border-b-0' : 'rounded-md'
                   )}
                   aria-expanded={planExpanded}
@@ -3636,7 +3668,7 @@ function ChangesCanvasFilled({
                       tabIndex={0}
                       data-testid={`changes-file-row-${file.id}`}
                       className={cn(
-                        'flex min-h-9 flex-wrap items-center justify-between gap-2 border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+                        'flex min-h-9 flex-wrap items-center justify-between gap-2 border border-border px-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                         isExpanded ? 'rounded-t-md border-b-0' : 'rounded-md'
                       )}
                       aria-expanded={isExpanded}
@@ -3750,7 +3782,7 @@ function ComposerAttachmentChip({
       <div className="min-w-0 pr-4">
         <span className="block min-w-0 truncate text-xs font-medium leading-4 text-foreground">{attachment.name}</span>
       </div>
-      <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         <File className="h-3 w-3 shrink-0" aria-hidden />
         <span>{attachment.extensionLabel}</span>
       </div>
@@ -3918,7 +3950,7 @@ function TerminalHighlightedLine({ line }: { line: string }) {
     return <span className="text-muted-foreground">{line}</span>;
   }
   if (lead.startsWith('<')) {
-    return <span className="text-sky-400">{line}</span>;
+    return <span className="text-info">{line}</span>;
   }
   if (line.trim().startsWith('/*') || line.trim().startsWith('*/')) {
     return <span className="text-muted-foreground">{line}</span>;
@@ -3931,7 +3963,7 @@ function TerminalHighlightedLine({ line }: { line: string }) {
       (lead.startsWith('*') && line.includes('::')) ||
       (lead.startsWith(',') && line.includes('::')));
   if (looksLikeCss) {
-    return <span className="text-amber-200/90">{line}</span>;
+    return <span className="text-warning">{line}</span>;
   }
   if (line.includes('pts/') && line.includes('python')) {
     return highlightPsLine(line);
@@ -4039,7 +4071,7 @@ function TasksCanvasFilled() {
               </div>
               <span
                 className={cn(
-                  'text-[12px] font-normal leading-4',
+                  'text-xs font-normal leading-4',
                   isCompleted ? 'text-muted-foreground' : 'text-foreground'
                 )}
               >
@@ -4189,7 +4221,7 @@ function CanvasTabEmptyContent({
               aria-label="Build plan"
               onClick={onCreatePlan}
             >
-              <span className="text-[11px] font-medium leading-5">Build ⌘↩</span>
+              <span className="text-xs font-medium leading-5">Build ⌘↩</span>
             </button>
           </div>
           <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-md">

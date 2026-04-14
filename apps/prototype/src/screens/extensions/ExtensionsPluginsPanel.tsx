@@ -210,7 +210,7 @@ ${skill.initialPrompt}
                   return next;
                 })
               }
-              className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+              className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs text-muted-foreground hover:bg-muted/60 hover:text-foreground"
             >
               {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
               <Folder className="h-3.5 w-3.5" />
@@ -234,7 +234,7 @@ ${skill.initialPrompt}
             className={`flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs transition-colors ${
               selectedFilePath === path
                 ? 'bg-muted/80 text-foreground'
-                : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
             }`}
           >
             <FileText className="h-3.5 w-3.5" />
@@ -368,7 +368,7 @@ ${skill.initialPrompt}
                       <button
                         type="button"
                         onClick={() => setPluginDetailView('files')}
-                        className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                       >
                         <ChevronLeft className="h-3.5 w-3.5" />
                         <span>Back</span>
@@ -409,7 +409,7 @@ ${skill.initialPrompt}
                     return (
                       <div
                         key={skill.id}
-                        className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/50"
+                        className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
                       >
                         <PluginToggle
                           size="sm"
@@ -437,7 +437,7 @@ ${skill.initialPrompt}
                               `/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
                             );
                           }}
-                          className="w-full rounded-xl p-5 pr-14 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                          className="w-full rounded-xl p-5 pr-14 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                         >
                           <div className="flex items-start gap-3">
                             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">

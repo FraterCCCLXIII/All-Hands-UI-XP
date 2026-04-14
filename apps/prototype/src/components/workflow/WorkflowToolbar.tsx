@@ -40,7 +40,7 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
   );
 
   const triggerClass =
-    'flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
+    'flex h-10 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background hover:bg-accent/50 focus:outline-none focus:ring-1 focus:ring-ring focus:ring-offset-2';
 
   return (
     <div className="pointer-events-auto flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/95 p-2 backdrop-blur">
@@ -94,7 +94,7 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-input bg-background hover:bg-accent/50 focus:outline-none focus:ring-1 focus:ring-ring focus:ring-offset-2"
               aria-label="Workflow options"
             >
               <MoreVertical className="h-4 w-4" />
@@ -135,7 +135,7 @@ export const WorkflowToolbar: React.FC<WorkflowToolbarProps> = ({
       <button
         type="button"
         onClick={onNewWorkflow}
-        className="inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium bg-white text-black hover:bg-white/90"
+        className="inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-normal bg-primary text-primary-foreground hover:bg-primary/85"
       >
         New workflow
       </button>

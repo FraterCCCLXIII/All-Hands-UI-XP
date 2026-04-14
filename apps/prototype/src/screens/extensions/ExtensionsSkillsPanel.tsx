@@ -78,11 +78,11 @@ function highlightJson(content: string) {
       let className = 'text-success-foreground';
       if (match[1]) {
         const rest = line.slice(index + token.length);
-        className = /^\s*:/.test(rest) ? 'text-sky-300' : 'text-success-foreground';
+        className = /^\s*:/.test(rest) ? 'text-info' : 'text-success-foreground';
       } else if (match[2]) {
-        className = 'text-purple-300';
+        className = 'text-agent';
       } else if (match[3]) {
-        className = 'text-amber-300';
+        className = 'text-warning';
       }
       tokens.push(
         <span key={`${lineIndex}-${index}`} className={className}>
@@ -357,7 +357,7 @@ function StartConversationDialog({
                 <input
                   placeholder={selectedRepoDefaultBranch ?? 'Select branch...'}
                   disabled={!selectedRepo}
-                  className="h-10 w-full rounded-md border border-border bg-muted/40 px-4 pl-10 pr-4 text-sm text-foreground shadow-none transition-colors hover:bg-muted/60 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+                  className="h-10 w-full rounded-md border border-border bg-muted/40 px-4 pl-10 pr-4 text-sm text-foreground shadow-none transition-colors hover:bg-muted/60 placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-60"
                   value={selectedBranch}
                   onChange={(event) => onBranchChange(event.target.value)}
                 />
@@ -368,7 +368,7 @@ function StartConversationDialog({
             </div>
             <div className="relative flex items-center justify-center py-1">
               <div className="absolute inset-x-0 h-px bg-border" />
-              <span className="relative bg-background px-3 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">or</span>
+              <span className="relative bg-background px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">or</span>
             </div>
             <Button variant="outline" size="sm" onClick={onStartWithoutRepo} className="w-full">
               <Plus className="mr-1 h-4 w-4" />
@@ -678,7 +678,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                             'shrink-0 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
                             selectedCategory === null
                               ? 'bg-primary text-primary-foreground'
-                              : 'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                              : 'bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                           )}
                         >
                           All
@@ -694,7 +694,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                               'inline-flex shrink-0 items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
                               selectedCategory === cat.slug
                                 ? 'bg-primary text-primary-foreground'
-                                : 'bg-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                                : 'bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                             )}
                           >
                             <span>{cat.name}</span>
@@ -710,7 +710,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
+                                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
                                 aria-label="More categories"
                               >
                                 <MoreHorizontal className="h-4 w-4" />
@@ -742,7 +742,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   return (
                     <div
                       key={skill.id}
-                      className="relative flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/50 hover:border-muted-foreground/20"
+                      className="relative flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/60 hover:border-muted-foreground/20"
                     >
                       <PluginToggle
                         size="sm"
@@ -777,7 +777,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                             `/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`,
                           );
                         }}
-                        className="flex flex-1 flex-col rounded-xl p-6 pr-14 pt-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                        className="flex flex-1 flex-col rounded-xl p-6 pr-14 pt-6 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                       >
                         <div className="flex items-start gap-3">
                           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">

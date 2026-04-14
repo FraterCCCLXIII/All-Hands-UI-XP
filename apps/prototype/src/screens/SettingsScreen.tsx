@@ -869,7 +869,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <button
               type="button"
               data-tour-id="settings.org-selector"
-              className="w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/40 transition-colors"
+              className="w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
               aria-label="Select organization"
             >
               <span className="flex items-center gap-2 w-full">
@@ -880,7 +880,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 )}
                 <span>{selectedOrg?.name ?? 'Personal Account'}</span>
                 {selectedOrg?.role && (
-                  <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                  <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                     {selectedOrg.role}
                   </span>
                 )}
@@ -899,7 +899,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   )}
                   <span>{org.name}</span>
                   {org.role && (
-                    <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                       {org.role}
                     </span>
                   )}
@@ -918,7 +918,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
                   activeTab === item.tabId
                     ? 'bg-muted/60'
-                    : 'hover:bg-muted/40'
+                    : 'hover:bg-muted/60'
                 }`}
               >
                 <Icon
@@ -948,7 +948,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
               activeTab === 'user'
                 ? 'bg-muted/60'
-                : 'hover:bg-muted/40'
+                : 'hover:bg-muted/60'
             }`}
           >
             <User
@@ -969,7 +969,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
               activeTab === 'app'
                 ? 'bg-muted/60'
-                : 'hover:bg-muted/40'
+                : 'hover:bg-muted/60'
             }`}
           >
             <SettingsIcon
@@ -988,7 +988,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <button
             type="button"
             onClick={() => setCreateOrgModalOpen(true)}
-            className="group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/40"
+            className="group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/60"
           >
             <Plus className="w-5 h-5 text-muted-foreground group-hover:text-white" />
             <span className="text-sm font-normal text-muted-foreground whitespace-nowrap group-hover:text-white">
@@ -1034,7 +1034,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <label className="text-sm text-foreground">Email</label>
                     <div className="flex items-center gap-3">
                       <input
-                        className="h-10 text-base text-foreground px-3 bg-muted/40 hover:bg-muted/60 transition-colors rounded-md border border-border flex-grow max-w-[680px]"
+                        className="h-10 text-base text-foreground px-3 bg-muted/40 hover:bg-muted/60 transition-colors rounded-md border border-border flex-grow max-w-[680px] ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                         placeholder="Loading..."
                         type="email"
                         value={userEmail}
@@ -1045,7 +1045,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <button
                         type="button"
                         disabled
-                        className="h-10 flex items-center justify-center px-4 rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="h-10 flex items-center justify-center px-4 rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                       >
                         Save
                       </button>
@@ -1073,7 +1073,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     type="button"
                     disabled={!canInviteMembers}
                     onClick={() => setInviteModalOpen(true)}
-                    className="inline-flex h-10 items-center justify-center gap-2 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="inline-flex h-10 items-center justify-center gap-2 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/85 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Plus className="h-4 w-4 shrink-0" aria-hidden />
                     Invite Organization Member
@@ -1086,7 +1086,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-medium text-foreground">{member.email}</span>
                         {member.status === 'invited' && (
-                          <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          <span className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                             Invited
                           </span>
                         )}
@@ -1159,7 +1159,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                     isConnected
                                       ? 'bg-success'
                                       : isConnecting
-                                      ? 'animate-pulse bg-amber-400'
+                                      ? 'animate-pulse bg-warning'
                                       : 'bg-destructive'
                                   }`}
                                   aria-hidden
@@ -1212,7 +1212,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               type="button"
                               onClick={() => void handleGitSourceConnect(source.id)}
                               disabled={isConnecting}
-                              className="flex h-10 items-center justify-center rounded-md bg-white px-4 text-sm text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-60"
+                              className="flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isConnecting ? 'Connecting...' : source.connectLabel}
                             </button>
@@ -1243,7 +1243,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
                   >
                     Install OpenHands Slack App
                   </button>
@@ -1282,7 +1282,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <span className="text-sm text-foreground">Language</span>
                     </div>
                     <input
-                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2"
+                      className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                       type="text"
                       value="English"
                       readOnly
@@ -1362,7 +1362,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <span className="text-sm text-foreground">Git Username</span>
                         <input
                           placeholder="Username for git commits"
-                          className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                          className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                           type="text"
                           value={gitUsername}
                           onChange={(e) => setGitUsername(e.target.value)}
@@ -1372,7 +1372,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <span className="text-sm text-foreground">Git Email</span>
                         <input
                           placeholder="Email for git commits"
-                          className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic"
+                          className="bg-muted/40 hover:bg-muted/60 transition-colors border border-border h-10 w-full rounded-md p-2 placeholder:italic ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                           type="email"
                           value={gitEmail}
                           onChange={(e) => setGitEmail(e.target.value)}
@@ -1386,7 +1386,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 <button
                   disabled
                   type="submit"
-                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                 >
                   Save Changes
                 </button>
@@ -1417,7 +1417,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             <label className="text-sm text-foreground">LLM Provider</label>
                             <div className="relative w-full">
                               <select
-                                className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                                className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
                                 data-testid="llm-provider-input"
                                 aria-label="LLM Provider"
                                 value={llmProvider}
@@ -1442,7 +1442,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             <label className="text-sm text-foreground">LLM Model</label>
                             <div className="relative w-full">
                               <select
-                                className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                                className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
                                 data-testid="llm-model-input"
                                 aria-label="LLM Model"
                                 defaultValue=""
@@ -1475,7 +1475,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   e.preventDefault();
                                 }
                               }}
-                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
                               type="text"
                               data-testid="llm-api-key-input"
                             />
@@ -1493,7 +1493,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
                             rel="noreferrer noopener"
                             target="_blank"
-                            className="underline underline-offset-2 text-white hover:text-gray-300"
+                            className="underline underline-offset-2 text-white hover:text-muted-foreground"
                           >
                             Click here for instructions
                           </a>
@@ -1520,7 +1520,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <button
                       disabled
                       type="submit"
-                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                       Save Changes
                     </button>
@@ -1555,7 +1555,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </div>
                     <button
                       type="button"
-                      className="flex h-10 shrink-0 items-center justify-center rounded-md bg-white px-4 text-sm text-black transition-colors hover:bg-gray-300 cursor-pointer"
+                      className="flex h-10 shrink-0 items-center justify-center rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors hover:bg-primary/85 cursor-pointer"
                     >
                       Manage Credits
                     </button>
@@ -1565,7 +1565,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <span className="text-sm text-foreground">Add Funds</span>
                   <div className="flex w-full min-w-0 flex-col gap-2">
                     <div className="flex w-full min-w-0 items-center gap-2">
-                      <div className="flex h-10 min-w-0 w-full max-w-[11rem] flex-1 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+                      <div className="flex h-10 min-w-0 w-full max-w-[11rem] flex-1 items-center gap-1.5 rounded-md border border-border bg-muted/40 px-3 transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
                         <span className="shrink-0 select-none text-sm font-medium text-muted-foreground" aria-hidden>
                           $
                         </span>
@@ -1584,7 +1584,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <button
                         disabled={!canAddCredit}
                         type="submit"
-                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-white px-4 text-sm text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Plus className="h-4 w-4 shrink-0" aria-hidden />
                         Add Credit
@@ -1653,7 +1653,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     placeholder="e.g. OpenAI_API_Key"
                     value={newSecretName}
                     onChange={(ev) => setNewSecretName(ev.target.value)}
-                    className="h-10 max-w-[680px] flex-grow rounded-md border border-border bg-muted/40 px-3 text-base text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="h-10 max-w-[680px] flex-grow rounded-md border border-border bg-muted/40 px-3 text-base text-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -1666,7 +1666,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     rows={6}
                     value={newSecretValue}
                     onChange={(ev) => setNewSecretValue(ev.target.value)}
-                    className="min-h-[140px] w-full max-w-[680px] resize-y rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="min-h-[140px] w-full max-w-[680px] resize-y rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                   />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -1680,7 +1680,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     autoComplete="off"
                     value={newSecretDescription}
                     onChange={(ev) => setNewSecretDescription(ev.target.value)}
-                    className="h-10 max-w-[680px] flex-grow rounded-md border border-border bg-muted/40 px-3 text-base text-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                    className="h-10 max-w-[680px] flex-grow rounded-md border border-border bg-muted/40 px-3 text-base text-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                   />
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -1709,7 +1709,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-8">
                 <button
                   type="button"
-                  className="inline-flex h-10 w-fit shrink-0 items-center justify-center gap-2 px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                  className="inline-flex h-10 w-fit shrink-0 items-center justify-center gap-2 px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
                   onClick={() => {
                     setEditingSecretId(null);
                     setSecretsView('add');
@@ -1763,7 +1763,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   <button
                                     type="button"
                                     aria-label={`Edit ${row.name}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() => {
                                       setEditingSecretId(row.id);
                                       setNewSecretName(row.name);
@@ -1778,7 +1778,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   <button
                                     type="button"
                                     aria-label={`Delete ${row.name}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() => setSecretDeleteTarget({ id: row.id, name: row.name })}
                                   >
                                     <Trash2 className="h-4 w-4" aria-hidden />
@@ -1812,7 +1812,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <div className="flex items-center justify-between">
                     <button
                       type="button"
-                      className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                      className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
                     >
                       <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
                       Refresh API Key
@@ -1821,7 +1821,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   <div>
                     <div className="flex w-full items-center gap-2">
                       <div
-                        className="flex h-10 min-h-10 w-full min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:bg-muted/60"
+                        className="flex h-10 min-h-10 w-full min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2 focus-within:bg-muted/60"
                         role="group"
                         aria-label="OpenHands LLM API key"
                       >
@@ -1831,7 +1831,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <div className="flex shrink-0 items-center gap-0.5">
                           <button
                             type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-label="Show API key"
                             title="Show API key"
                           >
@@ -1839,7 +1839,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           </button>
                           <button
                             type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                             aria-label="Copy API key"
                             title="Copy API key"
                           >
@@ -1864,7 +1864,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           href="https://docs.all-hands.dev/usage/cloud/cloud-api"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-white hover:underline hover:text-gray-300"
+                          className="text-white hover:underline hover:text-muted-foreground"
                         >
                           API documentation
                         </a>.
@@ -1873,7 +1873,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <div className="flex items-center justify-between">
                       <button
                         type="button"
-                        className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors"
+                        className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
                       >
                         <Plus className="h-4 w-4 shrink-0" aria-hidden />
                         Create API Key
@@ -1933,7 +1933,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   <button
                                     type="button"
                                     aria-label={`Delete ${row.name}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() =>
                                       setOpenHandsApiKeys((prev) => prev.filter((k) => k.id !== row.id))
                                     }
@@ -2176,7 +2176,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       type="button"
                       onClick={handleAddPluginRepo}
                       disabled={pluginRepoInput.trim().length === 0}
-                      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Plus className="h-4 w-4 shrink-0" aria-hidden />
                       Add Repository
@@ -2188,7 +2188,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         {pluginRepositories.map((repo) => (
                           <li
                             key={repo}
-                            className="flex items-center justify-between gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40"
+                            className="flex items-center justify-between gap-3 px-3 py-2.5 transition-colors hover:bg-muted/60"
                           >
                             <span className="truncate text-sm text-foreground">{repo}</span>
                             <button
@@ -2225,7 +2225,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     />
                     <div className="flex min-w-0 flex-wrap items-center gap-2 sm:shrink-0">
                       <label className="flex min-w-0 flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-                        <span className="text-[11px] uppercase tracking-wide">Type</span>
+                        <span className="text-xs uppercase tracking-wide">Type</span>
                         <div className="relative min-w-[8.5rem]">
                           <select
                             value={orgPluginsKindFilter}
@@ -2233,7 +2233,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               setOrgPluginsKindFilter(e.target.value as 'all' | OrgCatalogKind)
                             }
                             aria-label="Filter by plugin or skill"
-                            className="h-10 w-full min-w-[8.5rem] appearance-none rounded-md border border-border bg-muted/40 pl-3 pr-10 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="h-10 w-full min-w-[8.5rem] appearance-none rounded-md border border-border bg-muted/40 pl-3 pr-10 text-sm text-foreground ring-offset-background hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                           >
                             <option value="all">All types</option>
                             <option value="plugin">Plugins only</option>
@@ -2246,13 +2246,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         </div>
                       </label>
                       <label className="flex min-w-0 flex-1 flex-col gap-1.5 text-xs font-medium text-muted-foreground sm:min-w-[12rem] sm:max-w-[22rem]">
-                        <span className="text-[11px] uppercase tracking-wide">Repository</span>
+                        <span className="text-xs uppercase tracking-wide">Repository</span>
                         <div className="relative min-w-0 w-full">
                           <select
                             value={orgPluginsRepoFilter}
                             onChange={(e) => setOrgPluginsRepoFilter(e.target.value)}
                             aria-label="Filter by plugin repository"
-                            className="h-10 w-full min-w-0 appearance-none rounded-md border border-border bg-muted/40 pl-3 pr-10 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="h-10 w-full min-w-0 appearance-none rounded-md border border-border bg-muted/40 pl-3 pr-10 text-sm text-foreground ring-offset-background hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                           >
                             <option value="all">All repositories</option>
                             {orgPluginCatalogRepoOptions.map((repo) => (
@@ -2326,7 +2326,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                       ? `/extensions/skills/skill/${encodeURIComponent(row.marketplaceSkillId)}`
                                       : `/extensions/plugins/plugin/${encodeURIComponent(row.marketplaceSkillId)}`
                                   }
-                                  className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
+                                  className="font-medium text-foreground underline-offset-4 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
                                 >
                                   {row.name}
                                 </a>
@@ -2528,7 +2528,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       type="text"
                       value="Starlight Labs"
                       readOnly
-                      className="w-full h-10 rounded-md border border-border bg-muted/40 px-3 pr-20 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-sidebar"
+                      className="w-full h-10 rounded-md border border-border bg-muted/40 px-3 pr-20 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                       aria-label="Organization name"
                     />
                     <button
@@ -2761,7 +2761,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <label className="text-sm text-foreground" htmlFor="invite-emails-input">
           Email addresses
         </label>
-        <div className="min-h-[44px] rounded-md border border-border bg-muted/40 px-2 py-2 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
+        <div className="min-h-[44px] rounded-md border border-border bg-muted/40 px-2 py-2 focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
           <div className="flex flex-wrap gap-2">
             {inviteEmails.map((email) => (
               <span
@@ -2803,7 +2803,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           type="button"
           onClick={handleSendInvites}
           disabled={inviteEmails.length === 0 && inviteInput.trim().length === 0}
-          className="h-9 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/85 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Send Invites
         </button>
@@ -2876,7 +2876,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           href="https://openhands.dev/contact"
           target="_blank"
           rel="noreferrer noopener"
-          className="h-9 inline-flex items-center justify-center px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors"
+          className="h-9 inline-flex items-center justify-center px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/85 transition-colors"
         >
           Contact Sales
         </a>

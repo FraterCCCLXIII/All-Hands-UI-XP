@@ -68,7 +68,7 @@ export function ExtensionsShellSidebar({
                     'group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
                     isActive
                       ? 'bg-muted/60 text-foreground'
-                      : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground',
+                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
@@ -92,14 +92,14 @@ export function ExtensionsShellSidebar({
               className="flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm bg-muted/60 text-foreground"
               aria-current="page"
             >
-              <Layers3 className="h-5 w-5 shrink-0 text-white" aria-hidden />
+              <Layers3 className="h-5 w-5 shrink-0 text-foreground" aria-hidden />
               <span className="font-normal">All active</span>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
-              className="group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground"
+              className="group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
             >
               <Layers3 className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
               <span className="font-normal group-hover:text-white">All active</span>

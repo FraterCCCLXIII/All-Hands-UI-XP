@@ -233,7 +233,7 @@ export function AgentPanel({
                       href={msg.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline text-sm break-all"
+                      className="text-info hover:underline text-sm break-all"
                     >
                       {msg.link}
                     </a>
@@ -256,13 +256,13 @@ export function AgentPanel({
                     <div className="flex flex-col overflow-clip bg-card border border-border rounded-xl w-full mt-2">
                       <div className="flex gap-1.5 items-center border-b border-border h-[41px] px-3 shrink-0">
                         <ListTodo className="shrink-0 w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                        <span className="text-[11px] text-foreground tracking-[0.11px] font-medium leading-[16px]">Tasks</span>
+                        <span className="text-xs text-foreground tracking-[0.11px] font-medium leading-[16px]">Tasks</span>
                       </div>
                       <div>
                         {msg.tasks.map((task, taskIdx) => (
                           <div key={taskIdx} className="flex gap-3.5 items-center px-4 py-2 w-full">
                             <Circle className="shrink-0 w-4 h-4 text-foreground" aria-hidden="true" />
-                            <span className="font-normal text-[12px] text-foreground leading-5">{task}</span>
+                            <span className="font-normal text-xs text-foreground leading-5">{task}</span>
                           </div>
                         ))}
                       </div>

@@ -27,7 +27,7 @@ const highlightCards = [
     text: 'News, releases, and media highlights.',
     url: '/press',
     icon: (
-      <div className="flex h-8 w-8 items-center justify-center rounded-[2.66667px] bg-black text-white">
+      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
         <Megaphone className="h-5 w-5" />
       </div>
     ),
@@ -37,7 +37,7 @@ const highlightCards = [
     text: 'Connect, share, and grow together.',
     url: 'http://openhands.dev/joinslack',
     icon: (
-      <div className="flex h-8 w-8 items-center justify-center rounded-[2.66667px] bg-black text-white">
+      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
         <MessageCircle className="h-5 w-5" />
       </div>
     ),
@@ -111,7 +111,7 @@ function LeftNavTooltip({ label, children }: { label: string; children: React.Re
       >
         <span
           role="tooltip"
-          className="whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+          className="whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs text-foreground shadow-md"
         >
           {label}
         </span>
@@ -303,7 +303,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             side="right"
             align="end"
             sideOffset={8}
-            className="bg-sidebar text-sidebar-foreground border border-border rounded-[12px] w-56 p-3"
+            className="bg-sidebar text-sidebar-foreground border border-border rounded-xl w-56 p-3"
           >
             <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
               UX Flows
@@ -351,7 +351,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Inspector mode
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-1">
+                  <div className="text-xs text-muted-foreground mt-1">
                     Click any element to view code.
                   </div>
                 </div>
@@ -389,7 +389,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               <User className="h-4 w-4" aria-hidden="true" />
               {isOrgAccount && (
                 <span
-                  className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-white shadow-sm"
+                  className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-foreground shadow-sm"
                   aria-hidden
                 >
                   <span className="text-[8px] font-semibold leading-none text-black">{orgInitial}</span>
@@ -401,7 +401,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             side="right"
             align="start"
             sideOffset={8}
-            className="w-max max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground [max-height:min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-[12px] border border-border -translate-y-12"
+            className="w-max max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground [max-height:min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border -translate-y-12"
           >
             <div className="inline-grid w-max max-w-full grid-cols-[max-content_max-content] items-stretch gap-4">
               {/* Left column: Account menu */}
@@ -410,30 +410,30 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 
                 {/* Workspace — same dropdown pattern as Settings org selector */}
                 <div className="mb-3 space-y-1">
-                  <div className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  <div className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Workspace
                   </div>
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="flex h-12 w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/40"
+                        className="group flex h-12 w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/60"
                         aria-label="Select workspace"
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2">
                           {selectedWorkspace.type === 'org' ? (
-                            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                           ) : (
-                            <User className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <User className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                           )}
                           <span className="truncate">{selectedWorkspace.name}</span>
                           {selectedWorkspace.role ? (
-                            <span className="ml-auto shrink-0 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                            <span className="ml-auto shrink-0 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                               {selectedWorkspace.role}
                             </span>
                           ) : null}
                         </span>
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -443,7 +443,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       {accountWorkspaceOptions.map((org) => (
                         <DropdownMenuItem
                           key={org.id}
-                          className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground"
+                          className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground data-[highlighted]:[&_svg]:!text-white group-hover:[&_svg]:!text-white"
                           onClick={() => onActiveWorkspaceChange?.(org.id)}
                         >
                           <span className="flex w-full items-center gap-2">
@@ -454,7 +454,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                             )}
                             <span>{org.name}</span>
                             {org.role ? (
-                              <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                 {org.role}
                               </span>
                             ) : null}
@@ -466,8 +466,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 </div>
 
                 {/* Invite Team */}
-                <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
-                  <UserCircle2 className="w-4 h-4" />
+                <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
+                  <UserCircle2 className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                   Invite Team
                 </button>
 
@@ -477,34 +477,34 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 <div className="space-y-0.5">
                   <button 
                     onClick={() => onNavItemClick('settings')}
-                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <CreditCard className="w-4 h-4" />
+                    <CreditCard className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Manage Account
                   </button>
-                  <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <Users className="w-4 h-4" />
+                  <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <Users className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Manage Team
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
-                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Cloud className="w-4 h-4" />
+                    <Cloud className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Integrations
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
-                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Key className="w-4 h-4" />
+                    <Key className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     API Keys
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
-                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Shield className="w-4 h-4" />
+                    <Shield className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Secrets
                   </button>
                 </div>
@@ -515,24 +515,24 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 <div className="space-y-0.5">
                   <button 
                     onClick={() => onNavItemClick('settings')}
-                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <UserCircle2 className="w-4 h-4" />
+                    <UserCircle2 className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     User Settings
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
-                    className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Application Settings
                   </button>
-                  <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <Plus className="w-4 h-4" />
+                  <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <Plus className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Create New Organization
                   </button>
-                  <button className="inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <LogOut className="w-4 h-4" />
+                  <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <LogOut className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Log Out
                   </button>
                 </div>

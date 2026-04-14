@@ -102,7 +102,7 @@ export function NewTaskDialog({ activeRepo, branches, modelOptions, repositories
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
               rows={4}
-              className="w-full rounded-md border border-border bg-muted/40 p-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-muted/40 p-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:bg-muted/60 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               placeholder="Describe what this task should accomplish..."
               required
             />

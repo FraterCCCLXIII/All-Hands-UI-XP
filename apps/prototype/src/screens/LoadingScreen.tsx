@@ -54,7 +54,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({
       </motion.div>
 
       {/* Loading Bar Container */}
-      <div className="w-48 h-1 bg-stone-800 rounded-full overflow-hidden">
+      <div className="w-48 h-1 bg-card rounded-full overflow-hidden">
         <motion.div
           className={`h-full ${getThemeClasses('button-bg')}`}
           initial={{ width: '0%' }}

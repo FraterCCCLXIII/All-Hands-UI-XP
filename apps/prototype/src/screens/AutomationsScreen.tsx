@@ -747,7 +747,7 @@ function MultiSelectBubbleInput({
               variant="ghost"
               size="sm"
               disabled={menuTriggerMode ? false : availableOptions.length === 0}
-              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-white hover:!text-black"
+              className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-primary hover:!text-primary-foreground"
               aria-label={addActionLabel}
             >
               <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-black" />
@@ -992,7 +992,7 @@ function RepositoryTargetsBubbleField({
           type="button"
           variant="ghost"
           size="sm"
-          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-white hover:!text-black"
+          className="group h-7 shrink-0 gap-1.5 px-2 text-muted-foreground hover:!bg-primary hover:!text-primary-foreground"
           aria-label="Add repository"
           onClick={onRequestAdd}
         >
@@ -1181,7 +1181,7 @@ function ActivityLogSection({
                         className={cn(
                           'mt-0.5 block w-full max-w-full truncate text-left text-sm font-medium sm:mt-0',
                           canOpenConversation
-                            ? 'rounded-sm text-primary underline-offset-2 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card'
+                            ? 'rounded-sm text-primary underline-offset-2 transition-colors hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card'
                             : 'cursor-default text-muted-foreground'
                         )}
                         aria-label={`Open conversation${conversationName ? `: ${conversationName}` : ''}`}
@@ -1198,14 +1198,14 @@ function ActivityLogSection({
                       className={cn(
                         'inline-flex w-fit items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium',
                         isRunning
-                          ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
+                          ? 'border-warning/40 bg-warning/10 text-warning'
                           : isSuccess
                             ? 'border-success/40 bg-success/10 text-success-foreground'
                             : 'border-destructive/40 bg-destructive/10 text-destructive-foreground'
                       )}
                     >
                       {isRunning ? (
-                        <Spinner className="h-3.5 w-3.5" color="border-t-amber-300" />
+                        <Spinner className="h-3.5 w-3.5" color="border-t-warning" />
                       ) : isSuccess ? (
                         <CheckCircle2 className="h-3.5 w-3.5" />
                       ) : (
@@ -1512,7 +1512,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   };
 
   const renderAutomationRow = (automation: AutomationItem) => (
-    <div className="rounded-xl border border-border bg-card transition-colors hover:bg-muted/40 hover:border-muted-foreground/20">
+    <div className="rounded-xl border border-border bg-card transition-colors hover:bg-muted/60 hover:border-muted-foreground/20">
       <div className="flex items-start justify-between gap-4 p-5">
         <button
           type="button"
@@ -1790,7 +1790,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
             <button
               type="button"
               onClick={() => handleRunNow(selectedAutomation.id)}
-              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85"
               aria-label={`Run now: ${selectedAutomation.title}`}
             >
               <Play className="h-4 w-4" aria-hidden />
@@ -1980,7 +1980,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                           aria-label="How notification destination is used"
                         >
                           <Info className="h-3.5 w-3.5" aria-hidden />
@@ -2030,7 +2030,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                   !newAutomationPrompt.trim() ||
                   newAutomationRepoTargets.length === 0
                 }
-                className="h-9 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Create Automation
               </button>
@@ -2143,7 +2143,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         <button
           type="button"
           onClick={handleAddAutomationClick}
-          className="inline-flex h-9 items-center gap-2 rounded-md bg-white px-3 text-sm font-medium text-black transition-colors hover:bg-gray-300"
+          className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85"
         >
           <Plus className="h-4 w-4" />
           Add Automation

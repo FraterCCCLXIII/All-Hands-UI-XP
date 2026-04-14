@@ -32,7 +32,7 @@ export function InfoCard<T extends React.ElementType = 'div'>({
       className={cn(
         'flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left',
         interactive &&
-          'transition-colors hover:bg-muted/50 hover:border-muted-foreground/20',
+          'transition-colors hover:bg-muted/60 hover:border-muted-foreground/20',
         className
       )}
       {...props}

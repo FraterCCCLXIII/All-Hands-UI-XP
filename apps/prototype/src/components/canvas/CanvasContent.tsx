@@ -25,9 +25,9 @@ export const CanvasContent: React.FC<CanvasContentProps> = ({
         {content.type === 'code' ? (
           <pre className={`w-full overflow-auto rounded-md p-4 whitespace-pre-wrap ${
             theme === 'dark' 
-              ? 'bg-stone-800 text-stone-200' 
+              ? 'bg-card text-foreground' 
               : theme === 'light' 
-                ? 'bg-stone-200 text-stone-800' 
+                ? 'bg-muted text-foreground' 
                 : 'bg-[rgb(215,205,190)] text-[rgb(100,80,60)]'
           }`}>
             <code>{content.text}</code>

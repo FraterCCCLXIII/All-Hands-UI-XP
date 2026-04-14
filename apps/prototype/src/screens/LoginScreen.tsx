@@ -79,8 +79,8 @@ const socialLogins = [
   { id: 'github', label: 'Sign in with Github', icon: Github, className: 'bg-[#9E28B0] hover:bg-[#8a2399] text-white border-0' },
   { id: 'gitlab', label: 'Sign in with Gitlab', icon: GitLabIcon, className: 'bg-[#FC6B0E] hover:bg-[#e55f0c] text-white border-0' },
   { id: 'bitbucket', label: 'Sign in with Bitbucket', icon: BitbucketIcon, className: 'bg-[#2684FF] hover:bg-[#1a6ce6] text-white border-0' },
-  { id: 'google', label: 'Sign in with Google', icon: GoogleIcon, className: 'bg-white hover:bg-gray-200 text-gray-800 border border-border' },
-  { id: 'chatgpt', label: 'Sign in with ChatGPT', icon: ChatGPTIcon, className: 'bg-white hover:bg-gray-200 text-black border border-border', iconClassName: 'w-5 h-5' },
+  { id: 'google', label: 'Sign in with Google', icon: GoogleIcon, className: 'bg-primary hover:bg-primary/85 text-primary-foreground border border-border' },
+  { id: 'chatgpt', label: 'Sign in with ChatGPT', icon: ChatGPTIcon, className: 'bg-primary hover:bg-primary/85 text-primary-foreground border border-border', iconClassName: 'w-5 h-5' },
 ];
 
 type PrimaryUseOption = 'personal' | 'saas' | 'self-hosted';
@@ -348,7 +348,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
                   <button
                     type="button"
                     onClick={() => setShowLlmUpgradeForm(true)}
-                    className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-white text-black hover:bg-gray-300 transition-colors w-full sm:w-auto mt-auto"
+                    className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/85 transition-colors w-full sm:w-auto mt-auto"
                   >
                     Upgrade
                   </button>
@@ -375,7 +375,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
                           type="button"
                           onClick={handleGet30DaysFree}
                           disabled={!businessEmail.trim()}
-                          className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-white text-black hover:bg-gray-300 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center justify-center h-10 px-4 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/85 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Get 30 Days Free
                         </button>
@@ -546,7 +546,7 @@ export function LoginScreen({ onBack }: LoginScreenProps) {
                   value={selfHostedForm.message}
                   onChange={(e) => setSelfHostedForm((prev) => ({ ...prev, message: e.target.value }))}
                   rows={4}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60"
                 />
               </div>
               <div className="flex gap-3">

@@ -66,7 +66,7 @@ export function ConversationCard({
                   <span>{conversation.timestamp}</span>
                   <span>•</span>
                   <div className="flex items-center gap-1">
-                    <span className="uppercase tracking-wide text-[10px] text-muted-foreground">Agent Status</span>
+                    <span className="uppercase tracking-wide text-xs text-muted-foreground">Agent Status</span>
                     <button className="flex h-5 w-5 items-center justify-center rounded-full border border-border text-muted-foreground transition hover:border-foreground hover:text-foreground">
                       {conversation.agentStatus === 'active' ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
                     </button>
@@ -92,7 +92,7 @@ export function ConversationCard({
               </button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-1 hover:bg-muted/80 rounded transition-colors text-muted-foreground hover:text-foreground">
+                  <button className="p-1 hover:bg-muted/60 rounded transition-colors text-muted-foreground hover:text-foreground">
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                 </DropdownMenuTrigger>
@@ -117,7 +117,7 @@ export function ConversationCard({
           {isCompact && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-1 hover:bg-muted/80 rounded transition-colors text-muted-foreground hover:text-foreground">
+                <button className="p-1 hover:bg-muted/60 rounded transition-colors text-muted-foreground hover:text-foreground">
                   <MoreHorizontal className="w-4 h-4" />
                 </button>
               </DropdownMenuTrigger>

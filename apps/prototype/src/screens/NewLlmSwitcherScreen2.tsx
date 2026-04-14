@@ -178,7 +178,7 @@ export function NewLlmSwitcherScreen2() {
           <button
             type="button"
             onClick={handleStartAdd}
-            className="h-10 px-4 rounded-md bg-white text-black text-sm font-medium hover:bg-gray-300 transition-colors"
+            className="h-10 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/85 transition-colors"
           >
             Add LLM Profile
           </button>
@@ -194,7 +194,7 @@ export function NewLlmSwitcherScreen2() {
                 {profile.provider} {profile.model}
               </span>
               {defaultProfileId === profile.id && (
-                <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                <span className="rounded-full bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground">
                   Default
                 </span>
               )}
@@ -264,7 +264,7 @@ export function NewLlmSwitcherScreen2() {
           />
           <div
             className={`relative w-12 h-6 rounded-xl cursor-pointer transition-colors duration-200 ease-in-out flex items-center p-1.5 justify-start ${
-              addAdvanced ? 'bg-white' : 'bg-muted border border-border'
+              addAdvanced ? 'bg-primary' : 'bg-muted border border-border'
             }`}
           >
             <div
@@ -280,7 +280,7 @@ export function NewLlmSwitcherScreen2() {
           <span className="text-sm text-foreground">Display Name</span>
           <input
             placeholder="LLM Display Name"
-            className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+            className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
             type="text"
             value={addDisplayName}
             onChange={(e) => setAddDisplayName(e.target.value)}
@@ -293,7 +293,7 @@ export function NewLlmSwitcherScreen2() {
               <label className="text-sm text-foreground">LLM Provider</label>
               <div className="relative w-full">
                 <select
-                  className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                  className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
                   data-testid="llm-provider-input"
                   aria-label="LLM Provider"
                   value={addProvider}
@@ -314,7 +314,7 @@ export function NewLlmSwitcherScreen2() {
               <label className="text-sm text-foreground">LLM Model</label>
               <div className="relative w-full">
                 <select
-                  className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+                  className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
                   data-testid="llm-model-input"
                   aria-label="LLM Model"
                   value={addModel}
@@ -348,7 +348,7 @@ export function NewLlmSwitcherScreen2() {
                       e.preventDefault();
                     }
                   }}
-                  className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+                  className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
                   type="text"
                   data-testid="llm-api-key-input"
                 />
@@ -412,7 +412,7 @@ export function NewLlmSwitcherScreen2() {
                 href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
                 rel="noreferrer noopener"
                 target="_blank"
-                className="underline underline-offset-2 text-white hover:text-gray-300"
+                className="underline underline-offset-2 text-white hover:text-muted-foreground"
               >
                 Click here for instructions
               </a>
@@ -503,7 +503,7 @@ export function NewLlmSwitcherScreen2() {
         <button
           disabled
           type="submit"
-          className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="h-10 flex items-center justify-center w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           Save Profile
         </button>
@@ -536,7 +536,7 @@ export function NewLlmSwitcherScreen2() {
           <span className="text-sm text-foreground">Display Name</span>
           <input
             placeholder="Your Display Name"
-            className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+            className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -547,7 +547,7 @@ export function NewLlmSwitcherScreen2() {
           <label className="text-sm text-foreground">LLM Provider</label>
           <div className="relative w-full">
             <select
-              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
               data-testid="llm-provider-input"
               aria-label="LLM Provider"
               value={providerName}
@@ -569,7 +569,7 @@ export function NewLlmSwitcherScreen2() {
           <label className="text-sm text-foreground">LLM Model</label>
           <div className="relative w-full">
             <select
-              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
+              className="h-10 w-full rounded-md border border-border bg-muted/40 pl-3 pr-10 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30 appearance-none"
               data-testid="llm-model-input"
               aria-label="LLM Model"
               value={modelName}
@@ -592,7 +592,7 @@ export function NewLlmSwitcherScreen2() {
           <div className="relative w-full">
             <input
               placeholder="••••••••••"
-              className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
+              className="h-10 w-full rounded-md border border-border bg-muted/40 px-3 pr-10 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/30"
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
@@ -652,7 +652,7 @@ export function NewLlmSwitcherScreen2() {
             href="https://docs.all-hands.dev/usage/local-setup#getting-an-api-key"
             rel="noreferrer noopener"
             target="_blank"
-            className="underline underline-offset-2 text-white hover:text-gray-300"
+            className="underline underline-offset-2 text-white hover:text-muted-foreground"
           >
             Click here for instructions
           </a>
@@ -679,7 +679,7 @@ export function NewLlmSwitcherScreen2() {
         <button
           disabled={!isEditDirty}
           type="submit"
-          className="h-10 flex items-center justify-center w-fit px-6 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="h-10 flex items-center justify-center w-fit px-6 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           Save
         </button>
@@ -722,12 +722,12 @@ export function NewLlmSwitcherScreen2() {
                 className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors ${
                   selectedRole === role
                     ? 'bg-muted/60 text-foreground'
-                    : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                 }`}
               >
                 <span>{role}</span>
                 {selectedRole === role && (
-                  <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Active</span>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Active</span>
                 )}
               </button>
             ))}

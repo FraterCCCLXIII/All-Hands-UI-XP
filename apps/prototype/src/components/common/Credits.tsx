@@ -18,7 +18,7 @@ const Credits: React.FC<CreditsProps> = ({ credits }) => {
   return (
     <div className="relative inline-block" ref={ref}>
       <div
-        className="inline-flex items-center space-x-2 rounded-full bg-stone-800 text-stone-100 text-xs font-medium px-4 py-1 shadow cursor-pointer hover:bg-stone-700 transition-colors"
+        className="inline-flex items-center space-x-2 rounded-full bg-card text-foreground text-xs font-medium px-4 py-1 shadow cursor-pointer hover:bg-muted/60 transition-colors"
         title="Credits available"
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -28,7 +28,7 @@ const Credits: React.FC<CreditsProps> = ({ credits }) => {
           <circle cx="10" cy="10" r="4" fill="#FFF7B2" />
         </svg>
         {credits}
-        <ChevronRight className="w-4 h-4 ml-2 text-stone-400" />
+        <ChevronRight className="w-4 h-4 ml-2 text-muted-foreground" />
       </div>
       {/* Invisible buffer to catch mouse events */}
       {open && (
@@ -39,14 +39,14 @@ const Credits: React.FC<CreditsProps> = ({ credits }) => {
             onMouseLeave={() => setOpen(false)}
           />
           <div
-            className="min-w-[160px] rounded-xl bg-stone-900 border border-stone-700 shadow-lg p-2 flex flex-col space-y-2"
+            className="min-w-[160px] rounded-xl bg-background border border-border shadow-lg p-2 flex flex-col space-y-2"
             onMouseEnter={() => setOpen(true)}
             onMouseLeave={() => setOpen(false)}
           >
             {DROPDOWN_ITEMS.map(item => (
-              <div key={item.label} className="flex items-center justify-between px-2 py-1 hover:bg-stone-800 rounded-lg cursor-pointer">
-                <span className="text-xs text-stone-100">{item.label}</span>
-                <span className="inline-flex items-center space-x-1 rounded-full bg-stone-800 text-stone-100 text-xs font-medium px-3 py-0.5 ml-2">
+              <div key={item.label} className="flex items-center justify-between px-2 py-1 hover:bg-card rounded-lg cursor-pointer">
+                <span className="text-xs text-foreground">{item.label}</span>
+                <span className="inline-flex items-center space-x-1 rounded-full bg-card text-foreground text-xs font-medium px-3 py-0.5 ml-2">
                   <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 mr-1">
                     <circle cx="10" cy="10" r="8" fill="#FFD700" stroke="#C9A100" strokeWidth="2" />
                     <circle cx="10" cy="10" r="4" fill="#FFF7B2" />

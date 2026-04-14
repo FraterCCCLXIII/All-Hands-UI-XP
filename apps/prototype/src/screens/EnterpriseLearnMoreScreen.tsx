@@ -143,7 +143,7 @@ export function EnterpriseLearnMoreScreen({ onBack, onSubmitComplete }: Enterpri
                   value={form.message}
                   onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
                   rows={4}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60"
                 />
               </div>
               <div className="flex gap-3">
@@ -235,7 +235,7 @@ export function EnterpriseLearnMoreScreen({ onBack, onSubmitComplete }: Enterpri
                     </li>
                   ))}
                 </ul>
-                <span className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 h-10 w-fit ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                <span className="mt-4 inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background px-4 py-2 h-10 w-fit ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2">
                   Learn More
                 </span>
               </div>

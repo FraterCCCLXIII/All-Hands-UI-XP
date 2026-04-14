@@ -29,14 +29,14 @@ const CurrentProjects: React.FC<CurrentProjectsProps> = ({ projects }) => {
       <div className="font-semibold text-xs mb-2 whitespace-nowrap">Current Projects</div>
       <div className={`flex flex-col ${needsScroll ? 'max-h-60 overflow-y-auto' : ''} ${customScrollbar}`}>
         {visibleProjects.map((project) => (
-          <div key={project.id} className="py-1 rounded hover:bg-stone-800 text-xs text-stone-100 cursor-pointer whitespace-nowrap">
+          <div key={project.id} className="py-1 rounded hover:bg-card text-xs text-foreground cursor-pointer whitespace-nowrap">
             {project.name}
           </div>
         ))}
       </div>
       {hasMore && (
         <button
-          className="flex items-center space-x-1 text-xs text-stone-400 hover:text-stone-100 mt-2 py-1 rounded transition-colors whitespace-nowrap"
+          className="flex items-center space-x-1 text-xs text-muted-foreground hover:text-foreground mt-2 py-1 rounded transition-colors whitespace-nowrap"
           onClick={() => setExpanded((e) => !e)}
         >
           <span>{expanded ? 'View less' : 'View more'}</span>

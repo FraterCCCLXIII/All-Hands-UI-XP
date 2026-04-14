@@ -39,7 +39,7 @@ export function ChatGPTConnectSection({
           type="button"
           disabled={isConnecting}
           onClick={onConnect}
-          className="h-10 w-full rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="h-10 w-full rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity focus:outline-none focus:ring-1 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isConnecting ? (
             <Spinner className="w-5 h-5 shrink-0" color="border-t-primary-foreground" />

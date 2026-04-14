@@ -22,7 +22,7 @@ import { cn } from '../lib/utils';
 function SectionLabel({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mt-10 mb-4">
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
+      <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground whitespace-nowrap">
         {label}
       </span>
       <div className="flex-1 h-px bg-border" />
@@ -63,10 +63,10 @@ interface DisclosureProps {
 function ToolDisclosure({ verb, target, fullPath, children, defaultOpen = false }: DisclosureProps) {
   const [expanded, setExpanded] = useState(defaultOpen);
   return (
-    <div className="flex flex-col gap-2 my-2 py-2 text-sm text-neutral-500 w-full font-sans">
-      <div className="flex items-center justify-between font-normal text-neutral-500">
+    <div className="flex flex-col gap-2 my-2 py-2 text-sm text-muted-foreground w-full font-sans">
+      <div className="flex items-center justify-between font-normal text-muted-foreground">
         <div>
-          <span className="text-neutral-400">{verb}</span>{' '}
+          <span className="text-muted-foreground">{verb}</span>{' '}
           <span className="font-sans" title={fullPath}>
             {target}
           </span>
@@ -78,9 +78,9 @@ function ToolDisclosure({ verb, target, fullPath, children, defaultOpen = false 
             onClick={() => setExpanded((e) => !e)}
           >
             {expanded ? (
-              <ChevronUp className="h-4 w-4 ml-2 inline text-neutral-500" />
+              <ChevronUp className="h-4 w-4 ml-2 inline text-muted-foreground" />
             ) : (
-              <ChevronDown className="h-4 w-4 ml-2 inline text-neutral-500" />
+              <ChevronDown className="h-4 w-4 ml-2 inline text-muted-foreground" />
             )}
           </button>
         </div>
@@ -107,7 +107,7 @@ function SkillKnowledgeRow({ item }: { item: SkillKnowledgeItem }) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-semibold text-foreground bg-muted/20 hover:bg-muted/40 transition-colors text-left"
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-semibold text-foreground bg-muted/20 hover:bg-muted/60 transition-colors text-left"
         aria-expanded={open}
       >
         {open ? (
@@ -187,7 +187,7 @@ function CodeBlock({ language, code, filename }: CodeBlockProps) {
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
           {copied ? (
-            <Check className="w-3.5 h-3.5 text-green-500" />
+            <Check className="w-3.5 h-3.5 text-success" />
           ) : (
             <Copy className="w-3.5 h-3.5" />
           )}
@@ -219,8 +219,8 @@ function DiffBlock({ filename, lines }: { filename: string; lines: DiffLine[] })
             key={i}
             className={cn(
               'px-4 py-0.5',
-              line.type === 'add' && 'bg-green-950/40 text-green-300',
-              line.type === 'remove' && 'bg-red-950/40 text-red-300',
+              line.type === 'add' && 'bg-success/10 text-success-foreground',
+              line.type === 'remove' && 'bg-destructive/10 text-destructive-foreground',
               line.type === 'context' && 'text-muted-foreground'
             )}
           >
@@ -297,7 +297,7 @@ function TaskTracker({ tasks }: { tasks: Task[] }) {
     <div className="flex flex-col overflow-clip bg-card border border-border rounded-xl w-full my-2">
       <div className="flex gap-1 items-center border-b border-border h-[41px] px-2 shrink-0">
         <ListTodo className="shrink-0 w-4 h-4 text-muted-foreground" aria-hidden />
-        <span className="text-[11px] text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px]">
+        <span className="text-xs text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px]">
           Tasks
         </span>
       </div>
@@ -310,14 +310,14 @@ function TaskTracker({ tasks }: { tasks: Task[] }) {
             <div className="flex flex-col items-start justify-center leading-[20px] whitespace-normal font-normal">
               <span
                 className={cn(
-                  'font-normal text-[12px]',
+                  'font-normal text-xs',
                   task.status === 'completed' ? 'line-through text-muted-foreground' : 'text-foreground'
                 )}
               >
                 {task.label}
               </span>
               {task.note && (
-                <span className="font-normal text-[10px] text-muted-foreground">{task.note}</span>
+                <span className="font-normal text-xs text-muted-foreground">{task.note}</span>
               )}
             </div>
           </div>
@@ -350,8 +350,8 @@ function DiffSummary({ files, onUndo }: DiffSummaryProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <span className="text-foreground font-medium">
           {files.length} file{files.length !== 1 ? 's' : ''} changed{' '}
-          <span className="text-green-500">+{totalAdded}</span>{' '}
-          <span className="text-red-500">-{totalRemoved}</span>
+          <span className="text-success">+{totalAdded}</span>{' '}
+          <span className="text-destructive">-{totalRemoved}</span>
         </span>
         {onUndo && (
           <button
@@ -372,8 +372,8 @@ function DiffSummary({ files, onUndo }: DiffSummaryProps) {
         <div key={file.path} className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 last:border-0">
           <span className="text-xs font-mono text-foreground/80">{file.path}</span>
           <span className="text-xs shrink-0 ml-4">
-            <span className="text-green-500">+{file.added}</span>{' '}
-            <span className="text-red-500">-{file.removed}</span>
+            <span className="text-success">+{file.added}</span>{' '}
+            <span className="text-destructive">-{file.removed}</span>
           </span>
         </div>
       ))}
@@ -401,7 +401,7 @@ function FileTree({ lines }: { lines: string[] }) {
         className="absolute right-3 top-3 flex items-center text-muted-foreground hover:text-foreground transition-colors"
       >
         {copied ? (
-          <Check className="w-3.5 h-3.5 text-green-500" />
+          <Check className="w-3.5 h-3.5 text-success" />
         ) : (
           <Copy className="w-3.5 h-3.5" />
         )}
@@ -465,14 +465,14 @@ function PlanPreview({ variant }: PlanPreviewProps) {
       {/* Header */}
       <div className="border-b border-border flex h-[41px] items-center px-2 gap-1">
         {PLAN_PREVIEW_ICON}
-        <span className="font-medium text-[11px] text-foreground tracking-[0.11px] leading-4">Plan.md</span>
+        <span className="font-medium text-xs text-foreground tracking-[0.11px] leading-4">Plan.md</span>
         <div className="flex-1" />
         <button
           type="button"
           className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
           data-testid="plan-preview-view-button"
         >
-          <span className="font-medium text-[11px] tracking-[0.11px] leading-4">View</span>
+          <span className="font-medium text-xs tracking-[0.11px] leading-4">View</span>
           <ArrowUpRight className="w-[18px] h-[18px]" aria-hidden />
         </button>
       </div>
@@ -526,7 +526,7 @@ function PlanPreview({ variant }: PlanPreviewProps) {
             data-testid="plan-preview-build-button"
             aria-label="Build plan"
           >
-            <span className="text-[11px] font-medium leading-5">Build ⌘↩</span>
+            <span className="text-xs font-medium leading-5">Build ⌘↩</span>
           </button>
         </div>
       )}
@@ -614,7 +614,7 @@ function ConversationSample() {
             { n: 5, title: 'Update Tailwind config', detail: 'Point Tailwind darkMode to "class" and map utilities to the new tokens.' },
           ].map(({ n, title, detail }) => (
             <div key={n} className="flex gap-4 px-4 py-3 border-b border-border last:border-0 items-start">
-              <span className="shrink-0 w-5 h-5 rounded-full bg-muted text-muted-foreground text-[11px] font-semibold flex items-center justify-center mt-0.5">{n}</span>
+              <span className="shrink-0 w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs font-semibold flex items-center justify-center mt-0.5">{n}</span>
               <div>
                 <div className="text-sm font-medium text-foreground">{title}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">{detail}</div>
@@ -716,7 +716,7 @@ export function ChatComponentsScreen() {
               'px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize',
               tab === t
                 ? 'bg-muted text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
             )}
           >
             {t === 'components' ? 'Components' : 'Conversation Sample'}
@@ -752,7 +752,7 @@ export function ChatComponentsScreen() {
             {/* Image attachment */}
             <UserMessage>
               <p>Here&apos;s a screenshot of the bug:</p>
-              <div className="mt-1 flex h-[54px] w-[54px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/5">
+              <div className="mt-1 flex h-[54px] w-[54px] shrink-0 items-center justify-center overflow-hidden rounded-lg bg-foreground/5">
                 <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden />
               </div>
             </UserMessage>
@@ -760,11 +760,11 @@ export function ChatComponentsScreen() {
             {/* File attachment */}
             <UserMessage>
               <p>Can you review this file?</p>
-              <div className="mt-1 flex h-[54px] max-w-[184px] shrink-0 flex-col justify-between rounded-lg bg-white/5 px-3 py-2">
+              <div className="mt-1 flex h-[54px] max-w-[184px] shrink-0 flex-col justify-between rounded-lg bg-foreground/5 px-3 py-2">
                 <div className="min-w-0 pr-4">
                   <span className="block min-w-0 truncate text-xs font-medium leading-4 text-foreground">Counter.tsx</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <FileText className="h-3 w-3 shrink-0" aria-hidden />
                   <span>TSX</span>
                 </div>
@@ -780,11 +780,11 @@ export function ChatComponentsScreen() {
                   { name: 'Counter.test.tsx', ext: 'TSX' },
                   { name: 'design-spec.pdf',  ext: 'PDF' },
                 ].map((f) => (
-                  <div key={f.name} className="flex h-[54px] max-w-[184px] shrink-0 flex-col justify-between rounded-lg bg-white/5 px-3 py-2">
+                  <div key={f.name} className="flex h-[54px] max-w-[184px] shrink-0 flex-col justify-between rounded-lg bg-foreground/5 px-3 py-2">
                     <div className="min-w-0 pr-4">
                       <span className="block min-w-0 truncate text-xs font-medium leading-4 text-foreground">{f.name}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       <FileText className="h-3 w-3 shrink-0" aria-hidden />
                       <span>{f.ext}</span>
                     </div>
@@ -1056,7 +1056,7 @@ LIMIT 50;`}
                 { n: 5, title: 'Update Tailwind config', detail: 'Point Tailwind darkMode to "class" and map utilities to the new tokens.' },
               ].map(({ n, title, detail }) => (
                 <div key={n} className="flex gap-4 px-4 py-3 border-b border-border last:border-0 items-start">
-                  <span className="shrink-0 w-5 h-5 rounded-full bg-muted text-muted-foreground text-[11px] font-semibold flex items-center justify-center mt-0.5">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-muted text-muted-foreground text-xs font-semibold flex items-center justify-center mt-0.5">
                     {n}
                   </span>
                   <div>

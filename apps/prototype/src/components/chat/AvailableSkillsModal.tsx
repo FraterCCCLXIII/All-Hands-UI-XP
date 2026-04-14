@@ -344,7 +344,7 @@ function SkillTableRow({ skill }: { skill: Skill }) {
         className={cn(
           'transition-colors',
           expanded ? 'border-b-0' : 'border-b border-border',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+          'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
           hasDetail ? 'hover:bg-muted/30 cursor-pointer' : 'cursor-default',
           expanded && 'bg-muted/20'
         )}

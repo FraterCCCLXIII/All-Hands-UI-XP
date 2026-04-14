@@ -41,16 +41,16 @@ export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
 
   return (
     <div className="mb-4">
-      <div className="bg-stone-800 rounded-lg shadow-lg">
+      <div className="bg-card rounded-lg shadow-lg">
         {/* Message Input */}
-        <div className="py-4 px-2 border-b border-stone-700">
+        <div className="py-4 px-2 border-b border-border">
           <div className="relative flex items-center">
             <motion.button
-              className={`p-2 rounded-full flex items-center justify-center hover:bg-stone-700 focus:outline-none mr-2 transition-colors duration-150`}
+              className={`p-2 rounded-full flex items-center justify-center hover:bg-muted/60 focus:outline-none mr-2 transition-colors duration-150`}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
             >
-              <Paperclip className="w-4 h-4 text-stone-400 hover:text-white transition-colors duration-150" />
+              <Paperclip className="w-4 h-4 text-muted-foreground hover:text-white transition-colors duration-150" />
             </motion.button>
             <input
               type="text"
@@ -78,7 +78,7 @@ export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
         </div>
 
         {/* Server Status */}
-        <div className={`py-2 px-2 flex items-center justify-between text-xs border-stone-700`}>
+        <div className={`py-2 px-2 flex items-center justify-between text-xs border-border`}>
           <ServerStatus
             status={isConnecting ? 'connecting' : serverStatus}
             getThemeClasses={getThemeClasses}
@@ -86,7 +86,7 @@ export const MessageInputPanel: React.FC<MessageInputPanelProps> = ({
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="flex items-center space-x-1 px-3 py-1 rounded-full bg-stone-700 text-white hover:opacity-90"
+            className="flex items-center space-x-1 px-3 py-1 rounded-full bg-muted text-white hover:opacity-90"
             style={{ transform: 'scale(0.95)' }}
             onClick={() => onServerStatusChange(serverStatus === 'active' ? 'stopped' : 'active')}
             disabled={isConnecting}

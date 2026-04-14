@@ -30,7 +30,7 @@ const Tooltip: React.FC<{ label: string; children: React.ReactNode }> = ({ label
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.18 }}
-            className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 px-3 py-1 bg-stone-800 text-white text-xs rounded-full shadow-lg z-50 pointer-events-none whitespace-nowrap"
+            className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 px-3 py-1 bg-muted text-foreground text-xs rounded-full shadow-lg z-50 pointer-events-none whitespace-nowrap"
             role="tooltip"
           >
             {label}
@@ -115,7 +115,7 @@ export const ClaimStatesScreen = () => {
               </div>
             </Tooltip>
             <Tooltip label="Warning: Disconnecting removes org claims">
-              <div className="h-9 w-9 rounded-full border border-amber-500/40 bg-amber-500/15 flex items-center justify-center text-amber-200">
+              <div className="h-9 w-9 rounded-full border border-warning/40 bg-warning/15 flex items-center justify-center text-warning">
                 <AlertTriangle className="h-4 w-4" />
               </div>
             </Tooltip>

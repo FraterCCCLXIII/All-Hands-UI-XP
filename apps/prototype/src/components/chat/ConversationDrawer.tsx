@@ -244,7 +244,7 @@ export function ConversationDrawer({
               tabIndex={0}
               className={cn(
                 'group relative h-auto w-full cursor-pointer rounded-lg p-3.5 outline-none transition-all duration-300',
-                'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
+                'focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
                 // Match ChatStartScreen suggestion tiles + WelcomeScreen list rows
                 'hover:bg-muted/60 focus-visible:bg-muted/60',
                 isHighlighted && 'bg-muted/40 ring-1 ring-inset ring-border/60',
@@ -318,14 +318,14 @@ export function ConversationDrawer({
                         </p>
                         <div className={cn(
                           'h-1.5 w-1.5 rounded-full shrink-0',
-                          conversation.status === 'running' && 'bg-green-500',
-                          conversation.status === 'awaiting' && 'bg-yellow-400',
-                          conversation.status === 'error' && 'bg-red-500',
+                          conversation.status === 'running' && 'bg-success',
+                          conversation.status === 'awaiting' && 'bg-warning',
+                          conversation.status === 'error' && 'bg-destructive',
                           !conversation.status && 'bg-muted-foreground',
                         )} />
                       </span>
                     )}
-                    <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-semibold lowercase text-muted-foreground">
+                    <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-xs font-semibold lowercase text-muted-foreground">
                       {conversation.version}
                     </span>
                     {isAutomation ? (
@@ -371,7 +371,7 @@ export function ConversationDrawer({
                           data-testid="ellipsis-button"
                           data-conversation-menu-trigger="true"
                           type="button"
-                          className="relative z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-[opacity,color] duration-200 hover:text-foreground group-hover:opacity-100 data-[state=open]:text-foreground data-[state=open]:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                          className="relative z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-[opacity,color] duration-200 hover:text-foreground group-hover:opacity-100 data-[state=open]:text-foreground data-[state=open]:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
                           aria-label="Conversation options"
                           onClick={(event) => event.stopPropagation()}
                         >
@@ -419,7 +419,7 @@ export function ConversationDrawer({
                   </DropdownMenu>
                 </div>
               </div>
-              <div className="flex flex-row items-center gap-2 mt-1 min-w-0 text-[10px] text-muted-foreground">
+              <div className="flex flex-row items-center gap-2 mt-1 min-w-0 text-xs text-muted-foreground">
                 <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
                   <div className="flex min-w-0 items-center gap-1 overflow-hidden">
                     <span

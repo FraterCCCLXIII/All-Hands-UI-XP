@@ -281,7 +281,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <button
                   type="button"
                   onClick={handleNavigateToSkills}
-                  className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/40 transition-colors text-left"
+                  className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/60 transition-colors text-left"
                 >
                   <Bot className="w-5 h-5 text-foreground shrink-0" />
                   <span className="text-base font-bold text-foreground leading-5">Start a conversation with a skill</span>
@@ -293,7 +293,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <button
                   type="button"
                   onClick={() => setOpenRepoModalOpen(true)}
-                  className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/40 transition-colors text-left"
+                  className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/60 transition-colors text-left"
                 >
                   <Folder className="w-5 h-5 text-foreground shrink-0" />
                   <span className="text-base font-bold text-foreground leading-5">Open Repository</span>
@@ -305,7 +305,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 <button
                   type="button"
                   onClick={handleStartNewConversation}
-                  className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/40 transition-colors text-left"
+                  className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/60 transition-colors text-left"
                 >
                   <Plus className="w-5 h-5 text-foreground shrink-0" />
                   <span className="text-base font-bold text-foreground leading-5">Start from Scratch</span>
@@ -334,7 +334,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                 </div>
                                 <input
                                   placeholder="user/repo"
-                                  className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
+                                  className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 pl-10 pr-10 text-sm"
                                   value={repoInput}
                                   onChange={(e) => setRepoInput(e.target.value)}
                                   aria-expanded={repoDropdownOpen}
@@ -428,7 +428,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                 placeholder="Select branch..."
                                 disabled={!repoInput}
                                 readOnly
-                                className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
+                                className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
                                 value={branchInput}
                                 aria-expanded={branchDropdownOpen}
                                 aria-haspopup="listbox"
@@ -471,7 +471,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                           setOpenRepoModalOpen(false);
                         }}
                         disabled={!repoInput || !branchInput}
-                        className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
+                        className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
                       >
                         Launch
                       </button>
@@ -505,7 +505,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                   </div>
                                   <input
                                     placeholder="user/repo"
-                                    className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
+                                    className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 pl-10 pr-10 text-sm"
                                     value={repoInput}
                                     onChange={(e) => setRepoInput(e.target.value)}
                                     aria-expanded={repoDropdownOpen}
@@ -599,7 +599,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                   placeholder="Select branch..."
                                   disabled={!repoInput}
                                   readOnly
-                                  className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
+                                  className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
                                   value={branchInput}
                                   aria-expanded={branchDropdownOpen}
                                   aria-haspopup="listbox"
@@ -639,7 +639,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                           type="button"
                           onClick={handleLaunchSkillWithRepository}
                           disabled={!repoInput || !branchInput}
-                          className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
+                          className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
                         >
                           Launch with Repository
                         </button>
@@ -661,7 +661,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </>
             ) : (
               <>
-                <div className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible">
+                <div className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible">
                   <div className="flex items-center gap-[10px] text-base font-bold text-foreground leading-5">
                     <Bot className="w-4 h-4" />
                     <span className="flex items-center">Start a conversation with a skill</span>
@@ -672,13 +672,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   <button
                     type="button"
                     onClick={handleNavigateToSkills}
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
+                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
                   >
                     Browse all
                   </button>
                 </div>
 
-                <section className="w-full flex flex-col gap-6 rounded-[12px] p-[24px] border border-border bg-secondary/80 relative overflow-visible">
+                <section className="w-full flex flex-col gap-6 rounded-xl p-[24px] border border-border bg-secondary/80 relative overflow-visible">
               <div className="flex flex-col">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-[10px] pb-4">
@@ -699,7 +699,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                           </div>
                           <input
                             placeholder="user/repo"
-                            className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring pl-10 pr-10 text-sm"
+                            className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 pl-10 pr-10 text-sm"
                             value={repoInput}
                             onChange={(event) => setRepoInput(event.target.value)}
                             aria-expanded={repoDropdownOpen}
@@ -823,7 +823,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             placeholder="Select branch..."
                             disabled={!repoInput}
                             readOnly
-                            className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
+                            className="w-full h-10 cursor-pointer px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm"
                             value={branchInput}
                             aria-expanded={branchDropdownOpen}
                             aria-haspopup="listbox"
@@ -870,14 +870,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                   type="button"
                   onClick={handleLaunch}
                   disabled={!repoInput || !branchInput}
-                  className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
+                  className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors w-full"
                 >
                   Launch
                 </button>
               </div>
             </section>
 
-            <div className="w-full flex flex-col rounded-[12px] p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible">
+            <div className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible">
               <div className="flex items-center gap-[10px] text-base font-bold text-foreground leading-5">
                 <Plus className="w-4 h-4" />
                 <span className="flex items-center">Start from Scratch</span>
@@ -888,7 +888,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               <button
                 type="button"
                 onClick={handleStartNewConversation}
-                className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-white text-black hover:bg-gray-300 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
+                className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
               >
                 New Conversation
               </button>

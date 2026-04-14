@@ -24,7 +24,7 @@ export function DocIconLink({
       <span className="pointer-events-none absolute left-1/2 top-full z-50 flex -translate-x-1/2 flex-col items-center pt-1.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-hover:delay-75">
         <span
           role="tooltip"
-          className="whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+          className="whitespace-nowrap rounded-md bg-muted px-2 py-1 text-xs text-foreground shadow-md"
         >
           View Documentation
         </span>

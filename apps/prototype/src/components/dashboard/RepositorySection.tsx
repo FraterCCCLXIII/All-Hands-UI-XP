@@ -93,13 +93,13 @@ export function RepositorySection({ name, branches, stats }: RepositorySectionPr
                 }}
                 aria-expanded={isExpanded}
                 aria-controls={branchContentId}
-                className="w-full px-4 py-3 flex items-center justify-between bg-secondary/50 text-left hover:bg-muted/60 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="w-full px-4 py-3 flex items-center justify-between bg-secondary/50 text-left hover:bg-muted/60 cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 <div className="flex items-center gap-3">
                   {branch.prNumber ? (
                     <GitPullRequest className="w-4 h-4 text-success" />
                   ) : (
-                    <GitBranch className="w-4 h-4 text-sky-400" />
+                    <GitBranch className="w-4 h-4 text-info" />
                   )}
                   <div className="flex items-center gap-2 min-w-0">
                     {branch.prNumber && (

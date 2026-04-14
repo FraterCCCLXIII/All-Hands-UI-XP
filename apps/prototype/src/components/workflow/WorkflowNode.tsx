@@ -39,11 +39,11 @@ function getNodeIcon(id: string, type: string): React.ComponentType<{ className?
 }
 
 const chipClass =
-  'inline-flex items-center rounded-md border px-2 py-0.5 text-[10px]';
+  'inline-flex items-center rounded-md border px-2 py-0.5 text-xs';
 
 const chipVariants: Record<string, string> = {
   default: 'border-border bg-muted/40 text-muted-foreground',
-  plugin: 'border-blue-500/40 bg-blue-500/15 text-blue-700 dark:text-blue-300',
+  plugin: 'border-info/40 bg-info/15 text-info dark:text-info',
   skill: 'border-success/40 bg-success/15 text-success dark:text-success-foreground',
 };
 

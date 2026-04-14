@@ -28,7 +28,7 @@ const Tooltip: React.FC<{ label: string; children: React.ReactNode }> = ({ label
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="absolute top-[calc(100%+0.5rem)] left-0 px-3 py-1 bg-stone-800 text-white text-xs rounded-full shadow-lg z-50 pointer-events-none whitespace-nowrap"
+            className="absolute top-[calc(100%+0.5rem)] left-0 px-3 py-1 bg-muted text-foreground text-xs rounded-full shadow-lg z-50 pointer-events-none whitespace-nowrap"
             role="tooltip"
           >
             {label}
@@ -98,21 +98,21 @@ const SharePreview: React.FC<SharePreviewProps> = ({ shareUrl, onClose }) => {
             animate={{ scale: 1 }}
             exit={{ scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-stone-900 border border-stone-700 rounded-xl shadow-xl p-8 w-full max-w-md relative z-[101]" 
+            className="bg-background border border-border rounded-xl shadow-xl p-8 w-full max-w-md relative z-[101]" 
             ref={modalRef}
           >
-            <button onClick={handleClose} className="absolute top-2 right-2 p-1 rounded-full hover:bg-stone-700 focus:outline-none">
+            <button onClick={handleClose} className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted/60 focus:outline-none">
               <span className="sr-only">Close</span>
-              <X className="w-5 h-5 text-stone-400" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
-            <h2 className="text-2xl font-normal text-stone-200 mb-2">Share Preview</h2>
-            <p className="text-stone-400 mb-4 font-normal">Share this preview with your team or on social platforms.</p>
+            <h2 className="text-2xl font-normal text-foreground mb-2">Share Preview</h2>
+            <p className="text-muted-foreground mb-4 font-normal">Share this preview with your team or on social platforms.</p>
             <div className="mb-6">
-              <label className="block text-xs text-stone-400 mb-1">Share Link</label>
-              <div className="flex items-center bg-stone-800 rounded px-3 py-2">
-                <span className="flex-1 truncate text-stone-200 text-sm">{shareUrl}</span>
-                <button onClick={handleCopy} className="ml-2 p-1 rounded hover:bg-stone-700 transition-colors" title="Copy link">
-                  <Copy className="w-4 h-4 text-stone-400" />
+              <label className="block text-xs text-muted-foreground mb-1">Share Link</label>
+              <div className="flex items-center bg-card rounded px-3 py-2">
+                <span className="flex-1 truncate text-foreground text-sm">{shareUrl}</span>
+                <button onClick={handleCopy} className="ml-2 p-1 rounded hover:bg-muted/60 transition-colors" title="Copy link">
+                  <Copy className="w-4 h-4 text-muted-foreground" />
                 </button>
                 {copied && <span className="ml-2 text-xs text-success-foreground">Copied!</span>}
               </div>

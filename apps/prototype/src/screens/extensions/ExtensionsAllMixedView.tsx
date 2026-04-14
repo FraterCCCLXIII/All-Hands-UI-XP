@@ -122,7 +122,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
     return (
       <div
         key={skill.id}
-        className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/40"
+        className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
       >
         {showToggle ? (
           <PluginToggle
@@ -155,7 +155,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
             )
           }
           className={cn(
-            'w-full rounded-xl p-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
+            'w-full rounded-xl p-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
             showToggle ? 'pr-14 pt-5' : 'p-5'
           )}
         >

@@ -39,7 +39,7 @@ export function NewConversationDialog({
         <button
           type="button"
           className={cn(
-            'inline-flex items-center gap-2 h-7 rounded-full border border-transparent px-2.5 text-[11px] text-foreground bg-muted/40 hover:bg-muted/60 transition-colors',
+            'inline-flex items-center gap-2 h-7 rounded-full border border-transparent px-2.5 text-xs text-foreground bg-muted/40 hover:bg-muted/60 transition-colors',
             triggerClassName
           )}
           onClick={(event) => event.stopPropagation()}
@@ -112,7 +112,7 @@ export function NewConversationDialog({
             <textarea
               id="new-conversation-prompt"
               rows={5}
-              className="w-full rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-md border border-border bg-muted/40 hover:bg-muted/60 transition-colors p-3 text-sm text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               placeholder="Describe what you want the agents to do..."
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}

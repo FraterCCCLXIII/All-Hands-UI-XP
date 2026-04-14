@@ -64,21 +64,21 @@ const messageTypeIcons: Record<MessageType, LucideIcon> = {
 const messageTypeColors: Record<MessageType, { text: string; border: string; bg_subtle: string }> = {
   error: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
   bug: { text: 'text-orange-500', border: 'border-orange-500', bg_subtle: 'bg-orange-500/20' },
-  security: { text: 'text-yellow-500', border: 'border-yellow-500', bg_subtle: 'bg-yellow-500/20' },
+  security: { text: 'text-warning', border: 'border-warning', bg_subtle: 'bg-warning/20' },
   performance: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
-  test: { text: 'text-blue-500', border: 'border-blue-500', bg_subtle: 'bg-blue-500/20' },
+  test: { text: 'text-info', border: 'border-info', bg_subtle: 'bg-info/20' },
   docs: { text: 'text-indigo-500', border: 'border-indigo-500', bg_subtle: 'bg-indigo-500/20' },
   dependency: { text: 'text-purple-500', border: 'border-purple-500', bg_subtle: 'bg-purple-500/20' },
   git: { text: 'text-pink-500', border: 'border-pink-500', bg_subtle: 'bg-pink-500/20' },
   llm_error: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
   microagent_ready: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
-  build: { text: 'text-blue-500', border: 'border-blue-500', bg_subtle: 'bg-blue-500/20' },
-  completed: { text: 'text-gray-400', border: 'border-gray-400', bg_subtle: 'bg-gray-400/20' },
+  build: { text: 'text-info', border: 'border-info', bg_subtle: 'bg-info/20' },
+  completed: { text: 'text-muted-foreground', border: 'border-border', bg_subtle: 'bg-muted/20' },
   user: { text: '', border: '', bg_subtle: '' },
   success: { text: 'text-success', border: 'border-success', bg_subtle: 'bg-success/20' },
   fail: { text: 'text-destructive', border: 'border-destructive', bg_subtle: 'bg-destructive/20' },
   tetris_game: { text: 'text-purple-500', border: 'border-purple-500', bg_subtle: 'bg-purple-500/20' },
-  code: { text: 'text-blue-500', border: 'border-blue-500', bg_subtle: 'bg-blue-500/20' },
+  code: { text: 'text-info', border: 'border-info', bg_subtle: 'bg-info/20' },
 };
 
 const canvasChangingMessageTypes: MessageType[] = ['code', 'build', 'git', 'bug', 'error', 'llm_error', 'dependency', 'security', 'test', 'docs', 'performance', 'microagent_ready'];
@@ -157,8 +157,8 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                 [&::-webkit-scrollbar-thumb]:transition-[background-color]
                 [&::-webkit-scrollbar-thumb]:duration-300
                 [&::-webkit-scrollbar-thumb]:ease-in-out
-                group-hover:[&::-webkit-scrollbar-thumb]:bg-stone-600/30
-                group-hover:[&::-webkit-scrollbar-thumb]:hover:bg-stone-600/50
+                group-hover:[&::-webkit-scrollbar-thumb]:bg-muted/30
+                group-hover:[&::-webkit-scrollbar-thumb]:hover:bg-muted/50
                 scrollbar-gutter:stable
                 scrollbar-width:thin
                 scrollbar-color:transparent transparent
@@ -167,7 +167,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                 duration-300
                 ease-in-out">
                 {/* Top Gradient */}
-                <div className={`sticky top-0 left-0 right-0 h-16 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-b from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-b from-stone-100 to-transparent' : 'bg-gradient-to-b from-[rgb(235,225,210)] to-transparent'}`}></div>
+                <div className={`sticky top-0 left-0 right-0 h-16 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-b from-background to-transparent' : theme === 'light' ? 'bg-gradient-to-b from-background to-transparent' : 'bg-gradient-to-b from-[rgb(235,225,210)] to-transparent'}`}></div>
 
                 {/* Messages Container */}
                 <div className="px-4 pt-4 pb-4 space-y-4">
@@ -225,7 +225,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                         >
                           <div className="flex items-start space-x-2">
                             {msg.type === 'code' ? (
-                              <pre className={`w-full overflow-auto rounded-md p-2 whitespace-pre-wrap ${theme === 'dark' ? 'bg-stone-800 text-stone-200' : theme === 'light' ? 'bg-stone-200 text-stone-800' : 'bg-[rgb(215,205,190)] text-[rgb(100,80,60)]'}`}>
+                              <pre className={`w-full overflow-auto rounded-md p-2 whitespace-pre-wrap ${theme === 'dark' ? 'bg-card text-foreground' : theme === 'light' ? 'bg-muted text-foreground' : 'bg-[rgb(215,205,190)] text-[rgb(100,80,60)]'}`}>
                                 <code>{msg.text}</code>
                               </pre>
                             ) : msg.type === 'tetris_game' ? (
@@ -299,7 +299,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                 </div>
 
                 {/* Bottom Gradient */}
-                <div className={`sticky bottom-0 left-0 right-0 h-8 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-t from-stone-900 to-transparent' : theme === 'light' ? 'bg-gradient-to-t from-stone-100 to-transparent' : 'bg-gradient-to-t from-[rgb(235,225,210)] to-transparent'}`}></div>
+                <div className={`sticky bottom-0 left-0 right-0 h-8 pointer-events-none z-10 ${theme === 'dark' ? 'bg-gradient-to-t from-background to-transparent' : theme === 'light' ? 'bg-gradient-to-t from-background to-transparent' : 'bg-gradient-to-t from-[rgb(235,225,210)] to-transparent'}`}></div>
                 <div ref={messagesEndRef} />
               </div>
             </div>

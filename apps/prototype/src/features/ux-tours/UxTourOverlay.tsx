@@ -168,7 +168,7 @@ export const UxTourOverlay: React.FC<UxTourOverlayProps> = ({
           <h3 className="mt-2 text-sm font-semibold text-foreground">{step.title}</h3>
           <p className="mt-2 text-sm text-muted-foreground">{step.body}</p>
           {!targetRect && step.targetId && (
-            <p className="mt-2 text-xs text-amber-300">
+            <p className="mt-2 text-xs text-warning">
               Waiting for "{step.targetId}" to appear. You can still continue.
             </p>
           )}
@@ -176,7 +176,7 @@ export const UxTourOverlay: React.FC<UxTourOverlayProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="h-8 rounded-md border border-border bg-muted px-3 text-xs font-medium text-foreground hover:bg-muted/70 transition-colors"
+              className="h-8 rounded-md border border-border bg-muted px-3 text-xs font-medium text-foreground hover:bg-muted/60 transition-colors"
             >
               Exit tour
             </button>
@@ -185,7 +185,7 @@ export const UxTourOverlay: React.FC<UxTourOverlayProps> = ({
                 type="button"
                 onClick={onBack}
                 disabled={!canGoBack || isBusy}
-                className="h-8 rounded-md border border-border bg-muted px-3 text-xs font-medium text-foreground hover:bg-muted/70 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="h-8 rounded-md border border-border bg-muted px-3 text-xs font-medium text-foreground hover:bg-muted/60 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Back
               </button>

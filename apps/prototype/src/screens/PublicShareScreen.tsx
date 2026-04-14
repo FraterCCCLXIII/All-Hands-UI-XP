@@ -78,7 +78,7 @@ interface MetaChipProps {
 
 function MetaChip({ icon, label, href }: MetaChipProps) {
   const classes =
-    'flex items-center gap-1.5 text-xs text-muted-foreground bg-muted hover:bg-muted/80 rounded-md px-2.5 py-1.5 transition-colors max-w-[200px]';
+    'flex items-center gap-1.5 text-xs text-muted-foreground bg-muted hover:bg-muted/60 rounded-md px-2.5 py-1.5 transition-colors max-w-[200px]';
 
   const inner = (
     <>
@@ -119,10 +119,10 @@ interface DisclosureProps {
 
 function ToolDisclosure({ verb, target, fullPath, expanded, onToggle, children }: DisclosureProps) {
   return (
-    <div className="flex flex-col gap-2 my-2 py-2 text-sm text-neutral-500 w-full font-sans">
-      <div className="flex items-center justify-between font-normal text-neutral-500">
+    <div className="flex flex-col gap-2 my-2 py-2 text-sm text-muted-foreground w-full font-sans">
+      <div className="flex items-center justify-between font-normal text-muted-foreground">
         <div>
-          <span className="text-neutral-400">{verb}</span>{' '}
+          <span className="text-muted-foreground">{verb}</span>{' '}
           <span className="font-sans" title={fullPath}>
             {target}
           </span>
@@ -134,9 +134,9 @@ function ToolDisclosure({ verb, target, fullPath, expanded, onToggle, children }
             onClick={onToggle}
           >
             {expanded ? (
-              <ChevronUp className="h-4 w-4 ml-2 inline text-neutral-500" />
+              <ChevronUp className="h-4 w-4 ml-2 inline text-muted-foreground" />
             ) : (
-              <ChevronDown className="h-4 w-4 ml-2 inline text-neutral-500" />
+              <ChevronDown className="h-4 w-4 ml-2 inline text-muted-foreground" />
             )}
           </button>
         </div>
@@ -189,7 +189,7 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
                 onToggle={() => setProjectReadExpanded((e) => !e)}
               >
                 <div data-testid="markdown-renderer" className="mt-1">
-                  <pre className="bg-neutral-800 text-neutral-200 p-4 rounded border border-neutral-600 overflow-auto text-xs font-mono whitespace-pre">
+                  <pre className="bg-card text-foreground p-4 rounded border border-border overflow-auto text-xs font-mono whitespace-pre">
                     <code>
                       {`Here's the files and directories up to 2 levels deep in /workspace/project, excluding hidden items:
 /workspace/project/
@@ -225,7 +225,7 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
                 onToggle={() => setPackageJsonReadExpanded((e) => !e)}
               >
                 <div data-testid="markdown-renderer" className="mt-1">
-                  <pre className="bg-neutral-800 text-neutral-200 p-4 rounded border border-neutral-600 overflow-auto text-xs font-mono whitespace-pre">
+                  <pre className="bg-card text-foreground p-4 rounded border border-border overflow-auto text-xs font-mono whitespace-pre">
                     <code>
                       {`{
   "name": "all-hands-ui-xp",
@@ -257,14 +257,14 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
                 onToggle={() => setRanCommandExpanded((e) => !e)}
               >
                 <div data-testid="markdown-renderer" className="mt-1 space-y-2">
-                  <p className="text-neutral-400 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     Command:{' '}
-                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                       sleep 2 &amp;&amp; cat /workspace/project/All-Hands-UI-XP/server.log
                     </code>
                   </p>
-                  <p className="text-neutral-400 text-sm">Output:</p>
-                  <pre className="bg-neutral-900 text-neutral-300 p-4 rounded-lg border border-neutral-600 overflow-auto text-xs font-mono whitespace-pre">
+                  <p className="text-muted-foreground text-sm">Output:</p>
+                  <pre className="bg-background text-foreground p-4 rounded-lg border border-border overflow-auto text-xs font-mono whitespace-pre">
                     <code>
                       {`[1]+  Exit 1                  cd /workspace/project/All-Hands-UI-XP && npm run dev -- --port 12000 --host 0.0.0.0 > server.log 2>&1
 
@@ -291,7 +291,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 </p>
                 <p className="py-2.5 first:pt-0 last:pb-0">
                   <a
-                    className="text-blue-500 hover:underline font-normal"
+                    className="text-info hover:underline font-normal"
                     href="https://work-1-vliuruphcuvxshgd.prod-runtime.all-hands.dev"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -305,32 +305,32 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 <ol className="list-decimal ml-5 pl-2 whitespace-normal">
                   <li>
                     Missing import{' '}
-                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                       ./components/chat/ConversationDrawer
                     </code>{' '}
                     in App.tsx
                   </li>
                   <li>
                     Missing import{' '}
-                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                       ../ui/popover
                     </code>{' '}
                     in LeftNav.tsx
                   </li>
                   <li>
                     CSS{' '}
-                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                       @import
                     </code>{' '}
                     should be placed before{' '}
-                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                       @tailwind
                     </code>{' '}
                     directives
                   </li>
                   <li>
                     Duplicate{' '}
-                    <code className="bg-neutral-800 text-neutral-200 px-1.5 py-0.5 rounded border border-neutral-600 text-xs font-mono">
+                    <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
                       style
                     </code>{' '}
                     attribute in WavingHand.tsx
@@ -345,7 +345,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               <div className="flex flex-col overflow-clip bg-card border border-border rounded-md w-full mt-4">
                 <div className="flex gap-1 items-center border-b border-border h-[41px] px-2 shrink-0">
                   <ListTodo className="shrink-0 w-4 h-4 text-muted-foreground" aria-hidden />
-                  <span className="text-[11px] text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px] whitespace-pre">
+                  <span className="text-xs text-nowrap text-foreground tracking-[0.11px] font-medium leading-[16px] whitespace-pre">
                     Tasks
                   </span>
                 </div>
@@ -362,8 +362,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                     <div key={i} className="flex gap-[14px] items-center px-4 py-2 w-full" data-name="item">
                       <Circle className="shrink-0 w-4 h-4 text-foreground" aria-hidden />
                       <div className={cn('flex flex-col items-start justify-center leading-[20px] whitespace-normal font-normal')}>
-                        <span className="font-normal text-[12px] text-foreground">{label}</span>
-                        <span className="font-normal text-[10px] text-muted-foreground">Notes: </span>
+                        <span className="font-normal text-xs text-foreground">{label}</span>
+                        <span className="font-normal text-xs text-muted-foreground">Notes: </span>
                       </div>
                     </div>
                   ))}

@@ -154,7 +154,7 @@ const Field: React.FC<{
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="mt-1 flex w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        className="mt-1 flex w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
       />
     ) : (
       <Input
@@ -215,7 +215,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
               <select
                 value={String(form.repoPath)}
                 onChange={(e) => handleChange('repoPath', e.target.value)}
-                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               >
                 <option value="">Select repository</option>
                 <option value="repoA/frontend-web">repoA/frontend-web</option>
@@ -228,7 +228,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
               <select
                 value={String(form.branch)}
                 onChange={(e) => handleChange('branch', e.target.value)}
-                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               >
                 <option value="">Select branch</option>
                 <option value="main">main</option>
@@ -259,7 +259,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
               <select
                 value={String(form.triggerType)}
                 onChange={(e) => handleChange('triggerType', e.target.value)}
-                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               >
                 <option value="cron">Scheduled</option>
                 <option value="webhook">Webhook (GitHub Actions)</option>
@@ -272,7 +272,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                 <select
                   value={String(form.webhookEvent)}
                   onChange={(e) => handleChange('webhookEvent', e.target.value)}
-                  className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                 >
                   <option value="push">push</option>
                   <option value="pull_request">pull_request</option>
@@ -295,7 +295,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                   <select
                     value={String(form.scheduleFrequency)}
                     onChange={(e) => handleChange('scheduleFrequency', e.target.value)}
-                    className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                   >
                     <option value="hourly">Hourly</option>
                     <option value="daily">Daily</option>
@@ -311,7 +311,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                     <select
                       value={String(form.scheduleDay || '1')}
                       onChange={(e) => handleChange('scheduleDay', e.target.value)}
-                      className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                     >
                       {form.scheduleFrequency === 'weekly' ? (
                         <>
@@ -341,7 +341,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                     <select
                       value={String(form.scheduleTime)}
                       onChange={(e) => handleChange('scheduleTime', e.target.value)}
-                      className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                     >
                       {[0, 15, 30, 45].map((m) => (
                         <option key={m} value={String(m)}>
@@ -354,7 +354,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                       type="time"
                       value={/^\d{1,2}:\d{2}$/.test(String(form.scheduleTime)) ? String(form.scheduleTime) : '09:00'}
                       onChange={(e) => handleChange('scheduleTime', e.target.value)}
-                      className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
                     />
                   )}
                 </div>
@@ -397,7 +397,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
               <select
                 value={String(form.model)}
                 onChange={(e) => handleChange('model', e.target.value)}
-                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               >
                 <option value="">Select model</option>
                 <option value="gpt-4">GPT-4</option>
@@ -421,7 +421,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
                 role="switch"
                 aria-checked={Boolean(form.optional)}
                 onClick={() => handleChange('optional', !form.optional)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                   form.optional ? 'bg-primary' : 'bg-muted'
                 }`}
               >
@@ -437,7 +437,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
               <select
                 value={String(form.channel)}
                 onChange={(e) => handleChange('channel', e.target.value)}
-                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               >
                 <option value="Slack">Slack</option>
                 <option value="email">Email</option>
@@ -455,7 +455,7 @@ export const WorkflowNodeInspector: React.FC<WorkflowNodeInspectorProps> = ({
               <select
                 value={String(form.notifyOn)}
                 onChange={(e) => handleChange('notifyOn', e.target.value)}
-                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60"
               >
                 <option value="success">Success only</option>
                 <option value="failure">Failure only</option>

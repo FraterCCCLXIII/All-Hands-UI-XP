@@ -1081,7 +1081,7 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setEnterpriseRequestSubmitted(false)}
-                    className="h-10 rounded-md bg-white px-4 text-sm font-medium text-black hover:bg-gray-300 transition-colors"
+                    className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/85 transition-colors"
                   >
                     Done
                   </button>

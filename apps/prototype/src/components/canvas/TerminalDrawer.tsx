@@ -51,7 +51,7 @@ export const TerminalDrawer: React.FC<TerminalDrawerProps> = ({
               document.addEventListener('mouseup', handleMouseUp);
             }}
           >
-            <div className="absolute inset-x-0 top-0 h-[2px] bg-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-x-0 top-0 h-[2px] bg-warning opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
 
           {/* Terminal header */}

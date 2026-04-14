@@ -50,8 +50,8 @@ export function PluginToggle({
         isSm
           ? 'h-3 min-h-3 w-8 min-w-8 p-px'
           : 'h-5 min-h-5 w-12 min-w-12 p-0.5',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-        isOn ? 'bg-white' : 'border border-border bg-muted',
+        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+        isOn ? 'bg-primary' : 'border border-border bg-muted',
         locked && 'cursor-not-allowed opacity-100',
         disabled && !locked && 'cursor-not-allowed',
         className,

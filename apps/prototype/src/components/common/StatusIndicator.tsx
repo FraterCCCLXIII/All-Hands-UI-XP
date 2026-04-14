@@ -12,7 +12,7 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   return (
     <div className="flex items-center space-x-2">
       <span className={`w-2 h-2 rounded-full ${serverStatus === 'active' ? 'bg-success' : 'bg-destructive'}`}></span>
-      <span className="text-sm text-stone-400">
+      <span className="text-sm text-muted-foreground">
         Server: {serverStatus === 'active' ? 'Running' : serverStatus === 'stopped' ? 'Stopped' : 'Thinking'}
       </span>
       <button

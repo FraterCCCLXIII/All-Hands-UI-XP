@@ -32,7 +32,7 @@ export const CanvasErrorModal: React.FC<CanvasErrorModalProps> = ({
             animate={{ scale: 1 }}
             exit={{ scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="w-full max-w-lg bg-stone-900 border border-stone-700 rounded-xl shadow-xl"
+            className="w-full max-w-lg bg-background border border-border rounded-xl shadow-xl"
           >
             <motion.button
               whileHover={{ scale: 1.1 }}

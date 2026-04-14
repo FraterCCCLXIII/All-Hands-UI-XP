@@ -64,9 +64,9 @@ export const TopBar: React.FC<TopBarProps> = ({
               serverStatus === 'active' 
                 ? getThemeClasses('status-dot-running')
                 : serverStatus === 'thinking'
-                ? 'animate-pulse bg-yellow-500'
+                ? 'animate-pulse bg-warning'
                 : serverStatus === 'connecting'
-                ? 'animate-pulse bg-blue-500'
+                ? 'animate-pulse bg-info'
                 : getThemeClasses('status-dot-stopped')
             }`}
           />

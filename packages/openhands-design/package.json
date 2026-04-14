@@ -1,0 +1,31 @@
+{
+  "name": "openhands-design",
+  "version": "0.1.0",
+  "description": "Add OpenHands design tokens, DESIGN.md, and UI primitives to your project root.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "openhands-design": "./bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "template"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "openhands",
+    "design-system",
+    "design-tokens",
+    "tailwind"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FraterCCCLXIII/OpenHands-Design.md"
+  },
+  "scripts": {
+    "sync-template": "rsync -a --delete --exclude='.git' ../../OpenHands-Design/ template/",
+    "prepublishOnly": "npm run sync-template"
+  }
+}

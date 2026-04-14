@@ -110,7 +110,7 @@ export function ArchivedDashboardScreen() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 rounded-md px-3"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 rounded-md px-3"
                   aria-label="Filter pull requests"
                   type="button"
                 >
@@ -137,7 +137,7 @@ export function ArchivedDashboardScreen() {
                   onClick={() => setReviewFilter(option)}
                   aria-pressed={reviewFilter === option}
                   className={cn(
-                    'rounded-full px-3 py-1 text-[11px] font-normal transition-colors',
+                    'rounded-full px-3 py-1 text-xs font-normal transition-colors',
                     reviewFilter === option
                       ? 'border border-border bg-muted text-foreground'
                       : 'border border-transparent text-muted-foreground hover:border-border'
@@ -151,7 +151,7 @@ export function ArchivedDashboardScreen() {
               {['Author', 'Label', 'Projects', 'Milestones', 'Reviews', 'Assignees', 'Sort'].map((label) => (
                 <button
                   key={label}
-                  className="rounded-full border border-border px-3 py-1 text-[11px] font-normal text-muted-foreground transition hover:border-foreground"
+                  className="rounded-full border border-border px-3 py-1 text-xs font-normal text-muted-foreground transition hover:border-foreground"
                 >
                   {label}
                 </button>
@@ -177,7 +177,7 @@ export function ArchivedDashboardScreen() {
                         </div>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mt-1">
                           <span className="font-normal text-muted-foreground">{pr.id}</span>
-                          <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px]">
+                          <span className="inline-flex items-center rounded-full border border-border px-2 py-0.5 text-xs">
                             {pr.repoDisplay}
                           </span>
                           <span>{pr.time}</span>
@@ -195,7 +195,7 @@ export function ArchivedDashboardScreen() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs text-muted-foreground transition-colors hover:border hover:border-border hover:bg-muted/80 focus-visible:border focus-visible:border-border focus-visible:bg-muted/80">
+                        <button className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs text-muted-foreground transition-colors hover:border hover:border-border hover:bg-muted/60 focus-visible:border focus-visible:border-border focus-visible:bg-muted/80">
                           <Bot className="h-4 w-4 text-muted-foreground" />
                           {pr.comments}
                         </button>
@@ -210,7 +210,7 @@ export function ArchivedDashboardScreen() {
                               onClick={() => handleSelectPr(popoverPr.repoKey)}
                             >
                               <p className="font-medium text-foreground text-xs leading-tight truncate w-full">{popoverPr.title}</p>
-                              <p className="text-[10px] text-muted-foreground leading-tight truncate w-full">{popoverPr.repoDisplay}</p>
+                              <p className="text-xs text-muted-foreground leading-tight truncate w-full">{popoverPr.repoDisplay}</p>
                             </button>
                           ))}
                         </div>

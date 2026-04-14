@@ -83,7 +83,7 @@ export function CommentsDialog({ count, trigger }: CommentsDialogProps) {
         {trigger ?? (
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-0.5 text-xs text-foreground bg-transparent hover:bg-muted/70 hover:border-border transition-colors"
+            className="inline-flex items-center gap-1 rounded-full border border-transparent px-2 py-0.5 text-xs text-foreground bg-transparent hover:bg-muted/60 hover:border-border transition-colors"
             aria-label="View comments"
             onClick={(event) => event.stopPropagation()}
           >
@@ -110,10 +110,10 @@ export function CommentsDialog({ count, trigger }: CommentsDialogProps) {
                       <span>{comment.date}</span>
                     </span>
                     <div className="flex items-center gap-2">
-                      <button className="rounded-[4px] border border-border px-3 py-1 text-[11px] font-semibold text-muted-foreground hover:bg-muted/70">
+                      <button className="rounded-md border border-border px-3 py-1 text-xs font-semibold text-muted-foreground hover:bg-muted/60">
                         View Comment
                       </button>
-                      <button className="rounded-[4px] border border-transparent bg-accent/10 px-3 py-1 text-[11px] font-semibold text-accent hover:bg-accent/20">
+                      <button className="rounded-md border border-transparent bg-accent/10 px-3 py-1 text-xs font-semibold text-accent hover:bg-accent/20">
                         Fix
                       </button>
                     </div>
@@ -134,7 +134,7 @@ export function CommentsDialog({ count, trigger }: CommentsDialogProps) {
             <DialogClose asChild>
               <button
                 type="button"
-                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors"
+                className="rounded-md border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
               >
                 Close
               </button>

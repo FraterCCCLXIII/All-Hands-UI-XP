@@ -29,12 +29,12 @@ export function NewLlmSwitcherScreen() {
                 className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm transition-colors ${
                   selectedRole === role
                     ? 'bg-muted/60 text-foreground'
-                    : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                 }`}
               >
                 <span>{role}</span>
                 {selectedRole === role && (
-                  <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Active</span>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Active</span>
                 )}
               </button>
             ))}
