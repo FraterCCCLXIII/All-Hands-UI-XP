@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Cpu, Download, GitBranch, Github, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { Download, MoreVertical, Pencil, Trash } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
   DropdownMenu,
@@ -221,12 +221,12 @@ export function ConversationDrawer({
             event.preventDefault();
           }
         }}
-        className="flex h-full max-h-screen min-h-0 flex-col overflow-hidden p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-[49]"
+        className="flex h-full max-h-screen min-h-0 flex-col overflow-hidden p-0 w-full md:w-[400px] sm:max-w-none border-r border-border bg-background left-16 z-[49]"
       >
         <div
           ref={panelRef}
           data-testid="conversation-panel"
-          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-card px-2 py-1 custom-scrollbar"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-background pr-2 py-1 custom-scrollbar"
         >
           {items.map((conversation) => {
             const isAutomation = conversation.tag === 'Automation';
@@ -268,18 +268,13 @@ export function ConversationDrawer({
             >
               <div className="flex items-center justify-between w-full">
                 <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden mr-2">
-                  <div className="flex items-center">
-                    <div className="inline-flex">
-                      <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />
-                    </div>
-                  </div>
                   <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
                     {editingConversationId === conversation.id ? (
                       <Input
                         data-testid="conversation-card-title"
                         data-conversation-rename-input={conversation.id}
                         aria-label="Conversation name"
-                        className="h-7 min-w-0 flex-1 border-border bg-background px-2 py-0 text-xs font-semibold leading-6 text-foreground shadow-sm"
+                        className="h-7 min-w-0 flex-1 border-border bg-background px-2 py-0 text-xs font-normal leading-6 text-foreground shadow-sm"
                         value={editingNameDraft}
                         onChange={(e) => setEditingNameDraft(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
@@ -313,13 +308,22 @@ export function ConversationDrawer({
                         }}
                       />
                     ) : (
-                      <p
-                        data-testid="conversation-card-title"
-                        className="min-w-0 truncate text-xs font-semibold leading-6 text-foreground"
-                        title={conversation.name}
-                      >
-                        {conversation.name}
-                      </p>
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <p
+                          data-testid="conversation-card-title"
+                          className="min-w-0 truncate text-sm font-normal leading-6 text-foreground"
+                          title={conversation.name}
+                        >
+                          {conversation.name}
+                        </p>
+                        <div className={cn(
+                          'h-1.5 w-1.5 rounded-full shrink-0',
+                          conversation.status === 'running' && 'bg-green-500',
+                          conversation.status === 'awaiting' && 'bg-yellow-400',
+                          conversation.status === 'error' && 'bg-red-500',
+                          !conversation.status && 'bg-muted-foreground',
+                        )} />
+                      </span>
                     )}
                     <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-semibold lowercase text-muted-foreground">
                       {conversation.version}
@@ -420,39 +424,36 @@ export function ConversationDrawer({
                   </DropdownMenu>
                 </div>
               </div>
-              <div className="flex flex-row items-center gap-2 mt-1 min-w-0">
-                <div className="flex items-center gap-3 min-w-0 shrink text-muted-foreground overflow-hidden">
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Github className="w-3 h-3" />
+              <div className="flex flex-row items-center gap-2 mt-1 min-w-0 text-[10px] text-muted-foreground">
+                <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
+                  <div className="flex min-w-0 items-center gap-1 overflow-hidden">
                     <span
                       data-testid="conversation-card-selected-repository"
-                      className="text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-44"
+                      className="whitespace-nowrap overflow-hidden text-ellipsis"
                     >
                       {conversation.repo}
                     </span>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <GitBranch className="w-3 h-3" />
-                    <span
-                      data-testid="conversation-card-selected-branch"
-                      className="text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-24"
-                    >
-                      {conversation.branch ?? ''}
-                    </span>
+                    {conversation.branch ? (
+                      <span className="inline-flex shrink-0 items-center rounded bg-muted/50 px-1.5 py-0.5">
+                        <span
+                          data-testid="conversation-card-selected-branch"
+                          className="whitespace-nowrap overflow-hidden text-ellipsis max-w-24"
+                        >
+                          {conversation.branch}
+                        </span>
+                      </span>
+                    ) : null}
                   </div>
                   {conversation.model ? (
-                    <div className="flex min-w-0 items-center gap-1">
-                      <Cpu className="h-3 w-3 shrink-0" aria-hidden />
-                      <span
-                        data-testid="conversation-card-model"
-                        className="min-w-0 truncate text-xs text-muted-foreground"
-                      >
-                        {conversation.model}
-                      </span>
-                    </div>
+                    <span
+                      data-testid="conversation-card-model"
+                      className="shrink-0"
+                    >
+                      {conversation.model}
+                    </span>
                   ) : null}
                 </div>
-                <p className="ml-auto shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                <p className="ml-auto shrink-0 whitespace-nowrap">
                   <time>{conversation.time}</time>
                 </p>
               </div>

@@ -128,8 +128,8 @@ const ActiveChatPreview = () => (
     onChatContentModeChange={() => {}}
     repositoryStatus="connected"
     onRepositoryStatusChange={() => {}}
-    showStatusBadge
-    onToggleStatusBadge={() => {}}
+    statusBadgeState="off"
+    onStatusBadgeStateChange={() => {}}
     automationContextTitle="PR Triage Digest"
     onAutomationContextTitleChange={() => {}}
   />

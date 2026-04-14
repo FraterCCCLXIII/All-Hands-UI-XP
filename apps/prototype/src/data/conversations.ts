@@ -1,3 +1,5 @@
+export type ConversationStatus = 'running' | 'awaiting' | 'error';
+
 export interface ConversationSummary {
   id: string;
   name: string;
@@ -8,6 +10,8 @@ export interface ConversationSummary {
   /** LLM / model label shown after branch in the conversation drawer. */
   model?: string;
   time: string;
+  /** Agent status driving the indicator dot color. */
+  status?: ConversationStatus;
 }
 
 export const conversationSummaries: ConversationSummary[] = [
@@ -19,6 +23,7 @@ export const conversationSummaries: ConversationSummary[] = [
     branch: 'main',
     model: 'GPT-5',
     time: '1h ago',
+    status: 'running',
   },
   {
     id: '0ff1812ced8f453189e945365bd52268',
@@ -27,6 +32,7 @@ export const conversationSummaries: ConversationSummary[] = [
     repo: 'FraterCCCLXIII/chatrtk',
     model: 'Claude Opus',
     time: '3d ago',
+    status: 'awaiting',
   },
   {
     id: 'sample-conv-billing-onboarding',
@@ -37,6 +43,7 @@ export const conversationSummaries: ConversationSummary[] = [
     branch: 'feat/billing-onboarding',
     model: 'GPT-4o',
     time: '2h ago',
+    status: 'error',
   },
   {
     id: 'sample-conv-checkout-e2e',
@@ -46,6 +53,7 @@ export const conversationSummaries: ConversationSummary[] = [
     branch: 'fix/checkout-e2e',
     model: 'Claude 3.5 Sonnet',
     time: '5h ago',
+    status: 'running',
   },
   {
     id: 'sample-conv-tokens-audit',

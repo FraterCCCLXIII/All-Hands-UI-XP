@@ -3,7 +3,7 @@ export { DashboardScreen } from './DashboardScreen';
 export { AutomationsScreen } from './AutomationsScreen';
 export { ExtensionsScreen } from './ExtensionsScreen';
 export { LoginScreen } from './LoginScreen';
-export { ActiveChatScreen } from './ActiveChatScreen';
+export { ActiveChatScreen, type StatusBadgeState } from './ActiveChatScreen';
 export { ComponentLibraryScreen } from './ComponentLibraryScreen';
 export { NewLlmSwitcherScreen } from './NewLlmSwitcherScreen';
 export { NewLlmSwitcherScreen2 } from './NewLlmSwitcherScreen2';

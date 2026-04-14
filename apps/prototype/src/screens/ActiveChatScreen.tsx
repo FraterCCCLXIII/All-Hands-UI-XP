@@ -53,6 +53,8 @@ import {
   FilePlus,
   Image as ImageIcon,
   Share2,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -83,6 +85,8 @@ import {
   DropdownMenuLabel,
 } from '../components/ui/dropdown-menu';
 
+export type StatusBadgeState = 'off' | 'running' | 'waiting' | 'finished' | 'error';
+
 interface ActiveChatScreenProps {
   theme: Theme;
   getThemeClasses: (element: ThemeElement) => string;
@@ -98,8 +102,8 @@ interface ActiveChatScreenProps {
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
   repositoryName?: string | null;
   branchName?: string | null;
-  showStatusBadge: boolean;
-  onToggleStatusBadge: () => void;
+  statusBadgeState: StatusBadgeState;
+  onStatusBadgeStateChange: (state: StatusBadgeState) => void;
   /** When set, shows automation icon + title above the chat header. */
   automationContextTitle: string | null;
   onAutomationContextTitleChange: (title: string | null) => void;
@@ -114,7 +118,22 @@ const MAX_LEFT_PANEL_PCT = 78;
 const CHAT_INPUT_MAX_LINES = 4;
 const CHAT_INPUT_MIN_LINES = 1;
 
-type TabId = 'changes' | 'code' | 'terminal' | 'app' | 'browser' | 'planner';
+const STATUS_BADGE_LABELS: Record<Exclude<StatusBadgeState, 'off'>, string> = {
+  running: 'Running',
+  waiting: 'Waiting',
+  finished: 'Done',
+  error: 'Error',
+};
+
+const STATUS_BADGE_OPTIONS: { value: StatusBadgeState; label: string }[] = [
+  { value: 'off', label: 'Off' },
+  { value: 'running', label: 'Running' },
+  { value: 'waiting', label: 'Waiting' },
+  { value: 'finished', label: 'Done' },
+  { value: 'error', label: 'Error' },
+];
+
+type TabId = 'changes' | 'code' | 'terminal' | 'app' | 'browser' | 'planner' | 'tasks';
 
 const CANVAS_TAB_ARIA: Record<TabId, string> = {
   changes: 'Changes',
@@ -123,6 +142,7 @@ const CANVAS_TAB_ARIA: Record<TabId, string> = {
   app: 'App',
   browser: 'Browser',
   planner: 'Planner',
+  tasks: 'Tasks',
 };
 
 /** Opens in a new tab from the Code tab external-link control */
@@ -137,9 +157,10 @@ const DEFAULT_PINNED: Record<TabId, boolean> = {
   app: true,
   browser: true,
   planner: true,
+  tasks: true,
 };
 
-const CANVAS_TAB_ORDER: TabId[] = ['changes', 'code', 'terminal', 'app', 'browser', 'planner'];
+const CANVAS_TAB_ORDER: TabId[] = ['changes', 'code', 'terminal', 'app', 'browser', 'planner', 'tasks'];
 
 const CONVERSATION_LOAD_DURATION_MS = 2000;
 const DEFAULT_LLM_MODEL = 'Claude 3.5 Sonnet';
@@ -344,6 +365,64 @@ function CopyableBlock({
   );
 }
 
+const STATUS_BADGE_CONFIG: Record<
+  Exclude<StatusBadgeState, 'off'>,
+  { label: string; icon: ReactNode }
+> = {
+  running: {
+    label: 'Running',
+    icon: (
+      <button
+        type="button"
+        data-testid="stop-button"
+        className="cursor-pointer flex items-center justify-center"
+        aria-label="Stop agent"
+      >
+        <Square className="w-3 h-3 text-foreground fill-foreground" />
+      </button>
+    ),
+  },
+  waiting: {
+    label: 'Waiting',
+    icon: <Clock className="w-4 h-4 text-foreground" />,
+  },
+  finished: {
+    label: 'Done',
+    icon: <CheckCircle2 className="w-4 h-4 text-foreground" />,
+  },
+  error: {
+    label: 'Error',
+    icon: (
+      <div data-testid="agent-loading-spinner">
+        <AlertCircle className="w-4 h-4 text-destructive" />
+      </div>
+    ),
+  },
+};
+
+function AgentStatusBadge({ state }: { state: StatusBadgeState }) {
+  if (state === 'off') return null;
+  const { label, icon } = STATUS_BADGE_CONFIG[state];
+  return (
+    <div className="flex items-center gap-1 min-w-0 ml-2 md:ml-3">
+      <span
+        className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate"
+        title={label}
+      >
+        {label}
+      </span>
+      <div
+        className={cn(
+          'bg-muted box-border flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 rounded-[100px] shrink-0 size-6',
+          state === 'running' && 'cursor-pointer transition-colors hover:bg-muted/80 active:scale-95'
+        )}
+      >
+        {icon}
+      </div>
+    </div>
+  );
+}
+
 export function ActiveChatScreen({
   theme,
   getThemeClasses,
@@ -359,8 +438,8 @@ export function ActiveChatScreen({
   onRepositoryStatusChange,
   repositoryName,
   branchName,
-  showStatusBadge,
-  onToggleStatusBadge,
+  statusBadgeState,
+  onStatusBadgeStateChange,
   automationContextTitle,
   onAutomationContextTitleChange,
   initialCanvasOpen = true,
@@ -383,6 +462,7 @@ export function ActiveChatScreen({
     app: false,
     browser: false,
     planner: false,
+    tasks: false,
   });
   const [chatInput, setChatInput] = useState('');
   const chatInputRef = useRef<HTMLDivElement>(null);
@@ -408,7 +488,7 @@ export function ActiveChatScreen({
   const [ranCommandExpanded, setRanCommandExpanded] = useState(false);
   const [attachmentPreviewsEnabled, setAttachmentPreviewsEnabled] = useState(true);
   const [composerAttachments, setComposerAttachments] = useState<ComposerAttachmentPreview[]>([]);
-  const shouldShowStatusBadge = showStatusBadge || !conversationLoaded;
+  const shouldShowStatusBadge = statusBadgeState !== 'off' || !conversationLoaded;
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedRepository, setSelectedRepository] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('main');
@@ -1066,6 +1146,16 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.planner}
                 />
               )}
+              {pinnedTabs.tasks && (
+                <TabButton
+                  label="Tasks"
+                  active={activeTab === 'tasks' && canvasOpen}
+                  onClick={() => handleCanvasTabClick('tasks')}
+                  ariaLabel="Tasks"
+                  icon={<ListTodo className="w-4 h-4 flex-shrink-0" strokeWidth={2} />}
+                  tooltip={CANVAS_TAB_ARIA.tasks}
+                />
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
@@ -1089,6 +1179,7 @@ export function ActiveChatScreen({
                       { id: 'app' as const, label: 'App', icon: <Monitor className="w-4 h-4" /> },
                       { id: 'browser' as const, label: 'Browser', icon: <Globe className="w-4 h-4" /> },
                       { id: 'planner' as const, label: 'Planner', icon: <ClipboardList className="w-4 h-4" /> },
+                      { id: 'tasks' as const, label: 'Tasks', icon: <ListTodo className="w-4 h-4" /> },
                     ] as const
                   ).map(({ id, label, icon }) => {
                     const isPinned = pinnedTabs[id];
@@ -1631,7 +1722,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                               Refresh
                             </button>
                           </div>
-                            {showStatusBadge && (
+                            {statusBadgeState !== 'off' && (
                               <div className="sr-only" />
                             )}
                             <div className="relative w-full">
@@ -2102,16 +2193,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
-                                  <div className="flex items-center gap-1 min-w-0 ml-2 md:ml-3">
-                                    <span className="text-[11px] text-foreground font-normal leading-5 flex-1 min-w-0 max-w-full truncate" title="Error. Retry.">
-                                      Error. Retry.
-                                    </span>
-                                    <div className="bg-muted box-border flex flex-row gap-[3px] items-center justify-center overflow-clip px-0.5 py-1 rounded-[100px] shrink-0 size-6">
-                                      <div data-testid="agent-loading-spinner">
-                                        <Loader2 className="w-4 h-4 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                                      </div>
-                                    </div>
-                                  </div>
+                                  <AgentStatusBadge state={statusBadgeState} />
                                 </div>
                               </div>
                             </div>
@@ -2392,23 +2474,30 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
           </div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Status Badge</div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={showStatusBadge}
-              onClick={onToggleStatusBadge}
-              className={cn(
-                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
-                showStatusBadge ? 'bg-foreground/80' : 'bg-muted/60'
-              )}
-            >
-              <span
-                className={cn(
-                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
-                  showStatusBadge ? 'translate-x-4' : 'translate-x-0'
-                )}
-              />
-            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
+                  aria-label="Status badge state"
+                >
+                  <span className="capitalize">{statusBadgeState === 'off' ? 'Off' : STATUS_BADGE_LABELS[statusBadgeState]}</span>
+                  <ChevronDown className="h-3 w-3 shrink-0 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[140px] rounded-[6px] py-[6px] px-1">
+                {STATUS_BADGE_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    className="cursor-pointer gap-2"
+                    onSelect={() => onStatusBadgeStateChange(option.value)}
+                  >
+                    {option.label}
+                    {statusBadgeState === option.value && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-foreground" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Attachment Previews</div>
@@ -3794,6 +3883,93 @@ function TerminalCanvasFilledOutput() {
   );
 }
 
+// ─── Tasks canvas ────────────────────────────────────────────────────────────
+
+type CanvasTaskStatus = 'completed' | 'in_progress' | 'pending';
+
+interface CanvasTask {
+  id: string;
+  title: string;
+  status: CanvasTaskStatus;
+}
+
+const CANVAS_TASKS_SAMPLE: CanvasTask[] = [
+  { id: 't1', title: 'Set up project repository', status: 'completed' },
+  { id: 't2', title: 'Install dependencies', status: 'completed' },
+  { id: 't3', title: 'Create database schema', status: 'completed' },
+  { id: 't4', title: 'Build authentication system', status: 'in_progress' },
+  { id: 't5', title: 'Implement API endpoints', status: 'pending' },
+  { id: 't6', title: 'Create frontend components', status: 'pending' },
+  { id: 't7', title: 'Write tests', status: 'pending' },
+  { id: 't8', title: 'Deploy to production', status: 'pending' },
+];
+
+function TaskCompletedIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M14.72 8.79L10.43 13.09L8.78 11.44C8.69036 11.3353 8.58004 11.2503 8.45597 11.1903C8.33191 11.1303 8.19678 11.0965 8.05906 11.0912C7.92134 11.0859 7.78401 11.1091 7.65568 11.1594C7.52736 11.2096 7.41081 11.2859 7.31335 11.3833C7.2159 11.4808 7.13964 11.5974 7.08937 11.7257C7.03909 11.854 7.01589 11.9913 7.02121 12.1291C7.02653 12.2668 7.06026 12.4019 7.12028 12.526C7.1803 12.65 7.26532 12.7604 7.37 12.85L9.72 15.21C9.81344 15.3027 9.92426 15.376 10.0461 15.4258C10.1679 15.4755 10.2984 15.5008 10.43 15.5C10.6923 15.4989 10.9437 15.3947 11.13 15.21L16.13 10.21C16.2237 10.117 16.2981 10.0064 16.3489 9.88458C16.3997 9.76272 16.4258 9.63201 16.4258 9.5C16.4258 9.36799 16.3997 9.23728 16.3489 9.11542C16.2981 8.99356 16.2237 8.88296 16.13 8.79C15.9426 8.60375 15.6892 8.49921 15.425 8.49921C15.1608 8.49921 14.9074 8.60375 14.72 8.79ZM12 2C10.0222 2 8.08879 2.58649 6.4443 3.6853C4.79981 4.78412 3.51809 6.3459 2.76121 8.17317C2.00433 10.0004 1.8063 12.0111 2.19215 13.9509C2.578 15.8907 3.53041 17.6725 4.92894 19.0711C6.32746 20.4696 8.10929 21.422 10.0491 21.8079C11.9889 22.1937 13.9996 21.9957 15.8268 21.2388C17.6541 20.4819 19.2159 19.2002 20.3147 17.5557C21.4135 15.9112 22 13.9778 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7363 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2ZM12 20C10.4178 20 8.87104 19.5308 7.55544 18.6518C6.23985 17.7727 5.21447 16.5233 4.60897 15.0615C4.00347 13.5997 3.84504 11.9911 4.15372 10.4393C4.4624 8.88743 5.22433 7.46197 6.34315 6.34315C7.46197 5.22433 8.88743 4.4624 10.4393 4.15372C11.9911 3.84504 13.5997 4.00346 15.0615 4.60896C16.5233 5.21447 17.7727 6.23984 18.6518 7.55544C19.5308 8.87103 20 10.4177 20 12C20 14.1217 19.1572 16.1566 17.6569 17.6569C16.1566 19.1571 14.1217 20 12 20Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function TaskInProgressIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden>
+      <path d="M5.79029 12.9507C5.69629 12.9042 5.59557 12.8843 5.50157 12.8843C5.25314 12.8843 5.01142 13.0238 4.89728 13.2562C4.72942 13.5883 4.87042 13.9868 5.20614 14.1462C5.30014 14.1927 5.40086 14.2127 5.50157 14.2127C5.75 14.2127 5.985 14.0732 6.10586 13.8407C6.15286 13.7477 6.17301 13.6481 6.17301 13.5551C6.17301 13.3027 6.03201 13.0636 5.79029 12.9507ZM13.3641 12.3463C13.3641 12.3463 13.3909 12.333 13.3977 12.3198C13.4178 12.2998 13.4312 12.2733 13.4447 12.2533C13.4245 12.2865 13.3977 12.3198 13.3641 12.3463ZM3.91698 11.463C3.7827 11.2969 3.58798 11.2106 3.39326 11.2106C3.24555 11.2106 3.09783 11.2637 2.97697 11.3567C2.68154 11.5892 2.63454 12.0076 2.86283 12.2932C2.99712 12.4592 3.19183 12.5456 3.39326 12.5456C3.54098 12.5456 3.68869 12.4924 3.80955 12.3995C3.97741 12.2666 4.0647 12.074 4.0647 11.8814C4.0647 11.7353 4.0177 11.5892 3.91698 11.463ZM2.88297 9.32433C2.80911 9.01881 2.53382 8.80627 2.23168 8.80627C2.18468 8.80627 2.13096 8.81291 2.07725 8.8262C1.71467 8.9059 1.48638 9.26455 1.56696 9.61657C1.64081 9.92873 1.9161 10.1346 2.22496 10.1346C2.27196 10.1346 2.32568 10.1346 2.37268 10.1213C2.68825 10.0549 2.8964 9.77597 2.8964 9.47045C2.8964 9.42395 2.8964 9.37082 2.88297 9.32433ZM2.37939 6.15621C2.33239 6.14293 2.27868 6.14293 2.23168 6.14293C1.92282 6.14293 1.64753 6.34218 1.57367 6.65434C1.4931 7.013 1.71467 7.36501 2.07725 7.45135C2.13096 7.46464 2.17796 7.47128 2.22496 7.47128C2.53382 7.47128 2.80911 7.25874 2.88297 6.95322C2.8964 6.90673 2.8964 6.8536 2.8964 6.8071C2.8964 6.50158 2.69497 6.22263 2.37939 6.15621ZM3.82298 3.87809C3.70212 3.78511 3.55441 3.73197 3.40669 3.73197C3.20526 3.73197 3.01054 3.81831 2.87626 3.98436C2.64797 4.26995 2.69497 4.68838 2.98369 4.92085C3.10454 5.01383 3.25226 5.06696 3.39998 5.06696C3.59469 5.06696 3.79612 4.98062 3.9237 4.81458C4.02441 4.69503 4.07141 4.54227 4.07141 4.39615C4.07141 4.20354 3.99084 4.01093 3.82298 3.87809ZM6.11929 2.45011C6.00515 2.21101 5.76343 2.07153 5.50829 2.07153C5.41428 2.07153 5.31357 2.09146 5.21957 2.13795C4.88385 2.29735 4.74956 2.69586 4.90399 3.0213C5.02485 3.26041 5.25985 3.39988 5.50829 3.39988C5.609 3.39988 5.70972 3.37996 5.80372 3.33347C6.04543 3.22056 6.17972 2.98145 6.17972 2.73571C6.17972 2.63608 6.15958 2.5431 6.11929 2.45011Z" fill="currentColor" />
+      <path d="M14.8809 8.14215C14.8809 8.65356 14.8205 9.15834 14.7063 9.64983C14.5251 10.4269 14.2028 11.1708 13.7462 11.8482C13.6589 11.9811 13.5649 12.1073 13.4642 12.2268C13.4642 12.2401 13.4575 12.2468 13.444 12.2534C13.4239 12.2866 13.397 12.3198 13.3635 12.3464C12.7457 13.1102 11.9602 13.7212 11.0604 14.1529C11.047 14.1596 11.0269 14.1662 11.0134 14.1729C10.9194 14.2194 10.8187 14.2658 10.718 14.3057C9.90558 14.6378 9.01928 14.8105 8.1397 14.8105H8.11955C7.74355 14.8038 7.45483 14.5116 7.45483 14.1463C7.45483 13.781 7.75698 13.4821 8.12627 13.4821H8.14641C8.85142 13.4821 9.55643 13.3426 10.2077 13.077C11.047 12.7316 11.7789 12.187 12.3496 11.4896C12.4436 11.37 12.5443 11.2438 12.6316 11.111C12.9942 10.5664 13.256 9.97527 13.397 9.35095C13.397 9.33766 13.397 9.32438 13.397 9.31774C13.4843 8.93252 13.5313 8.54065 13.5313 8.14215C13.5313 7.43812 13.3903 6.75402 13.1218 6.10313C12.927 5.64485 12.6786 5.21978 12.3697 4.83455C12.2422 4.67515 12.1012 4.51575 11.9535 4.36963C11.4499 3.8715 10.859 3.47964 10.201 3.21397C9.55643 2.9483 8.86485 2.81546 8.16655 2.80882H8.13298C7.76369 2.80882 7.46155 2.50994 7.46155 2.14464C7.46155 1.77935 7.76369 1.48047 8.13298 1.48047H8.17327C9.05285 1.48711 9.90557 1.65315 10.7113 1.98524C10.8322 2.03838 10.953 2.08487 11.0672 2.14464C11.0806 2.15129 11.094 2.15793 11.1007 2.15793C11.7722 2.48337 12.3697 2.90845 12.9002 3.43314C13.0815 3.61247 13.256 3.80508 13.4172 4.00434C13.4239 4.01098 13.4239 4.01762 13.4306 4.02426C13.8133 4.49583 14.1222 5.02717 14.3639 5.59171C14.4982 5.91052 14.6056 6.24261 14.6795 6.57469C14.6929 6.62119 14.7063 6.66768 14.7131 6.71417C14.8205 7.17909 14.8742 7.6573 14.8742 8.14215H14.8809Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function TaskPendingIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <path d="M12 2C10.0222 2 8.08879 2.58649 6.4443 3.6853C4.79981 4.78412 3.51809 6.3459 2.76121 8.17317C2.00433 10.0004 1.8063 12.0111 2.19215 13.9509C2.578 15.8907 3.53041 17.6725 4.92894 19.0711C6.32746 20.4696 8.10929 21.422 10.0491 21.8079C11.9889 22.1937 13.9996 21.9957 15.8268 21.2388C17.6541 20.4819 19.2159 19.2002 20.3147 17.5557C21.4135 15.9112 22 13.9778 22 12C22 10.6868 21.7413 9.38642 21.2388 8.17317C20.7363 6.95991 19.9997 5.85752 19.0711 4.92893C18.1425 4.00035 17.0401 3.26375 15.8268 2.7612C14.6136 2.25866 13.3132 2 12 2ZM12 20C10.4178 20 8.87104 19.5308 7.55544 18.6518C6.23985 17.7727 5.21447 16.5233 4.60897 15.0615C4.00347 13.5997 3.84504 11.9911 4.15372 10.4393C4.4624 8.88743 5.22433 7.46197 6.34315 6.34315C7.46197 5.22433 8.88743 4.4624 10.4393 4.15372C11.9911 3.84504 13.5997 4.00346 15.0615 4.60896C16.5233 5.21447 17.7727 6.23984 18.6518 7.55544C19.5308 8.87103 20 10.4177 20 12C20 14.1217 19.1572 16.1566 17.6569 17.6569C16.1566 19.1571 14.1217 20 12 20Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function TasksCanvasFilled() {
+  return (
+    <main className="flex flex-col h-full overflow-y-auto">
+      {CANVAS_TASKS_SAMPLE.map((task) => {
+        const isInProgress = task.status === 'in_progress';
+        const isCompleted = task.status === 'completed';
+        return (
+          <div
+            key={task.id}
+            className={cn('px-4 py-2', isInProgress && 'bg-muted/40')}
+          >
+            <div className="flex gap-2 items-center w-full">
+              <div className="shrink-0">
+                {isCompleted && (
+                  <TaskCompletedIcon className="w-4 h-4 text-muted-foreground" />
+                )}
+                {isInProgress && (
+                  <TaskInProgressIcon className="w-4 h-4 text-foreground" />
+                )}
+                {task.status === 'pending' && (
+                  <TaskPendingIcon className="w-4 h-4 text-foreground" />
+                )}
+              </div>
+              <span
+                className={cn(
+                  'text-[12px] font-normal leading-4',
+                  isCompleted ? 'text-muted-foreground' : 'text-foreground'
+                )}
+              >
+                {task.title}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+    </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function CanvasTabEmptyContent({
   activeTab,
   onCreatePlan,
@@ -3934,6 +4110,31 @@ function CanvasTabEmptyContent({
           <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-md">
             <div className="absolute inset-0 flex flex-col overflow-auto p-4">
               <PlannerFilledPlanSample />
+            </div>
+          </div>
+        </div>
+      );
+    case 'tasks':
+      if (!filled) {
+        return (
+          <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
+            <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
+              <ListTodo strokeWidth={1.75} />
+            </div>
+            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+              No tasks yet. OpenHands will track progress here as it works on your request.
+            </p>
+          </div>
+        );
+      }
+      return (
+        <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-transparent text-left">
+          <div className={cn(CANVAS_PANEL_HEADER_CLASS)}>
+            <span className="text-xs font-medium leading-none text-foreground">Task List</span>
+          </div>
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-b-md">
+            <div className="absolute inset-0 flex flex-col overflow-y-auto">
+              <TasksCanvasFilled />
             </div>
           </div>
         </div>

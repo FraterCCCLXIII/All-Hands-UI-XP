@@ -15,6 +15,7 @@ import {
   ExtensionsScreen,
   LoginScreen,
   ActiveChatScreen,
+  type StatusBadgeState,
   ComponentLibraryScreen,
   NewLlmSwitcherScreen,
   NewLlmSwitcherScreen2,
@@ -128,7 +129,7 @@ function App() {
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
   const [activeChatRepositoryName, setActiveChatRepositoryName] = useState<string | null>(null);
   const [activeChatBranchName, setActiveChatBranchName] = useState<string | null>(null);
-  const [showStatusBadge, setShowStatusBadge] = useState(false);
+  const [statusBadgeState, setStatusBadgeState] = useState<StatusBadgeState>('off');
   const [activeChatAutomationTitle, setActiveChatAutomationTitle] = useState<string | null>(null);
   const [projectTitle, setProjectTitle] = useState('My Project');
   const chatCanvasDefaultOpen = useMemo(
@@ -869,8 +870,8 @@ function App() {
                       onRepositoryStatusChange={setRepositoryStatus}
                       repositoryName={activeChatRepositoryName}
                       branchName={activeChatBranchName}
-                      showStatusBadge={showStatusBadge}
-                      onToggleStatusBadge={() => setShowStatusBadge((prev) => !prev)}
+                      statusBadgeState={statusBadgeState}
+                      onStatusBadgeStateChange={setStatusBadgeState}
                       automationContextTitle={activeChatAutomationTitle}
                       onAutomationContextTitleChange={setActiveChatAutomationTitle}
                       initialCanvasOpen={chatCanvasDefaultOpen}
