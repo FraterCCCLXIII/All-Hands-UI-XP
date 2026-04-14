@@ -273,6 +273,7 @@ export function ComponentLibraryScreen({
   const [drawerTab, setDrawerTab] = useState<DrawerTab['id']>('tasks');
   const [drawerCollapsed, setDrawerCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(isFigmaExport && exportItemId === 'chat-conversation-drawer');
+  const [previewDrawerConversations, setPreviewDrawerConversations] = useState(() => conversationSummaries.slice(0, 3));
   const [showWelcome, setShowWelcome] = useState(isFigmaExport && exportItemId === 'chat-welcome-screen');
   const [canvasView, setCanvasView] = useState<'changes' | 'code' | 'terminal' | 'browser' | 'preview'>('preview');
   const [canvasContentType, setCanvasContentType] = useState<CanvasContentType>('preview');
@@ -1282,7 +1283,12 @@ export function ComponentLibraryScreen({
                 <ConversationDrawer
                   open={drawerOpen}
                   onOpenChange={setDrawerOpen}
-                  conversations={conversationSummaries.slice(0, 3)}
+                  conversations={previewDrawerConversations}
+                  onRenameConversation={(conversationId, name) => {
+                    setPreviewDrawerConversations((prev) =>
+                      prev.map((c) => (c.id === conversationId ? { ...c, name } : c))
+                    );
+                  }}
                 />
               </div>
             ),

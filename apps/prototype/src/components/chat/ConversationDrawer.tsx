@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Cpu, Download, GitBranch, Github, MoreVertical, Pencil, Trash } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import {
@@ -9,6 +9,16 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Sheet, SheetContent } from '../ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { type ConversationSummary } from '../../data/conversations';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 
@@ -18,6 +28,27 @@ interface ConversationDrawerProps {
   conversations: ConversationSummary[];
   highlightedConversationId?: string | null;
   onSelectConversation?: (conversation: ConversationSummary) => void;
+  onRenameConversation?: (conversationId: string, name: string) => void;
+}
+
+/** Dropdown menu is portaled outside the Sheet; Sheet must ignore those interactions. */
+function isDropdownMenuElement(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(
+    target.closest('[data-conversation-dropdown-menu]') ||
+      target.closest('[data-radix-dropdown-menu-content]') ||
+      target.closest('[data-radix-dropdown-menu-sub-content]')
+  );
+}
+
+/** Pointer/focus targets can be wrong for portaled menus; walk composedPath when available. */
+function isDropdownMenuInteraction(event: {
+  target: EventTarget | null;
+  composedPath?: () => EventTarget[];
+}): boolean {
+  const path =
+    typeof event.composedPath === 'function' ? event.composedPath() : [event.target as EventTarget];
+  return path.some((node) => isDropdownMenuElement(node));
 }
 
 /** Matches left-nav Automations icon at drawer list size; unique clip id per instance. */
@@ -69,15 +100,80 @@ function AutomationDrawerIcon({ className }: { className?: string }) {
   );
 }
 
+const conversationMenuContentClass =
+  'z-[110] min-w-[12rem] rounded-lg border border-border/70 bg-card p-1 text-foreground shadow-md overflow-hidden';
+
+const conversationMenuItemClass =
+  'gap-2 cursor-pointer rounded-md text-sm text-foreground [&_svg]:text-muted-foreground';
+
 export function ConversationDrawer({
   open,
   onOpenChange,
   conversations,
   highlightedConversationId = null,
   onSelectConversation,
+  onRenameConversation,
 }: ConversationDrawerProps) {
   const items = useMemo(() => conversations, [conversations]);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const menuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ConversationSummary | null>(null);
+  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
+  const [editingNameDraft, setEditingNameDraft] = useState('');
+  const ignoreRenameBlurOnceRef = useRef(false);
+  const [openMenuConversationId, setOpenMenuConversationId] = useState<string | null>(null);
+
+  const cancelInlineRename = () => {
+    setEditingConversationId(null);
+    setEditingNameDraft('');
+  };
+
+  const commitInlineRename = (conversationId: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    onRenameConversation?.(conversationId, trimmed);
+    cancelInlineRename();
+  };
+
+  const cancelMenuCloseTimer = () => {
+    if (menuCloseTimerRef.current) {
+      clearTimeout(menuCloseTimerRef.current);
+      menuCloseTimerRef.current = null;
+    }
+  };
+
+  const scheduleMenuClose = () => {
+    cancelMenuCloseTimer();
+    menuCloseTimerRef.current = setTimeout(() => {
+      setOpenMenuConversationId(null);
+      menuCloseTimerRef.current = null;
+    }, 220);
+  };
+
+  useEffect(() => {
+    return () => cancelMenuCloseTimer();
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      cancelMenuCloseTimer();
+      setOpenMenuConversationId(null);
+      setEditingConversationId(null);
+      setEditingNameDraft('');
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!editingConversationId) return;
+    const id = requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLInputElement>(
+        `[data-conversation-rename-input="${editingConversationId}"]`
+      );
+      el?.focus();
+      el?.select();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [editingConversationId]);
 
   useEffect(() => {
     if (!open || !highlightedConversationId || !panelRef.current) {
@@ -92,24 +188,45 @@ export function ConversationDrawer({
   }, [highlightedConversationId, open]);
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        overlayClassName="bg-transparent pointer-events-none left-16 right-0"
+        overlayClassName="z-[40] bg-transparent pointer-events-none left-16 right-0"
         hideClose
+        onInteractOutside={(event) => {
+          // If a conversation menu is open, any "outside" interaction is a menu click — keep sheet open.
+          if (openMenuConversationId !== null || isDropdownMenuInteraction(event)) {
+            event.preventDefault();
+          }
+        }}
         onPointerDownOutside={(event) => {
+          if (openMenuConversationId !== null || isDropdownMenuInteraction(event)) {
+            event.preventDefault();
+            return;
+          }
           const target = event.target as HTMLElement | null;
           if (target?.closest('[data-conversation-toggle="true"]')) {
             // Let the nav toggle button control open/close state itself.
             event.preventDefault();
           }
         }}
-        className="p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-40"
+        onFocusOutside={(event) => {
+          if (openMenuConversationId !== null) {
+            event.preventDefault();
+            return;
+          }
+          const related = (event as unknown as FocusEvent).relatedTarget;
+          if (isDropdownMenuElement(related)) {
+            event.preventDefault();
+          }
+        }}
+        className="flex h-full max-h-screen min-h-0 flex-col overflow-hidden p-0 w-full md:w-[400px] sm:max-w-none border-x border-border bg-card left-16 z-[49]"
       >
         <div
           ref={panelRef}
           data-testid="conversation-panel"
-          className="flex-1 min-w-0 h-full bg-card overflow-y-auto hide-scrollbar"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-card px-2 py-1 custom-scrollbar"
         >
           {items.map((conversation) => {
             const isAutomation = conversation.tag === 'Automation';
@@ -126,19 +243,23 @@ export function ConversationDrawer({
               data-conversation-id={conversation.id}
               tabIndex={0}
               className={cn(
-                'relative h-auto w-full cursor-pointer border-b border-border p-3.5 outline-none transition-colors',
+                'group relative h-auto w-full cursor-pointer rounded-lg p-3.5 outline-none transition-all duration-300',
                 'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
-                !isHighlighted && 'hover:bg-muted/60 focus-visible:bg-muted/60',
-                isHighlighted &&
-                  !isAutomation &&
-                  'bg-success/10 ring-1 ring-inset ring-success/40 hover:bg-success/[0.14] focus-visible:bg-success/[0.14]',
-                isHighlighted &&
-                  isAutomation &&
-                  'bg-muted/40 ring-1 ring-inset ring-border hover:bg-muted/55 focus-visible:bg-muted/55',
+                // Match ChatStartScreen suggestion tiles + WelcomeScreen list rows
+                'hover:bg-muted/60 focus-visible:bg-muted/60',
+                isHighlighted && 'bg-muted/40 ring-1 ring-inset ring-border/60',
               )}
               aria-label={`Open ${conversation.name} in chat`}
-              onClick={openChatActive}
+              onClick={() => {
+                if (editingConversationId === conversation.id) return;
+                if (editingConversationId && editingConversationId !== conversation.id) {
+                  setEditingConversationId(null);
+                  setEditingNameDraft('');
+                }
+                openChatActive();
+              }}
               onKeyDown={(event) => {
+                if (editingConversationId === conversation.id) return;
                 if (event.key !== 'Enter' && event.key !== ' ') return;
                 if ((event.target as HTMLElement).closest('[data-conversation-menu-trigger="true"]')) return;
                 event.preventDefault();
@@ -153,13 +274,53 @@ export function ConversationDrawer({
                     </div>
                   </div>
                   <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                    <p
-                      data-testid="conversation-card-title"
-                      className="min-w-0 truncate text-xs font-semibold leading-6 text-foreground"
-                      title={conversation.name}
-                    >
-                      {conversation.name}
-                    </p>
+                    {editingConversationId === conversation.id ? (
+                      <Input
+                        data-testid="conversation-card-title"
+                        data-conversation-rename-input={conversation.id}
+                        aria-label="Conversation name"
+                        className="h-7 min-w-0 flex-1 border-border bg-background px-2 py-0 text-xs font-semibold leading-6 text-foreground shadow-sm"
+                        value={editingNameDraft}
+                        onChange={(e) => setEditingNameDraft(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          e.stopPropagation();
+                          if (e.key === 'Escape') {
+                            e.preventDefault();
+                            cancelInlineRename();
+                            return;
+                          }
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const trimmed = editingNameDraft.trim();
+                            if (trimmed) {
+                              commitInlineRename(conversation.id, editingNameDraft);
+                            } else {
+                              cancelInlineRename();
+                            }
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const next = e.relatedTarget as Node | null;
+                          const card = (e.currentTarget as HTMLElement).closest('[data-conversation-id]');
+                          if (next && card?.contains(next)) return;
+                          if (ignoreRenameBlurOnceRef.current) {
+                            ignoreRenameBlurOnceRef.current = false;
+                            return;
+                          }
+                          cancelInlineRename();
+                        }}
+                      />
+                    ) : (
+                      <p
+                        data-testid="conversation-card-title"
+                        className="min-w-0 truncate text-xs font-semibold leading-6 text-foreground"
+                        title={conversation.name}
+                      >
+                        {conversation.name}
+                      </p>
+                    )}
                     <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-[10px] font-semibold lowercase text-muted-foreground">
                       {conversation.version}
                     </span>
@@ -175,52 +336,93 @@ export function ConversationDrawer({
                   </div>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
-                  {conversation.tag && !isAutomation && (
-                    <span className="inline-flex items-center rounded-full border border-success/40 bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-success-foreground">
-                      {conversation.tag}
-                    </span>
-                  )}
-                  <div className="group">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        data-testid="ellipsis-button"
-                        data-conversation-menu-trigger="true"
-                        type="button"
-                        className="relative z-10 flex h-6 w-6 translate-x-2.5 cursor-pointer items-center justify-center text-muted-foreground hover:text-foreground"
-                        aria-label="Conversation options"
-                        onClick={(event) => event.stopPropagation()}
-                        onPointerDown={(event) => event.stopPropagation()}
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </DropdownMenuTrigger>
+                  <DropdownMenu
+                    open={openMenuConversationId === conversation.id}
+                    onOpenChange={(next) => {
+                      cancelMenuCloseTimer();
+                      setOpenMenuConversationId(next ? conversation.id : null);
+                      if (!next) {
+                        requestAnimationFrame(() => {
+                          const active = document.activeElement;
+                          if (active instanceof HTMLElement && active.closest('[data-conversation-menu-trigger="true"]')) {
+                            active.blur();
+                          }
+                        });
+                      }
+                    }}
+                    modal={false}
+                  >
+                    <div
+                      className="inline-flex shrink-0"
+                      onMouseEnter={() => {
+                        cancelMenuCloseTimer();
+                        setOpenMenuConversationId(conversation.id);
+                      }}
+                      onMouseLeave={() => {
+                        scheduleMenuClose();
+                      }}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          data-testid="ellipsis-button"
+                          data-conversation-menu-trigger="true"
+                          type="button"
+                          className="relative z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-[opacity,color] duration-200 hover:text-foreground group-hover:opacity-100 data-[state=open]:text-foreground data-[state=open]:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                          aria-label="Conversation options"
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <MoreVertical className="h-4 w-4" strokeWidth={2} />
+                        </button>
+                      </DropdownMenuTrigger>
+                    </div>
                     <DropdownMenuContent
                       align="end"
-                      className="bg-muted border border-border text-foreground"
+                      data-conversation-dropdown-menu
+                      className={conversationMenuContentClass}
+                      onMouseEnter={cancelMenuCloseTimer}
+                      onMouseLeave={scheduleMenuClose}
                     >
-                      <DropdownMenuItem className="gap-2">
-                        <Pencil className="h-4 w-4" />
+                      <DropdownMenuItem
+                        className={conversationMenuItemClass}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          setOpenMenuConversationId(null);
+                          ignoreRenameBlurOnceRef.current = true;
+                          setEditingConversationId(conversation.id);
+                          setEditingNameDraft(conversation.name);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" strokeWidth={2} />
                         Rename
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-border" />
-                      <DropdownMenuItem className="gap-2">
-                        <Download className="h-4 w-4" />
+                      <DropdownMenuItem className={conversationMenuItemClass}>
+                        <Download className="h-4 w-4" strokeWidth={2} />
                         Export Conversation
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="bg-border" />
-                      <DropdownMenuItem className="gap-2 text-destructive">
-                        <Trash className="h-4 w-4" />
+                      <DropdownMenuItem
+                        className={cn(
+                          conversationMenuItemClass,
+                          'text-destructive [&_svg]:text-destructive',
+                          'data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive',
+                          'focus:bg-destructive/10 focus:text-destructive',
+                        )}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          setDeleteTarget(conversation);
+                        }}
+                      >
+                        <Trash className="h-4 w-4" strokeWidth={2} />
                         Delete Conversation
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  </div>
                 </div>
               </div>
-              <div className="flex flex-row justify-between items-center mt-1">
-                <div className="flex items-center gap-3 flex-1 text-muted-foreground">
-                  <div className="flex items-center gap-1">
+              <div className="flex flex-row items-center gap-2 mt-1 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 shrink text-muted-foreground overflow-hidden">
+                  <div className="flex shrink-0 items-center gap-1">
                     <Github className="w-3 h-3" />
                     <span
                       data-testid="conversation-card-selected-repository"
@@ -229,7 +431,7 @@ export function ConversationDrawer({
                       {conversation.repo}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex shrink-0 items-center gap-1">
                     <GitBranch className="w-3 h-3" />
                     <span
                       data-testid="conversation-card-selected-branch"
@@ -243,14 +445,14 @@ export function ConversationDrawer({
                       <Cpu className="h-3 w-3 shrink-0" aria-hidden />
                       <span
                         data-testid="conversation-card-model"
-                        className="max-w-32 truncate text-xs whitespace-nowrap text-muted-foreground"
+                        className="min-w-0 truncate text-xs text-muted-foreground"
                       >
                         {conversation.model}
                       </span>
                     </div>
                   ) : null}
                 </div>
-                <p className="text-xs text-muted-foreground flex-1 text-right">
+                <p className="ml-auto shrink-0 whitespace-nowrap text-xs text-muted-foreground">
                   <time>{conversation.time}</time>
                 </p>
               </div>
@@ -260,5 +462,29 @@ export function ConversationDrawer({
         </div>
       </SheetContent>
     </Sheet>
+
+    <Dialog open={deleteTarget !== null} onOpenChange={(dialogOpen) => { if (!dialogOpen) setDeleteTarget(null); }}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete conversation?</DialogTitle>
+          <DialogDescription>
+            <span className="font-medium text-foreground">{deleteTarget?.name}</span>
+            {' '}will be permanently deleted. This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => setDeleteTarget(null)}
+          >
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

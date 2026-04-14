@@ -19,6 +19,7 @@ import {
   GitPullRequest,
   ExternalLink,
   Wrench,
+  Webhook,
   ArrowUp as ArrowUpIcon,
   Bot,
   FileText,
@@ -51,6 +52,7 @@ import {
   FileDiff,
   FilePlus,
   Image as ImageIcon,
+  Share2,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -61,6 +63,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import { Protip, type ProtipVariant } from '../components/canvas/Protip';
 import { ChatStartScreen } from '../components/chat/ChatStartScreen';
 import { RepositoryActionStrip } from '../components/chat/RepositoryActionStrip';
+import { AvailableSkillsModal } from '../components/chat/AvailableSkillsModal';
+import { AvailableHooksModal } from '../components/chat/AvailableHooksModal';
+import { AgentToolsModal } from '../components/chat/AgentToolsModal';
+import { ConversationMetricsModal } from '../components/chat/ConversationMetricsModal';
+import { SkillIcon } from '../components/icons/SkillIcon';
+import { showAppToast } from '../lib/appToast';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import {
@@ -410,6 +418,13 @@ export function ActiveChatScreen({
   const [isCliCommandVisible, setIsCliCommandVisible] = useState(false);
   const [isCliCommandCopied, setIsCliCommandCopied] = useState(false);
   const [selectedCapability, setSelectedCapability] = useState<ConversationCapability | null>(null);
+  const [isSkillsModalOpen, setIsSkillsModalOpen] = useState(false);
+  const [isHooksModalOpen, setIsHooksModalOpen] = useState(false);
+  const [isAgentToolsModalOpen, setIsAgentToolsModalOpen] = useState(false);
+  const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
+  const [sharingEnabled, setSharingEnabled] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const copyTimeoutRef = useRef<number | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -871,12 +886,16 @@ export function ActiveChatScreen({
                       Rename
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem data-testid="show-skills-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
-                      <Sparkles className="w-4 h-4 shrink-0" />
+                    <DropdownMenuItem data-testid="show-skills-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60" onSelect={() => setIsSkillsModalOpen(true)}>
+                      <SkillIcon className="w-4 h-4 shrink-0" />
                       Show Available Skills
                     </DropdownMenuItem>
-                    <DropdownMenuItem data-testid="show-agent-tools-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
-                      <Wrench className="w-4 h-4 shrink-0" />
+                    <DropdownMenuItem data-testid="show-hooks-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60" onSelect={() => setIsHooksModalOpen(true)}>
+                      <Webhook className="w-4 h-4 shrink-0" />
+                      Show Available Hooks
+                    </DropdownMenuItem>
+                    <DropdownMenuItem data-testid="show-agent-tools-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60" onSelect={() => setIsAgentToolsModalOpen(true)}>
+                      <Bot className="w-4 h-4 shrink-0" />
                       Show Agent Tools &amp; Metadata
                     </DropdownMenuItem>
                     <DropdownMenuItem data-testid="download-trajectory-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
@@ -884,9 +903,76 @@ export function ActiveChatScreen({
                       Export Conversation
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem data-testid="display-cost-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
+                    <DropdownMenuItem data-testid="display-cost-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60" onSelect={() => setIsMetricsModalOpen(true)}>
                       <DollarSign className="w-4 h-4 shrink-0" />
                       Display Cost
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      data-testid="share-conversation-button"
+                      className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60"
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setSharingEnabled((prev) => {
+                          showAppToast({ variant: 'success', message: 'Public sharing updated' });
+                          return !prev;
+                        });
+                      }}
+                    >
+                      <Share2 className="w-4 h-4 shrink-0" />
+                      <span className="flex-1">Share Conversation</span>
+                      {sharingEnabled && (
+                        <>
+                          {/* Copy link — stops propagation so it doesn't toggle the share state */}
+                          <div className="relative">
+                            <button
+                              type="button"
+                              aria-label="Copy conversation link"
+                              title="Copy conversation link"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard
+                                  .writeText(`${window.location.origin}/share`)
+                                  .catch(() => {});
+                                if (copyTimeoutRef.current !== null) {
+                                  window.clearTimeout(copyTimeoutRef.current);
+                                }
+                                setIsCopied(true);
+                                copyTimeoutRef.current = window.setTimeout(() => {
+                                  setIsCopied(false);
+                                  copyTimeoutRef.current = null;
+                                }, 2000);
+                              }}
+                              className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                            >
+                              <Copy className="w-4 h-4 shrink-0" aria-hidden />
+                            </button>
+                            {isCopied && (
+                              <div
+                                role="tooltip"
+                                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs bg-popover text-popover-foreground border border-border rounded-md shadow-md whitespace-nowrap z-[200] pointer-events-none"
+                              >
+                                Conversation address copied
+                              </div>
+                            )}
+                          </div>
+                          {/* Open public share page in new tab */}
+                          <button
+                            type="button"
+                            aria-label="Open public share page"
+                            title="Open public share page"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open('/share', '_blank', 'noopener,noreferrer');
+                            }}
+                            className="p-0.5 rounded text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                          >
+                            <ExternalLink className="w-4 h-4 shrink-0" aria-hidden />
+                          </button>
+                        </>
+                      )}
+                      <div className={cn('relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-200', sharingEnabled ? 'bg-primary' : 'bg-muted')}>
+                        <span className={cn('inline-block h-3 w-3 rounded-full bg-background shadow transition-transform duration-200', sharingEnabled ? 'translate-x-3.5' : 'translate-x-0.5')} />
+                      </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem data-testid="stop-button" className="gap-2 cursor-pointer p-2 h-[30px] rounded hover:bg-muted/60">
                       <X className="w-4 h-4 shrink-0" />
@@ -2376,6 +2462,10 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
           </div>
         </PopoverContent>
       </Popover>
+      <AvailableSkillsModal open={isSkillsModalOpen} onOpenChange={setIsSkillsModalOpen} />
+      <AvailableHooksModal open={isHooksModalOpen} onOpenChange={setIsHooksModalOpen} />
+      <AgentToolsModal open={isAgentToolsModalOpen} onOpenChange={setIsAgentToolsModalOpen} />
+      <ConversationMetricsModal open={isMetricsModalOpen} onOpenChange={setIsMetricsModalOpen} />
       <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>
         <DialogContent className="max-w-md text-foreground">
           <DialogHeader>

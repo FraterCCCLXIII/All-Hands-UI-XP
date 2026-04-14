@@ -23,6 +23,7 @@ import {
   SignInWithAdScreen,
   WorkflowsScreen,
   ClaimStatesScreen,
+  PublicShareScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -153,6 +154,8 @@ function App() {
   const [drawerConversations, setDrawerConversations] = useState(conversationSummaries);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [isActiveChatView, setIsActiveChatView] = useState(false);
+  const [isShareView, setIsShareView] = useState(false);
+  const [shareConversationId, setShareConversationId] = useState<string | null>(null);
   const [isInspectorEnabled, setIsInspectorEnabled] = useState(false);
   const [showClaimCreditsPrompt, setShowClaimCreditsPrompt] = useState(false);
   const [isUxFlowMenuOpen, setIsUxFlowMenuOpen] = useState(false);
@@ -189,6 +192,7 @@ function App() {
       activeNavItem,
       String(isActiveChatView),
       String(isWelcomeScreenActive),
+      String(isShareView),
     ].join('|');
   }, [
     location.pathname,
@@ -198,6 +202,7 @@ function App() {
     activeNavItem,
     isActiveChatView,
     isWelcomeScreenActive,
+    isShareView,
     lastNonDrawerNavItem,
   ]);
 
@@ -239,9 +244,17 @@ function App() {
     !isWorkflowsView;
   const showLeftNav =
     !showFigmaExportView &&
+    !isShareView &&
     activeFlowPrototype !== 'new-user-experience' &&
     activeFlowPrototype !== 'enterprise-learn-more' &&
     activeFlowPrototype !== 'sign-in-with-ad';
+
+  const shareConversation = useMemo(
+    () =>
+      conversationSummaries.find((c) => c.id === shareConversationId) ??
+      conversationSummaries[0],
+    [shareConversationId]
+  );
 
   const getThemeClasses = useCallback((element: ThemeElement): string => {
     return themeClasses[theme][element] || '';
@@ -563,6 +576,17 @@ function App() {
       return;
     }
     setFigmaExportRoute(null);
+    setIsShareView(false);
+    if (hash === 'share') {
+      setIsShareView(true);
+      setIsActiveChatView(false);
+      setActiveFlowPrototype(null);
+      setIsConversationDrawerOpen(false);
+      setSettingsTab(null);
+      const shareParams = new URLSearchParams(routeSearch);
+      setShareConversationId(shareParams.get('id'));
+      return;
+    }
     if (hash === 'components') {
       navigate({ pathname: '/chat', search }, { replace: true });
       return;
@@ -768,7 +792,7 @@ function App() {
               />
             )}
             <div
-              className={`flex min-h-0 flex-1 flex-col transition-all duration-200 ${activeFlowPrototype || showFigmaExportView ? '' : 'ml-16'}`}
+              className={`flex min-h-0 flex-1 flex-col transition-all duration-200 ${activeFlowPrototype || showFigmaExportView || isShareView ? '' : 'ml-16'}`}
               style={{ minWidth: 0 }}
             >
               {showMainApp && !isEmbedded && (
@@ -787,7 +811,9 @@ function App() {
                     exit={shellMotionActive ? { opacity: 0, x: -28 } : { opacity: 0 }}
                     transition={pageTransition}
                   >
-                    {showFigmaExportView ? (
+                    {isShareView ? (
+                      <PublicShareScreen conversation={shareConversation} />
+                    ) : showFigmaExportView ? (
                       <ComponentLibraryScreen
                         key={`figma-export-${figmaExportRoute}`}
                         mode="figma"
@@ -1005,6 +1031,11 @@ function App() {
                 conversations={drawerConversations}
                 highlightedConversationId={activeConversationId}
                 onSelectConversation={(c) => setActiveConversationId(c.id)}
+                onRenameConversation={(conversationId, name) => {
+                  setDrawerConversations((prev) =>
+                    prev.map((c) => (c.id === conversationId ? { ...c, name } : c))
+                  );
+                }}
               />
             )}
             <UxTourOverlay

@@ -12,3 +12,4 @@ export { EnterpriseLearnMoreScreen } from './EnterpriseLearnMoreScreen';
 export { SignInWithAdScreen } from './SignInWithAdScreen';
 export { WorkflowsScreen } from './WorkflowsScreen';
 export { ClaimStatesScreen } from './ClaimStatesScreen';
+export { PublicShareScreen } from './PublicShareScreen';
