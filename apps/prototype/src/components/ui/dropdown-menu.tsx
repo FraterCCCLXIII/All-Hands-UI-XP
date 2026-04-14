@@ -35,14 +35,16 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      'flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none text-popover-foreground data-[state=open]:bg-muted/60 data-[state=open]:text-popover-foreground focus:bg-muted/60 focus:text-popover-foreground [&_svg]:text-muted-foreground',
+      'group flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none text-popover-foreground data-[state=open]:bg-muted/60 data-[state=open]:text-popover-foreground focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:[&_svg]:!text-foreground',
       inset && 'pl-8',
       className
     )}
     {...props}
   >
-    {children}
-    <ChevronRight className="ml-auto h-4 w-4" />
+    <span className="flex w-full min-w-0 flex-1 items-center gap-2 [&_svg]:text-muted-foreground [&_svg]:transition-colors group-hover:[&_svg]:!text-foreground">
+      {children}
+      <ChevronRight className="ml-auto h-4 w-4 shrink-0" />
+    </span>
   </DropdownMenuPrimitive.SubTrigger>
 ));
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
@@ -87,16 +89,20 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
   }
->(({ className, inset, ...props }, ref) => (
+>(({ className, inset, children, ...props }, ref) => (
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground [&_svg]:text-muted-foreground',
+      'group relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground data-[highlighted]:[&_svg]:!text-foreground',
       inset && 'pl-8',
       className
     )}
     {...props}
-  />
+  >
+    <span className="contents [&_svg]:text-muted-foreground [&_svg]:transition-colors group-hover:[&_svg]:!text-foreground">
+      {children}
+    </span>
+  </DropdownMenuPrimitive.Item>
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
