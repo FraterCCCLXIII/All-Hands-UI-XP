@@ -11,10 +11,10 @@ import {
   History,
   Info,
   MessageSquare,
-  Package,
+  Box,
   Plus,
   Play,
-  PlayCircle,
+  Zap,
   MoreVertical,
   Power,
   Settings2,
@@ -26,6 +26,7 @@ import { SearchInput } from '../components/ui/search-input';
 import { NativeSelect } from '../components/ui/native-select';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { Spinner } from '../components/common/Spinner';
+import { DocIconLink } from '../components/common/DocIconLink';
 import { Button } from '../components/ui/button';
 import {
   Dialog,
@@ -545,7 +546,7 @@ const metadataSections: Array<{
       {
         key: 'trigger',
         label: 'Trigger',
-        icon: PlayCircle,
+        icon: Zap,
         value: (automation) => (automation.trigger === 'schedule' ? 'Schedule' : 'Event'),
       },
       {
@@ -558,7 +559,7 @@ const metadataSections: Array<{
       {
         key: 'event',
         label: 'Event',
-        icon: PlayCircle,
+        icon: Zap,
         value: (automation) => automation.event ?? 'N/A',
         shouldRender: (automation) => Boolean(automation.event?.trim()),
       },
@@ -1530,7 +1531,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               {automation.trigger === 'schedule' ? (
                 <CalendarClock className="h-3.5 w-3.5" />
               ) : (
-                <PlayCircle className="h-3.5 w-3.5" />
+                <Zap className="h-3.5 w-3.5" />
               )}
               {automation.trigger === 'schedule'
                 ? `${automation.schedule} (${automation.timezone})`
@@ -1808,7 +1809,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           )}
           <AssociatedResources
             title="Plugins"
-            icon={Package}
+            icon={Box}
             items={selectedAutomation.plugins}
           />
           <ActivityLogSection
@@ -2131,13 +2132,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold leading-6 text-foreground">Automations</h2>
-            <a
-              href="#"
-              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Automations documentation"
-            >
-              <BookOpen className="h-4 w-4" />
-            </a>
+            <DocIconLink aria-label="Automations documentation" />
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
             View active and inactive automations, search by metadata, and inspect read-only details.

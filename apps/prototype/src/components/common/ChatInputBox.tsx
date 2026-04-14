@@ -11,7 +11,7 @@ import {
   Merge,
   MessageCircleQuestion,
   Microchip,
-  Package,
+  Droplets,
   Paperclip,
   Settings,
   Sparkles,
@@ -172,7 +172,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
                   Auto-merge PRs
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2 cursor-pointer">
-                  <Package className="h-4 w-4" />
+                  <Droplets className="h-4 w-4" />
                   Clean dependencies
                 </DropdownMenuItem>
               </DropdownMenuSubContent>

@@ -26,7 +26,7 @@ import {
   Sparkles,
   TestTube,
   Merge,
-  Package,
+  Droplets,
   ChevronDown,
   ChevronUp,
   File,
@@ -1979,7 +1979,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                               Auto-merge PRs
                                             </DropdownMenuItem>
                                             <DropdownMenuItem className="gap-2 cursor-pointer">
-                                              <Package className="h-4 w-4" />
+                                              <Droplets className="h-4 w-4" />
                                               Clean dependencies
                                             </DropdownMenuItem>
                                           </DropdownMenuSubContent>

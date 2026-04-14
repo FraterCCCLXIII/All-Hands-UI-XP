@@ -1,4 +1,5 @@
-import { BookOpen, Box, Cloud, Layers3, Webhook } from 'lucide-react';
+import { Box, Cloud, Layers3, Webhook } from 'lucide-react';
+import { DocIconLink } from '../../components/common/DocIconLink';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
@@ -44,15 +45,7 @@ export function ExtensionsShellSidebar({
     >
       <div className="flex items-center justify-between gap-2 ml-1">
         <h2 className="text-xl font-semibold leading-6 text-foreground">Extensions</h2>
-        <a
-          href="https://docs.openhands.dev/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shrink-0 rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="Extensions documentation"
-        >
-          <BookOpen className="h-4 w-4" aria-hidden />
-        </a>
+        <DocIconLink aria-label="Extensions documentation" />
       </div>
       {browseControls ? (
         <>
