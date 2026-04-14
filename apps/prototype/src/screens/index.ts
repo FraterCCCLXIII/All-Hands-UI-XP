@@ -13,3 +13,4 @@ export { SignInWithAdScreen } from './SignInWithAdScreen';
 export { WorkflowsScreen } from './WorkflowsScreen';
 export { ClaimStatesScreen } from './ClaimStatesScreen';
 export { PublicShareScreen } from './PublicShareScreen';
+export { ChatComponentsScreen } from './ChatComponentsScreen';

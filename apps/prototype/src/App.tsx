@@ -25,6 +25,7 @@ import {
   WorkflowsScreen,
   ClaimStatesScreen,
   PublicShareScreen,
+  ChatComponentsScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -71,6 +72,7 @@ const actionSlugs: Record<string, string> = {
   settings: 'settings',
   workflows: 'workflows',
   'claim-states': 'claim-states',
+  'chat-components': 'chat-components',
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
@@ -231,6 +233,7 @@ function App() {
   const isNewLlmSwitcherView2 = activeNavItem === 'new-llm-switcher-2';
   const isWorkflowsView = activeNavItem === 'workflows';
   const isClaimStatesView = activeNavItem === 'claim-states';
+  const isChatComponentsView = activeNavItem === 'chat-components';
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showFigmaExportView = figmaExportRoute !== null;
   const isFigmaCaptureSession = isFigmaCaptureActive();
@@ -242,7 +245,8 @@ function App() {
     !isSettingsView &&
     !isNewLlmSwitcherView &&
     !isNewLlmSwitcherView2 &&
-    !isWorkflowsView;
+    !isWorkflowsView &&
+    !isChatComponentsView;
   const showLeftNav =
     !showFigmaExportView &&
     !isShareView &&
@@ -695,6 +699,13 @@ function App() {
       setIsConversationDrawerOpen(drawerShouldBeOpen);
       return;
     }
+    if (hash === 'chat-components') {
+      setActiveNavItem('chat-components');
+      setLastNonDrawerNavItem('chat-components');
+      setIsConversationDrawerOpen(false);
+      setSettingsTab(null);
+      return;
+    }
     const action = slugToAction[hash] ?? 'chat-cards';
     setActiveNavItem(action);
     setLastNonDrawerNavItem(action);
@@ -941,6 +952,7 @@ function App() {
                 )}
                 {isWorkflowsView && <WorkflowsScreen />}
                 {isClaimStatesView && <ClaimStatesScreen />}
+                {isChatComponentsView && <ChatComponentsScreen />}
                 {showChatView && !isActiveChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
