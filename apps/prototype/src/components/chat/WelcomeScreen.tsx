@@ -8,6 +8,7 @@ import {
   Github,
   Key,
   Plus,
+  Settings,
 } from 'lucide-react';
 import { AutomationGlyph } from '../icons/AutomationGlyph';
 import { SkillIcon } from '../icons/SkillIcon';
@@ -15,6 +16,7 @@ import { ThemeElement } from '../../types/theme';
 import { conversationSummaries } from '../../data/conversations';
 import { marketplaceSkills } from '../../data/skillsPageData';
 import { navigateAppRoute } from '../../lib/captureNavigation';
+import { cn } from '../../lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   Dialog,
@@ -27,7 +29,7 @@ interface WelcomeScreenProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   userName: string;
-  variant?: 'default' | 'cards' | 'new-chat-start';
+  variant?: 'default' | 'chat-start' | 'new-chat-start';
 }
 
 function buildChatRoute(options: {
@@ -89,6 +91,79 @@ const ALL_REPOS = [
   ...RECENT_REPOS,
 ];
 
+type HomeColumnId = 'skills' | 'conversations' | 'tasks';
+type HomeColumnDemoMode = 'content' | 'loading' | 'empty';
+
+const COLUMN_DEMO_ROWS = 5;
+const COLUMN_DEMO_MODES: { id: HomeColumnDemoMode; label: string }[] = [
+  { id: 'content', label: 'Content' },
+  { id: 'loading', label: 'Skeleton' },
+  { id: 'empty', label: 'Empty' },
+];
+
+function SkillsColumnSkeleton() {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
+        <div key={i} className="flex flex-col gap-2 p-[14px] animate-pulse">
+          <div className="flex items-center gap-2 pl-1">
+            <div className="h-3 w-3 rounded bg-muted" />
+            <div className="h-4 max-w-[200px] flex-1 rounded bg-muted" />
+          </div>
+          <div className="ml-5 h-3 w-[85%] max-w-[220px] rounded bg-muted/70" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ConversationsColumnSkeleton() {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
+        <div key={i} className="flex flex-col gap-2 p-[14px] animate-pulse">
+          <div className="flex items-center gap-2 pl-1">
+            <div className="h-1.5 w-1.5 rounded-full bg-muted" />
+            <div className="h-4 flex-1 rounded bg-muted" />
+          </div>
+          <div className="flex items-center justify-between gap-3 pl-1">
+            <div className="h-3 w-32 rounded bg-muted/70" />
+            <div className="h-3 w-10 rounded bg-muted/70" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TasksColumnSkeleton() {
+  return (
+    <div className="flex flex-col">
+      {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
+        <div key={i} className="p-[14px] animate-pulse">
+          <div className="flex gap-2">
+            <div className="h-3 w-8 rounded bg-muted/70" />
+            <div className="h-4 flex-1 rounded bg-muted" />
+          </div>
+          <div className="mt-2 flex items-center gap-2 pl-10">
+            <div className="h-3 w-3 rounded bg-muted/70" />
+            <div className="h-3 w-48 max-w-full rounded bg-muted/60" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ColumnEmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex min-h-[240px] flex-col items-center justify-center gap-1 px-4 py-8 text-center">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   theme,
   getThemeClasses,
@@ -103,6 +178,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [openRepoModalOpen, setOpenRepoModalOpen] = useState(false);
   const [openSkillLaunchModalOpen, setOpenSkillLaunchModalOpen] = useState(false);
   const [selectedHomepageSkill, setSelectedHomepageSkill] = useState<(typeof marketplaceSkills)[number] | null>(null);
+  const [homeColumnModes, setHomeColumnModes] = useState<Record<HomeColumnId, HomeColumnDemoMode>>({
+    skills: 'content',
+    conversations: 'content',
+    tasks: 'content',
+  });
 
   const filteredRecentRepos = useMemo(
     () =>
@@ -189,11 +269,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
   const handleGoApiKeys = useCallback(() => {
     navigateAppRoute('/settings/api-keys');
-  }, []);
-
-  const handleOpenConversationDrawer = useCallback(() => {
-    const backgroundRoute = `${window.location.pathname}${window.location.search}`;
-    navigateAppRoute(`/conversations?from=${encodeURIComponent(backgroundRoute)}`);
   }, []);
 
   const handleLaunch = useCallback(() => {
@@ -286,9 +361,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         <div className="pt-[25px] flex justify-center">
           <div className="flex flex-col gap-5 px-6 sm:max-w-full sm:min-w-full md:flex-row lg:px-0 lg:max-w-[960px] lg:min-w-[960px]">
-            {variant === 'cards' || variant === 'new-chat-start' ? (
+            {variant === 'chat-start' || variant === 'new-chat-start' ? (
               <>
-                {variant === 'cards' ? (
+                {variant === 'chat-start' ? (
                   <button
                     type="button"
                     onClick={handleNavigateToSkills}
@@ -517,7 +592,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     </div>
                   </DialogContent>
                 </Dialog>
-                {variant === 'cards' ? (
+                {variant === 'chat-start' ? (
                   <Dialog open={openSkillLaunchModalOpen} onOpenChange={setOpenSkillLaunchModalOpen}>
                     <DialogContent className="border-border sm:max-w-[480px]">
                       <DialogHeader>
@@ -947,28 +1022,37 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
               <div className="flex flex-col min-h-0">
                 <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
-                  <div className="flex flex-col">
-                    {featuredSkills.map((skill) => {
-                      return (
-                        <button
-                          key={skill.id}
-                          type="button"
-                          onClick={() => handleOpenSkillLaunchModal(skill)}
-                          className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
-                        >
-                          <div className="flex items-center gap-2 pl-1">
-                            <SkillIcon className="h-3 text-muted-foreground" />
-                          <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                            {skill.skillName ?? skill.title}
-                          </span>
-                        </div>
-                        <span className="block min-w-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal pl-5 truncate">
-                          {skill.description}
-                        </span>
-                      </button>
-                    );
-                    })}
-                  </div>
+                  {homeColumnModes.skills === 'loading' ? (
+                    <SkillsColumnSkeleton />
+                  ) : homeColumnModes.skills === 'empty' ? (
+                    <ColumnEmptyState
+                      title="No skills yet"
+                      description="Browse extensions to add skills to your workspace."
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {featuredSkills.map((skill) => {
+                        return (
+                          <button
+                            key={skill.id}
+                            type="button"
+                            onClick={() => handleOpenSkillLaunchModal(skill)}
+                            className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                          >
+                            <div className="flex items-center gap-2 pl-1">
+                              <SkillIcon className="h-3 text-muted-foreground" />
+                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                                {skill.skillName ?? skill.title}
+                              </span>
+                            </div>
+                            <span className="block min-w-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal pl-5 truncate">
+                              {skill.description}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -979,48 +1063,57 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
               <div className="flex flex-col min-h-0">
                 <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
-                  <div className="flex flex-col">
-                    {recentConversationPreview.map((conversation) => (
-                      <button
-                        key={conversation.id}
-                        type="button"
-                        onClick={() => {
-                          navigateAppRoute(
-                            buildChatRoute({
-                              repository: conversation.repo === 'No Repository' ? 'disconnected' : 'connected',
-                              repo: conversation.repo === 'No Repository' ? null : conversation.repo,
-                              branch: conversation.branch ?? null,
-                            })
-                          );
-                        }}
-                        className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
-                      >
-                        <div className="flex items-center gap-2 pl-1">
-                          <div className="inline-flex">
-                            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
-                          </div>
-                          <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                            {conversation.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground leading-4 font-normal">
-                          <div className="flex min-w-0 flex-nowrap items-center gap-3 overflow-hidden">
-                            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
-                              <Github className="w-3 h-3" />
-                              <span className="min-w-0 whitespace-nowrap truncate">{conversation.repo}</span>
+                  {homeColumnModes.conversations === 'loading' ? (
+                    <ConversationsColumnSkeleton />
+                  ) : homeColumnModes.conversations === 'empty' ? (
+                    <ColumnEmptyState
+                      title="No conversations yet"
+                      description="Start a conversation to see it listed here."
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {recentConversationPreview.map((conversation) => (
+                        <button
+                          key={conversation.id}
+                          type="button"
+                          onClick={() => {
+                            navigateAppRoute(
+                              buildChatRoute({
+                                repository: conversation.repo === 'No Repository' ? 'disconnected' : 'connected',
+                                repo: conversation.repo === 'No Repository' ? null : conversation.repo,
+                                branch: conversation.branch ?? null,
+                              })
+                            );
+                          }}
+                          className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                        >
+                          <div className="flex items-center gap-2 pl-1">
+                            <div className="inline-flex">
+                              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
                             </div>
-                            {conversation.branch ? (
-                              <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden">
-                                <GitBranch className="w-3 h-3" />
-                                <span className="min-w-0 whitespace-nowrap truncate">{conversation.branch}</span>
-                              </div>
-                            ) : null}
+                            <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                              {conversation.name}
+                            </span>
                           </div>
-                          <span className="shrink-0 whitespace-nowrap">{conversation.time}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground leading-4 font-normal">
+                            <div className="flex min-w-0 flex-nowrap items-center gap-3 overflow-hidden">
+                              <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
+                                <Github className="w-3 h-3" />
+                                <span className="min-w-0 whitespace-nowrap truncate">{conversation.repo}</span>
+                              </div>
+                              {conversation.branch ? (
+                                <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden">
+                                  <GitBranch className="w-3 h-3" />
+                                  <span className="min-w-0 whitespace-nowrap truncate">{conversation.branch}</span>
+                                </div>
+                              ) : null}
+                            </div>
+                            <span className="shrink-0 whitespace-nowrap">{conversation.time}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -1033,40 +1126,97 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
               <div className="flex flex-col min-h-0">
                 <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
-                  <div className="flex flex-col">
-                    {suggestedTasks.map((task) => (
-                      <button
-                        key={task.id}
-                        type="button"
-                        className="w-full p-[14px] text-left flex items-center justify-between cursor-pointer rounded-lg transition-all duration-300 hover:bg-muted/60"
-                      >
-                        <div className="flex items-start gap-3 min-w-0 w-full">
-                          <div className="flex flex-col gap-1 min-w-0 flex-1">
-                            <div className="flex min-w-0 items-center gap-2">
-                              <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal">
-                                {task.id}
-                              </span>
-                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                                {task.title}
-                              </span>
-                            </div>
-                            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden text-xs text-muted-foreground leading-4 font-normal">
-                              <Github className="w-3 h-3 shrink-0" />
-                              <span className="min-w-0 whitespace-nowrap truncate">
-                                {task.repo} / {task.subtitle}
-                              </span>
+                  {homeColumnModes.tasks === 'loading' ? (
+                    <TasksColumnSkeleton />
+                  ) : homeColumnModes.tasks === 'empty' ? (
+                    <ColumnEmptyState
+                      title="No suggested tasks"
+                      description="When your agent has follow-ups, they will appear here."
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {suggestedTasks.map((task) => (
+                        <button
+                          key={task.id}
+                          type="button"
+                          className="w-full p-[14px] text-left flex items-center justify-between cursor-pointer rounded-lg transition-all duration-300 hover:bg-muted/60"
+                        >
+                          <div className="flex items-start gap-3 min-w-0 w-full">
+                            <div className="flex flex-col gap-1 min-w-0 flex-1">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal">
+                                  {task.id}
+                                </span>
+                                <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                                  {task.title}
+                                </span>
+                              </div>
+                              <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden text-xs text-muted-foreground leading-4 font-normal">
+                                <Github className="w-3 h-3 shrink-0" />
+                                <span className="min-w-0 whitespace-nowrap truncate">
+                                  {task.repo} / {task.subtitle}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
           </div>
         </div>
       </div>
+
+      {variant === 'chat-start' ? (
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="fixed bottom-6 right-6 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Column list demo states"
+              data-testid="chat-start-column-demo"
+            >
+              <Settings className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent side="top" align="end" sideOffset={8} className="w-80 border-border bg-card p-3">
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-semibold text-muted-foreground">Home columns (prototype)</p>
+              {(
+                [
+                  { id: 'skills' as const, label: 'Recent Skills' },
+                  { id: 'conversations' as const, label: 'Recent Conversations' },
+                  { id: 'tasks' as const, label: 'Suggested Tasks' },
+                ] as const
+              ).map(({ id, label }) => (
+                <div key={id} className="space-y-1.5">
+                  <div className="text-xs font-medium text-foreground">{label}</div>
+                  <div className="flex gap-1">
+                    {COLUMN_DEMO_MODES.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => setHomeColumnModes((prev) => ({ ...prev, [id]: m.id }))}
+                        className={cn(
+                          'flex-1 rounded-md px-2 py-1.5 text-xs transition-colors',
+                          homeColumnModes[id] === m.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground hover:bg-muted/80'
+                        )}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      ) : null}
     </div>
   );
 }; 

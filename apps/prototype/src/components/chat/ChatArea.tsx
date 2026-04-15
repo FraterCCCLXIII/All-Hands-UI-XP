@@ -30,7 +30,7 @@ interface ChatAreaProps {
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
   disableAutoScroll?: boolean;
   onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
-  welcomeScreenVariant?: 'default' | 'cards' | 'new-chat-start';
+  welcomeScreenVariant?: 'default' | 'chat-start' | 'new-chat-start';
   onEnterpriseLearnMoreClick?: () => void;
   /** `inline` = in-flow under messages / on welcome (default). `fixed` = bottom-right overlay. */
   enterpriseCtaPlacement?: 'fixed' | 'inline';

@@ -11,6 +11,9 @@ import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 import { cn } from '../../lib/utils';
 
+/** Slightly thinner strokes for Lucide icons in the left nav (Lucide default is 2). */
+const NAV_ICON_STROKE = 1.5;
+
 /** Mirrors Settings org selector options for a consistent workspace switcher. */
 const accountWorkspaceOptions = [
   { id: 'personal', name: 'Personal Account', role: null as string | null, type: 'personal' as const },
@@ -28,7 +31,7 @@ const highlightCards = [
     url: '/press',
     icon: (
       <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
-        <Megaphone className="h-5 w-5" />
+        <Megaphone className="h-5 w-5" strokeWidth={NAV_ICON_STROKE} />
       </div>
     ),
   },
@@ -38,7 +41,7 @@ const highlightCards = [
     url: 'http://openhands.dev/joinslack',
     icon: (
       <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
-        <MessageCircle className="h-5 w-5" />
+        <MessageCircle className="h-5 w-5" strokeWidth={NAV_ICON_STROKE} />
       </div>
     ),
   },
@@ -57,20 +60,20 @@ function AutomationsIcon({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <g clipPath="url(#automations-icon-clip)">
-        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z" fill="currentColor" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </g>
       <defs>
         <clipPath id="automations-icon-clip">
@@ -143,6 +146,16 @@ export interface LeftNavProps {
 }
 
 const prototypeMenuEntries = [
+  {
+    id: 'launch-from-plugin-modal',
+    label: 'Launch from plugin modal',
+    navAction: 'launch-from-plugin-modal',
+  },
+  {
+    id: 'start-new-conversation-modal',
+    label: 'Start New Conversation Modal',
+    navAction: 'start-new-conversation-modal',
+  },
   { id: 'new-chat-start', label: 'New Chat Start', navAction: 'new-chat-start' },
   { id: 'chat-components', label: 'All Chat Components', navAction: 'chat-components' },
   { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
@@ -263,7 +276,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               : item.action === 'new-project'
                 ? activeNavItem === 'new-project' ||
                   ((activeNavItem === 'code' ||
-                    activeNavItem === 'chat-cards' ||
+                    activeNavItem === 'chat-start' ||
                     activeNavItem === 'new-chat-start') &&
                     isHomeRoute)
                 : activeNavItem === item.action;
@@ -283,7 +296,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 )}
               >
                 <span className="inline-flex leading-none transition-transform duration-500 ease-out">
-                  <Icon className="w-5 h-5" />
+                  <Icon
+                    className="w-5 h-5"
+                    {...(item.action === 'automations' ? {} : { strokeWidth: NAV_ICON_STROKE })}
+                  />
                 </span>
               </button>
             </LeftNavTooltip>
@@ -300,7 +316,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               aria-label="UX flow tutorials"
               data-tour-id="left-nav.ux-flow-icon"
             >
-              <Sparkles className="w-5 h-5" />
+              <Sparkles className="w-5 h-5" strokeWidth={NAV_ICON_STROKE} />
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -390,7 +406,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               )}
               aria-label={isOrgAccount ? 'Open account menu, organization workspace' : 'Open account menu'}
             >
-              <User className="h-4 w-4" aria-hidden="true" />
+              <User className="h-4 w-4" aria-hidden="true" strokeWidth={NAV_ICON_STROKE} />
               {isOrgAccount && (
                 <span
                   className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-foreground shadow-sm"
@@ -423,9 +439,15 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2">
                           {selectedWorkspace.type === 'org' ? (
-                            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                            <Building2
+                              className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                              strokeWidth={NAV_ICON_STROKE}
+                            />
                           ) : (
-                            <User className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                            <User
+                              className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                              strokeWidth={NAV_ICON_STROKE}
+                            />
                           )}
                           <span className="truncate">{selectedWorkspace.name}</span>
                           {selectedWorkspace.role ? (
@@ -434,7 +456,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                             </span>
                           ) : null}
                         </span>
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                        <ChevronDown
+                          className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                          strokeWidth={NAV_ICON_STROKE}
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -449,9 +474,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                         >
                           <span className="flex w-full items-center gap-2">
                             {org.type === 'org' ? (
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <Building2
+                                className="h-4 w-4 text-muted-foreground"
+                                strokeWidth={NAV_ICON_STROKE}
+                              />
                             ) : (
-                              <User className="h-4 w-4 text-muted-foreground" />
+                              <User className="h-4 w-4 text-muted-foreground" strokeWidth={NAV_ICON_STROKE} />
                             )}
                             <span>{org.name}</span>
                             {org.role ? (
@@ -468,7 +496,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 
                 {/* Invite Team */}
                 <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
-                  <UserCircle2 className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                  <UserCircle2
+                    className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                    strokeWidth={NAV_ICON_STROKE}
+                  />
                   Invite Team
                 </button>
 
@@ -480,32 +511,47 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <CreditCard className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <CreditCard
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Manage Account
                   </button>
                   <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <Users className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <Users
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Manage Team
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Cloud className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <Cloud
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Integrations
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Key className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <Key
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     API Keys
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Shield className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <Shield
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Secrets
                   </button>
                 </div>
@@ -518,22 +564,34 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <UserCircle2 className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <UserCircle2
+                    className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                    strokeWidth={NAV_ICON_STROKE}
+                  />
                     User Settings
                   </button>
                   <button 
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Settings className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <Settings
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Application Settings
                   </button>
                   <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <Plus className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <Plus
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Create New Organization
                   </button>
                   <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <LogOut className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <LogOut
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
                     Log Out
                   </button>
                 </div>

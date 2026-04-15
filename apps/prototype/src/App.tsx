@@ -26,6 +26,8 @@ import {
   ClaimStatesScreen,
   PublicShareScreen,
   ChatComponentsScreen,
+  StartNewConversationModalScreen,
+  LaunchFromPluginModalScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
@@ -62,7 +64,7 @@ type CanvasTipVariant = 'none' | ProtipVariant;
 
 const actionSlugs: Record<string, string> = {
   code: 'chat',
-  'chat-cards': 'chat-cards',
+  'chat-start': 'chat-start',
   'new-chat-start': 'new-chat-start',
   dashboard: 'dashboard',
   automations: 'automations',
@@ -74,12 +76,14 @@ const actionSlugs: Record<string, string> = {
   workflows: 'workflows',
   'claim-states': 'claim-states',
   'chat-components': 'chat-components',
+  'start-new-conversation-modal': 'start-new-conversation-modal',
+  'launch-from-plugin-modal': 'launch-from-plugin-modal',
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
 
 /** Default shell when opening the app or returning from overlays (pathname segment). */
-const DEFAULT_HOME_SLUG = actionSlugs['chat-cards'];
+const DEFAULT_HOME_SLUG = actionSlugs['chat-start'];
 
 /**
  * Collapse nested in-app routes so the outer shell slide does not re-run when only the
@@ -141,13 +145,13 @@ function App() {
     () => new URLSearchParams(location.search).get('canvas') !== 'closed',
     [location.search]
   );
-  const [activeNavItem, setActiveNavItem] = useState('chat-cards');
+  const [activeNavItem, setActiveNavItem] = useState('chat-start');
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
   const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
   const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
-  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('chat-cards');
+  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('chat-start');
   const [isEnterpriseCtaVisible, setIsEnterpriseCtaVisible] = useState(true);
   // Canvas resizing state
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
@@ -237,6 +241,8 @@ function App() {
   const isWorkflowsView = activeNavItem === 'workflows';
   const isClaimStatesView = activeNavItem === 'claim-states';
   const isChatComponentsView = activeNavItem === 'chat-components';
+  const isStartNewConversationModalView = activeNavItem === 'start-new-conversation-modal';
+  const isLaunchFromPluginModalView = activeNavItem === 'launch-from-plugin-modal';
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showFigmaExportView = figmaExportRoute !== null;
   const isFigmaCaptureSession = isFigmaCaptureActive();
@@ -249,7 +255,9 @@ function App() {
     !isNewLlmSwitcherView &&
     !isNewLlmSwitcherView2 &&
     !isWorkflowsView &&
-    !isChatComponentsView;
+    !isChatComponentsView &&
+    !isStartNewConversationModalView &&
+    !isLaunchFromPluginModalView;
   const showLeftNav =
     !showFigmaExportView &&
     !isShareView &&
@@ -451,10 +459,10 @@ function App() {
       if (action === 'new-project') {
         setActiveFlowPrototype(null);
         setIsConversationDrawerOpen(false);
-        setActiveNavItem('chat-cards');
-        setLastNonDrawerNavItem('chat-cards');
+        setActiveNavItem('chat-start');
+        setLastNonDrawerNavItem('chat-start');
         setIsWelcomeScreenActive(true);
-        navigateAppRoute(`/${actionSlugs['chat-cards']}`);
+        navigateAppRoute(`/${actionSlugs['chat-start']}`);
         return;
       }
 
@@ -553,6 +561,10 @@ function App() {
       navigate({ pathname: routeToPath(legacyHash), search }, { replace: true });
       return;
     }
+    if (pathname === 'chat-cards' || legacyHash === 'chat-cards') {
+      navigate({ pathname: '/chat-start', search }, { replace: true });
+      return;
+    }
     const route = normalizedCaptureRoute ? normalizedCaptureRoute : pathname || legacyHash;
     const routeHash = route.split('?')[0];
     const drawerFallbackRoute = `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`;
@@ -567,12 +579,12 @@ function App() {
       setFigmaExportRoute(null);
       setActiveFlowPrototype(null);
       setIsActiveChatView(false);
-      setActiveNavItem('chat-cards');
-      setLastNonDrawerNavItem('chat-cards');
+      setActiveNavItem('chat-start');
+      setLastNonDrawerNavItem('chat-start');
       setIsConversationDrawerOpen(false);
       setSettingsTab(null);
       setIsWelcomeScreenActive(true);
-      navigate({ pathname: '/chat-cards', search }, { replace: true });
+      navigate({ pathname: '/chat-start', search }, { replace: true });
       return;
     }
     if (hash === 'figma' || hash.startsWith('figma/')) {
@@ -709,7 +721,7 @@ function App() {
       setSettingsTab(null);
       return;
     }
-    const action = slugToAction[hash] ?? 'chat-cards';
+    const action = slugToAction[hash] ?? 'chat-start';
     setActiveNavItem(action);
     setLastNonDrawerNavItem(action);
     setIsConversationDrawerOpen(drawerShouldBeOpen);
@@ -802,7 +814,7 @@ function App() {
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
                 isHomeRoute={
-                  location.pathname === '/chat-cards' ||
+                  location.pathname === '/chat-start' ||
                   location.pathname === '/' ||
                   location.pathname === '/new-chat-start'
                 }
@@ -962,6 +974,8 @@ function App() {
                 {isWorkflowsView && <WorkflowsScreen />}
                 {isClaimStatesView && <ClaimStatesScreen />}
                 {isChatComponentsView && <ChatComponentsScreen />}
+                {isStartNewConversationModalView && <StartNewConversationModalScreen />}
+                {isLaunchFromPluginModalView && <LaunchFromPluginModalScreen />}
                 {showChatView && !isActiveChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
@@ -990,15 +1004,15 @@ function App() {
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
                         welcomeScreenVariant={
-                          activeNavItem === 'chat-cards'
-                            ? 'cards'
+                          activeNavItem === 'chat-start'
+                            ? 'chat-start'
                             : activeNavItem === 'new-chat-start'
                               ? 'new-chat-start'
                               : 'default'
                         }
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
                         isHomeRoute={
-                          location.pathname === '/chat-cards' ||
+                          location.pathname === '/chat-start' ||
                           location.pathname === '/' ||
                           location.pathname === '/new-chat-start'
                         }
