@@ -2844,7 +2844,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         {gitConversationRoutingClaims.length === 0 ? (
                           <div
                             data-testid="git-conversation-routing-empty"
-                            className="rounded-md border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground"
+                            className="rounded-md border border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground"
                           >
                             No git organizations found
                           </div>
