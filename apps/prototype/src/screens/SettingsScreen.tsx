@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { showAppToast } from '../lib/appToast';
 import {
   dataTableBodyClassName,
@@ -521,6 +522,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [deleteOrganizationDialogOpen, setDeleteOrganizationDialogOpen] = useState(false);
   const [addCreditAmount, setAddCreditAmount] = useState('');
   const [openHandsApiKeys, setOpenHandsApiKeys] = useState<OpenHandsApiKeyRow[]>(initialOpenHandsApiKeys);
+  const [createApiKeyModalOpen, setCreateApiKeyModalOpen] = useState(false);
+  const [newApiKeyName, setNewApiKeyName] = useState('');
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   const canAddCredit = useMemo(() => {
@@ -581,6 +584,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     // secrets read intentionally only when initialTab changes (avoid resetting edit form when list updates)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync route → form on navigation only
   }, [initialTab, onTabChange]);
+
+  useEffect(() => {
+    if (createApiKeyModalOpen) {
+      setNewApiKeyName('');
+    }
+  }, [createApiKeyModalOpen]);
 
   const handleTabClick = (tabId: string) => {
     setActiveTab(tabId);
@@ -1881,6 +1890,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <button
                         type="button"
                         className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
+                        onClick={() => setCreateApiKeyModalOpen(true)}
                       >
                         <Plus className="h-4 w-4 shrink-0" aria-hidden />
                         Create API Key
@@ -1957,6 +1967,68 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
               </div>
+
+              <Dialog open={createApiKeyModalOpen} onOpenChange={setCreateApiKeyModalOpen}>
+                <DialogContent className="gap-4 rounded-xl border border-border bg-card sm:max-w-[500px]">
+                  <DialogHeader className="space-y-0 text-left">
+                    <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
+                      Create API Key
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div data-testid="create-api-key-modal" className="flex flex-col gap-4">
+                    <p className="text-sm text-muted-foreground">
+                      Give your API key a descriptive name to help you identify it later.
+                    </p>
+                    <label htmlFor="api-key-name-input" className="mt-4 flex w-full flex-col gap-2.5">
+                      <span className="text-sm text-foreground">Name</span>
+                      <Input
+                        id="api-key-name-input"
+                        data-testid="api-key-name-input"
+                        type="text"
+                        placeholder="My API Key"
+                        value={newApiKeyName}
+                        onChange={(e) => setNewApiKeyName(e.target.value)}
+                        autoComplete="off"
+                        className="rounded-sm placeholder:italic"
+                      />
+                    </label>
+                  </div>
+                  <DialogFooter className="mt-2 flex w-full flex-row gap-2 !justify-start sm:space-x-0">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="flex-1"
+                      disabled={!newApiKeyName.trim()}
+                      onClick={() => {
+                        const name = newApiKeyName.trim();
+                        if (!name) return;
+                        setOpenHandsApiKeys((prev) => [
+                          {
+                            id: `api-key-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                            name,
+                            created: new Date().toLocaleString(),
+                            lastUsed: 'Never',
+                          },
+                          ...prev,
+                        ]);
+                        setCreateApiKeyModalOpen(false);
+                        showAppToast({ variant: 'success', message: 'API key created.' });
+                      }}
+                    >
+                      Create
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 border-primary text-primary hover:bg-primary/10"
+                      onClick={() => setCreateApiKeyModalOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
