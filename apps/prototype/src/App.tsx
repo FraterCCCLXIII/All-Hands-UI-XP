@@ -87,7 +87,8 @@ const DEFAULT_HOME_SLUG = actionSlugs['chat-start'];
 
 /**
  * Collapse nested in-app routes so the outer shell slide does not re-run when only the
- * sub-route changes (left nav + secondary column stay stable; same pattern as Settings).
+ * sub-route changes (left nav + secondary column stay stable). Extensions uses inner
+ * `ExtensionsAnimatedMain` for sub-route transitions.
  */
 function normalizePathForShellTransition(pathname: string): string {
   if (pathname === '/settings' || pathname.startsWith('/settings/')) return '/settings';

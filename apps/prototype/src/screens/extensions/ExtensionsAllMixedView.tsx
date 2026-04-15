@@ -26,6 +26,7 @@ import { cn } from '../../lib/utils';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
+import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
 
 function skillMatchesQuery(
@@ -308,7 +309,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
     <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
-      <main className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
+      <ExtensionsAnimatedMain className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
         <div
           className={cn(
             extensionsPageContentClassName,
@@ -427,7 +428,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
           </>
         )}
         </div>
-      </main>
+      </ExtensionsAnimatedMain>
     </div>
   );
 }

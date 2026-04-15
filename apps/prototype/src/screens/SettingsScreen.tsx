@@ -1146,7 +1146,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   const isConnected = status === 'connected';
                   const isConnecting = status === 'connecting';
                   return (
-                    <div key={source.id} className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                    <div key={source.id} className="rounded-modal border border-border bg-card p-6 shadow-sm">
                       <div className="flex flex-col gap-4">
                         <div className="flex items-start gap-3">
                           <div className="shrink-0 pt-0.5 text-foreground">{source.icon}</div>
@@ -1188,7 +1188,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                               <DropdownMenuContent align="end" className="w-44">
                                 <DropdownMenuItem
                                   onClick={() => setGitSourceDisconnectTarget(source.id)}
-                                  className="gap-2 text-destructive focus:text-destructive"
+                                  className="gap-2"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                   Disconnect
@@ -1224,7 +1224,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 })}
 
                 {/* Slack */}
-                <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <div className="rounded-modal border border-border bg-card p-6 shadow-sm">
                   <div className="flex items-start gap-3 mb-6">
                     <svg className="w-6 h-6 shrink-0" viewBox="0 0 54 54">
                       <g fill="none" fillRule="evenodd">
@@ -1250,7 +1250,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </div>
 
                 {/* Jira Cloud */}
-                <div className="rounded-lg border border-border bg-card p-6 shadow-sm">
+                <div className="rounded-modal border border-border bg-card p-6 shadow-sm">
                   <div className="flex items-start gap-3 mb-6">
                     <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
                       <path fill="#2684FF" d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.757a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"/>

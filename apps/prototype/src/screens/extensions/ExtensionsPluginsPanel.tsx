@@ -16,6 +16,7 @@ import {
   type SkillRepositoryItem,
 } from '../../data/skillsPageData';
 import { InfoCard } from '../../components/common/InfoCard';
+import { SkillIcon } from '../../components/icons/SkillIcon';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
 import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '../../lib/captureNavigation';
 import {
@@ -29,6 +30,7 @@ import {
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
+import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
 import { cn } from '../../lib/utils';
 import { toSkillFileName } from './pluginRepoUtils';
@@ -247,7 +249,7 @@ ${skill.initialPrompt}
     <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
-      <main
+      <ExtensionsAnimatedMain
         className={cn(
           selectedPlugin ? extensionsMainNoScrollClassName : extensionsMainScrollClassName,
           !selectedPlugin && 'repo-dropdown-scroll',
@@ -271,7 +273,7 @@ ${skill.initialPrompt}
                   className="mb-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  <span>Back to Plugin Marketplace</span>
+                  <span>Back</span>
                 </button>
 
                 <div className="my-6">
@@ -281,19 +283,19 @@ ${skill.initialPrompt}
                         {selectedPlugin.skillName ?? selectedPlugin.title}
                       </h2>
                       <p className="mt-2 text-sm text-muted-foreground">{selectedPlugin.description}</p>
-                      <a
-                        href={selectedPlugin.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                      >
-                        <Github className="h-4 w-4" />
-                        <span className="font-mono">
-                          {selectedPlugin.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                        </span>
-                      </a>
-                      <div className="mt-4">
-                        <SkillSourceBadge source={getSkillSource(selectedPlugin)} />
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <a
+                          href={selectedPlugin.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                        >
+                          <Github className="h-4 w-4 shrink-0" />
+                          <span className="truncate font-mono">
+                            {selectedPlugin.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                          </span>
+                        </a>
+                        <SkillSourceBadge source={getSkillSource(selectedPlugin)} className="shrink-0" />
                       </div>
                     </div>
                     {selectedPlugin.isPlugin ? (
@@ -325,7 +327,7 @@ ${skill.initialPrompt}
 
                 <section className="mt-4">
                   <h3 className="text-sm font-semibold text-foreground">Skills in this plugin bundle</h3>
-                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="mt-3 grid grid-cols-1 gap-4">
                     {pluginBundleSkills.map((skill) => (
                       <InfoCard
                         key={skill.id}
@@ -338,7 +340,7 @@ ${skill.initialPrompt}
                         }}
                         title={skill.skillName ?? skill.title}
                         description={skill.description}
-                        icon={<Box className="h-5 w-5" />}
+                        icon={<SkillIcon className="h-5 text-muted-foreground" />}
                         iconPosition="left"
                         interactive
                         className="w-full"
@@ -400,7 +402,7 @@ ${skill.initialPrompt}
               {filteredSkills.length === 0 && (
                 <p className="text-sm text-muted-foreground">No marketplace plugins match your search.</p>
               )}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4">
                   {filteredSkills.map((skill) => {
                     const pluginLabel = skill.skillName ?? skill.title;
                     const locked = skill.switchLocked === true;
@@ -460,7 +462,7 @@ ${skill.initialPrompt}
               </section>
           </div>
         )}
-      </main>
+      </ExtensionsAnimatedMain>
     </div>
   );
 }

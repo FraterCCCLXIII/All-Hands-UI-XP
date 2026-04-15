@@ -46,6 +46,7 @@ import {
   extensionsPageContentClassName,
   extensionsShellRowClassName,
 } from '../../lib/extensionsRoutes';
+import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
@@ -619,7 +620,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
     <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
-      <main className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
+      <ExtensionsAnimatedMain className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
         <div className={extensionsPageContentClassName}>
         {showMarketplace ? (
           <>
@@ -733,7 +734,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       </div>
                     </div>
                   </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4">
                 {filteredMarketplaceSkills.map((skill) => {
                   const label = skill.skillName ?? skill.title;
                   const locked = skill.switchLocked === true;
@@ -831,24 +832,23 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                 <div className="my-6">
                   <div className="flex items-start justify-between gap-4 min-w-0">
                     <div className="min-w-0 flex-1">
-                      <h2 className="text-[28px] font-semibold text-foreground leading-tight">
+                      <h2 className="text-xl font-semibold leading-6 text-foreground">
                         {displayItem.skillName ?? displayItem.title}
                       </h2>
-                      <a
-                        href={displayItem.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-                      >
-                        <Github className="h-4 w-4" />
-                        <span className="font-mono">
-                          {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                        </span>
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                      <p className="mt-4 text-sm text-muted-foreground">{displayItem.description}</p>
-                      <div className="mt-4">
-                        <SkillSourceBadge source={getSkillSource(displayItem)} />
+                      <p className="mt-2 text-sm text-muted-foreground">{displayItem.description}</p>
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <a
+                          href={displayItem.repoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                        >
+                          <Github className="h-4 w-4 shrink-0" />
+                          <span className="truncate font-mono">
+                            {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                          </span>
+                        </a>
+                        <SkillSourceBadge source={getSkillSource(displayItem)} className="shrink-0" />
                       </div>
                     </div>
                     <PluginToggle
@@ -877,24 +877,23 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                 </div>
               ) : (
                 <>
-                  <h2 className="text-[28px] font-semibold text-foreground leading-tight">
+                  <h2 className="text-xl font-semibold leading-6 text-foreground">
                     {displayItem.skillName ?? displayItem.title}
                   </h2>
-                  <a
-                    href={displayItem.repoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-                  >
-                    <Github className="h-4 w-4" />
-                    <span className="font-mono">
-                      {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                    </span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                  <p className="mt-4 text-sm text-muted-foreground">{displayItem.description}</p>
-                  <div className="mt-4">
-                    <SkillSourceBadge source={getSkillSource(displayItem)} />
+                  <p className="mt-2 text-sm text-muted-foreground">{displayItem.description}</p>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                    <a
+                      href={displayItem.repoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                    >
+                      <Github className="h-4 w-4 shrink-0" />
+                      <span className="truncate font-mono">
+                        {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      </span>
+                    </a>
+                    <SkillSourceBadge source={getSkillSource(displayItem)} className="shrink-0" />
                   </div>
                 </>
               )}
@@ -1003,7 +1002,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-foreground">Skills in this repo</h3>
                   </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4">
                     {selectedRepoGroup.skills.map((skill) => (
                       <InfoCard
                         key={skill.id}
@@ -1024,7 +1023,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
             </div>
           ) : null}
         </div>
-      </main>
+      </ExtensionsAnimatedMain>
 
       {displayItem && (
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-4">
