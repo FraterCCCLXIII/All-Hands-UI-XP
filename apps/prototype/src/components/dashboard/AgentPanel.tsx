@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { PRCard } from '../../types/pr';
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '../ui/sheet';
 import {
-  ArrowDown, ArrowUp, ChevronDown, Circle, CircleCheckBig,
-  Clock, ExternalLink, GitBranch, GitPullRequest, ListTodo,
+  ChevronDown, Circle, CircleCheckBig,
+  Clock, ExternalLink, ListTodo,
   Minus, Plus, X,
 } from 'lucide-react';
 import { ChatInputBox } from '../common/ChatInputBox';

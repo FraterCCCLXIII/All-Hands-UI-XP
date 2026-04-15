@@ -3,7 +3,6 @@ import type { KeyboardEvent, ReactNode, SyntheticEvent } from 'react';
 import {
   Loader2,
   ArrowUp,
-  ArrowDown,
   ArrowDownToLine,
   MoreHorizontal,
   Paperclip,

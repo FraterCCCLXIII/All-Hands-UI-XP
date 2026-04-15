@@ -1,12 +1,11 @@
 import { Box, Cloud, Layers3, Webhook } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { DocIconLink } from '../../components/common/DocIconLink';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 import { EXTENSIONS_ALL_BASE, extensionsSectionStackGap } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
-import type { ComponentType } from 'react';
-import type { LucideIcon } from 'lucide-react';
 
 export type ExtensionsCatalogScope = 'all' | 'skills' | 'plugins' | 'mcp' | 'hooks';
 
@@ -17,7 +16,7 @@ export type ExtensionsBrowseControls = {
   onScopeChange: (scope: ExtensionsCatalogScope) => void;
 };
 
-const SCOPE_ITEMS: { id: ExtensionsCatalogScope; label: string; icon: ComponentType<{ className?: string; 'aria-hidden'?: boolean }> }[] = [
+const SCOPE_ITEMS: { id: ExtensionsCatalogScope; label: string; icon: LucideIcon | typeof SkillIcon }[] = [
   { id: 'all', label: 'All active', icon: Layers3 },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
   { id: 'plugins', label: 'Plugins', icon: Box },
