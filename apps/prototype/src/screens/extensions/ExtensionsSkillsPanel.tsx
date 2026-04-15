@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronLeft,
   Copy,
-  ExternalLink,
   Folder,
   GitBranch,
   Github,
@@ -734,7 +733,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       </div>
                     </div>
                   </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {filteredMarketplaceSkills.map((skill) => {
                   const label = skill.skillName ?? skill.title;
                   const locked = skill.switchLocked === true;
@@ -841,9 +840,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                           href={displayItem.repoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                          className="inline-flex min-w-0 max-w-full items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                         >
-                          <Github className="h-4 w-4 shrink-0" />
                           <span className="truncate font-mono">
                             {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                           </span>
@@ -886,9 +884,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       href={displayItem.repoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                      className="inline-flex min-w-0 max-w-full items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                     >
-                      <Github className="h-4 w-4 shrink-0" />
                       <span className="truncate font-mono">
                         {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                       </span>
@@ -986,13 +983,11 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                           href={selectedRepoMeta.repoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
+                          className="mt-4 inline-flex min-w-0 max-w-full w-fit items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                         >
-                          <Github className="h-4 w-4" />
-                          <span className="font-mono">
+                          <span className="truncate font-mono">
                             {selectedRepoMeta.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                           </span>
-                          <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       )}
                     </div>
@@ -1002,7 +997,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   <div className="mb-3 flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-foreground">Skills in this repo</h3>
                   </div>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {selectedRepoGroup.skills.map((skill) => (
                       <InfoCard
                         key={skill.id}

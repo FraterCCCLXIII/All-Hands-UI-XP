@@ -266,7 +266,7 @@ const gitSourceDefinitions: Array<{
     name: 'GitHub',
     connectLabel: 'Connect GitHub',
     icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <svg className="h-5 w-5 text-[#8534F3]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
       </svg>
     ),
@@ -276,7 +276,7 @@ const gitSourceDefinitions: Array<{
     name: 'GitLab',
     connectLabel: 'Connect GitLab',
     icon: (
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden>
         <path d="M23.955 13.587l-1.342-4.135-2.664-8.189a.455.455 0 0 0-.867 0L16.418 9.45H7.582L4.918 1.263a.455.455 0 0 0-.867 0L1.387 9.452.045 13.587a.924.924 0 0 0 .331 1.023L12 23.054l11.624-8.443a.92.92 0 0 0 .331-1.024" fill="#E24329"/>
         <path d="M12 23.054l4.418-13.604H7.582z" fill="#FC6D26"/>
         <path d="M12 23.054l-4.418-13.604H1.387z" fill="#FCA326"/>
@@ -293,7 +293,7 @@ const gitSourceDefinitions: Array<{
     name: 'Bitbucket',
     connectLabel: 'Connect Bitbucket',
     icon: (
-      <svg className="w-6 h-6" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <svg className="h-5 w-5" viewBox="0 0 14 14" fill="none" aria-hidden>
         <path d="M13.5508 0.555664C13.8304 0.555669 14.04 0.794414 13.9941 1.08105L13.3906 4.8584H4.78516L5.55469 9.08887H8.46875L8.99902 5.98438H13.2109L12.082 13.0566C12.0353 13.2715 11.8489 13.4385 11.6387 13.4385H2.50098C2.19793 13.4385 1.94217 13.2238 1.89551 12.9131L0.00683594 1.05762C-0.0392224 0.794892 0.169738 0.531535 0.449219 0.53125L13.5508 0.555664Z" fill="#2684FF"/>
       </svg>
     ),
@@ -1140,83 +1140,79 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
           {/* Integrations Content */}
           {activeTab === 'integrations' && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
                 {gitSourceDefinitions.map((source) => {
                   const status = gitSourceStatus[source.id];
                   const isConnected = status === 'connected';
                   const isConnecting = status === 'connecting';
                   return (
-                    <div key={source.id} className="rounded-modal border border-border bg-card p-6 shadow-sm">
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-start gap-3">
-                          <div className="shrink-0 pt-0.5 text-foreground">{source.icon}</div>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                              <h3 className="text-base font-semibold leading-snug text-foreground">{source.name}</h3>
-                              <div className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5">
-                                <span
-                                  className={`h-2 w-2 shrink-0 rounded-full ${
-                                    isConnected
-                                      ? 'bg-success'
-                                      : isConnecting
-                                      ? 'animate-pulse bg-warning'
-                                      : 'bg-destructive'
-                                  }`}
-                                  aria-hidden
-                                />
-                                <span className="text-xs font-normal text-muted-foreground">
-                                  {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Not Connected'}
-                                </span>
-                              </div>
-                            </div>
-                            <p className="text-sm leading-relaxed text-muted-foreground">
-                              Connect your {source.name} account to authorize repositories and configure access for
-                              OpenHands.
-                            </p>
-                          </div>
-                          {isConnected && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button
-                                  type="button"
-                                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                                  aria-label={`Open actions for ${source.name}`}
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
-                                <DropdownMenuItem
-                                  onClick={() => setGitSourceDisconnectTarget(source.id)}
-                                  className="gap-2"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Disconnect
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                    <div
+                      key={source.id}
+                      className="relative rounded-xl border border-border bg-card p-5 transition-colors duration-200 ease-out hover:bg-muted/60"
+                    >
+                      {isConnected && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors duration-200 ease-out hover:bg-muted/60 hover:text-foreground"
+                              aria-label={`Open actions for ${source.name}`}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              onClick={() => setGitSourceDisconnectTarget(source.id)}
+                              className="gap-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              Disconnect
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+                          {source.icon}
                         </div>
-                        {/* Aligns with title/description column: icon w-6 (24px) + gap-3 (12px) = pl-9 */}
-                        <div className="flex flex-wrap items-center gap-3 pl-9">
-                          {isConnected ? (
-                            <button
-                              type="button"
-                              onClick={() => handleGitSourceConfigure(source.id)}
-                              className="flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm text-foreground transition-colors hover:bg-muted/60"
-                            >
-                              Configure Repositories
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => void handleGitSourceConnect(source.id)}
-                              disabled={isConnecting}
-                              className="flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {isConnecting ? 'Connecting...' : source.connectLabel}
-                            </button>
+                        <div
+                          className={cn(
+                            'flex min-w-0 flex-1 flex-col',
+                            isConnected && 'pr-10',
                           )}
+                        >
+                          <div className="flex min-w-0 flex-wrap items-center gap-2">
+                            <span className="text-base font-medium leading-tight text-foreground">{source.name}</span>
+                            {isConnected && (
+                              <span className="inline-flex shrink-0 items-center rounded-full border border-success/40 bg-success/15 px-2 py-0.5 text-xs font-medium text-success-foreground">
+                                Connected
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                            {`Connect your ${source.name} account to authorize repositories and configure access for OpenHands.`}
+                          </p>
+                          <div className="mt-3 flex flex-wrap items-center gap-3">
+                            {isConnected ? (
+                              <button
+                                type="button"
+                                onClick={() => handleGitSourceConfigure(source.id)}
+                                className="flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm text-foreground transition-colors duration-200 ease-out hover:bg-muted/60"
+                              >
+                                Configure Repositories
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => void handleGitSourceConnect(source.id)}
+                                disabled={isConnecting}
+                                className="flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors duration-200 ease-out hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {isConnecting ? 'Connecting...' : source.connectLabel}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1224,50 +1220,61 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 })}
 
                 {/* Slack */}
-                <div className="rounded-modal border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-start gap-3 mb-6">
-                    <svg className="w-6 h-6 shrink-0" viewBox="0 0 54 54">
+                <div className="relative rounded-xl border border-border bg-card p-5 transition-colors duration-200 ease-out hover:bg-muted/60">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60">
+                      <svg className="h-5 w-5" viewBox="0 0 54 54" aria-hidden>
                       <g fill="none" fillRule="evenodd">
                         <path d="M19.712.133a5.381 5.381 0 0 0-5.376 5.387 5.381 5.381 0 0 0 5.376 5.386h5.376V5.52A5.381 5.381 0 0 0 19.712.133m0 14.365H5.376A5.381 5.381 0 0 0 0 19.884a5.381 5.381 0 0 0 5.376 5.387h14.336a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386" fill="#36C5F0"/>
                         <path d="M53.76 19.884a5.381 5.381 0 0 0-5.376-5.386 5.381 5.381 0 0 0-5.376 5.386v5.387h5.376a5.381 5.381 0 0 0 5.376-5.387m-14.336 0V5.52A5.381 5.381 0 0 0 34.048.133a5.381 5.381 0 0 0-5.376 5.387v14.364a5.381 5.381 0 0 0 5.376 5.387 5.381 5.381 0 0 0 5.376-5.387" fill="#2EB67D"/>
                         <path d="M34.048 54a5.381 5.381 0 0 0 5.376-5.387 5.381 5.381 0 0 0-5.376-5.386h-5.376v5.386A5.381 5.381 0 0 0 34.048 54m0-14.365h14.336a5.381 5.381 0 0 0 5.376-5.386 5.381 5.381 0 0 0-5.376-5.387H34.048a5.381 5.381 0 0 0-5.376 5.387 5.381 5.381 0 0 0 5.376 5.386" fill="#ECB22E"/>
                         <path d="M0 34.249a5.381 5.381 0 0 0 5.376 5.386 5.381 5.381 0 0 0 5.376-5.386v-5.387H5.376A5.381 5.381 0 0 0 0 34.25m14.336 0v14.364A5.381 5.381 0 0 0 19.712 54a5.381 5.381 0 0 0 5.376-5.387V34.25a5.381 5.381 0 0 0-5.376-5.387 5.381 5.381 0 0 0-5.376 5.387" fill="#E01E5A"/>
                       </g>
-                    </svg>
-                    <div className="space-y-1">
-                      <h3 className="text-base font-semibold leading-snug text-foreground">Slack</h3>
-                      <p className="text-sm text-muted-foreground">
+                      </svg>
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-base font-medium text-foreground">Slack</span>
+                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                         Install the OpenHands Slack app to receive notifications in your workspace.
                       </p>
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors duration-200 ease-out hover:bg-primary/85 cursor-pointer"
+                        >
+                          Install OpenHands Slack App
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
-                  >
-                    Install OpenHands Slack App
-                  </button>
                 </div>
 
                 {/* Jira Cloud */}
-                <div className="rounded-modal border border-border bg-card p-6 shadow-sm">
-                  <div className="flex items-start gap-3 mb-6">
-                    <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24">
-                      <path fill="#2684FF" d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.757a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"/>
-                    </svg>
-                    <div className="space-y-1">
-                      <h3 className="text-base font-semibold leading-snug text-foreground">Jira Cloud</h3>
-                      <p className="text-sm text-muted-foreground">
+                <div className="relative rounded-xl border border-border bg-card p-5 transition-colors duration-200 ease-out hover:bg-muted/60">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
+                        <path
+                          fill="#2684FF"
+                          d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.757a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-base font-medium text-foreground">Jira Cloud</span>
+                      <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                         Link Jira to sync issues and keep OpenHands aligned with your project tracking.
                       </p>
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm text-foreground transition-colors duration-200 ease-out hover:bg-muted/60"
+                        >
+                          Configure
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="h-10 flex items-center justify-center px-4 text-sm rounded-md border border-border bg-background text-foreground hover:bg-muted/60 transition-colors"
-                  >
-                    Configure
-                  </button>
                 </div>
             </div>
           )}

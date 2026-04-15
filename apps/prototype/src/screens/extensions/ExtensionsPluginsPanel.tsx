@@ -7,7 +7,6 @@ import {
   ChevronRight,
   FileText,
   Folder,
-  Github,
 } from 'lucide-react';
 import {
   marketplaceSkills,
@@ -288,9 +287,8 @@ ${skill.initialPrompt}
                           href={selectedPlugin.repoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+                          className="inline-flex min-w-0 max-w-full items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
                         >
-                          <Github className="h-4 w-4 shrink-0" />
                           <span className="truncate font-mono">
                             {selectedPlugin.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                           </span>
@@ -402,7 +400,7 @@ ${skill.initialPrompt}
               {filteredSkills.length === 0 && (
                 <p className="text-sm text-muted-foreground">No marketplace plugins match your search.</p>
               )}
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {filteredSkills.map((skill) => {
                     const pluginLabel = skill.skillName ?? skill.title;
                     const locked = skill.switchLocked === true;
