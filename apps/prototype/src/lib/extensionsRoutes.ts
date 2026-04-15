@@ -14,9 +14,6 @@ export const extensionsSectionStackGap = 'gap-6';
 /** Centered main column (matches Settings inner: `max-w-4xl`, `pr-8`, section stack gap). */
 export const extensionsPageContentClassName = `mx-auto flex w-full max-w-4xl flex-col pr-8 ${extensionsSectionStackGap}`;
 
-/** Wider centered column for split layouts (e.g. plugin file tree + preview). */
-export const extensionsWidePageContentClassName = `mx-auto flex w-full max-w-6xl flex-col pr-8 ${extensionsSectionStackGap}`;
-
 /** Outer row: matches Settings (left inset, gap before main, shell does not scroll). */
 export const extensionsShellRowClassName =
   'flex h-full min-h-0 min-w-0 w-full flex-1 gap-6 overflow-hidden bg-background pl-8 pr-0';

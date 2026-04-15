@@ -143,6 +143,7 @@ export interface LeftNavProps {
 }
 
 const prototypeMenuEntries = [
+  { id: 'new-chat-start', label: 'New Chat Start', navAction: 'new-chat-start' },
   { id: 'chat-components', label: 'All Chat Components', navAction: 'chat-components' },
   { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
   { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
@@ -261,7 +262,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               ? isConversationDrawerOpen
               : item.action === 'new-project'
                 ? activeNavItem === 'new-project' ||
-                  ((activeNavItem === 'code' || activeNavItem === 'chat-cards') && isHomeRoute)
+                  ((activeNavItem === 'code' ||
+                    activeNavItem === 'chat-cards' ||
+                    activeNavItem === 'new-chat-start') &&
+                    isHomeRoute)
                 : activeNavItem === item.action;
           return (
             <LeftNavTooltip key={item.action} label={item.label}>
@@ -408,11 +412,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               <div className="flex w-min min-w-[220px] flex-col">
                 <div className="text-lg font-semibold mb-4">Account</div>
                 
-                {/* Workspace — same dropdown pattern as Settings org selector */}
-                <div className="mb-3 space-y-1">
-                  <div className="px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Workspace
-                  </div>
+                {/* Workspace selector — same dropdown pattern as Settings org selector */}
+                <div className="mb-3">
                   <DropdownMenu modal={false}>
                     <DropdownMenuTrigger asChild>
                       <button

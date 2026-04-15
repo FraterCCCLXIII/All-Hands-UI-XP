@@ -25,7 +25,6 @@ import {
   extensionsMainScrollClassName,
   extensionsPageContentClassName,
   extensionsShellRowClassName,
-  extensionsWidePageContentClassName,
 } from '../../lib/extensionsRoutes';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
@@ -256,9 +255,9 @@ ${skill.initialPrompt}
       >
         {selectedPlugin ? (
           <div
-            className={cn(extensionsWidePageContentClassName, 'flex min-h-0 flex-1 flex-col')}
+            className={cn(extensionsPageContentClassName, 'flex min-h-0 flex-1 flex-col')}
           >
-            <div className="flex h-full min-h-0 gap-4">
+            <div className="flex h-full min-h-0 gap-6">
               <div className="repo-dropdown-scroll min-w-0 flex-1 overflow-y-auto pr-1">
                 <button
                   type="button"

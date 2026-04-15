@@ -63,6 +63,7 @@ type CanvasTipVariant = 'none' | ProtipVariant;
 const actionSlugs: Record<string, string> = {
   code: 'chat',
   'chat-cards': 'chat-cards',
+  'new-chat-start': 'new-chat-start',
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
@@ -801,7 +802,9 @@ function App() {
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
                 isHomeRoute={
-                  location.pathname === '/chat-cards' || location.pathname === '/'
+                  location.pathname === '/chat-cards' ||
+                  location.pathname === '/' ||
+                  location.pathname === '/new-chat-start'
                 }
               />
             )}
@@ -986,9 +989,19 @@ function App() {
                         onCreatePR={handleCreatePR}
                         onWelcomeScreenChange={setIsWelcomeScreenActive}
                         onEnterpriseCtaVisibilityChange={setIsEnterpriseCtaVisible}
-                        welcomeScreenVariant={activeNavItem === 'chat-cards' ? 'cards' : 'default'}
+                        welcomeScreenVariant={
+                          activeNavItem === 'chat-cards'
+                            ? 'cards'
+                            : activeNavItem === 'new-chat-start'
+                              ? 'new-chat-start'
+                              : 'default'
+                        }
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
-                        isHomeRoute={location.pathname === '/chat-cards' || location.pathname === '/'}
+                        isHomeRoute={
+                          location.pathname === '/chat-cards' ||
+                          location.pathname === '/' ||
+                          location.pathname === '/new-chat-start'
+                        }
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
                       />
