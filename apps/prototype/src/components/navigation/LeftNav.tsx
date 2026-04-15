@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { Boxes, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, Cloud, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
+import { Blocks, Boxes, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Theme, ThemeElement } from '../../types/theme';
@@ -188,6 +190,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 }) => {
   const selectedWorkspace =
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
+  const personalWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'personal');
+  const gitOrganizationWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'org');
   const isOrgAccount = selectedWorkspace.type === 'org';
   const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
@@ -466,30 +470,51 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       align="start"
                       className="z-[100] w-[var(--radix-dropdown-menu-trigger-width)] border-border bg-sidebar text-sidebar-foreground"
                     >
-                      {accountWorkspaceOptions.map((org) => (
+                      {personalWorkspaces.map((org) => (
                         <DropdownMenuItem
                           key={org.id}
                           className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground data-[highlighted]:[&_svg]:!text-white group-hover:[&_svg]:!text-white"
                           onClick={() => onActiveWorkspaceChange?.(org.id)}
                         >
                           <span className="flex w-full items-center gap-2">
-                            {org.type === 'org' ? (
+                            <User className="h-4 w-4 text-muted-foreground" strokeWidth={NAV_ICON_STROKE} />
+                            <span>{org.name}</span>
+                          </span>
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        Git organizations
+                      </DropdownMenuLabel>
+                      {gitOrganizationWorkspaces.length > 0 ? (
+                        gitOrganizationWorkspaces.map((org) => (
+                          <DropdownMenuItem
+                            key={org.id}
+                            className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground data-[highlighted]:[&_svg]:!text-white group-hover:[&_svg]:!text-white"
+                            onClick={() => onActiveWorkspaceChange?.(org.id)}
+                          >
+                            <span className="flex w-full items-center gap-2">
                               <Building2
                                 className="h-4 w-4 text-muted-foreground"
                                 strokeWidth={NAV_ICON_STROKE}
                               />
-                            ) : (
-                              <User className="h-4 w-4 text-muted-foreground" strokeWidth={NAV_ICON_STROKE} />
-                            )}
-                            <span>{org.name}</span>
-                            {org.role ? (
-                              <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                {org.role}
-                              </span>
-                            ) : null}
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
+                              <span>{org.name}</span>
+                              {org.role ? (
+                                <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                  {org.role}
+                                </span>
+                              ) : null}
+                            </span>
+                          </DropdownMenuItem>
+                        ))
+                      ) : (
+                        <div
+                          data-testid="git-organizations-empty"
+                          className="mx-1 mb-1 rounded-md border border-border bg-muted/20 px-3 py-2.5 text-center text-sm text-muted-foreground"
+                        >
+                          No git organizations found
+                        </div>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -528,7 +553,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     onClick={() => onNavItemClick('settings')}
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <Cloud
+                    <Blocks
                       className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
                       strokeWidth={NAV_ICON_STROKE}
                     />

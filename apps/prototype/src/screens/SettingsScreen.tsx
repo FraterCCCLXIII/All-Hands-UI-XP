@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   Building2,
@@ -9,12 +10,13 @@ import {
   CheckCircle,
   ChevronDown,
   Eye,
+  Info,
   Key,
   Layers,
   MoreVertical,
   Pencil,
   Plus,
-  Puzzle,
+  Blocks,
   RefreshCw,
   Settings as SettingsIcon,
   Shield,
@@ -29,6 +31,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -56,6 +59,7 @@ import {
   dataTableShellClassName,
   dataTableTh,
 } from '../components/ui/table';
+import { SkillIcon } from '../components/icons/SkillIcon';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
@@ -133,7 +137,7 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
-  { id: 'integrations', label: 'Integrations', icon: Puzzle },
+  { id: 'integrations', label: 'Integrations', icon: Blocks },
   { id: 'app', label: 'Application', icon: SettingsIcon },
   { id: 'llm', label: 'Language Model (LLM)', icon: Cpu },
   { id: 'billing', label: 'Billing', icon: CreditCard },
@@ -144,7 +148,74 @@ const settingsTabs = [
   { id: 'org-plugins', label: 'Extensions', icon: Layers },
   { id: 'org-hooks', label: 'Hooks', icon: Webhook },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
+  { id: 'skills', label: 'Skills', icon: SkillIcon },
 ];
+
+type SettingsNavItem = {
+  id: string;
+  label: string;
+  tabId: string;
+  icon: LucideIcon | typeof SkillIcon;
+  requiredPermission?: PermissionKey;
+};
+
+/** Org context (Admin / Owner): order within Org settings. */
+const ORG_SETTINGS_NAV: SettingsNavItem[] = [
+  {
+    id: 'organizations',
+    label: 'Organization',
+    tabId: 'organizations',
+    icon: Building2,
+    requiredPermission: 'manage_organization_claims',
+  },
+  {
+    id: 'manage-team',
+    label: 'Org Members',
+    tabId: 'manage-team',
+    icon: Users,
+    requiredPermission: 'invite_user_to_organization',
+  },
+  { id: 'llm', label: 'Language Model (LLM)', tabId: 'llm', icon: Cpu, requiredPermission: 'view_llm_settings' },
+  { id: 'billing', label: 'Billing', tabId: 'billing', icon: CreditCard, requiredPermission: 'view_billing' },
+  { id: 'org-plugins', label: 'Extensions', tabId: 'org-plugins', icon: Layers, requiredPermission: 'manage_org_plugins' },
+  { id: 'org-hooks', label: 'Hooks', tabId: 'org-hooks', icon: Webhook, requiredPermission: 'manage_org_hooks' },
+];
+
+const PERSONAL_SETTINGS_NAV: SettingsNavItem[] = [
+  { id: 'api-keys', label: 'API Keys', tabId: 'api-keys', icon: Key, requiredPermission: 'manage_api_keys' },
+  { id: 'secrets', label: 'Secrets', tabId: 'secrets', icon: Shield, requiredPermission: 'manage_secrets' },
+  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: Cloud, requiredPermission: 'manage_mcp' },
+];
+
+const ACCOUNT_NAV: SettingsNavItem[] = [
+  { id: 'user', label: 'User', tabId: 'user', icon: User },
+  { id: 'app', label: 'Application', tabId: 'app', icon: SettingsIcon },
+];
+
+const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    tabId: 'integrations',
+    icon: Blocks,
+    requiredPermission: 'manage_integrations',
+  },
+  { id: 'skills', label: 'Skills', tabId: 'skills', icon: SkillIcon, requiredPermission: 'manage_org_plugins' },
+];
+
+/** Personal workspace: LLM → API Keys → Secrets → MCP | User → App | Billing | Integrations → Skills */
+const PERSONAL_WORKSPACE_TOP_NAV: SettingsNavItem[] = [
+  { id: 'llm', label: 'Language Model (LLM)', tabId: 'llm', icon: Cpu, requiredPermission: 'view_llm_settings' },
+  { id: 'api-keys', label: 'API Keys', tabId: 'api-keys', icon: Key, requiredPermission: 'manage_api_keys' },
+  { id: 'secrets', label: 'Secrets', tabId: 'secrets', icon: Shield, requiredPermission: 'manage_secrets' },
+  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: Cloud, requiredPermission: 'manage_mcp' },
+];
+
+const PERSONAL_WORKSPACE_BILLING_NAV: SettingsNavItem[] = [
+  { id: 'billing', label: 'Billing', tabId: 'billing', icon: CreditCard, requiredPermission: 'view_billing' },
+];
+
+/** Org member: same nav groups as personal workspace block (no billing). */
 
 type SecretsView = 'list' | 'add' | 'edit';
 
@@ -191,6 +262,7 @@ const settingsTabDescriptions: Record<string, string> = {
     'Add extension repositories from Git URLs, choose which plugins and skills appear for your organization, and enable them in every conversation.',
   'org-hooks':
     'Define organization hooks and control whether members see them in the UI and whether they run automatically in every new conversation.',
+  skills: 'Choose which skills are available for your organization and how they appear in conversations.',
 };
 
 /** Border + padding below the line only. Parent stacks sections with `gap-6`; extra `mt-*` here doubles the gap above the rule. */
@@ -202,49 +274,15 @@ const settingsSectionStackGap = 'gap-6';
 /** Gap under subsection subline (description) to the next control or table — same as `settingsSectionStackGap`. */
 const settingsSublineToContentGap = settingsSectionStackGap;
 
-const settingsLinks: Array<{
-  id: string;
-  label: string;
-  icon: typeof Users;
-  tabId: string;
-  requiredPermission: PermissionKey;
-}> = [
-  { id: 'manage-team', label: 'Manage Team', icon: Users, tabId: 'manage-team', requiredPermission: 'invite_user_to_organization' },
-  { id: 'integrations', label: 'Integrations', icon: Puzzle, tabId: 'integrations', requiredPermission: 'manage_integrations' },
-  { id: 'llm', label: 'Language Model (LLM)', icon: Cpu, tabId: 'llm', requiredPermission: 'view_llm_settings' },
-  { id: 'api-keys', label: 'API Keys', icon: Key, tabId: 'api-keys', requiredPermission: 'manage_api_keys' },
-  { id: 'secrets', label: 'Secrets', icon: Shield, tabId: 'secrets', requiredPermission: 'manage_secrets' },
-  { id: 'mcp', label: 'MCP', icon: Cloud, tabId: 'mcp', requiredPermission: 'manage_mcp' },
-  {
-    id: 'organizations',
-    label: 'Organization',
-    icon: Building2,
-    tabId: 'organizations',
-    requiredPermission: 'manage_organization_claims',
-  },
-  {
-    id: 'org-plugins',
-    label: 'Extensions',
-    icon: Layers,
-    tabId: 'org-plugins',
-    requiredPermission: 'manage_org_plugins',
-  },
-  {
-    id: 'org-hooks',
-    label: 'Hooks',
-    icon: Webhook,
-    tabId: 'org-hooks',
-    requiredPermission: 'manage_org_hooks',
-  },
-  { id: 'billing', label: 'Billing', icon: CreditCard, tabId: 'billing', requiredPermission: 'view_billing' },
-];
-
 const orgOptions = [
   { id: 'personal', name: 'Personal Account', role: null, type: 'personal' },
   { id: 'acme-owner', name: 'Acme Inc', role: 'Owner', type: 'org' },
   { id: 'starlight-admin', name: 'Starlight Labs', role: 'Admin', type: 'org' },
   { id: 'nova-member', name: 'Nova Group', role: 'Member', type: 'org' },
 ];
+
+const personalOrgOptions = orgOptions.filter((o) => o.type === 'personal');
+const gitOrganizationOptions = orgOptions.filter((o) => o.type === 'org');
 
 const roleOptionsForTeam: OrgRole[] = ['Member', 'Admin', 'Owner'];
 
@@ -541,6 +579,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [revealedApiKey, setRevealedApiKey] = useState('');
   /** Demo: unlocked after adding ≥$10 on Billing, or via prototype FAB (API Keys). */
   const [hasOpenHandsLlmKeyAccess, setHasOpenHandsLlmKeyAccess] = useState(false);
+  /** Demo: Organization → Git Conversation Routing shows empty state (prototype FAB). */
+  const [demoEmptyGitClaimOrganizations, setDemoEmptyGitClaimOrganizations] = useState(false);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   const canAddCredit = useMemo(() => {
@@ -664,28 +704,25 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     selectedOrg?.type === 'personal' ? 'Owner' : (selectedOrg?.role as OrgRole) ?? 'Member';
 
   useEffect(() => {
-    if (
-      selectedOrg?.type === 'personal' &&
-      (activeTab === 'org-plugins' || activeTab === 'org-hooks')
-    ) {
+    if (selectedOrg?.type === 'personal' && (activeTab === 'org-plugins' || activeTab === 'org-hooks')) {
       setActiveTab('user');
       onTabChange?.('user');
     }
   }, [selectedOrg?.type, activeTab, onTabChange]);
 
   const hasPermission = (permission: PermissionKey) => rolePermissions[effectiveRole].has(permission);
-  const visibleSettingsLinks = settingsLinks.filter((item) => {
-    if (selectedOrg?.type === 'personal' && item.id === 'manage-team') {
+  const navItemVisible = (item: SettingsNavItem): boolean => {
+    if (item.requiredPermission && !hasPermission(item.requiredPermission)) return false;
+    if (selectedOrg?.type === 'personal' && item.tabId === 'manage-team') return false;
+    if (selectedOrg?.type === 'personal' && (item.tabId === 'org-plugins' || item.tabId === 'org-hooks')) {
       return false;
     }
-    if (selectedOrg?.type === 'personal' && item.id === 'org-plugins') {
-      return false;
-    }
-    if (selectedOrg?.type === 'personal' && item.id === 'org-hooks') {
-      return false;
-    }
-    return !item.requiredPermission || hasPermission(item.requiredPermission);
-  });
+    return true;
+  };
+  const filterNav = (items: SettingsNavItem[]) => items.filter(navItemVisible);
+  const showOrgAdminNav =
+    selectedOrg?.type === 'org' && (effectiveRole === 'Admin' || effectiveRole === 'Owner');
+  const showOrgMemberNav = selectedOrg?.type === 'org' && effectiveRole === 'Member';
   const canInviteMembers = hasPermission('invite_user_to_organization');
   const canManageOrgClaims = true;
   const activeOrgName = selectedOrg?.name ?? 'Personal Account';
@@ -811,6 +848,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   };
 
   const claimableOptions = orgClaimOptions.filter((option) => option.availableToOwner);
+  const gitConversationRoutingClaims = demoEmptyGitClaimOrganizations ? [] : claimableOptions;
 
   const handleClaim = (claimId: string) => {
     const owner = claimRegistry[claimId];
@@ -878,6 +916,40 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     ? { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
     : { duration: 0 };
 
+  const renderNavButton = (item: SettingsNavItem) => {
+    const Icon = item.icon;
+    const isActive = activeTab === item.tabId;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => handleTabClick(item.tabId)}
+        className={cn(
+          'group flex w-full items-center gap-3 rounded-md px-3.5 py-2 text-left transition-colors duration-200',
+          isActive ? 'bg-muted/60' : 'hover:bg-muted/60',
+        )}
+      >
+        <Icon
+          className={cn(
+            'h-5 w-5 shrink-0',
+            isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
+          )}
+          aria-hidden
+        />
+        <span
+          className={cn(
+            'block min-w-0 flex-1 truncate text-sm font-normal transition-transform duration-300',
+            isActive
+              ? 'text-white'
+              : 'text-muted-foreground group-hover:translate-x-0.5 group-hover:text-white',
+          )}
+        >
+          {item.label}
+        </span>
+      </button>
+    );
+  };
+
   return (
     <div className={cn('flex min-h-0 min-w-0 flex-1 overflow-hidden pl-8 pr-0', settingsSectionStackGap)}>
       {/* Left Navigation — vertical inset from CSS vars (independent of main) */}
@@ -915,113 +987,106 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
-            {orgOptions.map((org) => (
+            {personalOrgOptions.map((org) => (
               <DropdownMenuItem key={org.id} onClick={() => handleOrgChange(org.id)}>
                 <span className="flex items-center gap-2 w-full">
-                  {org.type === 'org' ? (
-                    <Building2 className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <User className="w-4 h-4 text-muted-foreground" />
-                  )}
+                  <User className="w-4 h-4 text-muted-foreground" />
                   <span>{org.name}</span>
-                  {org.role && (
-                    <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                      {org.role}
-                    </span>
-                  )}
                 </span>
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Git organizations
+            </DropdownMenuLabel>
+            {gitOrganizationOptions.length > 0 ? (
+              gitOrganizationOptions.map((org) => (
+                <DropdownMenuItem key={org.id} onClick={() => handleOrgChange(org.id)}>
+                  <span className="flex items-center gap-2 w-full">
+                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                    <span>{org.name}</span>
+                    {org.role && (
+                      <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        {org.role}
+                      </span>
+                    )}
+                  </span>
+                </DropdownMenuItem>
+              ))
+            ) : (
+              <div
+                data-testid="git-organizations-empty"
+                className="mx-1 mb-1 rounded-md border border-border bg-muted/20 px-3 py-2.5 text-center text-sm text-muted-foreground"
+              >
+                No git organizations found
+              </div>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
         <div className="flex flex-col gap-2">
-          {visibleSettingsLinks.map((item) => {
-            const Icon = item.icon;
-            return (
+          {showOrgAdminNav ? (
+            <>
+              <div className="px-3.5 pt-0.5">
+                <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
+                  Org settings
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">{filterNav(ORG_SETTINGS_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="px-3.5">
+                <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
+                  Personal settings
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_SETTINGS_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">
+                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+              </div>
+            </>
+          ) : showOrgMemberNav ? (
+            <>
+              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">
+                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_WORKSPACE_BILLING_NAV).map(renderNavButton)}</div>
+              <div className="border-t border-border" />
+              <div className="flex flex-col gap-0.5">
+                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+              </div>
+            </>
+          )}
+        </div>
+        {selectedOrg?.type === 'personal' ? (
+          <>
+            <div className="border-t border-border" />
+            <div className="flex flex-col gap-2">
               <button
-                key={item.id}
-                onClick={() => handleTabClick(item.tabId)}
-                className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
-                  activeTab === item.tabId
-                    ? 'bg-muted/60'
-                    : 'hover:bg-muted/60'
-                }`}
+                type="button"
+                onClick={() => setCreateOrgModalOpen(true)}
+                className="group flex items-center gap-3 rounded-md px-3.5 py-2 text-left transition-colors hover:bg-muted/60"
               >
-                <Icon
-                  className={`w-5 h-5 ${
-                    activeTab === item.tabId
-                      ? 'text-white'
-                      : 'text-muted-foreground group-hover:text-white'
-                  }`}
-                />
-                <span
-                  className={`text-sm font-normal whitespace-nowrap ${
-                    activeTab === item.tabId
-                      ? 'text-white'
-                      : 'text-muted-foreground group-hover:text-white'
-                  }`}
-                >
-                  {item.label}
+                <Plus className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
+                <span className="text-sm font-normal text-muted-foreground group-hover:text-white">
+                  Create New Organization
                 </span>
               </button>
-            );
-          })}
-        </div>
-        <div className="border-t border-border" />
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={() => handleTabClick('user')}
-            className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
-              activeTab === 'user'
-                ? 'bg-muted/60'
-                : 'hover:bg-muted/60'
-            }`}
-          >
-            <User
-              className={`w-5 h-5 ${
-                activeTab === 'user' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
-              }`}
-            />
-            <span
-              className={`text-sm font-normal whitespace-nowrap ${
-                activeTab === 'user' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
-              }`}
-            >
-              User
-            </span>
-          </button>
-          <button
-            onClick={() => handleTabClick('app')}
-            className={`group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left ${
-              activeTab === 'app'
-                ? 'bg-muted/60'
-                : 'hover:bg-muted/60'
-            }`}
-          >
-            <SettingsIcon
-              className={`w-5 h-5 ${
-                activeTab === 'app' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
-              }`}
-            />
-            <span
-              className={`text-sm font-normal whitespace-nowrap ${
-                activeTab === 'app' ? 'text-white' : 'text-muted-foreground group-hover:text-white'
-              }`}
-            >
-              Application
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setCreateOrgModalOpen(true)}
-            className="group flex items-center gap-3 px-[14px] py-2 rounded-md transition-colors text-left hover:bg-muted/60"
-          >
-            <Plus className="w-5 h-5 text-muted-foreground group-hover:text-white" />
-            <span className="text-sm font-normal text-muted-foreground whitespace-nowrap group-hover:text-white">
-              Create New Organization
-            </span>
-          </button>
-        </div>
+            </div>
+          </>
+        ) : null}
       </nav>
 
       {/* Main Content — scrolls at the viewport right edge; inner padding keeps text off the gutter */}
@@ -1043,7 +1108,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             >
           {activeTabLabel && activeTab !== 'manage-team' && (
             <div className="space-y-1">
-              <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-semibold leading-6 text-foreground">{activeTabLabel}</h2>
+                {activeTab === 'llm' && showOrgAdminNav && (
+                  <div
+                    data-testid="org-wide-settings-badge"
+                    className="flex items-center gap-2 rounded-full border border-border bg-muted/40 px-2.5 py-1"
+                  >
+                    <Info className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden />
+                    <span className="text-[11px] font-medium leading-5 text-muted-foreground">
+                      This setting affects the whole organization
+                    </span>
+                  </div>
+                )}
+              </div>
               {settingsTabDescriptions[activeTab] &&
                 !(activeTab === 'secrets' && (secretsView === 'add' || secretsView === 'edit')) && (
                 <p className="text-sm text-muted-foreground">{settingsTabDescriptions[activeTab]}</p>
@@ -2685,6 +2763,43 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           )}
 
+          {/* Skills — org: extensions catalog; personal: integrations CTA */}
+          {activeTab === 'skills' && (
+            <div className="contents">
+              <div className={cn('flex flex-col', settingsSectionStackGap)}>
+                <div className="space-y-1">
+                  <h3 className="text-base font-semibold leading-snug text-foreground">
+                    {selectedOrg?.type === 'personal' ? 'Skills' : 'Organization skills'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrg?.type === 'personal' ? (
+                      <>
+                        Skills in your personal workspace come from extensions you connect. Use Integrations to manage
+                        connections; create an organization when you need shared extension repos and org-wide skills.
+                      </>
+                    ) : (
+                      <>
+                        Skills available to your org come from your extension repositories. Add or remove repos on
+                        Extensions to change which skills appear in conversations.
+                      </>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  {selectedOrg?.type === 'personal' ? (
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleTabClick('integrations')}>
+                      Open Integrations
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleTabClick('org-plugins')}>
+                      Open Extensions
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Organizations Content */}
           {activeTab === 'organizations' && (
             <div className="contents">
@@ -2726,48 +2841,57 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     </div>
                     <div className={dataTableShellClassName}>
                       <div className={dataTableInnerClassName}>
-                        <table className={dataTableClassName}>
-                          <colgroup>
-                            <col className="min-w-0" />
-                            <col className="w-[9rem]" />
-                          </colgroup>
-                          <tbody className={dataTableBodyClassName}>
-                            {claimableOptions.map((option) => {
-                              const claimOwner = claimRegistry[option.id];
-                              const isClaimedByCurrentOrg = claimOwner === activeOrgName;
+                        {gitConversationRoutingClaims.length === 0 ? (
+                          <div
+                            data-testid="git-conversation-routing-empty"
+                            className="rounded-md border border-dashed border-border bg-muted/10 px-4 py-10 text-center text-sm text-muted-foreground"
+                          >
+                            No git organizations found
+                          </div>
+                        ) : (
+                          <table className={dataTableClassName}>
+                            <colgroup>
+                              <col className="min-w-0" />
+                              <col className="w-[9rem]" />
+                            </colgroup>
+                            <tbody className={dataTableBodyClassName}>
+                              {gitConversationRoutingClaims.map((option) => {
+                                const claimOwner = claimRegistry[option.id];
+                                const isClaimedByCurrentOrg = claimOwner === activeOrgName;
 
-                              return (
-                                <tr key={option.id} className={dataTableRowClassName}>
-                                  <td className="min-w-0 px-4 py-3.5 align-middle text-sm text-foreground">
-                                    <span className="text-muted-foreground">{option.provider}</span>
-                                    <span className="mx-1 text-muted-foreground">/</span>
-                                    <span>{option.handle}</span>
-                                  </td>
-                                  <td className="px-4 py-3.5 align-middle text-right">
-                                    {isClaimedByCurrentOrg && canManageOrgClaims ? (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveClaim(option.id)}
-                                        className="group h-7 rounded-md border border-success/60 bg-success/20 px-2 text-xs font-medium text-success-foreground transition-colors hover:border-destructive/60 hover:bg-destructive/15 hover:text-destructive-foreground"
-                                      >
-                                        <span className="group-hover:hidden">Claimed</span>
-                                        <span className="hidden group-hover:inline">Disconnect</span>
-                                      </button>
-                                    ) : (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleClaim(option.id)}
-                                        className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-muted/60 transition-colors"
-                                      >
-                                        Claim
-                                      </button>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                                return (
+                                  <tr key={option.id} className={dataTableRowClassName}>
+                                    <td className="min-w-0 px-4 py-3.5 align-middle text-sm text-foreground">
+                                      <span className="text-muted-foreground">{option.provider}</span>
+                                      <span className="mx-1 text-muted-foreground">/</span>
+                                      <span>{option.handle}</span>
+                                    </td>
+                                    <td className="px-4 py-3.5 align-middle text-right">
+                                      {isClaimedByCurrentOrg && canManageOrgClaims ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveClaim(option.id)}
+                                          className="group h-7 rounded-md border border-success/60 bg-success/20 px-2 text-xs font-medium text-success-foreground transition-colors hover:border-destructive/60 hover:bg-destructive/15 hover:text-destructive-foreground"
+                                        >
+                                          <span className="group-hover:hidden">Claimed</span>
+                                          <span className="hidden group-hover:inline">Disconnect</span>
+                                        </button>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleClaim(option.id)}
+                                          className="h-7 rounded-md border border-border bg-background px-2 text-xs text-foreground hover:bg-muted/60 transition-colors"
+                                        >
+                                          Claim
+                                        </button>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -3066,7 +3190,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <Popover>
         <PopoverTrigger asChild>
           <PrototypeControlsFab
-            isActive={hasOpenHandsLlmKeyAccess}
+            isActive={hasOpenHandsLlmKeyAccess || demoEmptyGitClaimOrganizations}
             aria-label="Prototype controls: OpenHands LLM key access"
             title="Open prototype controls"
             data-testid="settings-demo-llm-access-fab"
@@ -3096,6 +3220,35 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             Demo: simulates having purchased enough credits to use the OpenHands LLM key (API Keys tab).
+          </p>
+          <div className="mt-3 flex items-center justify-between gap-3 border-t border-border pt-3">
+            <span className="text-sm font-medium text-foreground">Empty Git org claims</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={demoEmptyGitClaimOrganizations}
+              aria-label={
+                demoEmptyGitClaimOrganizations
+                  ? 'Show sample Git organizations in routing table'
+                  : 'Show empty state in Git Conversation Routing'
+              }
+              data-testid="settings-demo-git-claims-empty-toggle"
+              onClick={() => setDemoEmptyGitClaimOrganizations((v) => !v)}
+              className={cn(
+                'flex h-6 w-10 shrink-0 items-center rounded-full border border-border px-0.5 transition-colors',
+                demoEmptyGitClaimOrganizations ? 'bg-foreground/80' : 'bg-muted/60',
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  demoEmptyGitClaimOrganizations ? 'translate-x-4' : 'translate-x-0',
+                )}
+              />
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Demo: Organization tab → Git Conversation Routing table shows “No git organizations found”.
           </p>
         </PopoverContent>
       </Popover>
