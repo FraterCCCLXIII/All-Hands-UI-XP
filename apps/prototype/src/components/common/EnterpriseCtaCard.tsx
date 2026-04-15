@@ -41,7 +41,7 @@ export function EnterpriseCtaCard({
       className={cn(
         staticLayout
           ? 'relative overflow-hidden rounded-2xl border border-border/60 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)] bg-card/70 px-6 py-5 shadow-lg'
-          : 'relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/70 px-6 py-5 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-card/50',
+          : 'relative flex min-h-0 flex-col justify-center overflow-hidden rounded-2xl border border-border/60 bg-card/70 px-6 py-5 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-card/50',
         className
       )}
     >
@@ -58,7 +58,13 @@ export function EnterpriseCtaCard({
           ×
         </button>
       )}
-      <div className={cn('space-y-4 text-left', !staticLayout && 'relative z-10', staticLayout && 'relative')}>
+      <div
+        className={cn(
+          'space-y-4 text-left',
+          !staticLayout && 'relative z-10 w-full',
+          staticLayout && 'relative',
+        )}
+      >
         {showIcon && (
           <div className="flex justify-start">
             <OpenHandsIcon />

@@ -29,7 +29,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
@@ -875,9 +874,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Git organizations
-            </DropdownMenuLabel>
             {gitOrganizationOptions.length > 0 ? (
               gitOrganizationOptions.map((org) => (
                 <DropdownMenuItem key={org.id} onClick={() => handleOrgChange(org.id)}>
@@ -952,11 +948,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
             </>
           )}
-        </div>
-        {selectedOrg?.type === 'personal' ? (
-          <>
-            <div className="border-t border-border" />
-            <div className="flex flex-col gap-2">
+          {selectedOrg?.type === 'personal' ? (
+            <>
+              <div className="border-t border-border" />
               <button
                 type="button"
                 onClick={() => setCreateOrgModalOpen(true)}
@@ -967,9 +961,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   Create New Organization
                 </span>
               </button>
-            </div>
-          </>
-        ) : null}
+            </>
+          ) : null}
+        </div>
       </nav>
 
       {/* Main Content — scrolls at the viewport right edge; inner padding keeps text off the gutter */}

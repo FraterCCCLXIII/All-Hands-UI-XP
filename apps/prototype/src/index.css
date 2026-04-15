@@ -71,6 +71,9 @@
     --settings-nav-padding-bottom: 2rem;
     --settings-main-padding-top: 2rem;
     --settings-main-padding-bottom: 2rem;
+
+    /** Lucide default is 2; aligns with sidebar/settings nav icon weight */
+    --lucide-icon-stroke: 1.5;
   }
 
   .dark {
@@ -137,6 +140,8 @@
     --settings-nav-padding-bottom: 2rem;
     --settings-main-padding-top: 2rem;
     --settings-main-padding-bottom: 2rem;
+
+    --lucide-icon-stroke: 1.5;
   }
 }
 
@@ -450,6 +455,7 @@ body[data-figma-fixed-canvas='true'] {
   /* Default Lucide icons to secondary grey (muted-foreground); stroke uses currentColor */
   svg.lucide {
     color: hsl(var(--muted-foreground));
+    stroke-width: var(--lucide-icon-stroke);
   }
 
   button svg.lucide,

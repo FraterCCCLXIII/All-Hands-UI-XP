@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
@@ -13,9 +12,6 @@ import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 import { cn } from '../../lib/utils';
 import { getAccountPopoverNavSections } from '../../config/settingsWorkspaceNav';
-
-/** Slightly thinner strokes for Lucide icons in the left nav (Lucide default is 2). */
-const NAV_ICON_STROKE = 1.5;
 
 /** Mirrors Settings org selector options for a consistent workspace switcher. */
 const accountWorkspaceOptions = [
@@ -34,7 +30,7 @@ const highlightCards = [
     url: '/press',
     icon: (
       <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
-        <Megaphone className="h-5 w-5" strokeWidth={NAV_ICON_STROKE} />
+        <Megaphone className="h-5 w-5" />
       </div>
     ),
   },
@@ -44,7 +40,7 @@ const highlightCards = [
     url: 'http://openhands.dev/joinslack',
     icon: (
       <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
-        <MessageCircle className="h-5 w-5" strokeWidth={NAV_ICON_STROKE} />
+        <MessageCircle className="h-5 w-5" />
       </div>
     ),
   },
@@ -309,10 +305,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 )}
               >
                 <span className="inline-flex leading-none transition-transform duration-500 ease-out">
-                  <Icon
-                    className="w-5 h-5"
-                    {...(item.action === 'automations' ? {} : { strokeWidth: NAV_ICON_STROKE })}
-                  />
+                  <Icon className="w-5 h-5" />
                 </span>
               </button>
             </LeftNavTooltip>
@@ -329,7 +322,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               aria-label="UX flow tutorials"
               data-tour-id="left-nav.ux-flow-icon"
             >
-              <Sparkles className="w-5 h-5" strokeWidth={NAV_ICON_STROKE} />
+              <Sparkles className="w-5 h-5" />
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -419,7 +412,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               )}
               aria-label={isOrgAccount ? 'Open account menu, organization workspace' : 'Open account menu'}
             >
-              <User className="h-4 w-4" aria-hidden="true" strokeWidth={NAV_ICON_STROKE} />
+              <User className="h-4 w-4" aria-hidden="true" />
               {isOrgAccount && (
                 <span
                   className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-foreground shadow-sm"
@@ -452,15 +445,9 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2">
                           {selectedWorkspace.type === 'org' ? (
-                            <Building2
-                              className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                              strokeWidth={NAV_ICON_STROKE}
-                            />
+                            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                           ) : (
-                            <User
-                              className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                              strokeWidth={NAV_ICON_STROKE}
-                            />
+                            <User className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                           )}
                           <span className="truncate">{selectedWorkspace.name}</span>
                           {selectedWorkspace.role ? (
@@ -469,10 +456,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                             </span>
                           ) : null}
                         </span>
-                        <ChevronDown
-                          className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                          strokeWidth={NAV_ICON_STROKE}
-                        />
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -486,15 +470,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                           onClick={() => onActiveWorkspaceChange?.(org.id)}
                         >
                           <span className="flex w-full items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" strokeWidth={NAV_ICON_STROKE} />
+                            <User className="h-4 w-4 text-muted-foreground" />
                             <span>{org.name}</span>
                           </span>
                         </DropdownMenuItem>
                       ))}
                       <DropdownMenuSeparator />
-                      <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                        Git organizations
-                      </DropdownMenuLabel>
                       {gitOrganizationWorkspaces.length > 0 ? (
                         gitOrganizationWorkspaces.map((org) => (
                           <DropdownMenuItem
@@ -503,10 +484,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                             onClick={() => onActiveWorkspaceChange?.(org.id)}
                           >
                             <span className="flex w-full items-center gap-2">
-                              <Building2
-                                className="h-4 w-4 text-muted-foreground"
-                                strokeWidth={NAV_ICON_STROKE}
-                              />
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
                               <span>{org.name}</span>
                               {org.role ? (
                                 <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
@@ -527,8 +505,6 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-
-                <div className="border-t border-sidebar-border my-3" />
 
                 {accountNavSections.map((section, sectionIndex) => (
                   <React.Fragment key={`${section.label ?? 'nav'}-${sectionIndex}`}>
@@ -552,7 +528,6 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                           >
                             <Icon
                               className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                              strokeWidth={NAV_ICON_STROKE}
                               aria-hidden
                             />
                             <span className="min-w-0 truncate">{item.label}</span>
@@ -567,18 +542,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 
                 <div className="space-y-0.5">
                   <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <UserPlus
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
+                    <UserPlus className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Invite Team
                   </button>
                   {selectedWorkspace.type === 'personal' ? (
                     <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                      <Plus
-                        className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                        strokeWidth={NAV_ICON_STROKE}
-                      />
+                      <Plus className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                       Create New Organization
                     </button>
                   ) : null}
@@ -588,17 +557,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <BookOpen
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
+                    <BookOpen className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Documentation
                   </a>
                   <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <LogOut
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
+                    <LogOut className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                     Log Out
                   </button>
                 </div>

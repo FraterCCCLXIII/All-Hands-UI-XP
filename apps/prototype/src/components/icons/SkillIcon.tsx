@@ -3,14 +3,15 @@ import { cn } from '../../lib/utils';
 
 type SkillIconProps = SVGProps<SVGSVGElement>;
 
-export function SkillIcon({ className, ...props }: SkillIconProps) {
+/** Default stroke matches global `--lucide-icon-stroke` / Lucide nav weight (1.5). */
+export function SkillIcon({ className, strokeWidth = 1.5, ...props }: SkillIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 19.13 24.62"
       fill="none"
       stroke="currentColor"
-      strokeWidth={1.32}
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       className={cn('h-4 w-auto shrink-0', className)}
