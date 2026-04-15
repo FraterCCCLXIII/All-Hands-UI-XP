@@ -244,6 +244,6 @@ export const defaultWorkflowEdgeOptions = {
   labelStyle: {
     fill: 'hsl(var(--foreground))',
     fontSize: 11,
-    fontWeight: 500,
+    fontWeight: 400,
   },
 };
