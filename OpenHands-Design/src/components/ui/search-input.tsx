@@ -62,7 +62,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Clear search"
           >
-            <XCircle className={cn(iconSizes[size])} strokeWidth={2} />
+            <XCircle className={cn(iconSizes[size])} />
           </button>
         )}
       </div>

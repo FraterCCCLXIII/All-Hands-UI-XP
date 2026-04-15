@@ -24,6 +24,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { cn } from '../lib/utils';
+import { extensionsSectionStackGap } from '../lib/extensionsRoutes';
 import { insightsPullRequests, insightsRepositories, insightsRepoData } from '../data/insightsData';
 import { initialColumns } from '../data/mockData';
 
@@ -96,44 +97,52 @@ export function DashboardScreen() {
   }) => (
     <aside
       className={cn(
-        'shrink-0 bg-sidebar text-sidebar-foreground h-full transition-[width] duration-200 overflow-hidden',
-        isOpen ? 'w-64' : 'w-0 border-0'
+        'relative z-10 flex h-full min-h-0 shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground transition-[width] duration-200',
+        'pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
+        extensionsSectionStackGap,
+        isOpen ? 'w-64 px-3' : 'w-0 min-w-0 max-w-0 border-0 px-0 pointer-events-none',
       )}
       aria-hidden={!isOpen}
     >
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-4">
-        <div className="mb-3 flex items-center justify-between gap-2 px-2">
-          <h3 className="shrink-0 whitespace-nowrap text-xs font-medium text-muted-foreground uppercase tracking-wider">
-            Workspaces
-          </h3>
-          <NewWorkspaceDialog repositories={workspaceRepositoryOptions} onCreateWorkspace={handleCreateWorkspace} />
-        </div>
-        <nav className="min-w-0 space-y-1 whitespace-nowrap">
-          {workspaceList.map((workspace) => {
-            const isActive = activeWorkspaceId === workspace.id;
-            const WorkspaceIcon = getWorkspaceIcon(workspace);
-            return (
-              <button
-                key={workspace.id}
-                type="button"
-                onClick={() => {
-                  setActiveWorkspaceId(workspace.id);
-                  setActiveRepo(workspace.repoKey);
-                }}
-                className={`w-full min-w-0 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left ${
-                  isActive
-                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-                }`}
-                aria-pressed={isActive}
-              >
-                <WorkspaceIcon className="w-4 h-4 shrink-0" />
-                <span className="min-w-0 truncate">{workspace.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+      <div className="flex items-center justify-between gap-2 ml-1 shrink-0">
+        <h2 className="text-xl font-semibold leading-6 text-foreground">Workspaces</h2>
+        <NewWorkspaceDialog repositories={workspaceRepositoryOptions} onCreateWorkspace={handleCreateWorkspace} />
       </div>
+      <nav
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden whitespace-nowrap"
+        aria-label="Workspaces"
+      >
+        {workspaceList.map((workspace) => {
+          const isActive = activeWorkspaceId === workspace.id;
+          const WorkspaceIcon = getWorkspaceIcon(workspace);
+          return (
+            <button
+              key={workspace.id}
+              type="button"
+              onClick={() => {
+                setActiveWorkspaceId(workspace.id);
+                setActiveRepo(workspace.repoKey);
+              }}
+              className={cn(
+                'group flex w-full min-w-0 items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
+                isActive
+                  ? 'bg-muted/60 text-foreground'
+                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+              )}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <WorkspaceIcon
+                className={cn(
+                  'h-5 w-5 shrink-0',
+                  isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
+                )}
+                aria-hidden
+              />
+              <span className="min-w-0 truncate font-normal">{workspace.label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </aside>
   );
 
@@ -322,25 +331,36 @@ export function DashboardScreen() {
         ) : (
           <>
             {activeView === 'active' && (
-              <aside className="w-64 shrink-0 bg-sidebar text-sidebar-foreground h-full">
-                <div className="flex-1 px-3 py-4 overflow-y-auto">
-                  <div className="mb-3 flex items-center justify-between gap-2 px-2">
-                    <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Workspaces</h3>
-                    <NewWorkspaceDialog
-                      repositories={insightsRepositories.map((repo) => repo.name)}
-                      onCreateWorkspace={(_, repositoryName) => {
-                        const matchingRepository = insightsRepositories.find((repo) => repo.name === repositoryName);
-                        if (!matchingRepository) {
-                          return;
-                        }
+              <aside
+                className={cn(
+                  'relative z-10 flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground',
+                  'pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
+                  extensionsSectionStackGap,
+                  'px-3',
+                )}
+              >
+                <div className="flex items-center justify-between gap-2 ml-1 shrink-0">
+                  <h2 className="text-xl font-semibold leading-6 text-foreground">Workspaces</h2>
+                  <NewWorkspaceDialog
+                    repositories={insightsRepositories.map((repo) => repo.name)}
+                    onCreateWorkspace={(_, repositoryName) => {
+                      const matchingRepository = insightsRepositories.find((repo) => repo.name === repositoryName);
+                      if (!matchingRepository) {
+                        return;
+                      }
 
-                        setSelectedInsightRepo(matchingRepository.id);
-                        scrollToSection(matchingRepository.name);
-                      }}
-                    />
-                  </div>
-                  <nav className="space-y-1">
-                    {insightsRepositories.map((repo) => (
+                      setSelectedInsightRepo(matchingRepository.id);
+                      scrollToSection(matchingRepository.name);
+                    }}
+                  />
+                </div>
+                <nav
+                  className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden"
+                  aria-label="Workspaces"
+                >
+                  {insightsRepositories.map((repo) => {
+                    const isActive = selectedInsightRepo === repo.id;
+                    return (
                       <button
                         key={repo.id}
                         type="button"
@@ -349,19 +369,25 @@ export function DashboardScreen() {
                           scrollToSection(repo.name);
                         }}
                         className={cn(
-                          'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors',
-                          selectedInsightRepo === repo.id
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+                          'group flex w-full min-w-0 items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
+                          isActive
+                            ? 'bg-muted/60 text-foreground'
+                            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                         )}
-                        aria-pressed={selectedInsightRepo === repo.id}
+                        aria-current={isActive ? 'page' : undefined}
                       >
-                        <Github className="w-4 h-4 shrink-0" />
-                        <span className="truncate">{repo.name}</span>
+                        <Github
+                          className={cn(
+                            'h-5 w-5 shrink-0',
+                            isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
+                          )}
+                          aria-hidden
+                        />
+                        <span className="min-w-0 truncate font-normal">{repo.name}</span>
                       </button>
-                    ))}
-                  </nav>
-                </div>
+                    );
+                  })}
+                </nav>
               </aside>
             )}
             {activeView === 'reviews' && <RepositorySidebar workspaceList={workspaces} isOpen />}

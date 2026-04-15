@@ -73,7 +73,7 @@
     --settings-main-padding-bottom: 2rem;
 
     /** Lucide default is 2; aligns with sidebar/settings nav icon weight */
-    --lucide-icon-stroke: 1.5;
+    --lucide-icon-stroke: 1.32;
   }
 
   .dark {
@@ -141,7 +141,7 @@
     --settings-main-padding-top: 2rem;
     --settings-main-padding-bottom: 2rem;
 
-    --lucide-icon-stroke: 1.5;
+    --lucide-icon-stroke: 1.32;
   }
 }
 
@@ -452,7 +452,7 @@ body[data-figma-fixed-canvas='true'] {
     @apply m-0 bg-background text-foreground antialiased;
   }
 
-  /* Default Lucide icons to secondary grey (muted-foreground); stroke uses currentColor */
+  /* Lucide + matching custom SVGs: stroke weight from `--lucide-icon-stroke` (add `class="lucide"` on root `<svg>`). */
   svg.lucide {
     color: hsl(var(--muted-foreground));
     stroke-width: var(--lucide-icon-stroke);
@@ -461,11 +461,35 @@ body[data-figma-fixed-canvas='true'] {
   button svg.lucide,
   [role="button"] svg.lucide,
   a svg.lucide,
-  [role="menuitem"] svg.lucide,
-  [role="option"] svg.lucide,
   [role="tab"] svg.lucide,
   label svg.lucide {
     color: inherit;
+  }
+
+  /*
+   * Radix DropdownMenu / Submenu / Select listbox: do NOT use `color: inherit` on menuitem/option
+   * (that pulled full foreground onto icons). Muted by default, white when highlighted/selected.
+   */
+  [role='menuitem'] svg.lucide,
+  [role='menuitemcheckbox'] svg.lucide,
+  [role='menuitemradio'] svg.lucide {
+    color: hsl(var(--muted-foreground));
+  }
+  [role='menuitem'][data-highlighted] svg.lucide,
+  [role='menuitemcheckbox'][data-highlighted] svg.lucide,
+  [role='menuitemradio'][data-highlighted] svg.lucide,
+  [role='menuitem']:focus-visible svg.lucide,
+  [role='menuitemcheckbox']:focus-visible svg.lucide,
+  [role='menuitemradio']:focus-visible svg.lucide {
+    color: white;
+  }
+
+  [role='option'] svg.lucide {
+    color: hsl(var(--muted-foreground));
+  }
+  [role='option'][data-highlighted] svg.lucide,
+  [role='option'][aria-selected='true'] svg.lucide {
+    color: white;
   }
 
   button,

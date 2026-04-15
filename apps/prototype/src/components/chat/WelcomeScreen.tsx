@@ -1179,7 +1179,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               aria-label="Column list demo states"
               data-testid="chat-start-column-demo"
             >
-              <Settings className="h-5 w-5" strokeWidth={1.5} />
+              <Settings className="h-5 w-5" />
             </button>
           </PopoverTrigger>
           <PopoverContent side="top" align="end" sideOffset={8} className="w-80 border-border bg-card p-3">

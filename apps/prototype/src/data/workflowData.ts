@@ -228,6 +228,7 @@ export function getWorkflowNameFromNodes(nodes: Node[]): string {
   return workflowName?.trim() || 'Untitled workflow';
 }
 
+/** React Flow edge styles use pixel strokes for diagram readability (not icon `--lucide-icon-stroke`). */
 export const defaultWorkflowEdgeOptions = {
   type: 'default' as const,
   markerEnd: { type: MarkerType.ArrowClosed },

@@ -35,13 +35,13 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      'group flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none text-popover-foreground data-[state=open]:bg-muted/60 data-[state=open]:text-popover-foreground focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:[&_svg]:!text-foreground',
+      'group flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none text-popover-foreground data-[state=open]:bg-muted/60 data-[state=open]:text-popover-foreground focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:[&_svg]:!text-white focus-visible:[&_svg]:!text-white',
       inset && 'pl-8',
       className
     )}
     {...props}
   >
-    <span className="flex w-full min-w-0 flex-1 items-center gap-2 [&_svg]:text-muted-foreground [&_svg]:transition-colors group-hover:[&_svg]:!text-foreground">
+    <span className="flex w-full min-w-0 flex-1 items-center gap-2 [&_svg]:text-muted-foreground [&_svg]:transition-colors group-hover:[&_svg]:!text-white">
       {children}
       <ChevronRight className="ml-auto h-4 w-4 shrink-0" />
     </span>
@@ -93,13 +93,13 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      'group relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground data-[highlighted]:[&_svg]:!text-foreground',
+      'group relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground data-[highlighted]:[&_svg]:!text-white focus-visible:[&_svg]:!text-white',
       inset && 'pl-8',
       className
     )}
     {...props}
   >
-    <span className="contents [&_svg]:text-muted-foreground [&_svg]:transition-colors group-hover:[&_svg]:!text-foreground">
+    <span className="contents [&_svg]:text-muted-foreground [&_svg]:transition-colors group-hover:[&_svg]:!text-white">
       {children}
     </span>
   </DropdownMenuPrimitive.Item>
@@ -113,7 +113,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground',
+      'relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground [&_svg]:text-muted-foreground [&_svg]:transition-colors data-[highlighted]:[&_svg]:!text-white focus-visible:[&_svg]:!text-white',
       className
     )}
     checked={checked}
@@ -136,7 +136,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      'relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground',
+      'relative flex cursor-default select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none transition-colors data-[disabled]:pointer-events-none data-[disabled]:opacity-50 focus:bg-muted/60 focus:text-popover-foreground data-[highlighted]:bg-muted/60 data-[highlighted]:text-popover-foreground [&_svg]:text-muted-foreground [&_svg]:transition-colors data-[highlighted]:[&_svg]:!text-white focus-visible:[&_svg]:!text-white',
       className
     )}
     {...props}

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Boxes, List, Plus, SquareKanban, LogOut, UserPlus, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown, BookOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
@@ -20,6 +21,14 @@ const accountWorkspaceOptions = [
   { id: 'starlight-admin', name: 'Starlight Labs', role: 'Admin' as const, type: 'org' as const },
   { id: 'nova-member', name: 'Nova Group', role: 'Member' as const, type: 'org' as const },
 ] as const;
+
+/** True when the browser path is the given Settings tab (including secrets sub-routes). */
+function isSettingsTabPathActive(pathname: string, tabId: string) {
+  if (!pathname.startsWith('/settings')) return false;
+  const rest = pathname.replace(/^\/settings\/?/, '');
+  const first = rest.split('/')[0] ?? '';
+  return first === tabId;
+}
 
 const highlightCards = [
   { title: 'Docs', text: 'Build, integrate, and scale with ease.', url: 'https://docs.openhands.dev/', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M8.53787 11.87L8.49787 11C8.49787 10.4696 8.70858 9.96086 9.08366 9.58579C9.45873 9.21071 9.96744 9 10.4979 9H14.1699C14.7003 9.00011 15.2089 9.2109 15.5839 9.586L16.4119 10.414C16.7869 10.7891 17.2955 10.9999 17.8259 11H21.8079C22.0858 11 22.3607 11.0579 22.615 11.17C22.8693 11.2821 23.0974 11.446 23.2848 11.6512C23.4723 11.8564 23.6149 12.0985 23.7035 12.3618C23.7922 12.6252 23.825 12.9042 23.7999 13.181L23.1629 20.181C23.1177 20.6779 22.8884 21.14 22.5201 21.4766C22.1517 21.8131 21.6708 21.9998 21.1719 22H10.8239C10.3249 21.9998 9.84404 21.8131 9.47567 21.4766C9.1073 21.14 8.87803 20.6779 8.83287 20.181L8.19587 13.181C8.15326 12.7178 8.27426 12.2543 8.53787 11.871V11.87ZM10.1879 12C10.049 12 9.91156 12.0289 9.78445 12.085C9.65734 12.141 9.5433 12.2229 9.44959 12.3254C9.35589 12.428 9.28457 12.5489 9.2402 12.6806C9.19583 12.8122 9.17937 12.9516 9.19187 13.09L9.82887 20.09C9.85132 20.3385 9.96584 20.5696 10.1499 20.7379C10.334 20.9063 10.5744 20.9998 10.8239 21H21.1719C21.4213 20.9998 21.6617 20.9063 21.8458 20.7379C22.0299 20.5696 22.1444 20.3385 22.1669 20.09L22.8039 13.09C22.8164 12.9516 22.7999 12.8122 22.7555 12.6806C22.7112 12.5489 22.6399 12.428 22.5462 12.3254C22.4524 12.2229 22.3384 12.141 22.2113 12.085C22.0842 12.0289 21.9468 12 21.8079 12H10.1879ZM14.8779 10.293C14.7849 10.2 14.6745 10.1263 14.553 10.076C14.4316 10.0257 14.3014 9.9999 14.1699 10H10.4979C10.2359 9.99995 9.9844 10.1027 9.7974 10.2861C9.6104 10.4696 9.50285 10.7191 9.49787 10.981L9.50387 11.12C9.71787 11.042 9.94787 11 10.1879 11H15.5839L14.8769 10.293H14.8779Z" fill="currentColor"/></svg> },
@@ -54,25 +63,25 @@ function AutomationsIcon({ className }: { className?: string }) {
       height="20"
       viewBox="0 0 20 20"
       fill="none"
-      className={`${className ?? ''} block`.trim()}
+      className={cn('lucide block', className)}
       aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
       <g clipPath="url(#automations-icon-clip)">
-        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z" fill="currentColor" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
       </g>
       <defs>
         <clipPath id="automations-icon-clip">
@@ -185,6 +194,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onActiveWorkspaceChange,
   isHomeRoute = false,
 }) => {
+  const location = useLocation();
   const selectedWorkspace =
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
   const personalWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'personal');
@@ -445,9 +455,9 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2">
                           {selectedWorkspace.type === 'org' ? (
-                            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                            <Building2 className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                           ) : (
-                            <User className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                            <User className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                           )}
                           <span className="truncate">{selectedWorkspace.name}</span>
                           {selectedWorkspace.role ? (
@@ -456,7 +466,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                             </span>
                           ) : null}
                         </span>
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                        <ChevronDown className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -466,11 +476,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       {personalWorkspaces.map((org) => (
                         <DropdownMenuItem
                           key={org.id}
-                          className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground data-[highlighted]:[&_svg]:!text-white group-hover:[&_svg]:!text-white"
+                          className="cursor-pointer text-sidebar-foreground"
                           onClick={() => onActiveWorkspaceChange?.(org.id)}
                         >
                           <span className="flex w-full items-center gap-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
+                            <User className="h-4 w-4 shrink-0" />
                             <span>{org.name}</span>
                           </span>
                         </DropdownMenuItem>
@@ -480,11 +490,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                         gitOrganizationWorkspaces.map((org) => (
                           <DropdownMenuItem
                             key={org.id}
-                            className="cursor-pointer text-sidebar-foreground focus:bg-muted/60 focus:text-sidebar-foreground data-[highlighted]:[&_svg]:!text-white group-hover:[&_svg]:!text-white"
+                            className="cursor-pointer text-sidebar-foreground"
                             onClick={() => onActiveWorkspaceChange?.(org.id)}
                           >
                             <span className="flex w-full items-center gap-2">
-                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              <Building2 className="h-4 w-4 shrink-0" />
                               <span>{org.name}</span>
                               {org.role ? (
                                 <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
@@ -527,7 +537,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                             className="group inline-flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-sidebar-foreground transition-colors hover:bg-muted/60 hover:text-white"
                           >
                             <Icon
-                              className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                              className={cn(
+                                'h-4 w-4 shrink-0 transition-colors',
+                                isSettingsTabPathActive(location.pathname, item.tabId)
+                                  ? '!text-white'
+                                  : '!text-muted-foreground group-hover:!text-white',
+                              )}
                               aria-hidden
                             />
                             <span className="min-w-0 truncate">{item.label}</span>
@@ -542,12 +557,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 
                 <div className="space-y-0.5">
                   <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <UserPlus className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <UserPlus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                     Invite Team
                   </button>
                   {selectedWorkspace.type === 'personal' ? (
                     <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                      <Plus className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                      <Plus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                       Create New Organization
                     </button>
                   ) : null}
@@ -557,11 +572,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <BookOpen className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <BookOpen className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                     Documentation
                   </a>
                   <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <LogOut className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
+                    <LogOut className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                     Log Out
                   </button>
                 </div>

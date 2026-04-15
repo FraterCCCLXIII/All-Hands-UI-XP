@@ -945,7 +945,7 @@ export function ActiveChatScreen({
                       onClick={() => setServerStatus('Stopped')}
                     >
                       Stop Runtime
-                      <Square className="w-4 h-4" strokeWidth={2} />
+                      <Square className="w-4 h-4" />
                     </button>
                   </ul>
                 )}
@@ -1156,7 +1156,7 @@ export function ActiveChatScreen({
                   active={activeTab === 'planner' && canvasOpen}
                   onClick={() => handleCanvasTabClick('planner')}
                   ariaLabel="Planner"
-                  icon={<ClipboardList className="w-4 h-4 flex-shrink-0" strokeWidth={2} />}
+                  icon={<ClipboardList className="w-4 h-4 flex-shrink-0" />}
                   tooltip={CANVAS_TAB_ARIA.planner}
                 />
               )}
@@ -1166,7 +1166,7 @@ export function ActiveChatScreen({
                   active={activeTab === 'tasks' && canvasOpen}
                   onClick={() => handleCanvasTabClick('tasks')}
                   ariaLabel="Tasks"
-                  icon={<ListTodo className="w-4 h-4 flex-shrink-0" strokeWidth={2} />}
+                  icon={<ListTodo className="w-4 h-4 flex-shrink-0" />}
                   tooltip={CANVAS_TAB_ARIA.tasks}
                 />
               )}
@@ -1237,9 +1237,9 @@ export function ActiveChatScreen({
                           title={isPinned ? 'Pinned to toolbar (click to unpin)' : 'Not pinned (click to pin)'}
                         >
                           {isPinned ? (
-                            <PinOff className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                            <PinOff className="h-4 w-4 shrink-0" aria-hidden />
                           ) : (
-                            <Pin className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={2} aria-hidden />
+                            <Pin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
                           )}
                         </span>
                       </DropdownMenuItem>
@@ -1976,7 +1976,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     aria-label="Send"
                                     onClick={hasInput ? handleSendMessage : undefined}
                                   >
-                                    <ArrowUp className="w-6 h-6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                                    <ArrowUp className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round" />
                                   </button>
                                 </div>
                                 <div className="w-full flex items-center justify-between">
@@ -2316,7 +2316,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             </div>
                           )}
                         </div>
-                        <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden />
+                        <Loader2 className="w-16 h-16 text-foreground animate-spin" strokeLinecap="round" strokeLinejoin="round" aria-hidden />
                         <span className="text-sm font-normal leading-5 gradient-flow p-4">Loading...</span>
                       </>
                     )}
@@ -2937,7 +2937,7 @@ function CanvasNavTooltip({
               title="Open repository on GitHub"
               onClick={(e) => e.stopPropagation()}
             >
-              <ExternalLink className="h-3.5 w-3.5" strokeWidth={2} />
+              <ExternalLink className="h-3.5 w-3.5" />
             </a>
           ) : null}
         </span>
@@ -4129,7 +4129,7 @@ function CanvasTabEmptyContent({
           <TerminalCanvasShell>
             <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
               <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
-                <Terminal strokeWidth={1.75} />
+                <Terminal />
               </div>
               <div className="max-w-md text-sm leading-relaxed text-muted-foreground">No terminal output yet.</div>
             </div>
@@ -4147,7 +4147,7 @@ function CanvasTabEmptyContent({
           <AppCanvasShell>
             <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
               <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
-                <Monitor strokeWidth={1.75} />
+                <Monitor />
               </div>
               <div className="max-w-md text-sm leading-relaxed text-muted-foreground">
                 No web app running. Ask OpenHands to start your project&apos;s dev server (for example: npm run dev) to see your web application here.
@@ -4169,7 +4169,7 @@ function CanvasTabEmptyContent({
           <BrowserCanvasShell>
             <div className="flex h-full min-h-0 flex-1 flex-col items-center justify-center px-6 text-center">
               <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
-                <Globe strokeWidth={1.75} />
+                <Globe />
               </div>
               <div className="max-w-md text-sm leading-relaxed text-muted-foreground">
                 No page loaded yet. Ask OpenHands to open a URL. Example: &quot;Open https://example.com&quot;
@@ -4188,7 +4188,7 @@ function CanvasTabEmptyContent({
     case 'code':
       if (!filled) {
         return textBlock(
-          <Code2 strokeWidth={1.75} />,
+          <Code2 />,
           <>No file open. Ask OpenHands to create or open a file in the repository.</>
         );
       }
@@ -4198,7 +4198,7 @@ function CanvasTabEmptyContent({
         return (
           <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
             <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
-              <ClipboardList strokeWidth={1.75} />
+              <ClipboardList />
             </div>
             <p className="mb-4 max-w-md text-sm leading-relaxed text-muted-foreground">
               There is currently no plan for this repo
@@ -4235,7 +4235,7 @@ function CanvasTabEmptyContent({
         return (
           <div className="flex h-full w-full flex-col items-center justify-center px-6 text-center">
             <div className="mb-3 text-muted-foreground [&_svg]:size-8 [&_svg]:shrink-0" aria-hidden>
-              <ListTodo strokeWidth={1.75} />
+              <ListTodo />
             </div>
             <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
               No tasks yet. OpenHands will track progress here as it works on your request.

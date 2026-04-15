@@ -3,7 +3,10 @@ import { cn } from '../../lib/utils';
 
 type McpIconProps = SVGProps<SVGSVGElement>;
 
-/** MCP / Model Context Protocol mark — matches product MCP artwork; stroke uses `currentColor`. */
+/**
+ * MCP / Model Context Protocol mark — matches product MCP artwork; stroke uses `currentColor`.
+ * Path `strokeWidth="12"` is in 180×180 viewBox units (not `--lucide-icon-stroke`).
+ */
 export function McpIcon({ className, ...props }: McpIconProps) {
   const clipId = `mcp-icon-${useId().replace(/:/g, '')}`;
   return (

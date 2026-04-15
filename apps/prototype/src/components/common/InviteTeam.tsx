@@ -75,7 +75,7 @@ const InviteTeam: React.FC<InviteTeamProps> = ({ organizations, currentOrg, onCl
           >
             <button onClick={handleClose} className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted/60 focus:outline-none">
               <span className="sr-only">Close</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="lucide w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
             <h2 className="text-2xl font-normal text-foreground mb-2">Invite Team Members</h2>
             <p className="text-muted-foreground mb-4 font-normal">Invite team members to your organization by entering their email addresses below. They will receive an invitation to join your organization.</p>

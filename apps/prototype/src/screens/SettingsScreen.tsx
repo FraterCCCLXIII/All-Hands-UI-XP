@@ -810,7 +810,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <Icon
           className={cn(
             'h-5 w-5 shrink-0',
-            isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
+            isActive ? '!text-white' : '!text-muted-foreground group-hover:!text-white',
           )}
           aria-hidden
         />
@@ -819,7 +819,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             'block min-w-0 flex-1 truncate text-sm font-normal transition-transform duration-300',
             isActive
               ? 'text-white'
-              : 'text-muted-foreground group-hover:translate-x-0.5 group-hover:text-white',
+              : 'text-muted-foreground group-hover:translate-x-0.5 group-hover:!text-white',
           )}
         >
           {item.label}
@@ -845,14 +845,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <button
               type="button"
               data-tour-id="settings.org-selector"
-              className="w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
+              className="group w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
               aria-label="Select organization"
             >
               <span className="flex items-center gap-2 w-full">
                 {selectedOrg?.type === 'org' ? (
-                  <Building2 className="w-4 h-4 text-muted-foreground" />
+                  <Building2 className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                 ) : (
-                  <User className="w-4 h-4 text-muted-foreground" />
+                  <User className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
                 )}
                 <span>{selectedOrg?.name ?? 'Personal Account'}</span>
                 {selectedOrg?.role && (
@@ -861,14 +861,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </span>
                 )}
               </span>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-[var(--radix-dropdown-menu-trigger-width)]">
             {personalOrgOptions.map((org) => (
               <DropdownMenuItem key={org.id} onClick={() => handleOrgChange(org.id)}>
                 <span className="flex items-center gap-2 w-full">
-                  <User className="w-4 h-4 text-muted-foreground" />
+                  <User className="w-4 h-4 shrink-0" />
                   <span>{org.name}</span>
                 </span>
               </DropdownMenuItem>
@@ -878,7 +878,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               gitOrganizationOptions.map((org) => (
                 <DropdownMenuItem key={org.id} onClick={() => handleOrgChange(org.id)}>
                   <span className="flex items-center gap-2 w-full">
-                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                    <Building2 className="w-4 h-4 shrink-0" />
                     <span>{org.name}</span>
                     {org.role && (
                       <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">

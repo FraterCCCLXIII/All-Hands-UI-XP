@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, X, Slack, Github, Mail, Facebook, MessageCircle } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 interface SharePreviewProps {
   shareUrl: string;
@@ -39,10 +40,10 @@ const Tooltip: React.FC<{ label: string; children: React.ReactNode }> = ({ label
   );
 };
 
-const XLogo = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+const XLogo = ({ className, ...rest }: React.SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn('lucide', className)} {...rest}>
     <rect width="32" height="32" rx="16" fill="black" />
-    <path d="M22.5 9.5L9.5 22.5M9.5 9.5L22.5 22.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M22.5 9.5L9.5 22.5M9.5 9.5L22.5 22.5" stroke="white" strokeLinecap="round" />
   </svg>
 );
 

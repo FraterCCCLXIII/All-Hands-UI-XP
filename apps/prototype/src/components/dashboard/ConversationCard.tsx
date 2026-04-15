@@ -201,12 +201,12 @@ export function ConversationList({
         >
           {collapsible && (
             <svg
-              className={cn('w-4 h-4 transition-transform', isCollapsed ? '-rotate-90' : '')}
+              className={cn('lucide w-4 h-4 transition-transform', isCollapsed ? '-rotate-90' : '')}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           )}
           <span>{title}</span>

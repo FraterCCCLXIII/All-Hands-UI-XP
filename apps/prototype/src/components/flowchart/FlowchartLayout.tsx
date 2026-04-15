@@ -503,7 +503,7 @@ export const FlowchartLayout: React.FC<FlowchartLayoutProps> = ({
                       key={edge.id}
                       d={`M ${fromX} ${fromY} L ${toX} ${toY}`}
                       className="stroke-current"
-                      strokeWidth={2}
+                      strokeWidth="var(--lucide-icon-stroke)"
                       fill="none"
                       markerEnd="url(#flowchart-arrow)"
                     />

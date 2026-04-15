@@ -23,8 +23,8 @@ const Credits: React.FC<CreditsProps> = ({ credits }) => {
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
       >
-        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1">
-          <circle cx="10" cy="10" r="8" fill="#FFD700" stroke="#C9A100" strokeWidth="2" />
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="lucide w-4 h-4 mr-1">
+          <circle cx="10" cy="10" r="8" fill="#FFD700" stroke="#C9A100" />
           <circle cx="10" cy="10" r="4" fill="#FFF7B2" />
         </svg>
         {credits}
@@ -47,8 +47,8 @@ const Credits: React.FC<CreditsProps> = ({ credits }) => {
               <div key={item.label} className="flex items-center justify-between px-2 py-1 hover:bg-card rounded-lg cursor-pointer">
                 <span className="text-xs text-foreground">{item.label}</span>
                 <span className="inline-flex items-center space-x-1 rounded-full bg-card text-foreground text-xs font-medium px-3 py-0.5 ml-2">
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 mr-1">
-                    <circle cx="10" cy="10" r="8" fill="#FFD700" stroke="#C9A100" strokeWidth="2" />
+                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="lucide w-3 h-3 mr-1">
+                    <circle cx="10" cy="10" r="8" fill="#FFD700" stroke="#C9A100" />
                     <circle cx="10" cy="10" r="4" fill="#FFF7B2" />
                   </svg>
                   {item.credits}

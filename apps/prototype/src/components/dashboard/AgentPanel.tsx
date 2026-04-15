@@ -113,7 +113,12 @@ export function AgentPanel({
   const branchUrl = repoUrl ? `${repoUrl}/tree/${encodeURIComponent(branchName)}` : null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
+    <Sheet
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <SheetContent className="w-full sm:max-w-xl bg-background p-0 flex flex-col" hideClose>
         {/* Header */}
         <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
