@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AppWindow,
@@ -65,75 +64,22 @@ import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
 import { usePageTransitions } from '../contexts/PageTransitionsContext';
 import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
-
-type OrgRole = 'Member' | 'Admin' | 'Owner';
-type PermissionKey =
-  | 'manage_secrets'
-  | 'manage_mcp'
-  | 'manage_integrations'
-  | 'manage_application_settings'
-  | 'manage_api_keys'
-  | 'view_llm_settings'
-  | 'edit_llm_settings'
-  | 'view_billing'
-  | 'invite_user_to_organization'
-  | 'change_user_role:member'
-  | 'change_user_role:admin'
-  | 'change_user_role:owner'
-  | 'change_organization_name'
-  | 'delete_organization'
-  | 'add_credits'
-  | 'manage_organization_claims'
-  | 'manage_org_plugins'
-  | 'manage_org_hooks';
-
-const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
-  Member: new Set([
-    'manage_secrets',
-    'manage_mcp',
-    'manage_integrations',
-    'manage_application_settings',
-    'manage_api_keys',
-    'view_llm_settings',
-  ]),
-  Admin: new Set([
-    'manage_secrets',
-    'manage_mcp',
-    'manage_integrations',
-    'manage_application_settings',
-    'manage_api_keys',
-    'view_llm_settings',
-    'edit_llm_settings',
-    'view_billing',
-    'invite_user_to_organization',
-    'change_user_role:member',
-    'change_user_role:admin',
-    'add_credits',
-    'manage_organization_claims',
-    'manage_org_plugins',
-    'manage_org_hooks',
-  ]),
-  Owner: new Set([
-    'manage_secrets',
-    'manage_mcp',
-    'manage_integrations',
-    'manage_application_settings',
-    'manage_api_keys',
-    'view_llm_settings',
-    'edit_llm_settings',
-    'view_billing',
-    'invite_user_to_organization',
-    'change_user_role:member',
-    'change_user_role:admin',
-    'change_user_role:owner',
-    'change_organization_name',
-    'delete_organization',
-    'add_credits',
-    'manage_organization_claims',
-    'manage_org_plugins',
-    'manage_org_hooks',
-  ]),
-};
+import {
+  ACCOUNT_NAV,
+  INTEGRATIONS_AND_SKILLS_NAV,
+  INTEGRATIONS_ONLY_NAV,
+  ORG_ADMIN_PERSONAL_SETTINGS_NAV,
+  ORG_SETTINGS_NAV,
+  PERSONAL_ACCOUNT_WITH_BILLING_NAV,
+  PERSONAL_WORKSPACE_TOP_NAV,
+  SKILLS_ONLY_NAV,
+  filterSettingsNav,
+  rolePermissions,
+  type OrgRole,
+  type PermissionKey,
+  type SettingsNavItem,
+  type WorkspaceNavContext,
+} from '../config/settingsWorkspaceNav';
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
@@ -150,86 +96,6 @@ const settingsTabs = [
   { id: 'manage-team', label: 'Organization Members', icon: Users },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
 ];
-
-type SettingsNavItem = {
-  id: string;
-  label: string;
-  tabId: string;
-  icon: LucideIcon | typeof SkillIcon | typeof McpIcon;
-  requiredPermission?: PermissionKey;
-};
-
-/** Org context (Admin / Owner): order within Org settings. */
-const ORG_SETTINGS_NAV: SettingsNavItem[] = [
-  {
-    id: 'organizations',
-    label: 'Organization',
-    tabId: 'organizations',
-    icon: Building2,
-    requiredPermission: 'manage_organization_claims',
-  },
-  {
-    id: 'manage-team',
-    label: 'Org Members',
-    tabId: 'manage-team',
-    icon: Users,
-    requiredPermission: 'invite_user_to_organization',
-  },
-  { id: 'llm', label: 'Language Model (LLM)', tabId: 'llm', icon: Cpu, requiredPermission: 'view_llm_settings' },
-  { id: 'billing', label: 'Billing', tabId: 'billing', icon: CreditCard, requiredPermission: 'view_billing' },
-  { id: 'org-plugins', label: 'Extensions', tabId: 'org-plugins', icon: Layers, requiredPermission: 'manage_org_plugins' },
-  { id: 'org-hooks', label: 'Hooks', tabId: 'org-hooks', icon: Webhook, requiredPermission: 'manage_org_hooks' },
-];
-
-const PERSONAL_SETTINGS_CORE_NAV: SettingsNavItem[] = [
-  { id: 'api-keys', label: 'API Keys', tabId: 'api-keys', icon: Key, requiredPermission: 'manage_api_keys' },
-  { id: 'secrets', label: 'Secrets', tabId: 'secrets', icon: Shield, requiredPermission: 'manage_secrets' },
-  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: McpIcon, requiredPermission: 'manage_mcp' },
-];
-
-const ACCOUNT_NAV: SettingsNavItem[] = [
-  { id: 'user', label: 'User', tabId: 'user', icon: User },
-  { id: 'app', label: 'Application', tabId: 'app', icon: AppWindow },
-];
-
-const INTEGRATIONS_ONLY_NAV: SettingsNavItem[] = [
-  {
-    id: 'integrations',
-    label: 'Integrations',
-    tabId: 'integrations',
-    icon: Blocks,
-    requiredPermission: 'manage_integrations',
-  },
-];
-
-const SKILLS_ONLY_NAV: SettingsNavItem[] = [
-  { id: 'skills', label: 'Skills', tabId: 'skills', icon: SkillIcon, requiredPermission: 'manage_org_plugins' },
-];
-
-const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [...INTEGRATIONS_ONLY_NAV, ...SKILLS_ONLY_NAV];
-
-/** Org admin/owner: Personal settings = core + Integrations + Skills under MCP, then Account. */
-const ORG_ADMIN_PERSONAL_SETTINGS_NAV: SettingsNavItem[] = [
-  ...PERSONAL_SETTINGS_CORE_NAV,
-  ...INTEGRATIONS_AND_SKILLS_NAV,
-];
-
-/** Personal workspace top: LLM → API Keys → Secrets → MCP; Integrations + Skills rendered after (see personal branch). */
-const PERSONAL_WORKSPACE_TOP_NAV: SettingsNavItem[] = [
-  { id: 'llm', label: 'Language Model (LLM)', tabId: 'llm', icon: Cpu, requiredPermission: 'view_llm_settings' },
-  { id: 'api-keys', label: 'API Keys', tabId: 'api-keys', icon: Key, requiredPermission: 'manage_api_keys' },
-  { id: 'secrets', label: 'Secrets', tabId: 'secrets', icon: Shield, requiredPermission: 'manage_secrets' },
-  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: McpIcon, requiredPermission: 'manage_mcp' },
-];
-
-const PERSONAL_WORKSPACE_BILLING_NAV: SettingsNavItem[] = [
-  { id: 'billing', label: 'Billing', tabId: 'billing', icon: CreditCard, requiredPermission: 'view_billing' },
-];
-
-/** Personal workspace: User → App → Billing (after top block). */
-const PERSONAL_ACCOUNT_WITH_BILLING_NAV: SettingsNavItem[] = [...ACCOUNT_NAV, ...PERSONAL_WORKSPACE_BILLING_NAV];
-
-/** Org member: Integrations under MCP; User → App → Skills in one block below first divider (no billing). */
 
 type SecretsView = 'list' | 'add' | 'edit';
 
@@ -724,16 +590,15 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     }
   }, [selectedOrg?.type, activeTab, onTabChange]);
 
+  const workspaceNavCtx: WorkspaceNavContext = useMemo(
+    () => ({
+      workspaceType: selectedOrg?.type === 'org' ? 'org' : 'personal',
+      effectiveRole,
+    }),
+    [selectedOrg?.type, effectiveRole],
+  );
   const hasPermission = (permission: PermissionKey) => rolePermissions[effectiveRole].has(permission);
-  const navItemVisible = (item: SettingsNavItem): boolean => {
-    if (item.requiredPermission && !hasPermission(item.requiredPermission)) return false;
-    if (selectedOrg?.type === 'personal' && item.tabId === 'manage-team') return false;
-    if (selectedOrg?.type === 'personal' && (item.tabId === 'org-plugins' || item.tabId === 'org-hooks')) {
-      return false;
-    }
-    return true;
-  };
-  const filterNav = (items: SettingsNavItem[]) => items.filter(navItemVisible);
+  const filterNav = (items: SettingsNavItem[]) => filterSettingsNav(items, workspaceNavCtx);
   const showOrgAdminNav =
     selectedOrg?.type === 'org' && (effectiveRole === 'Admin' || effectiveRole === 'Owner');
   const showOrgMemberNav = selectedOrg?.type === 'org' && effectiveRole === 'Member';

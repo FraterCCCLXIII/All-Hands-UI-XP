@@ -466,6 +466,14 @@ function App() {
         navigateAppRoute(`/${actionSlugs['chat-start']}`);
         return;
       }
+      if (action.startsWith('settings/')) {
+        const tab = action.slice('settings/'.length) || 'user';
+        setActiveNavItem('settings');
+        setLastNonDrawerNavItem('settings');
+        setIsConversationDrawerOpen(false);
+        navigateAppRoute(`/settings/${tab}`);
+        return;
+      }
 
       setActiveNavItem(action);
       setLastNonDrawerNavItem(action);

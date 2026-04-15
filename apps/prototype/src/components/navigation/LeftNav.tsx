@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Blocks, Boxes, List, Plus, SquareKanban, LogOut, Settings, Users, Key, Shield, CreditCard, UserCircle2, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown } from 'lucide-react';
+import React, { useMemo, useState, useRef } from 'react';
+import { Boxes, List, Plus, SquareKanban, LogOut, UserPlus, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown, BookOpen } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   DropdownMenu,
@@ -12,6 +12,7 @@ import {
 import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 import { cn } from '../../lib/utils';
+import { getAccountPopoverNavSections } from '../../config/settingsWorkspaceNav';
 
 /** Slightly thinner strokes for Lucide icons in the left nav (Lucide default is 2). */
 const NAV_ICON_STROKE = 1.5;
@@ -192,6 +193,14 @@ export const LeftNav: React.FC<LeftNavProps> = ({
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
   const personalWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'personal');
   const gitOrganizationWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'org');
+  const accountNavSections = useMemo(
+    () =>
+      getAccountPopoverNavSections({
+        type: selectedWorkspace.type,
+        role: selectedWorkspace.role,
+      }),
+    [selectedWorkspace.type, selectedWorkspace.role],
+  );
   const isOrgAccount = selectedWorkspace.type === 'org';
   const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
@@ -519,100 +528,73 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   </DropdownMenu>
                 </div>
 
-                {/* Invite Team */}
-                <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors mb-1">
-                  <UserCircle2
-                    className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                    strokeWidth={NAV_ICON_STROKE}
-                  />
-                  Invite Team
-                </button>
+                <div className="border-t border-sidebar-border my-3" />
 
-                <div className="border-t border-sidebar-border my-3"></div>
+                {accountNavSections.map((section, sectionIndex) => (
+                  <React.Fragment key={`${section.label ?? 'nav'}-${sectionIndex}`}>
+                    {sectionIndex > 0 ? <div className="border-t border-sidebar-border my-3" /> : null}
+                    {section.label ? (
+                      <div className="mb-1.5 px-3">
+                        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                          {section.label}
+                        </span>
+                      </div>
+                    ) : null}
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => onNavItemClick(`settings/${item.tabId}`)}
+                            className="group inline-flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-sidebar-foreground transition-colors hover:bg-muted/60 hover:text-white"
+                          >
+                            <Icon
+                              className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                              strokeWidth={NAV_ICON_STROKE}
+                              aria-hidden
+                            />
+                            <span className="min-w-0 truncate">{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </React.Fragment>
+                ))}
 
-                {/* Account Management Section */}
+                <div className="border-t border-sidebar-border my-3" />
+
                 <div className="space-y-0.5">
-                  <button 
-                    onClick={() => onNavItemClick('settings')}
+                  <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    <UserPlus
+                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                      strokeWidth={NAV_ICON_STROKE}
+                    />
+                    Invite Team
+                  </button>
+                  {selectedWorkspace.type === 'personal' ? (
+                    <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                      <Plus
+                        className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
+                        strokeWidth={NAV_ICON_STROKE}
+                      />
+                      Create New Organization
+                    </button>
+                  ) : null}
+                  <a
+                    href="https://docs.openhands.dev/"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
                   >
-                    <CreditCard
+                    <BookOpen
                       className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
                       strokeWidth={NAV_ICON_STROKE}
                     />
-                    Manage Account
-                  </button>
-                  <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <Users
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
-                    Manage Team
-                  </button>
-                  <button 
-                    onClick={() => onNavItemClick('settings')}
-                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-                  >
-                    <Blocks
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
-                    Integrations
-                  </button>
-                  <button 
-                    onClick={() => onNavItemClick('settings')}
-                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-                  >
-                    <Key
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
-                    API Keys
-                  </button>
-                  <button 
-                    onClick={() => onNavItemClick('settings')}
-                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-                  >
-                    <Shield
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
-                    Secrets
-                  </button>
-                </div>
-
-                <div className="border-t border-sidebar-border my-3"></div>
-
-                {/* Settings Section */}
-                <div className="space-y-0.5">
-                  <button 
-                    onClick={() => onNavItemClick('settings')}
-                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-                  >
-                    <UserCircle2
-                    className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                    strokeWidth={NAV_ICON_STROKE}
-                  />
-                    User Settings
-                  </button>
-                  <button 
-                    onClick={() => onNavItemClick('settings')}
-                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-                  >
-                    <Settings
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
-                    Application Settings
-                  </button>
-                  <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <Plus
-                      className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
-                      strokeWidth={NAV_ICON_STROKE}
-                    />
-                    Create New Organization
-                  </button>
-                  <button className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                    Documentation
+                  </a>
+                  <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
                     <LogOut
                       className="w-4 h-4 shrink-0 text-muted-foreground transition-colors group-hover:text-white"
                       strokeWidth={NAV_ICON_STROKE}
