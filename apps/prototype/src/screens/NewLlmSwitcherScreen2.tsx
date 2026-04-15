@@ -221,7 +221,7 @@ export function NewLlmSwitcherScreen2() {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setDeleteTarget(profile)}
-                    className="gap-2 text-destructive focus:text-destructive"
+                    className="gap-2"
                   >
                     <Trash2 className="h-4 w-4" />
                     Delete

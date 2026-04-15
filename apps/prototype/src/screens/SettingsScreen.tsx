@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
+  AppWindow,
   Building2,
-  Cloud,
   Copy,
   Cpu,
   CreditCard,
@@ -18,7 +18,6 @@ import {
   Plus,
   Blocks,
   RefreshCw,
-  Settings as SettingsIcon,
   Shield,
   User,
   Users,
@@ -59,6 +58,7 @@ import {
   dataTableShellClassName,
   dataTableTh,
 } from '../components/ui/table';
+import { McpIcon } from '../components/icons/McpIcon';
 import { SkillIcon } from '../components/icons/SkillIcon';
 import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
@@ -138,12 +138,12 @@ const rolePermissions: Record<OrgRole, Set<PermissionKey>> = {
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
   { id: 'integrations', label: 'Integrations', icon: Blocks },
-  { id: 'app', label: 'Application', icon: SettingsIcon },
+  { id: 'app', label: 'Application', icon: AppWindow },
   { id: 'llm', label: 'Language Model (LLM)', icon: Cpu },
   { id: 'billing', label: 'Billing', icon: CreditCard },
   { id: 'secrets', label: 'Secrets', icon: Shield },
   { id: 'api-keys', label: 'API Keys', icon: Key },
-  { id: 'mcp', label: 'MCP', icon: Cloud },
+  { id: 'mcp', label: 'MCP', icon: McpIcon },
   { id: 'organizations', label: 'Organization', icon: Building2 },
   { id: 'org-plugins', label: 'Extensions', icon: Layers },
   { id: 'org-hooks', label: 'Hooks', icon: Webhook },
@@ -155,7 +155,7 @@ type SettingsNavItem = {
   id: string;
   label: string;
   tabId: string;
-  icon: LucideIcon | typeof SkillIcon;
+  icon: LucideIcon | typeof SkillIcon | typeof McpIcon;
   requiredPermission?: PermissionKey;
 };
 
@@ -181,18 +181,18 @@ const ORG_SETTINGS_NAV: SettingsNavItem[] = [
   { id: 'org-hooks', label: 'Hooks', tabId: 'org-hooks', icon: Webhook, requiredPermission: 'manage_org_hooks' },
 ];
 
-const PERSONAL_SETTINGS_NAV: SettingsNavItem[] = [
+const PERSONAL_SETTINGS_CORE_NAV: SettingsNavItem[] = [
   { id: 'api-keys', label: 'API Keys', tabId: 'api-keys', icon: Key, requiredPermission: 'manage_api_keys' },
   { id: 'secrets', label: 'Secrets', tabId: 'secrets', icon: Shield, requiredPermission: 'manage_secrets' },
-  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: Cloud, requiredPermission: 'manage_mcp' },
+  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: McpIcon, requiredPermission: 'manage_mcp' },
 ];
 
 const ACCOUNT_NAV: SettingsNavItem[] = [
   { id: 'user', label: 'User', tabId: 'user', icon: User },
-  { id: 'app', label: 'Application', tabId: 'app', icon: SettingsIcon },
+  { id: 'app', label: 'Application', tabId: 'app', icon: AppWindow },
 ];
 
-const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [
+const INTEGRATIONS_ONLY_NAV: SettingsNavItem[] = [
   {
     id: 'integrations',
     label: 'Integrations',
@@ -200,22 +200,36 @@ const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [
     icon: Blocks,
     requiredPermission: 'manage_integrations',
   },
+];
+
+const SKILLS_ONLY_NAV: SettingsNavItem[] = [
   { id: 'skills', label: 'Skills', tabId: 'skills', icon: SkillIcon, requiredPermission: 'manage_org_plugins' },
 ];
 
-/** Personal workspace: LLM → API Keys → Secrets → MCP | User → App | Billing | Integrations → Skills */
+const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [...INTEGRATIONS_ONLY_NAV, ...SKILLS_ONLY_NAV];
+
+/** Org admin/owner: Personal settings = core + Integrations + Skills under MCP, then Account. */
+const ORG_ADMIN_PERSONAL_SETTINGS_NAV: SettingsNavItem[] = [
+  ...PERSONAL_SETTINGS_CORE_NAV,
+  ...INTEGRATIONS_AND_SKILLS_NAV,
+];
+
+/** Personal workspace top: LLM → API Keys → Secrets → MCP; Integrations + Skills rendered after (see personal branch). */
 const PERSONAL_WORKSPACE_TOP_NAV: SettingsNavItem[] = [
   { id: 'llm', label: 'Language Model (LLM)', tabId: 'llm', icon: Cpu, requiredPermission: 'view_llm_settings' },
   { id: 'api-keys', label: 'API Keys', tabId: 'api-keys', icon: Key, requiredPermission: 'manage_api_keys' },
   { id: 'secrets', label: 'Secrets', tabId: 'secrets', icon: Shield, requiredPermission: 'manage_secrets' },
-  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: Cloud, requiredPermission: 'manage_mcp' },
+  { id: 'mcp', label: 'MCP', tabId: 'mcp', icon: McpIcon, requiredPermission: 'manage_mcp' },
 ];
 
 const PERSONAL_WORKSPACE_BILLING_NAV: SettingsNavItem[] = [
   { id: 'billing', label: 'Billing', tabId: 'billing', icon: CreditCard, requiredPermission: 'view_billing' },
 ];
 
-/** Org member: same nav groups as personal workspace block (no billing). */
+/** Personal workspace: User → App → Billing (after top block). */
+const PERSONAL_ACCOUNT_WITH_BILLING_NAV: SettingsNavItem[] = [...ACCOUNT_NAV, ...PERSONAL_WORKSPACE_BILLING_NAV];
+
+/** Org member: Integrations under MCP; User → App → Skills in one block below first divider (no billing). */
 
 type SecretsView = 'list' | 'add' | 'edit';
 
@@ -1038,34 +1052,38 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   Personal settings
                 </span>
               </div>
-              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_SETTINGS_NAV).map(renderNavButton)}</div>
+              <div className="flex flex-col gap-0.5">
+                {filterNav(ORG_ADMIN_PERSONAL_SETTINGS_NAV).map(renderNavButton)}
+              </div>
               <div className="border-t border-border" />
               <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
-              <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">
-                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
-              </div>
             </>
           ) : showOrgMemberNav ? (
             <>
-              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}</div>
-              <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
+              <div className="px-3.5 pt-0.5">
+                <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
+                  Personal settings
+                </span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
+                {filterNav(INTEGRATIONS_ONLY_NAV).map(renderNavButton)}
+              </div>
               <div className="border-t border-border" />
               <div className="flex flex-col gap-0.5">
-                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+                {filterNav(ACCOUNT_NAV).map(renderNavButton)}
+                {filterNav(SKILLS_ONLY_NAV).map(renderNavButton)}
               </div>
             </>
           ) : (
             <>
-              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}</div>
-              <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
-              <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">{filterNav(PERSONAL_WORKSPACE_BILLING_NAV).map(renderNavButton)}</div>
+              <div className="flex flex-col gap-0.5">
+                {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
+                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+              </div>
               <div className="border-t border-border" />
               <div className="flex flex-col gap-0.5">
-                {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+                {filterNav(PERSONAL_ACCOUNT_WITH_BILLING_NAV).map(renderNavButton)}
               </div>
             </>
           )}
@@ -1225,7 +1243,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => setMemberDeleteTarget(member)}
-                              className="gap-2 text-destructive focus:text-destructive"
+                              className="gap-2"
                             >
                               <Trash2 className="h-4 w-4" />
                               Delete User
@@ -1890,7 +1908,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   <button
                                     type="button"
                                     aria-label={`Delete ${row.name}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() => setSecretDeleteTarget({ id: row.id, name: row.name })}
                                   >
                                     <Trash2 className="h-4 w-4" aria-hidden />
@@ -2065,7 +2083,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                   <button
                                     type="button"
                                     aria-label={`Delete ${row.name}`}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() =>
                                       setOpenHandsApiKeys((prev) => prev.filter((k) => k.id !== row.id))
                                     }
@@ -2385,7 +2403,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                       Edit
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
-                                      className="gap-2 text-destructive focus:text-destructive"
+                                      className="gap-2"
                                       onClick={() => handleDeleteMcpServer(row.id)}
                                     >
                                       <Trash2 className="h-4 w-4" />
