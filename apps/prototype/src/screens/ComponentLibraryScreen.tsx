@@ -35,6 +35,7 @@ import { WavingHand } from '../components/common/WavingHand';
 import HomeInfo from '../components/common/HomeInfo';
 import ProjectLoading from '../components/common/ProjectLoading';
 import InviteTeam from '../components/common/InviteTeam';
+import { InvitationAcceptModal } from '../components/common/InvitationAcceptModal';
 import SharePreview from '../components/common/SharePreview';
 import UserSettings from '../components/common/UserSettings';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
@@ -263,6 +264,9 @@ export function ComponentLibraryScreen({
   const [statusIndicatorStatus, setStatusIndicatorStatus] = useState<'active' | 'stopped' | 'thinking'>('active');
   const [serverStatus, setServerStatus] = useState<ServerStatusType>('active');
   const [showInviteTeam, setShowInviteTeam] = useState(isFigmaExport && exportItemId === 'common-invite-team');
+  const [showInvitationAccept, setShowInvitationAccept] = useState(
+    isFigmaExport && exportItemId === 'common-invitation-accept-modal',
+  );
   const [showSharePreview, setShowSharePreview] = useState(
     isFigmaExport && (exportItemId === 'common-share-preview' || exportItemId === 'navigation-top-bar')
   );
@@ -971,6 +975,29 @@ export function ComponentLibraryScreen({
                     onClose={() => setShowInviteTeam(false)}
                   />
                 )}
+              </div>
+            ),
+          },
+          {
+            id: 'common-invitation-accept-modal',
+            name: 'InvitationAcceptModal',
+            path: 'components/common/InvitationAcceptModal.tsx',
+            description: 'Invitation to join an organization — confirm or cancel.',
+            usage: `<InvitationAcceptModal open={open} onOpenChange={...} onConfirm={...} />`,
+            preview: (
+              <div className="flex items-center gap-3">
+                {!isFigmaExport && (
+                  <Button variant="outline" onClick={() => setShowInvitationAccept(true)}>
+                    Open invitation modal
+                  </Button>
+                )}
+                <InvitationAcceptModal
+                  open={showInvitationAccept}
+                  onOpenChange={setShowInvitationAccept}
+                  onConfirm={() =>
+                    showAppToast({ variant: 'success', message: 'Invitation accepted.' })
+                  }
+                />
               </div>
             ),
           },
@@ -2340,6 +2367,31 @@ export function ComponentLibraryScreen({
                   <Trash2 className="h-4 w-4" />
                   Delete
                 </div>
+              </div>
+            </div>
+          ),
+        },
+      ];
+    }
+
+    if (item.id === 'common-invitation-accept-modal') {
+      return [
+        {
+          label: 'Open modal',
+          span: 'wide',
+          content: (
+            <div className="w-[500px] max-w-full rounded-xl border border-border bg-card p-6 shadow-xl">
+              <div className="text-xl font-semibold text-foreground">Join Organization</div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                You have been invited to join an organization. Would you like to accept this invitation?
+              </p>
+              <div className="mt-4 flex w-full gap-2">
+                <Button type="button" size="sm" className="flex-1">
+                  Confirm
+                </Button>
+                <Button type="button" variant="outline" size="sm" className="flex-1">
+                  Cancel
+                </Button>
               </div>
             </div>
           ),

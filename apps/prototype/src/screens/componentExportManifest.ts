@@ -31,6 +31,7 @@ export const componentExportManifest = [
   'src/components/common/AppToaster.tsx',
   'src/lib/toastStyles.ts',
   'src/components/common/InviteTeam.tsx',
+  'src/components/common/InvitationAcceptModal.tsx',
   'src/components/common/Logo.tsx',
   'src/components/common/ProjectLoading.tsx',
   'src/components/common/PrototypeControlsFab.tsx',

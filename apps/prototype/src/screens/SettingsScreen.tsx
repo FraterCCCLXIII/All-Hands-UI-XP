@@ -44,6 +44,8 @@ import {
 } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { showAppToast } from '../lib/appToast';
 import {
   dataTableBodyClassName,
@@ -431,6 +433,17 @@ const initialOpenHandsApiKeys: OpenHandsApiKeyRow[] = [
   { id: 'api-key-cli', name: 'CLI', created: '9/19/2025, 5:09:37 PM', lastUsed: 'Never' },
 ];
 
+/** Demo-only: generate a one-time display secret for the “API Key Created” modal. */
+function generateOpenHandsApiKeySecret(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const len = 48;
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  let tail = '';
+  for (let i = 0; i < len; i += 1) tail += chars[arr[i]! % chars.length];
+  return `sk-oh-${tail}`;
+}
+
 export interface SettingsScreenProps {
   /** Initial tab from route (e.g. llm for #/settings/llm) */
   initialTab?: string;
@@ -524,6 +537,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [openHandsApiKeys, setOpenHandsApiKeys] = useState<OpenHandsApiKeyRow[]>(initialOpenHandsApiKeys);
   const [createApiKeyModalOpen, setCreateApiKeyModalOpen] = useState(false);
   const [newApiKeyName, setNewApiKeyName] = useState('');
+  const [apiKeyCreatedModalOpen, setApiKeyCreatedModalOpen] = useState(false);
+  const [revealedApiKey, setRevealedApiKey] = useState('');
+  /** Demo: unlocked after adding ≥$10 on Billing, or via prototype FAB (API Keys). */
+  const [hasOpenHandsLlmKeyAccess, setHasOpenHandsLlmKeyAccess] = useState(false);
   const selectedOrgId = controlledOrgId ?? uncontrolledOrgId;
 
   const canAddCredit = useMemo(() => {
@@ -1554,7 +1571,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!canAddCredit) return;
-                  showToast('Adding credits is not wired in this prototype.', 'info');
+                  setHasOpenHandsLlmKeyAccess(true);
+                  showToast('Credits added. OpenHands LLM key is now available in API Keys.', 'success');
                   setAddCreditAmount('');
                 }}
               >
@@ -1825,46 +1843,65 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       account. Do not share this key elsewhere; anyone with it can incur charges on your account.
                     </p>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      className="h-10 inline-flex items-center justify-center gap-2 w-fit px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors"
-                    >
-                      <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
-                      Refresh API Key
-                    </button>
-                  </div>
-                  <div>
-                    <div className="flex w-full items-center gap-2">
-                      <div
-                        className="flex h-10 min-h-10 w-full min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2 focus-within:bg-muted/60"
-                        role="group"
-                        aria-label="OpenHands LLM API key"
-                      >
-                        <span className="min-w-0 truncate font-mono text-sm text-foreground">
-                          ••••••••••••••••••••
-                        </span>
-                        <div className="flex shrink-0 items-center gap-0.5">
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            aria-label="Show API key"
-                            title="Show API key"
-                          >
-                            <Eye className="h-4 w-4" aria-hidden />
-                          </button>
-                          <button
-                            type="button"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                            aria-label="Copy API key"
-                            title="Copy API key"
-                          >
-                            <Copy className="h-4 w-4" aria-hidden />
-                          </button>
-                        </div>
+                  {!hasOpenHandsLlmKeyAccess ? (
+                    <div className="flex flex-col gap-4 rounded-md border border-border bg-muted/60 p-4">
+                      <p className="text-sm text-muted-foreground">
+                        Purchase at least $10 in credits to get access to OpenHands LLM key for use with OpenHands CLI
+                        and SDK.
+                      </p>
+                      <div>
+                        <Button type="button" size="sm" onClick={() => handleTabClick('billing')}>
+                          Buy Now
+                        </Button>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          className="h-10 inline-flex w-fit cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm text-primary-foreground transition-colors hover:bg-primary/85"
+                          onClick={() =>
+                            showToast('A new OpenHands LLM key was generated.', 'success')
+                          }
+                        >
+                          <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
+                          Refresh API Key
+                        </button>
+                      </div>
+                      <div>
+                        <div className="flex w-full items-center gap-2">
+                          <div
+                            className="flex h-10 min-h-10 w-full min-w-0 flex-1 items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 text-sm text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-within:outline-none focus-within:ring-1 focus-within:ring-ring focus-within:ring-offset-2 focus-within:bg-muted/60"
+                            role="group"
+                            aria-label="OpenHands LLM API key"
+                          >
+                            <span className="min-w-0 truncate font-mono text-sm text-foreground">
+                              ••••••••••••••••••••
+                            </span>
+                            <div className="flex shrink-0 items-center gap-0.5">
+                              <button
+                                type="button"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                aria-label="Show API key"
+                                title="Show API key"
+                              >
+                                <Eye className="h-4 w-4" aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                aria-label="Copy API key"
+                                title="Copy API key"
+                              >
+                                <Copy className="h-4 w-4" aria-hidden />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* OpenHands API Keys Section: intro + CTA grouped */}
@@ -1969,18 +2006,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               </div>
 
               <Dialog open={createApiKeyModalOpen} onOpenChange={setCreateApiKeyModalOpen}>
-                <DialogContent className="gap-4 rounded-xl border border-border bg-card sm:max-w-[500px]">
-                  <DialogHeader className="space-y-0 text-left">
-                    <DialogTitle className="text-xl font-bold tracking-tight text-foreground">
-                      Create API Key
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div data-testid="create-api-key-modal" className="flex flex-col gap-4">
-                    <p className="text-sm text-muted-foreground">
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Create API Key</DialogTitle>
+                    <DialogDescription>
                       Give your API key a descriptive name to help you identify it later.
-                    </p>
-                    <label htmlFor="api-key-name-input" className="mt-4 flex w-full flex-col gap-2.5">
-                      <span className="text-sm text-foreground">Name</span>
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div data-testid="create-api-key-modal" className="space-y-4 py-1">
+                    <div>
+                      <label htmlFor="api-key-name-input" className="mb-1.5 block text-sm font-medium text-foreground">
+                        Name
+                      </label>
                       <Input
                         id="api-key-name-input"
                         data-testid="api-key-name-input"
@@ -1989,19 +2026,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         value={newApiKeyName}
                         onChange={(e) => setNewApiKeyName(e.target.value)}
                         autoComplete="off"
-                        className="rounded-sm placeholder:italic"
                       />
-                    </label>
+                    </div>
                   </div>
-                  <DialogFooter className="mt-2 flex w-full flex-row gap-2 !justify-start sm:space-x-0">
+                  <DialogFooter>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setCreateApiKeyModalOpen(false)}>
+                      Cancel
+                    </Button>
                     <Button
                       type="button"
                       size="sm"
-                      className="flex-1"
                       disabled={!newApiKeyName.trim()}
                       onClick={() => {
                         const name = newApiKeyName.trim();
                         if (!name) return;
+                        const secret = generateOpenHandsApiKeySecret();
                         setOpenHandsApiKeys((prev) => [
                           {
                             id: `api-key-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
@@ -2012,19 +2051,74 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                           ...prev,
                         ]);
                         setCreateApiKeyModalOpen(false);
-                        showAppToast({ variant: 'success', message: 'API key created.' });
+                        setRevealedApiKey(secret);
+                        setApiKeyCreatedModalOpen(true);
                       }}
                     >
                       Create
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog
+                open={apiKeyCreatedModalOpen}
+                onOpenChange={(open) => {
+                  setApiKeyCreatedModalOpen(open);
+                  if (!open) setRevealedApiKey('');
+                }}
+              >
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>API Key Created</DialogTitle>
+                  </DialogHeader>
+                  <div data-testid="new-api-key-modal" className="space-y-4 py-1">
+                    <p className="text-sm text-muted-foreground">
+                      This is the only time your API key will be displayed. Please copy it now and store it securely.
+                    </p>
+                    <div className="mt-4 flex min-h-10 items-center gap-2 rounded-md border border-border bg-muted/60 py-1.5 pl-3 pr-1.5">
+                      <span className="min-w-0 flex-1 break-all font-mono text-sm leading-normal text-foreground">
+                        {revealedApiKey}
+                      </span>
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        aria-label="Copy API key"
+                        title="Copy API key"
+                        onClick={() => {
+                          if (!revealedApiKey) return;
+                          void navigator.clipboard.writeText(revealedApiKey).then(() => {
+                            showAppToast({ variant: 'success', message: 'Copied to clipboard.' });
+                          });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" aria-hidden />
+                      </button>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        if (!revealedApiKey) return;
+                        void navigator.clipboard.writeText(revealedApiKey).then(() => {
+                          showAppToast({ variant: 'success', message: 'Copied to clipboard.' });
+                        });
+                      }}
+                    >
+                      Copy to Clipboard
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="flex-1 border-primary text-primary hover:bg-primary/10"
-                      onClick={() => setCreateApiKeyModalOpen(false)}
+                      onClick={() => {
+                        setApiKeyCreatedModalOpen(false);
+                        setRevealedApiKey('');
+                      }}
                     >
-                      Cancel
+                      Close
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -2969,6 +3063,42 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       </DialogFooter>
     </DialogContent>
   </Dialog>
+      <Popover>
+        <PopoverTrigger asChild>
+          <PrototypeControlsFab
+            isActive={hasOpenHandsLlmKeyAccess}
+            aria-label="Prototype controls: OpenHands LLM key access"
+            title="Open prototype controls"
+            data-testid="settings-demo-llm-access-fab"
+          />
+        </PopoverTrigger>
+        <PopoverContent side="top" align="end" className="w-72 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-foreground">OpenHands LLM key access</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hasOpenHandsLlmKeyAccess}
+              aria-label={hasOpenHandsLlmKeyAccess ? 'Disable demo access' : 'Enable demo access'}
+              onClick={() => setHasOpenHandsLlmKeyAccess((v) => !v)}
+              className={cn(
+                'flex h-6 w-10 shrink-0 items-center rounded-full border border-border px-0.5 transition-colors',
+                hasOpenHandsLlmKeyAccess ? 'bg-foreground/80' : 'bg-muted/60',
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  hasOpenHandsLlmKeyAccess ? 'translate-x-4' : 'translate-x-0',
+                )}
+              />
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Demo: simulates having purchased enough credits to use the OpenHands LLM key (API Keys tab).
+          </p>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };
