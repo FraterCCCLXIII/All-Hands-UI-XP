@@ -1,6 +1,23 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { Boxes, List, Plus, SquareKanban, LogOut, UserPlus, Sparkles, User, Megaphone, MessageCircle, Building2, ChevronDown, BookOpen } from 'lucide-react';
+import {
+  Boxes,
+  BookOpen,
+  Briefcase,
+  Building2,
+  ChevronDown,
+  List,
+  LogOut,
+  Megaphone,
+  Newspaper,
+  Plus,
+  SquareKanban,
+  Sparkles,
+  User,
+  UserPlus,
+  Users,
+} from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import {
   DropdownMenu,
@@ -30,15 +47,36 @@ function isSettingsTabPathActive(pathname: string, tabId: string) {
   return first === tabId;
 }
 
+const logoPopoverIconTileClass =
+  'flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white';
+
 const highlightCards = [
-  { title: 'Docs', text: 'Build, integrate, and scale with ease.', url: 'https://docs.openhands.dev/', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M8.53787 11.87L8.49787 11C8.49787 10.4696 8.70858 9.96086 9.08366 9.58579C9.45873 9.21071 9.96744 9 10.4979 9H14.1699C14.7003 9.00011 15.2089 9.2109 15.5839 9.586L16.4119 10.414C16.7869 10.7891 17.2955 10.9999 17.8259 11H21.8079C22.0858 11 22.3607 11.0579 22.615 11.17C22.8693 11.2821 23.0974 11.446 23.2848 11.6512C23.4723 11.8564 23.6149 12.0985 23.7035 12.3618C23.7922 12.6252 23.825 12.9042 23.7999 13.181L23.1629 20.181C23.1177 20.6779 22.8884 21.14 22.5201 21.4766C22.1517 21.8131 21.6708 21.9998 21.1719 22H10.8239C10.3249 21.9998 9.84404 21.8131 9.47567 21.4766C9.1073 21.14 8.87803 20.6779 8.83287 20.181L8.19587 13.181C8.15326 12.7178 8.27426 12.2543 8.53787 11.871V11.87ZM10.1879 12C10.049 12 9.91156 12.0289 9.78445 12.085C9.65734 12.141 9.5433 12.2229 9.44959 12.3254C9.35589 12.428 9.28457 12.5489 9.2402 12.6806C9.19583 12.8122 9.17937 12.9516 9.19187 13.09L9.82887 20.09C9.85132 20.3385 9.96584 20.5696 10.1499 20.7379C10.334 20.9063 10.5744 20.9998 10.8239 21H21.1719C21.4213 20.9998 21.6617 20.9063 21.8458 20.7379C22.0299 20.5696 22.1444 20.3385 22.1669 20.09L22.8039 13.09C22.8164 12.9516 22.7999 12.8122 22.7555 12.6806C22.7112 12.5489 22.6399 12.428 22.5462 12.3254C22.4524 12.2229 22.3384 12.141 22.2113 12.085C22.0842 12.0289 21.9468 12 21.8079 12H10.1879ZM14.8779 10.293C14.7849 10.2 14.6745 10.1263 14.553 10.076C14.4316 10.0257 14.3014 9.9999 14.1699 10H10.4979C10.2359 9.99995 9.9844 10.1027 9.7974 10.2861C9.6104 10.4696 9.50285 10.7191 9.49787 10.981L9.50387 11.12C9.71787 11.042 9.94787 11 10.1879 11H15.5839L14.8769 10.293H14.8779Z" fill="currentColor"/></svg> },
-  { title: 'Blog', text: 'Ideas, updates, and insights that inspire.', url: '/blog', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M22.5 11C22.6326 11 22.7598 11.0527 22.8536 11.1464C22.9473 11.2402 23 11.3674 23 11.5V20.5C23 20.6326 22.9473 20.7598 22.8536 20.8536C22.7598 20.9473 22.6326 21 22.5 21H9.5C9.36739 21 9.24021 20.9473 9.14645 20.8536C9.05268 20.7598 9 20.6326 9 20.5V11.5C9 11.3674 9.05268 11.2402 9.14645 11.1464C9.24021 11.0527 9.36739 11 9.5 11H22.5ZM9.5 10C9.10218 10 8.72064 10.158 8.43934 10.4393C8.15804 10.7206 8 11.1022 8 11.5V20.5C8 20.8978 8.15804 21.2794 8.43934 21.5607C8.72064 21.842 9.10218 22 9.5 22H22.5C22.8978 22 23.2794 21.842 23.5607 21.5607C23.842 21.2794 24 20.8978 24 20.5V11.5C24 11.1022 23.842 10.7206 23.5607 10.4393C23.2794 10.158 22.8978 10 22.5 10H9.5Z" fill="currentColor"/><path d="M11 16.5C11 16.3674 11.0527 16.2402 11.1464 16.1464C11.2402 16.0527 11.3674 16 11.5 16H20.5C20.6326 16 20.7598 16.0527 20.8536 16.1464C20.9473 16.2402 21 16.3674 21 16.5C21 16.6326 20.9473 16.7598 20.8536 16.8536C20.7598 16.9473 20.6326 17 20.5 17H11.5C11.3674 17 11.2402 16.9473 11.1464 16.8536C11.0527 16.7598 11 16.6326 11 16.5ZM11 18.5C11 18.3674 11.0527 18.2402 11.1464 18.1464C11.2402 18.0527 11.3674 18 11.5 18H17.5C17.6326 18 17.7598 18.0527 17.8536 18.1464C17.9473 18.2402 18 18.3674 18 18.5C18 18.6326 17.9473 18.7598 17.8536 18.8536C17.7598 18.9473 17.6326 19 17.5 19H11.5C11.3674 19 11.2402 18.9473 11.1464 18.8536C11.0527 18.7598 11 18.6326 11 18.5ZM11 13.5C11 13.3674 11.0527 13.2402 11.1464 13.1464C11.2402 13.0527 11.3674 13 11.5 13H20.5C20.6326 13 20.7598 13.0527 20.8536 13.1464C20.9473 13.2402 21 13.3674 21 13.5V14.5C21 14.6326 20.9473 14.7598 20.8536 14.8536C20.7598 14.9473 20.6326 15 20.5 15H11.5C11.3674 15 11.2402 14.9473 11.1464 14.8536C11.0527 14.7598 11 14.6326 11 14.5V13.5Z" fill="currentColor"/></svg> },
+  {
+    title: 'Docs',
+    text: 'Build, integrate, and scale with ease.',
+    url: 'https://docs.openhands.dev/',
+    icon: (
+      <div className={logoPopoverIconTileClass} aria-hidden>
+        <BookOpen className="h-5 w-5" />
+      </div>
+    ),
+  },
+  {
+    title: 'Blog',
+    text: 'Ideas, updates, and insights that inspire.',
+    url: '/blog',
+    icon: (
+      <div className={logoPopoverIconTileClass} aria-hidden>
+        <Newspaper className="h-5 w-5" />
+      </div>
+    ),
+  },
   {
     title: 'Press',
     text: 'News, releases, and media highlights.',
     url: '/press',
     icon: (
-      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
+      <div className={logoPopoverIconTileClass} aria-hidden>
         <Megaphone className="h-5 w-5" />
       </div>
     ),
@@ -48,12 +86,21 @@ const highlightCards = [
     text: 'Connect, share, and grow together.',
     url: 'http://openhands.dev/joinslack',
     icon: (
-      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-black text-white">
-        <MessageCircle className="h-5 w-5" />
+      <div className={logoPopoverIconTileClass} aria-hidden>
+        <Users className="h-5 w-5" />
       </div>
     ),
   },
-  { title: 'Careers', text: 'Learn more about our open roles.', url: 'https://jobs.ashbyhq.com/OpenHands', icon: <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-sidebar-foreground"><rect width="32" height="32" rx="2.66667" fill="black"/><path d="M19.7422 18.3439C20.5329 17.2673 21 15.9382 21 14.5C21 10.9101 18.0899 8 14.5 8C10.9101 8 8 10.9101 8 14.5C8 18.0899 10.9101 21 14.5 21C15.9386 21 17.268 20.5327 18.3448 19.7415L18.3439 19.7422C18.3734 19.7822 18.4062 19.8204 18.4424 19.8566L22.2929 23.7071C22.6834 24.0976 23.3166 24.0976 23.7071 23.7071C24.0976 23.3166 24.0976 22.6834 23.7071 22.2929L19.8566 18.4424C19.8204 18.4062 19.7822 18.3734 19.7422 18.3439ZM20 14.5C20 17.5376 17.5376 20 14.5 20C11.4624 20 9 17.5376 9 14.5C9 11.4624 11.4624 9 14.5 9C17.5376 9 20 11.4624 20 14.5Z" fill="currentColor"/></svg> },
+  {
+    title: 'Careers',
+    text: 'Learn more about our open roles.',
+    url: 'https://jobs.ashbyhq.com/OpenHands',
+    icon: (
+      <div className={logoPopoverIconTileClass} aria-hidden>
+        <Briefcase className="h-5 w-5" />
+      </div>
+    ),
+  },
 ];
 
 function AutomationsIcon({ className }: { className?: string }) {
@@ -199,14 +246,56 @@ export const LeftNav: React.FC<LeftNavProps> = ({
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
   const personalWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'personal');
   const gitOrganizationWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'org');
+  const prefersReducedMotion = useReducedMotion();
+  const accountPopoverBodyTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const };
+  const accountPopoverLayoutTransition = prefersReducedMotion
+    ? { duration: 0 }
+    : { duration: 0.32, ease: [0.4, 0, 0.2, 1] as const };
+
+  /** Body below the workspace selector: staged fade → layout → fade (selector uses `activeWorkspaceId` immediately). */
+  type AccountBodyPhase = 'idle' | 'fadeOut' | 'size' | 'fadeIn';
+  const [accountBodyDisplayedWorkspaceId, setAccountBodyDisplayedWorkspaceId] = useState(activeWorkspaceId);
+  const [accountBodyPhase, setAccountBodyPhase] = useState<AccountBodyPhase>('idle');
+  const activeWorkspaceIdRef = useRef(activeWorkspaceId);
+  activeWorkspaceIdRef.current = activeWorkspaceId;
+
+  const displayedAccountBodyWorkspace =
+    accountWorkspaceOptions.find((o) => o.id === accountBodyDisplayedWorkspaceId) ??
+    accountWorkspaceOptions[0];
   const accountNavSections = useMemo(
     () =>
       getAccountPopoverNavSections({
-        type: selectedWorkspace.type,
-        role: selectedWorkspace.role,
+        type: displayedAccountBodyWorkspace.type,
+        role: displayedAccountBodyWorkspace.role,
       }),
-    [selectedWorkspace.type, selectedWorkspace.role],
+    [displayedAccountBodyWorkspace.type, displayedAccountBodyWorkspace.role],
   );
+
+  useEffect(() => {
+    if (activeWorkspaceId === accountBodyDisplayedWorkspaceId) return;
+    if (prefersReducedMotion) {
+      setAccountBodyDisplayedWorkspaceId(activeWorkspaceId);
+      setAccountBodyPhase('idle');
+      return;
+    }
+    if (accountBodyPhase === 'idle' || accountBodyPhase === 'fadeIn') {
+      setAccountBodyPhase('fadeOut');
+    } else if (accountBodyPhase === 'size') {
+      setAccountBodyDisplayedWorkspaceId(activeWorkspaceId);
+    }
+  }, [activeWorkspaceId, accountBodyDisplayedWorkspaceId, accountBodyPhase, prefersReducedMotion]);
+
+  /** If layout does not animate (e.g. unchanged size), `onLayoutAnimationComplete` may not fire — avoid a stuck `size` phase. */
+  useEffect(() => {
+    if (accountBodyPhase !== 'size' || prefersReducedMotion) return;
+    const t = window.setTimeout(() => {
+      setAccountBodyPhase((p) => (p === 'size' ? 'fadeIn' : p));
+    }, 600);
+    return () => window.clearTimeout(t);
+  }, [accountBodyPhase, accountBodyDisplayedWorkspaceId, prefersReducedMotion]);
+
   const isOrgAccount = selectedWorkspace.type === 'org';
   const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
@@ -439,11 +528,23 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             sideOffset={8}
             className="w-max max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground [max-height:min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border -translate-y-12"
           >
-            <div className="inline-grid w-max max-w-full grid-cols-[max-content_max-content] items-stretch gap-4">
+            <motion.div
+              layout
+              transition={{ layout: accountPopoverLayoutTransition }}
+              onLayoutAnimationComplete={() => {
+                setAccountBodyPhase((p) => (p === 'size' ? 'fadeIn' : p));
+              }}
+              className={cn(
+                'inline-grid w-max max-w-full items-stretch gap-4 overflow-hidden',
+                displayedAccountBodyWorkspace.type === 'org'
+                  ? 'grid-cols-1'
+                  : 'grid-cols-[max-content_max-content]',
+              )}
+            >
               {/* Left column: Account menu */}
               <div className="flex w-min min-w-[220px] flex-col">
                 <div className="text-lg font-semibold mb-4">Account</div>
-                
+
                 {/* Workspace selector — same dropdown pattern as Settings org selector */}
                 <div className="mb-3">
                   <DropdownMenu modal={false}>
@@ -516,81 +617,113 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   </DropdownMenu>
                 </div>
 
-                {accountNavSections.map((section, sectionIndex) => (
-                  <React.Fragment key={`${section.label ?? 'nav'}-${sectionIndex}`}>
-                    {sectionIndex > 0 ? <div className="border-t border-sidebar-border my-3" /> : null}
-                    {section.label ? (
-                      <div className="mb-1.5 px-3">
-                        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                          {section.label}
-                        </span>
+                <motion.div
+                  animate={{
+                    opacity:
+                      accountBodyPhase === 'idle' || accountBodyPhase === 'fadeIn' ? 1 : 0,
+                  }}
+                  transition={accountPopoverBodyTransition}
+                  onAnimationComplete={() => {
+                    setAccountBodyPhase((prev) => {
+                      if (prev === 'fadeOut') {
+                        setAccountBodyDisplayedWorkspaceId(activeWorkspaceIdRef.current);
+                        return 'size';
+                      }
+                      if (prev === 'fadeIn') {
+                        return 'idle';
+                      }
+                      return prev;
+                    });
+                  }}
+                  className="flex min-h-0 flex-col"
+                >
+                  {accountNavSections.map((section, sectionIndex) => (
+                    <React.Fragment key={`${section.label ?? 'nav'}-${sectionIndex}`}>
+                      {sectionIndex > 0 ? <div className="border-t border-sidebar-border my-3" /> : null}
+                      {section.label ? (
+                        <div className="mb-1.5 px-3">
+                          <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            {section.label}
+                          </span>
+                        </div>
+                      ) : null}
+                      <div className="space-y-0.5">
+                        {section.items.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => onNavItemClick(`settings/${item.tabId}`)}
+                              className="group inline-flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-sidebar-foreground transition-colors hover:bg-muted/60 hover:text-white"
+                            >
+                              <Icon
+                                className={cn(
+                                  'h-4 w-4 shrink-0 transition-colors',
+                                  isSettingsTabPathActive(location.pathname, item.tabId)
+                                    ? '!text-white'
+                                    : '!text-muted-foreground group-hover:!text-white',
+                                )}
+                                aria-hidden
+                              />
+                              <span className="min-w-0 truncate">{item.label}</span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ) : null}
-                    <div className="space-y-0.5">
-                      {section.items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => onNavItemClick(`settings/${item.tabId}`)}
-                            className="group inline-flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-xs text-sidebar-foreground transition-colors hover:bg-muted/60 hover:text-white"
-                          >
-                            <Icon
-                              className={cn(
-                                'h-4 w-4 shrink-0 transition-colors',
-                                isSettingsTabPathActive(location.pathname, item.tabId)
-                                  ? '!text-white'
-                                  : '!text-muted-foreground group-hover:!text-white',
-                              )}
-                              aria-hidden
-                            />
-                            <span className="min-w-0 truncate">{item.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </React.Fragment>
-                ))}
+                    </React.Fragment>
+                  ))}
 
-                <div className="border-t border-sidebar-border my-3" />
+                  <div className="border-t border-sidebar-border my-3" />
 
-                <div className="space-y-0.5">
-                  <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <UserPlus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                    Invite Team
-                  </button>
-                  {selectedWorkspace.type === 'personal' ? (
+                  <div className="space-y-0.5">
                     <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                      <Plus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                      Create New Organization
+                      <UserPlus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
+                      Invite Team
                     </button>
-                  ) : null}
-                  <a
-                    href="https://docs.openhands.dev/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
-                  >
-                    <BookOpen className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                    Documentation
-                  </a>
-                  <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                    <LogOut className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                    Log Out
-                  </button>
-                </div>
+                    {displayedAccountBodyWorkspace.type === 'personal' ? (
+                      <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                        <Plus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
+                        Create New Organization
+                      </button>
+                    ) : null}
+                    <a
+                      href="https://docs.openhands.dev/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors"
+                    >
+                      <BookOpen className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
+                      Documentation
+                    </a>
+                    <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
+                      <LogOut className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
+                      Log Out
+                    </button>
+                  </div>
+                </motion.div>
               </div>
 
-              {/* Right column: OpenHands Enterprise CTA */}
-              <div className="flex h-full min-h-0 w-max max-w-[min(20rem,calc(100vw-3rem))] flex-col">
-                <EnterpriseCtaCard
-                  showIcon
-                  className="pointer-events-auto h-full min-h-0 rounded-lg"
-                  onLearnMoreClick={onEnterpriseLearnMoreClick}
-                />
-              </div>
-            </div>
+              {/* Enterprise CTA — personal workspace only (hidden on org accounts) */}
+              {displayedAccountBodyWorkspace.type === 'personal' ? (
+                <div className="flex h-full min-h-0 w-max max-w-[min(20rem,calc(100vw-3rem))] flex-col">
+                  <motion.div
+                    animate={{
+                      opacity:
+                        accountBodyPhase === 'idle' || accountBodyPhase === 'fadeIn' ? 1 : 0,
+                    }}
+                    transition={accountPopoverBodyTransition}
+                    className="flex h-full min-h-0 flex-col"
+                  >
+                    <EnterpriseCtaCard
+                      showIcon
+                      className="pointer-events-auto h-full min-h-0 rounded-lg"
+                      onLearnMoreClick={onEnterpriseLearnMoreClick}
+                    />
+                  </motion.div>
+                </div>
+              ) : null}
+            </motion.div>
           </PopoverContent>
         </Popover>
       </div>
