@@ -845,7 +845,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             <button
               type="button"
               data-tour-id="settings.org-selector"
-              className="group w-full h-12 rounded-md border border-border bg-muted/20 px-4 flex items-center justify-between text-left text-sm text-foreground hover:bg-muted/60 transition-colors"
+              className="group flex h-10 w-full shrink-0 items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-foreground transition-colors hover:bg-muted/60"
               aria-label="Select organization"
             >
               <span className="flex items-center gap-2 w-full">

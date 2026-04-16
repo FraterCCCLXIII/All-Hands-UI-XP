@@ -450,7 +450,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                     <DropdownMenuTrigger asChild>
                       <button
                         type="button"
-                        className="group flex h-12 w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/60"
+                        className="group flex h-10 w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/60"
                         aria-label="Select workspace"
                       >
                         <span className="flex min-w-0 flex-1 items-center gap-2">
