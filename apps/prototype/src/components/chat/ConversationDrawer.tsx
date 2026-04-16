@@ -112,7 +112,11 @@ export function ConversationDrawer({
   onSelectConversation,
   onRenameConversation,
 }: ConversationDrawerProps) {
-  const items = useMemo(() => conversations, [conversations]);
+  const items = useMemo(() => {
+    const active = conversations.filter((c) => !c.archived);
+    const archivedRows = conversations.filter((c) => c.archived);
+    return [...active, ...archivedRows];
+  }, [conversations]);
   const firstRunningIndex = useMemo(
     () => items.findIndex((c) => c.status === 'running'),
     [items]
@@ -232,9 +236,12 @@ export function ConversationDrawer({
         >
           {items.map((conversation, index) => {
             const isAutomation = conversation.tag === 'Automation';
+            const isArchived = Boolean(conversation.archived);
             const isHighlighted = conversation.id === highlightedConversationId;
             const showRunningSpinner =
-              conversation.status === 'running' && index === firstRunningIndex;
+              !isArchived &&
+              conversation.status === 'running' &&
+              index === firstRunningIndex;
             const openChatActive = () => {
               onSelectConversation?.(conversation);
               navigateAppRoute('/chat');
@@ -252,8 +259,12 @@ export function ConversationDrawer({
                 // Match ChatStartScreen suggestion tiles + WelcomeScreen list rows
                 'hover:bg-muted/60 focus-visible:bg-muted/60',
                 isHighlighted && 'bg-muted/40 ring-1 ring-inset ring-border/60',
+                isArchived && 'text-muted-foreground',
               )}
-              aria-label={`Open ${conversation.name} in chat`}
+              data-archived={isArchived || undefined}
+              aria-label={
+                isArchived ? `Open archived ${conversation.name} in chat` : `Open ${conversation.name} in chat`
+              }
               onClick={() => {
                 if (editingConversationId === conversation.id) return;
                 if (editingConversationId && editingConversationId !== conversation.id) {
@@ -272,7 +283,7 @@ export function ConversationDrawer({
             >
               <div className="flex items-start gap-2">
                 <div
-                  className="relative flex h-6 w-3 shrink-0 items-center justify-center"
+                  className="relative flex h-6 w-2 shrink-0 items-center justify-center"
                   aria-hidden
                 >
                   {showRunningSpinner ? (
@@ -287,10 +298,11 @@ export function ConversationDrawer({
                     <div
                       className={cn(
                         'h-1.5 w-1.5 shrink-0 rounded-full',
-                        conversation.status === 'running' && 'bg-success',
-                        conversation.status === 'awaiting' && 'bg-warning',
-                        conversation.status === 'error' && 'bg-destructive',
-                        !conversation.status && 'bg-muted-foreground',
+                        isArchived && 'bg-muted-foreground/50',
+                        !isArchived && conversation.status === 'running' && 'bg-success',
+                        !isArchived && conversation.status === 'awaiting' && 'bg-warning',
+                        !isArchived && conversation.status === 'error' && 'bg-destructive',
+                        !isArchived && !conversation.status && 'bg-muted-foreground',
                       )}
                     />
                   )}
@@ -339,18 +351,39 @@ export function ConversationDrawer({
                       ) : (
                         <p
                           data-testid="conversation-card-title"
-                          className="min-w-0 truncate text-sm font-normal leading-6 text-foreground"
+                          className={cn(
+                            'min-w-0 truncate text-sm font-normal leading-6',
+                            isArchived ? 'text-muted-foreground' : 'text-foreground',
+                          )}
                           title={conversation.name}
                         >
                           {conversation.name}
                         </p>
                       )}
-                      <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-xs font-semibold lowercase text-muted-foreground">
+                      <span
+                        className={cn(
+                          'inline-flex shrink-0 cursor-help items-center rounded px-1.5 py-0.5 text-xs font-semibold lowercase',
+                          isArchived
+                            ? 'border border-border/50 bg-muted/25 text-muted-foreground'
+                            : 'bg-muted/50 text-muted-foreground',
+                        )}
+                      >
                         {conversation.version}
                       </span>
+                      {isArchived ? (
+                        <span
+                          data-testid="conversation-card-archive-badge"
+                          className="inline-flex shrink-0 items-center rounded border border-border/60 bg-muted/30 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        >
+                          Archived
+                        </span>
+                      ) : null}
                       {isAutomation ? (
                         <span
-                          className="inline-flex shrink-0 items-center text-success-foreground"
+                          className={cn(
+                            'inline-flex shrink-0 items-center',
+                            isArchived ? 'text-muted-foreground' : 'text-success-foreground',
+                          )}
                           role="img"
                           aria-label="Automation conversation"
                         >
@@ -437,7 +470,12 @@ export function ConversationDrawer({
                       </DropdownMenu>
                     </div>
                   </div>
-                  <div className="flex min-w-0 flex-row items-center gap-2 text-xs leading-4 text-muted-foreground">
+                  <div
+                    className={cn(
+                      'flex min-w-0 flex-row items-center gap-2 text-xs leading-4',
+                      isArchived ? 'text-muted-foreground/80' : 'text-muted-foreground',
+                    )}
+                  >
                     <div className="flex min-w-0 shrink items-center gap-3 overflow-hidden">
                       <div className="flex min-w-0 items-center gap-1 overflow-hidden">
                         <span
@@ -447,7 +485,7 @@ export function ConversationDrawer({
                           {conversation.repo}
                         </span>
                         {conversation.branch ? (
-                          <span className="inline-flex shrink-0 items-center rounded bg-muted/30 px-1.5 py-0.5">
+                          <span className="inline-flex shrink-0 items-center rounded bg-muted/20 px-1.5 py-0.5">
                             <span
                               data-testid="conversation-card-selected-branch"
                               className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis"

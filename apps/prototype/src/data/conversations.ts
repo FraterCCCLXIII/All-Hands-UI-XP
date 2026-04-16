@@ -12,6 +12,8 @@ export interface ConversationSummary {
   time: string;
   /** Agent status driving the indicator dot color. */
   status?: ConversationStatus;
+  /** When true, conversation drawer row is muted and shows an Archived badge. */
+  archived?: boolean;
 }
 
 export const conversationSummaries: ConversationSummary[] = [
@@ -133,5 +135,6 @@ export const conversationSummaries: ConversationSummary[] = [
     branch: 'main',
     model: 'Claude Opus',
     time: 'recent',
+    archived: true,
   },
 ];

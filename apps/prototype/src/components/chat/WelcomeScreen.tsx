@@ -124,14 +124,14 @@ function ConversationsColumnSkeleton() {
       {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
         <div key={i} className="p-[14px] animate-pulse">
           <div className="flex items-start gap-2 pl-1">
-            <div className="flex h-6 w-3 shrink-0 items-center justify-center">
+            <div className="flex h-6 w-2 shrink-0 items-center justify-center">
               <div className="h-1.5 w-1.5 rounded-full bg-muted" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="h-6 w-[85%] rounded bg-muted" />
               <div className="flex items-center gap-1">
                 <div className="h-3 w-32 max-w-[55%] rounded bg-muted/70" />
-                <div className="h-4 w-14 shrink-0 rounded bg-muted/30" />
+                <div className="h-4 w-14 shrink-0 rounded bg-muted/20" />
                 <div className="ml-auto h-3 w-10 shrink-0 rounded bg-muted/70" />
               </div>
             </div>
@@ -1102,7 +1102,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         >
                           <div className="flex items-start gap-2 pl-1">
                             <div
-                              className="relative flex h-6 w-3 shrink-0 items-center justify-center"
+                              className="relative flex h-6 w-2 shrink-0 items-center justify-center"
                               aria-hidden
                             >
                               {showRunningSpinner ? (
@@ -1116,8 +1116,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                               ) : (
                                 <div
                                   className={cn(
-                                    'h-1.5 w-1.5 rounded-full',
-                                    conversation.status === 'running' ? 'bg-success' : 'bg-muted-foreground',
+                                    'h-1.5 w-1.5 shrink-0 rounded-full',
+                                    conversation.status === 'running' && 'bg-success',
+                                    conversation.status === 'awaiting' && 'bg-warning',
+                                    conversation.status === 'error' && 'bg-destructive',
+                                    !conversation.status && 'bg-muted-foreground',
                                   )}
                                 />
                               )}
@@ -1132,7 +1135,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                                     {conversation.repo}
                                   </span>
                                   {conversation.branch ? (
-                                    <span className="inline-flex shrink-0 items-center rounded bg-muted/30 px-1.5 py-px leading-none">
+                                    <span className="inline-flex shrink-0 items-center rounded bg-muted/20 px-1.5 py-px leading-none">
                                       <span className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis text-[11px] leading-none">
                                         {conversation.branch}
                                       </span>

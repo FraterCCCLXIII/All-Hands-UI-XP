@@ -40,9 +40,14 @@ export function PRCardComponent({ card, onClick, isDragging }: PRCardProps) {
         </span>
       ) : null}
       <div className="mb-3">
-        <div className="flex items-start gap-2.5">
-          <div className="mt-[0.32rem] h-2 w-2 shrink-0 rounded-full bg-success" />
-          <h3 className="text-sm font-medium text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+        <div className="flex items-start gap-2">
+          <div
+            className="flex h-6 w-2 shrink-0 items-center justify-center"
+            aria-hidden
+          >
+            <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+          </div>
+          <h3 className="text-sm font-medium text-foreground leading-6 line-clamp-2 group-hover:text-primary transition-colors">
             {card.title}
           </h3>
         </div>

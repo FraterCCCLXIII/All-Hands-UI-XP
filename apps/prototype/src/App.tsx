@@ -102,6 +102,18 @@ function getConversationDrawerBackgroundRoute(search: string, fallbackRoute: str
   return from && from.startsWith('/') ? from : fallbackRoute;
 }
 
+/** When opening the conversations overlay, `from` must match the full URL (path + search) so the shell page key stays stable. */
+function getConversationDrawerBackgroundFallback(
+  pathname: string,
+  search: string,
+  lastNonDrawerNavItem: string
+): string {
+  if (pathname === '/conversations') {
+    return `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`;
+  }
+  return `${pathname}${search}`;
+}
+
 function parseAppRoute(route: string): { pathname: string; search: string; hash: string } {
   const url = new URL(route, 'http://localhost');
   return {
@@ -183,14 +195,14 @@ function App() {
 
   /** Collapse `/settings/...` and `/extensions/...` so in-app navigation does not re-run the shell slide. */
   const pageTransitionKey = useMemo(() => {
+    const drawerBgFallback = getConversationDrawerBackgroundFallback(
+      location.pathname,
+      location.search,
+      lastNonDrawerNavItem
+    );
     const transitionRoute =
       location.pathname === '/conversations'
-        ? parseAppRoute(
-            getConversationDrawerBackgroundRoute(
-              location.search,
-              `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
-            )
-          )
+        ? parseAppRoute(getConversationDrawerBackgroundRoute(location.search, drawerBgFallback))
         : { pathname: location.pathname, search: location.search };
     const normalizedPath = normalizePathForShellTransition(transitionRoute.pathname);
     const searchForKey =
@@ -372,7 +384,7 @@ function App() {
       }
       const backgroundRoute = getConversationDrawerBackgroundRoute(
         location.search,
-        `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+        getConversationDrawerBackgroundFallback(location.pathname, location.search, lastNonDrawerNavItem)
       );
       navigateAppRoute(
         open
@@ -380,7 +392,7 @@ function App() {
           : backgroundRoute
       );
     },
-    [lastNonDrawerNavItem, location.search]
+    [lastNonDrawerNavItem, location.pathname, location.search]
   );
 
   const handleAutomationRunNow = useCallback(
@@ -413,10 +425,10 @@ function App() {
     setIsConversationDrawerOpen(true);
     const backgroundRoute = getConversationDrawerBackgroundRoute(
       location.search,
-      `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+      getConversationDrawerBackgroundFallback(location.pathname, location.search, lastNonDrawerNavItem)
     );
     navigateAppRoute(`/conversations?from=${encodeURIComponent(backgroundRoute)}`);
-  }, [lastNonDrawerNavItem, location.search]);
+  }, [lastNonDrawerNavItem, location.pathname, location.search]);
 
   const handleNavItemClick = useCallback(
     (action: string) => {
@@ -448,7 +460,7 @@ function App() {
         setIsConversationDrawerOpen(nextOpenState);
         const backgroundRoute = getConversationDrawerBackgroundRoute(
           location.search,
-          `/${actionSlugs[lastNonDrawerNavItem] ?? DEFAULT_HOME_SLUG}`
+          getConversationDrawerBackgroundFallback(location.pathname, location.search, lastNonDrawerNavItem)
         );
         navigateAppRoute(
           nextOpenState
@@ -488,7 +500,7 @@ function App() {
       };
       setMessages((prev) => [...prev, tetrisMessage]);
     }
-  }, [isConversationDrawerOpen, lastNonDrawerNavItem]);
+  }, [isConversationDrawerOpen, lastNonDrawerNavItem, location.pathname, location.search]);
 
   const handleExitFlowPrototype = useCallback(() => {
     setActiveFlowPrototype(null);
