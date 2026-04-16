@@ -88,6 +88,13 @@ import type { ThemeElement } from '../types/theme';
 import type { Message as MessageModel } from '../types/message';
 import { conversationSummaries } from '../data/conversations';
 import type { PRCard } from '../types/pr';
+import {
+  sidebarListNavGroupHeadingClass,
+  sidebarListNavLeafClass,
+  sidebarListNavRailClass,
+  sidebarListNavSectionLabelClass,
+  sidebarListNavSubsectionHeadingClass,
+} from '../components/navigation/SidebarListNav';
 import { componentExportManifest } from './componentExportManifest';
 import { PrototypeLucideIconGrid } from './componentLibraryIcons';
 import { ComponentLibraryBlocksScreen } from './ComponentLibraryBlocksScreen';
@@ -2818,45 +2825,51 @@ export function ComponentLibraryScreen({
       ) : (
         <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* Left rail: does not scroll with main — only the nav list scrolls internally if needed */}
-          <aside className="hidden min-h-0 w-72 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-card/95 backdrop-blur-sm supports-[backdrop-filter]:bg-card/85 scrollbar-on-hover lg:flex lg:h-full">
-            <div className="px-6 py-6 pr-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Browse
-              </div>
+          <aside
+            className={cn(
+              sidebarListNavRailClass,
+              'hidden min-h-0 w-60 shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-border bg-card/95 backdrop-blur-sm supports-[backdrop-filter]:bg-card/85 scrollbar-on-hover lg:flex lg:h-full',
+            )}
+          >
+            <div className="px-4 py-4 pr-3">
+              <div className={sidebarListNavSectionLabelClass}>Browse</div>
               <button
                 type="button"
                 onClick={() => handleScrollTo('component-library-top')}
-                className="mt-3 w-full text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
+                className="mt-2 w-full rounded-md px-2 py-1 text-left text-xs font-medium text-foreground transition-colors hover:bg-muted/40 hover:text-primary"
               >
                 Overview
               </button>
-              <nav className="mt-6 space-y-6 pr-2" aria-label="Component library navigation">
+              <nav className="mt-4 space-y-4 pr-1" aria-label="Component library navigation">
                 {libraryGroups.map((group) => (
                   <div key={group.id}>
                     <button
                       type="button"
                       onClick={() => handleScrollTo(`group-${group.id}`)}
-                      className="text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-primary"
+                      className={cn('block w-full rounded-md px-2 py-0.5', sidebarListNavGroupHeadingClass)}
                     >
                       {group.title}
                     </button>
-                    <div className="mt-2 space-y-3">
+                    <div className="mt-2 space-y-2.5">
                       {group.sections.map((section) => (
                         <div key={section.id}>
                           <button
                             type="button"
                             onClick={() => handleScrollTo(`section-${section.id}`)}
-                            className="text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                            className={cn('block w-full rounded-md px-2 py-0.5', sidebarListNavSubsectionHeadingClass)}
                           >
                             {section.title}
                           </button>
-                          <div className="mt-1.5 space-y-0.5">
+                          <div className="mt-1 space-y-0.5">
                             {section.items.map((item) => (
                               <button
                                 key={item.id}
                                 type="button"
                                 onClick={() => handleScrollTo(item.id)}
-                                className="block w-full truncate text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
+                                className={cn(
+                                  'block w-full truncate rounded-md px-2 py-0.5',
+                                  sidebarListNavLeafClass,
+                                )}
                               >
                                 {item.name}
                               </button>

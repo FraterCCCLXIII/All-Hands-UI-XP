@@ -67,8 +67,8 @@
     --sidebar-ring: 0 0% 50%;
 
     /* Settings layout: nav vs main vertical inset (separate sources; edit per axis/region) */
-    --settings-nav-padding-top: 2rem;
-    --settings-nav-padding-bottom: 2rem;
+    --settings-nav-padding-top: 1.25rem;
+    --settings-nav-padding-bottom: 1.25rem;
     --settings-main-padding-top: 2rem;
     --settings-main-padding-bottom: 2rem;
 
@@ -136,8 +136,8 @@
     --sidebar-border: 0 0% 14%;
     --sidebar-ring: 0 0% 50%;
 
-    --settings-nav-padding-top: 2rem;
-    --settings-nav-padding-bottom: 2rem;
+    --settings-nav-padding-top: 1.25rem;
+    --settings-nav-padding-bottom: 1.25rem;
     --settings-main-padding-top: 2rem;
     --settings-main-padding-bottom: 2rem;
 

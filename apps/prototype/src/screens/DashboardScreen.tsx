@@ -24,7 +24,7 @@ import {
 } from '../components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { cn } from '../lib/utils';
-import { extensionsSectionStackGap } from '../lib/extensionsRoutes';
+import { SidebarListNavItem, sidebarListNavRailClass } from '../components/navigation/SidebarListNav';
 import { insightsPullRequests, insightsRepositories, insightsRepoData } from '../data/insightsData';
 import { initialColumns } from '../data/mockData';
 
@@ -97,9 +97,9 @@ export function DashboardScreen() {
   }) => (
     <aside
       className={cn(
-        'relative z-10 flex h-full min-h-0 shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground transition-[width] duration-200',
-        'pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
-        extensionsSectionStackGap,
+        sidebarListNavRailClass,
+        'h-full min-h-0 overflow-hidden bg-sidebar text-sidebar-foreground transition-[width] duration-200',
+        'gap-4',
         isOpen ? 'w-64 px-3' : 'w-0 min-w-0 max-w-0 border-0 px-0 pointer-events-none',
       )}
       aria-hidden={!isOpen}
@@ -109,37 +109,25 @@ export function DashboardScreen() {
         <NewWorkspaceDialog repositories={workspaceRepositoryOptions} onCreateWorkspace={handleCreateWorkspace} />
       </div>
       <nav
-        className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden whitespace-nowrap"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden whitespace-nowrap"
         aria-label="Workspaces"
       >
         {workspaceList.map((workspace) => {
           const isActive = activeWorkspaceId === workspace.id;
           const WorkspaceIcon = getWorkspaceIcon(workspace);
           return (
-            <button
+            <SidebarListNavItem
               key={workspace.id}
-              type="button"
+              icon={WorkspaceIcon}
+              active={isActive}
               onClick={() => {
                 setActiveWorkspaceId(workspace.id);
                 setActiveRepo(workspace.repoKey);
               }}
-              className={cn(
-                'group flex w-full min-w-0 items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
-                isActive
-                  ? 'bg-muted/60 text-foreground'
-                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-              )}
               aria-current={isActive ? 'page' : undefined}
             >
-              <WorkspaceIcon
-                className={cn(
-                  'h-5 w-5 shrink-0',
-                  isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
-                )}
-                aria-hidden
-              />
-              <span className="min-w-0 truncate font-normal">{workspace.label}</span>
-            </button>
+              {workspace.label}
+            </SidebarListNavItem>
           );
         })}
       </nav>
@@ -333,10 +321,9 @@ export function DashboardScreen() {
             {activeView === 'active' && (
               <aside
                 className={cn(
-                  'relative z-10 flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground',
-                  'pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
-                  extensionsSectionStackGap,
-                  'px-3',
+                  sidebarListNavRailClass,
+                  'h-full min-h-0 w-64 shrink-0 overflow-hidden bg-sidebar text-sidebar-foreground',
+                  'gap-4 px-3',
                 )}
               >
                 <div className="flex items-center justify-between gap-2 ml-1 shrink-0">
@@ -355,36 +342,24 @@ export function DashboardScreen() {
                   />
                 </div>
                 <nav
-                  className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden"
+                  className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden"
                   aria-label="Workspaces"
                 >
                   {insightsRepositories.map((repo) => {
                     const isActive = selectedInsightRepo === repo.id;
                     return (
-                      <button
+                      <SidebarListNavItem
                         key={repo.id}
-                        type="button"
+                        icon={Github}
+                        active={isActive}
                         onClick={() => {
                           setSelectedInsightRepo(repo.id);
                           scrollToSection(repo.name);
                         }}
-                        className={cn(
-                          'group flex w-full min-w-0 items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
-                          isActive
-                            ? 'bg-muted/60 text-foreground'
-                            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                        )}
                         aria-current={isActive ? 'page' : undefined}
                       >
-                        <Github
-                          className={cn(
-                            'h-5 w-5 shrink-0',
-                            isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
-                          )}
-                          aria-hidden
-                        />
-                        <span className="min-w-0 truncate font-normal">{repo.name}</span>
-                      </button>
+                        {repo.name}
+                      </SidebarListNavItem>
                     );
                   })}
                 </nav>

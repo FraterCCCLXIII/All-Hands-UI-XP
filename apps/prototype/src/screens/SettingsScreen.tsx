@@ -79,6 +79,11 @@ import {
   type SettingsNavItem,
   type WorkspaceNavContext,
 } from '../config/settingsWorkspaceNav';
+import {
+  SidebarListNavItem,
+  sidebarListNavRailClass,
+  sidebarListNavSectionLabelClass,
+} from '../components/navigation/SidebarListNav';
 
 const settingsTabs = [
   { id: 'user', label: 'User', icon: User },
@@ -794,47 +799,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     ? { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
     : { duration: 0 };
 
-  const renderNavButton = (item: SettingsNavItem) => {
-    const Icon = item.icon;
-    const isActive = activeTab === item.tabId;
-    return (
-      <button
-        key={item.id}
-        type="button"
-        onClick={() => handleTabClick(item.tabId)}
-        className={cn(
-          'group flex w-full items-center gap-3 rounded-md px-3.5 py-2 text-left transition-colors duration-200',
-          isActive ? 'bg-muted/60' : 'hover:bg-muted/60',
-        )}
-      >
-        <Icon
-          className={cn(
-            'h-5 w-5 shrink-0',
-            isActive ? '!text-white' : '!text-muted-foreground group-hover:!text-white',
-          )}
-          aria-hidden
-        />
-        <span
-          className={cn(
-            'block min-w-0 flex-1 truncate text-sm font-normal transition-transform duration-300',
-            isActive
-              ? 'text-white'
-              : 'text-muted-foreground group-hover:translate-x-0.5 group-hover:!text-white',
-          )}
-        >
-          {item.label}
-        </span>
-      </button>
-    );
-  };
+  const renderNavButton = (item: SettingsNavItem) => (
+    <SidebarListNavItem
+      key={item.id}
+      icon={item.icon}
+      active={activeTab === item.tabId}
+      onClick={() => handleTabClick(item.tabId)}
+    >
+      {item.label}
+    </SidebarListNavItem>
+  );
 
   return (
     <div className={cn('flex min-h-0 min-w-0 flex-1 overflow-hidden pl-8 pr-0', settingsSectionStackGap)}>
       {/* Left Navigation — vertical inset from CSS vars (independent of main) */}
       <nav
         className={cn(
-          'relative z-10 flex w-64 shrink-0 flex-col pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
-          settingsSectionStackGap,
+          sidebarListNavRailClass,
+          'w-64 gap-4',
         )}
       >
         <div className="flex items-center gap-2 ml-1">
@@ -901,17 +883,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <div className="flex flex-col gap-2">
           {showOrgAdminNav ? (
             <>
-              <div className="px-3.5 pt-0.5">
-                <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
-                  Org settings
-                </span>
+              <div className="px-2 pt-0.5">
+                <span className={sidebarListNavSectionLabelClass}>Org settings</span>
               </div>
               <div className="flex flex-col gap-0.5">{filterNav(ORG_SETTINGS_NAV).map(renderNavButton)}</div>
               <div className="border-t border-border" />
-              <div className="px-3.5">
-                <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
-                  Personal settings
-                </span>
+              <div className="px-2">
+                <span className={sidebarListNavSectionLabelClass}>Personal settings</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 {filterNav(ORG_ADMIN_PERSONAL_SETTINGS_NAV).map(renderNavButton)}
@@ -921,10 +899,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </>
           ) : showOrgMemberNav ? (
             <>
-              <div className="px-3.5 pt-0.5">
-                <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
-                  Personal settings
-                </span>
+              <div className="px-2 pt-0.5">
+                <span className={sidebarListNavSectionLabelClass}>Personal settings</span>
               </div>
               <div className="flex flex-col gap-0.5">
                 {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
@@ -951,16 +927,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {selectedOrg?.type === 'personal' ? (
             <>
               <div className="border-t border-border" />
-              <button
-                type="button"
+              <SidebarListNavItem
+                icon={Plus}
+                active={false}
                 onClick={() => setCreateOrgModalOpen(true)}
-                className="group flex items-center gap-3 rounded-md px-3.5 py-2 text-left transition-colors hover:bg-muted/60"
+                className="hover:bg-muted/60"
               >
-                <Plus className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
-                <span className="text-sm font-normal text-muted-foreground group-hover:text-white">
-                  Create New Organization
-                </span>
-              </button>
+                Create New Organization
+              </SidebarListNavItem>
             </>
           ) : null}
         </div>

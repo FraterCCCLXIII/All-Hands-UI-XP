@@ -5,8 +5,9 @@ import { McpIcon } from '../../components/icons/McpIcon';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
-import { EXTENSIONS_ALL_BASE, extensionsSectionStackGap } from '../../lib/extensionsRoutes';
+import { EXTENSIONS_ALL_BASE } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
+import { SidebarListNavItem, sidebarListNavRailClass } from '../../components/navigation/SidebarListNav';
 
 export type ExtensionsCatalogScope = 'all' | 'skills' | 'plugins' | 'mcp' | 'hooks';
 
@@ -41,12 +42,7 @@ export function ExtensionsShellSidebar({
   browseControls,
 }: ExtensionsShellSidebarProps) {
   return (
-    <aside
-      className={cn(
-        'relative z-10 flex w-64 shrink-0 flex-col pt-[var(--settings-nav-padding-top)] pb-[var(--settings-nav-padding-bottom)]',
-        extensionsSectionStackGap,
-      )}
-    >
+    <aside className={cn(sidebarListNavRailClass, 'w-64 gap-4')}>
       <div className="flex items-center justify-between gap-2 ml-1">
         <h2 className="text-xl font-semibold leading-6 text-foreground">Extensions</h2>
         <DocIconLink aria-label="Extensions documentation" />
@@ -60,31 +56,19 @@ export function ExtensionsShellSidebar({
             aria-label="Search extensions"
             size="sm"
           />
-          <nav className="flex flex-col gap-2" aria-label="Filter by type">
+          <nav className="flex flex-col gap-0.5" aria-label="Filter by type">
             {SCOPE_ITEMS.map(({ id, label, icon: Icon }) => {
               const isActive = browseControls.scope === id;
               return (
-                <button
+                <SidebarListNavItem
                   key={id}
-                  type="button"
+                  icon={Icon}
+                  active={isActive}
                   onClick={() => browseControls.onScopeChange(id)}
-                  className={cn(
-                    'group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
-                    isActive
-                      ? 'bg-muted/60 text-foreground'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-                  )}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon
-                    className={cn(
-                      'h-5 w-5 shrink-0',
-                      isActive ? 'text-white' : 'text-muted-foreground group-hover:text-white',
-                    )}
-                    aria-hidden
-                  />
-                  <span className="min-w-0 truncate font-normal">{label}</span>
-                </button>
+                  {label}
+                </SidebarListNavItem>
               );
             })}
           </nav>
@@ -93,21 +77,20 @@ export function ExtensionsShellSidebar({
         <nav aria-label="Extensions scope">
           {isAllActive ? (
             <div
-              className="flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm bg-muted/60 text-foreground"
+              className="flex w-full min-w-0 items-center gap-2 rounded-md bg-muted/60 px-2 py-2 text-left text-xs text-white"
               aria-current="page"
             >
-              <Layers3 className="h-5 w-5 shrink-0 text-foreground" aria-hidden />
-              <span className="font-normal">All active</span>
+              <Layers3 className="h-4 w-4 shrink-0 text-white" aria-hidden />
+              <span className="min-w-0 truncate font-normal">All active</span>
             </div>
           ) : (
-            <button
-              type="button"
+            <SidebarListNavItem
+              icon={Layers3}
+              active={false}
               onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
-              className="group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
             >
-              <Layers3 className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
-              <span className="font-normal group-hover:text-white">All active</span>
-            </button>
+              All active
+            </SidebarListNavItem>
           )}
         </nav>
       )}
