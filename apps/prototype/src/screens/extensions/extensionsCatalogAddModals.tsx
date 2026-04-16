@@ -94,11 +94,11 @@ export type AddMcpServerModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Persist row in Settings (or elsewhere); when omitted, only the success toast runs (e.g. Extensions catalog). */
-  onAdd?: (payload: { serverType: string; url: string; apiKey: string }) => void;
+  onAdd?: (payload: { name: string; serverType: string; url: string; apiKey: string }) => void;
   /** When set with initialValues, modal is in edit mode and calls onEdit on save. */
   editingId?: string | null;
-  initialValues?: { serverType: string; url: string; hasApiKey: boolean } | null;
-  onEdit?: (id: string, payload: { serverType: string; url: string; apiKey: string }) => void;
+  initialValues?: { name: string; serverType: string; url: string; hasApiKey: boolean } | null;
+  onEdit?: (id: string, payload: { name: string; serverType: string; url: string; apiKey: string }) => void;
 };
 
 export function AddMcpServerModal({
@@ -109,6 +109,7 @@ export function AddMcpServerModal({
   initialValues = null,
   onEdit,
 }: AddMcpServerModalProps) {
+  const [name, setName] = useState('');
   const [serverType, setServerType] = useState<string>('http');
   const [url, setUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
@@ -118,10 +119,12 @@ export function AddMcpServerModal({
   useEffect(() => {
     if (!open) return;
     if (editingId && initialValues) {
+      setName(initialValues.name);
       setServerType(initialValues.serverType);
       setUrl(initialValues.url);
       setApiKey('');
     } else if (!editingId) {
+      setName('');
       setServerType('http');
       setUrl('');
       setApiKey('');
@@ -130,8 +133,9 @@ export function AddMcpServerModal({
   }, [open, editingId]);
 
   const submit = () => {
+    const trimmedName = name.trim();
     const trimmed = url.trim();
-    if (!trimmed) return;
+    if (!trimmedName || !trimmed) return;
     if (serverType !== 'stdio') {
       try {
         new URL(trimmed);
@@ -140,7 +144,7 @@ export function AddMcpServerModal({
         return;
       }
     }
-    const payload = { serverType, url: trimmed, apiKey: apiKey.trim() };
+    const payload = { name: trimmedName, serverType, url: trimmed, apiKey: apiKey.trim() };
     onOpenChange(false);
     if (editingId) {
       onEdit?.(editingId, payload);
@@ -163,6 +167,18 @@ export function AddMcpServerModal({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
+          <div>
+            <label htmlFor="mcp-name" className="mb-1.5 block text-sm font-medium text-foreground">
+              Name
+            </label>
+            <Input
+              id="mcp-name"
+              placeholder="e.g. My MCP server"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="off"
+            />
+          </div>
           <div>
             <label htmlFor="mcp-type" className="mb-1.5 block text-sm font-medium text-foreground">
               Server type
@@ -215,7 +231,7 @@ export function AddMcpServerModal({
           <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button type="button" size="sm" disabled={!url.trim()} onClick={submit}>
+          <Button type="button" size="sm" disabled={!name.trim() || !url.trim()} onClick={submit}>
             {isEdit ? 'Save' : 'Add Server'}
           </Button>
         </DialogFooter>

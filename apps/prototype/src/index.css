@@ -499,6 +499,39 @@ body[data-figma-fixed-canvas='true'] {
     border-radius: var(--radius-sm);
   }
 
+  /*
+   * Consistent keyboard focus across the app: neutral `--ring` + `--background` offset.
+   * Removes browser/system accent outlines (blue, orange, etc.). Components that set their
+   * own `focus-visible:ring-*` utilities still win (utilities layer > base).
+   * Opt out per control: `focus-visible:ring-0 focus-visible:ring-offset-0` or `[data-no-focus-ring]`.
+   */
+  *:focus-visible {
+    outline: none;
+  }
+
+  :where(
+      button:not(:disabled):not([aria-disabled='true']):not([data-no-focus-ring]),
+      a[href]:not([data-no-focus-ring]),
+      area[href]:not([data-no-focus-ring]),
+      input:not([disabled]):not([type='hidden']):not([data-no-focus-ring]),
+      textarea:not([disabled]):not([data-no-focus-ring]),
+      select:not([disabled]):not([data-no-focus-ring]),
+      summary:not([data-no-focus-ring]),
+      iframe:not([data-no-focus-ring]),
+      [role='button']:not([aria-disabled='true']):not([data-no-focus-ring]),
+      [role='link']:not([data-no-focus-ring]),
+      [role='tab']:not([aria-disabled='true']):not([data-no-focus-ring]),
+      [role='menuitem']:not([data-no-focus-ring]),
+      [role='option']:not([data-no-focus-ring]),
+      [role='switch']:not([data-no-focus-ring]),
+      [role='slider']:not([data-no-focus-ring]),
+      [role='combobox']:not([data-no-focus-ring]),
+      [tabindex]:not([tabindex='-1']):not([data-no-focus-ring]),
+      [contenteditable='true']:not([data-no-focus-ring])
+    ):focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
   code,
   pre,
   .font-mono {

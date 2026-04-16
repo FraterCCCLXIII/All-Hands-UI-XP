@@ -16,7 +16,7 @@ export function SkillSourceBadge({ source, className }: SkillSourceBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex max-w-full shrink-0 items-center rounded border border-border bg-muted/60 px-1.5 py-px text-[10px] leading-tight font-medium uppercase tracking-wide text-muted-foreground',
+        'inline-flex max-w-full shrink-0 items-center rounded border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium leading-tight text-muted-foreground',
         className
       )}
     >

@@ -18,6 +18,34 @@ export const extensionsPageContentClassName = `mx-auto flex w-full max-w-4xl fle
 export const extensionsShellRowClassName =
   'flex h-full min-h-0 min-w-0 w-full flex-1 gap-6 overflow-hidden bg-background pl-8 pr-0';
 
+/**
+ * Skills / plugins / MCP marketplace cards use `p-5`; place toggles and menus at the same
+ * inset so spacing matches the card padding on the top and right.
+ */
+/** Slightly above `p-5` text block so the switch lines up with the title row. */
+export const extensionsCatalogCardControlsClassName = 'absolute right-5 top-3 z-10';
+
+/**
+ * Toggle is rightmost; optional ⋯ sits to its left. Skills/plugins use an empty slot so the
+ * switch lines up with MCP cards (same geometry as toggle + menu).
+ */
+export const extensionsCatalogCardControlClusterClassName =
+  'flex flex-row-reverse items-center gap-0.5';
+
+/**
+ * Reserved footprint for the ⋯ control (matches `extensionsCatalogCardOverflowMenuTriggerClassName`).
+ * Empty on skills/plugins so toggles align with MCP.
+ */
+export const extensionsCatalogCardMenuSlotClassName =
+  'flex h-6 w-7 shrink-0 items-center justify-center';
+
+/** Compact ⋯ trigger — matches toolbar icon buttons (e.g. pl-1.5 py-1 pr-1.5, muted hover). */
+export const extensionsCatalogCardOverflowMenuTriggerClassName =
+  'flex h-6 w-7 items-center justify-center rounded-md cursor-pointer pl-1.5 py-1 pr-1.5 gap-0 text-sm font-medium text-muted-foreground transition-[color,background-color] duration-200 hover:text-foreground hover:bg-muted/60 outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0';
+
+/** Main column: clears toggle + menu column + gap (shared by skills, plugins, MCP). */
+export const extensionsCatalogCardBodyPrWithControlCluster = 'pr-24';
+
 /** Main column: scrolls at the viewport right edge; content inside uses `extensionsPageContentClassName`. */
 export const extensionsMainScrollClassName =
   'relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto pt-[var(--settings-main-padding-top)] pb-[var(--settings-main-padding-bottom)]';
@@ -30,12 +58,12 @@ export type ExtensionsShellMode = 'all' | 'skills' | 'plugins';
 
 /**
  * Which full-screen Extensions child to render from the current pathname.
- * Skill / plugin detail routes mount the legacy full panels.
+ * Skills browse + skill detail use `ExtensionsSkillsPanel`; plugins use `ExtensionsPluginsPanel`.
  */
 export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
   const pathPart = pathname.replace(/^\/+/, '').split('?')[0] ?? '';
 
-  if (/^extensions\/skills\/skill\//.test(pathPart)) {
+  if (pathPart === EXTENSIONS_SKILLS_BASE || pathPart.startsWith(`${EXTENSIONS_SKILLS_BASE}/`)) {
     return 'skills';
   }
   if (
@@ -55,10 +83,6 @@ export function tryNormalizeExtensionsPath(): boolean {
   if (typeof window === 'undefined') return false;
   const raw = window.location.pathname.replace(/^\/+/, '').split('?')[0] ?? '';
 
-  if (raw === 'extensions/skills' || raw === 'extensions/mcp' || raw === 'extensions/hooks') {
-    navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });
-    return true;
-  }
   if (raw === 'extensions') {
     navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });
     return true;

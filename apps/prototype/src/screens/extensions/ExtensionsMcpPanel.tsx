@@ -1,12 +1,33 @@
-import { useMemo, useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { McpIcon } from '../../components/icons/McpIcon';
 import { SearchInput } from '../../components/ui/search-input';
-import { Button } from '../../components/ui/button';
-import { mcpCatalogCategories, mcpCatalogEntries, type McpCatalogEntry } from '../../data/mcpCatalog';
-import { navigateAppRoute } from '../../lib/captureNavigation';
-import { extensionsMainScrollClassName, extensionsPageContentClassName } from '../../lib/extensionsRoutes';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
+import { PluginToggle } from '../../components/ui/plugin-toggle';
+import {
+  mcpCatalogCategories,
+  mcpCatalogEntries,
+  mcpCatalogDisplayUrl,
+  mcpModalInitialValuesFromCatalog,
+  type McpCatalogEntry,
+  type McpConnectionOverride,
+} from '../../data/mcpCatalog';
+import { AddMcpServerModal } from './extensionsCatalogAddModals';
+import {
+  extensionsCatalogCardBodyPrWithControlCluster,
+  extensionsCatalogCardControlClusterClassName,
+  extensionsCatalogCardControlsClassName,
+  extensionsCatalogCardMenuSlotClassName,
+  extensionsCatalogCardOverflowMenuTriggerClassName,
+  extensionsMainScrollClassName,
+  extensionsPageContentClassName,
+} from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
-import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 
 function entryMatchesQuery(entry: McpCatalogEntry, q: string): boolean {
@@ -16,9 +37,11 @@ function entryMatchesQuery(entry: McpCatalogEntry, q: string): boolean {
     const label = mcpCatalogCategories.find((c) => c.slug === tag)?.name?.toLowerCase() ?? '';
     return label.includes(s);
   });
+  const url = mcpCatalogDisplayUrl(entry, null).toLowerCase();
   return (
     entry.name.toLowerCase().includes(s) ||
     entry.description.toLowerCase().includes(s) ||
+    url.includes(s) ||
     (entry.provider?.toLowerCase().includes(s) ?? false) ||
     entry.tags.some((t) => t.toLowerCase().includes(s)) ||
     categoryLabelMatch
@@ -28,6 +51,21 @@ function entryMatchesQuery(entry: McpCatalogEntry, q: string): boolean {
 export function ExtensionsMcpPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categorySlug, setCategorySlug] = useState<string | null>(null);
+  const [mcpSwitchById, setMcpSwitchById] = useState<Record<string, boolean>>({});
+  const [removedMcpIds, setRemovedMcpIds] = useState<Set<string>>(() => new Set());
+  const [mcpOverridesById, setMcpOverridesById] = useState<Record<string, McpConnectionOverride>>({});
+  const [mcpEditOpen, setMcpEditOpen] = useState(false);
+  const [mcpEditingId, setMcpEditingId] = useState<string | null>(null);
+
+  const closeMcpEdit = useCallback(() => {
+    setMcpEditOpen(false);
+    setMcpEditingId(null);
+  }, []);
+
+  const mcpEditingEntry = useMemo(
+    () => (mcpEditingId ? mcpCatalogEntries.find((e) => e.id === mcpEditingId) ?? null : null),
+    [mcpEditingId]
+  );
 
   const filtered = useMemo(() => {
     return mcpCatalogEntries.filter((entry) => {
@@ -36,28 +74,49 @@ export function ExtensionsMcpPanel() {
     });
   }, [searchQuery, categorySlug]);
 
-  const description = (
-    <>
-      Browse recommended Model Context Protocol servers. Add and manage connections in{' '}
-      <button
-        type="button"
-        className="font-medium text-foreground transition-colors hover:text-foreground/90"
-        onClick={() => navigateAppRoute('/settings/mcp')}
-      >
-        Settings
-      </button>
-      .
-    </>
+  const visible = useMemo(
+    () => filtered.filter((e) => !removedMcpIds.has(e.id)),
+    [filtered, removedMcpIds]
   );
+
+  const description =
+    'Browse recommended Model Context Protocol servers. Enable servers to expose tools and data to your agents.';
 
   return (
     <div className={cn(extensionsMainScrollClassName, 'h-full min-h-0 flex-1')}>
+      <AddMcpServerModal
+        open={mcpEditOpen && mcpEditingId !== null && mcpEditingEntry !== null}
+        onOpenChange={(open) => {
+          if (!open) closeMcpEdit();
+        }}
+        editingId={mcpEditingId}
+        initialValues={
+          mcpEditingEntry
+            ? mcpModalInitialValuesFromCatalog(
+                mcpEditingEntry,
+                mcpEditingId ? mcpOverridesById[mcpEditingId] ?? null : null
+              )
+            : null
+        }
+        onEdit={(id, payload) => {
+          setMcpOverridesById((prev) => {
+            const prior = prev[id];
+            const hasApiKey =
+              payload.apiKey.trim().length > 0 ? true : prior?.hasApiKey ?? false;
+            return {
+              ...prev,
+              [id]: {
+                name: payload.name,
+                serverType: payload.serverType,
+                url: payload.url,
+                hasApiKey,
+              },
+            };
+          });
+        }}
+      />
       <div className={extensionsPageContentClassName}>
-        <ExtensionsCatalogPageHeader
-          title="MCP servers"
-          description={description}
-          actions={<ExtensionsCatalogAddButton kind="mcp" />}
-        >
+        <ExtensionsCatalogPageHeader title="MCP servers" description={description}>
           <div className="max-w-lg">
             <SearchInput
               value={searchQuery}
@@ -98,55 +157,93 @@ export function ExtensionsMcpPanel() {
           </div>
         </ExtensionsCatalogPageHeader>
 
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {filtered.map((entry) => (
-            <li
-              key={entry.id}
-              className="flex flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:bg-muted/30"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-foreground">{entry.name}</h3>
-                  {entry.provider &&
-                  entry.provider.trim().toLowerCase() !== entry.name.trim().toLowerCase() ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground">{entry.provider}</p>
-                  ) : null}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {visible.map((entry) => {
+            const displayName = mcpOverridesById[entry.id]?.name ?? entry.name;
+            const displayUrl = mcpCatalogDisplayUrl(entry, mcpOverridesById[entry.id] ?? null);
+            const enabled = mcpSwitchById[entry.id] !== false;
+            return (
+              <div
+                key={entry.id}
+                className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
+              >
+                <div
+                  className={cn(
+                    extensionsCatalogCardControlsClassName,
+                    extensionsCatalogCardControlClusterClassName,
+                  )}
+                >
+                  <PluginToggle
+                    size="sm"
+                    checked={enabled}
+                    onCheckedChange={() =>
+                      setMcpSwitchById((prev) => ({
+                        ...prev,
+                        [entry.id]: !(prev[entry.id] !== false),
+                      }))
+                    }
+                    aria-label={enabled ? `Turn off ${displayName}` : `Turn on ${displayName}`}
+                  />
+                  <div className={extensionsCatalogCardMenuSlotClassName}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={extensionsCatalogCardOverflowMenuTriggerClassName}
+                          aria-label={`${displayName} options`}
+                        >
+                          <MoreVertical className="h-4 w-4 shrink-0" aria-hidden />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onSelect={() => {
+                            setMcpEditingId(entry.id);
+                            setMcpEditOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onSelect={() =>
+                            setRemovedMcpIds((prev) => new Set(prev).add(entry.id))
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                          Remove
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                <div
+                  className={cn(
+                    'w-full rounded-xl p-5 pt-5 text-left',
+                    extensionsCatalogCardBodyPrWithControlCluster,
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+                      <McpIcon className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span className="text-base font-medium text-foreground">{displayName}</span>
+                      <p className="mt-2 line-clamp-2 break-all text-sm text-muted-foreground" title={displayUrl}>
+                        {displayUrl}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="mt-3 line-clamp-4 text-sm text-muted-foreground">{entry.description}</p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Button type="button" size="sm" variant="default" onClick={() => navigateAppRoute('/settings/mcp')}>
-                  Add in Settings
-                </Button>
-                {entry.docsUrl ? (
-                  <Button type="button" size="sm" variant="outline" asChild>
-                    <a href={entry.docsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5">
-                      View docs
-                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                    </a>
-                  </Button>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-        {filtered.length === 0 ? (
+            );
+          })}
+        </div>
+        {visible.length === 0 ? (
           <p className="py-12 text-center text-sm text-muted-foreground">No servers match your search.</p>
         ) : null}
-
-        <footer className="border-t border-border pt-6">
-          <p className="text-sm text-muted-foreground">
-            Configure installed servers under{' '}
-            <button
-              type="button"
-              className="font-medium text-foreground transition-colors hover:text-foreground/90"
-              onClick={() => navigateAppRoute('/settings/mcp')}
-            >
-              Settings → MCP
-            </button>
-            .
-          </p>
-        </footer>
       </div>
     </div>
   );

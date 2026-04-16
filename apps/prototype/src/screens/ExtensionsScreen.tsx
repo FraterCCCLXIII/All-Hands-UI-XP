@@ -3,7 +3,10 @@ import { useLocation } from 'react-router-dom';
 import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '../lib/captureNavigation';
 import {
   EXTENSIONS_ALL_BASE,
+  EXTENSIONS_HOOKS_BASE,
+  EXTENSIONS_MCP_BASE,
   EXTENSIONS_PLUGINS_BASE,
+  EXTENSIONS_SKILLS_BASE,
   getExtensionsShellMode,
   type ExtensionsShellMode,
 } from '../lib/extensionsRoutes';
@@ -11,6 +14,16 @@ import { ExtensionsAllMixedView } from './extensions/ExtensionsAllMixedView';
 import { ExtensionsPluginsPanel } from './extensions/ExtensionsPluginsPanel';
 import { ExtensionsSkillsPanel } from './extensions/ExtensionsSkillsPanel';
 import type { ExtensionsBrowseControls, ExtensionsCatalogScope } from './extensions/ExtensionsShellSidebar';
+
+/** Map URL to sidebar scope so the left list matches the address bar. */
+function extensionsScopeFromPath(segment: string): ExtensionsCatalogScope {
+  const p = (segment.split('?')[0] ?? '').replace(/^\/+/, '');
+  if (p === EXTENSIONS_PLUGINS_BASE || p.startsWith(`${EXTENSIONS_PLUGINS_BASE}/`)) return 'plugins';
+  if (p === EXTENSIONS_SKILLS_BASE || p.startsWith(`${EXTENSIONS_SKILLS_BASE}/`)) return 'skills';
+  if (p === EXTENSIONS_MCP_BASE || p.startsWith(`${EXTENSIONS_MCP_BASE}/`)) return 'mcp';
+  if (p === EXTENSIONS_HOOKS_BASE || p.startsWith(`${EXTENSIONS_HOOKS_BASE}/`)) return 'hooks';
+  return 'all';
+}
 
 export function ExtensionsScreen() {
   const location = useLocation();
@@ -25,12 +38,19 @@ export function ExtensionsScreen() {
 
   const mode: ExtensionsShellMode = useMemo(() => getExtensionsShellMode(routeSegment), [routeSegment]);
   const [extensionsSearchQuery, setExtensionsSearchQuery] = useState('');
-  const [extensionsScope, setExtensionsScope] = useState<ExtensionsCatalogScope>('all');
+  const [extensionsScope, setExtensionsScope] = useState<ExtensionsCatalogScope>(() =>
+    extensionsScopeFromPath(getEffectiveAppRouteSegment())
+  );
 
-  /** Skills / All / MCP use the mixed catalog; Plugins uses the dedicated plugin marketplace panel. */
   const navigateForScope = useCallback((next: ExtensionsCatalogScope) => {
     if (next === 'plugins') {
       navigateAppRoute(`/${EXTENSIONS_PLUGINS_BASE}`);
+    } else if (next === 'skills') {
+      navigateAppRoute(`/${EXTENSIONS_SKILLS_BASE}`);
+    } else if (next === 'mcp') {
+      navigateAppRoute(`/${EXTENSIONS_MCP_BASE}`);
+    } else if (next === 'hooks') {
+      navigateAppRoute(`/${EXTENSIONS_HOOKS_BASE}`);
     } else {
       navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`);
     }
@@ -50,12 +70,7 @@ export function ExtensionsScreen() {
   );
 
   useEffect(() => {
-    const path = routeSegment;
-    if (path === EXTENSIONS_PLUGINS_BASE || path.startsWith(`${EXTENSIONS_PLUGINS_BASE}/`)) {
-      setExtensionsScope('plugins');
-    } else if (/^extensions\/skills\/skill\//.test(path)) {
-      setExtensionsScope('skills');
-    }
+    setExtensionsScope(extensionsScopeFromPath(routeSegment));
   }, [routeSegment]);
 
   if (mode === 'skills') {

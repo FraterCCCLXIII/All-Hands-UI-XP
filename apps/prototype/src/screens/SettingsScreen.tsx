@@ -127,7 +127,7 @@ function parseSettingsRoute(tab: string | undefined): {
 }
 
 const settingsTabDescriptions: Record<string, string> = {
-  user: 'View and update your account email address.',
+  user: 'Account email and where to find your personal skills repository.',
   integrations: 'Connect Git hosts, Slack, Jira, and other services.',
   app: 'Set language, privacy, notifications, and Git commit identity.',
   llm: 'Choose your model provider, API keys, and advanced options.',
@@ -331,6 +331,7 @@ const initialOrgHooks: OrgHookItem[] = [];
 
 type SettingsMcpServerRow = {
   id: string;
+  name: string;
   serverType: string;
   url: string;
   hasApiKey: boolean;
@@ -407,6 +408,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [gitUsername, setGitUsername] = useState('openhands');
   const [gitEmail, setGitEmail] = useState('openhands@all-hands.dev');
   const [userEmail, setUserEmail] = useState('panentheum@gmail.com');
+  const [personalSkillsRepo, setPersonalSkillsRepo] = useState('');
   const [enableAnalytics, setEnableAnalytics] = useState(true);
   const [enableSound, setEnableSound] = useState(false);
   const [enableProactive, setEnableProactive] = useState(true);
@@ -1023,6 +1025,37 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       />
                     </div>
                     <div className="flex items-center gap-3 mt-2">
+                      <button
+                        type="button"
+                        disabled
+                        className="h-10 flex items-center justify-center px-4 rounded-md bg-primary text-primary-foreground hover:bg-primary/85 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className={settingsSectionRule}>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="settings-personal-skills-repo" className="text-sm text-foreground">
+                      Personal skills repository
+                    </label>
+                    <p className="text-sm text-muted-foreground max-w-[680px]">
+                      Git repository that contains your personal skills (for example Markdown under a{' '}
+                      <span className="font-mono text-xs">skills/</span> folder). Use{' '}
+                      <span className="font-mono text-xs">owner/repo</span> or a full HTTPS URL.
+                    </p>
+                    <Input
+                      id="settings-personal-skills-repo"
+                      type="text"
+                      autoComplete="off"
+                      placeholder="owner/personal-skills-repo"
+                      value={personalSkillsRepo}
+                      onChange={(e) => setPersonalSkillsRepo(e.target.value)}
+                      className="max-w-[680px]"
+                    />
+                    <div className="flex items-center gap-3 mt-1">
                       <button
                         type="button"
                         disabled
@@ -2110,11 +2143,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       ? settingsMcpServers.find((r) => r.id === mcpEditingId) ?? null
                       : null
                   }
-                  onAdd={({ serverType, url, apiKey }) => {
+                  onAdd={({ name, serverType, url, apiKey }) => {
                     setSettingsMcpServers((prev) => [
                       ...prev,
                       {
                         id: `mcp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                        name,
                         serverType,
                         url,
                         hasApiKey: apiKey.length > 0,
@@ -2130,6 +2164,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         const nextHasApiKey = payload.apiKey.length > 0 ? true : r.hasApiKey;
                         return {
                           ...r,
+                          name: payload.name,
                           serverType: payload.serverType,
                           url: payload.url,
                           hasApiKey: nextHasApiKey,
@@ -2143,6 +2178,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                     <table className={dataTableClassName}>
                       <colgroup>
                         <col className="min-w-0" />
+                        <col className="min-w-0" />
                         <col className="w-[6.5rem]" />
                         <col className="w-[5.5rem]" />
                         <col className="w-[6.5rem]" />
@@ -2151,6 +2187,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </colgroup>
                       <thead>
                         <tr className={dataTableHeadRowClassName}>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
+                            Name
+                          </th>
                           <th scope="col" className={dataTableTh('px-4 text-left')}>
                             URL
                           </th>
@@ -2179,7 +2218,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         {settingsMcpServers.length === 0 ? (
                           <tr>
                             <td
-                              colSpan={6}
+                              colSpan={7}
                               className="px-4 py-10 text-center text-sm text-muted-foreground"
                             >
                               No servers configured. Use Add Server to connect one.
@@ -2188,6 +2227,14 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         ) : (
                           settingsMcpServers.map((row) => (
                             <tr key={row.id} className={dataTableRowClassName}>
+                              <td className="min-w-0 px-4 py-3.5 align-middle">
+                                <span
+                                  className="block truncate text-sm font-medium text-foreground"
+                                  title={row.name}
+                                >
+                                  {row.name}
+                                </span>
+                              </td>
                               <td className="min-w-0 px-4 py-3.5 align-middle">
                                 <span
                                   className="block truncate font-mono text-xs text-foreground"
@@ -2245,7 +2292,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                     <button
                                       type="button"
                                       className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                                      aria-label={`Actions for ${row.url}`}
+                                      aria-label={`Actions for ${row.name || row.url}`}
                                     >
                                       <MoreVertical className="h-4 w-4" />
                                     </button>

@@ -21,7 +21,10 @@ import { APP_ROUTE_EVENT, getEffectiveAppRouteSegment, navigateAppRoute } from '
 import {
   EXTENSIONS_ALL_BASE,
   EXTENSIONS_PLUGINS_BASE,
-  extensionsMainNoScrollClassName,
+  extensionsCatalogCardBodyPrWithControlCluster,
+  extensionsCatalogCardControlClusterClassName,
+  extensionsCatalogCardControlsClassName,
+  extensionsCatalogCardMenuSlotClassName,
   extensionsMainScrollClassName,
   extensionsPageContentClassName,
   extensionsShellRowClassName,
@@ -30,6 +33,7 @@ import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
 import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
+import { RepoUrlField } from './RepoUrlField';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
 import { cn } from '../../lib/utils';
 import { toSkillFileName } from './pluginRepoUtils';
@@ -249,17 +253,12 @@ ${skill.initialPrompt}
       <ExtensionsShellSidebar browseControls={browseControls} />
 
       <ExtensionsAnimatedMain
-        className={cn(
-          selectedPlugin ? extensionsMainNoScrollClassName : extensionsMainScrollClassName,
-          !selectedPlugin && 'repo-dropdown-scroll',
-        )}
+        className={cn(extensionsMainScrollClassName, 'repo-dropdown-scroll')}
       >
         {selectedPlugin ? (
-          <div
-            className={cn(extensionsPageContentClassName, 'flex min-h-0 flex-1 flex-col')}
-          >
-            <div className="flex h-full min-h-0 gap-6">
-              <div className="repo-dropdown-scroll min-w-0 flex-1 overflow-y-auto pr-1">
+          <div className={extensionsPageContentClassName}>
+            <div className="flex flex-col gap-6">
+              <div className="min-w-0">
                 <button
                   type="button"
                   onClick={() => {
@@ -275,27 +274,11 @@ ${skill.initialPrompt}
                   <span>Back</span>
                 </button>
 
-                <div className="my-6">
+                <div className="my-6 w-full min-w-0 space-y-3">
                   <div className="flex items-start justify-between gap-4 min-w-0">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-xl font-semibold leading-6 text-foreground">
-                        {selectedPlugin.skillName ?? selectedPlugin.title}
-                      </h2>
-                      <p className="mt-2 text-sm text-muted-foreground">{selectedPlugin.description}</p>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                        <a
-                          href={selectedPlugin.repoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex min-w-0 max-w-full items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                        >
-                          <span className="truncate font-mono">
-                            {selectedPlugin.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                          </span>
-                        </a>
-                        <SkillSourceBadge source={getSkillSource(selectedPlugin)} className="shrink-0" />
-                      </div>
-                    </div>
+                    <h2 className="min-w-0 flex-1 text-xl font-semibold leading-6 text-foreground">
+                      {selectedPlugin.skillName ?? selectedPlugin.title}
+                    </h2>
                     {selectedPlugin.isPlugin ? (
                       <PluginToggle
                         className="mt-0.5 shrink-0"
@@ -320,6 +303,13 @@ ${skill.initialPrompt}
                         }
                       />
                     ) : null}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{selectedPlugin.description}</p>
+                  <div className="w-full min-w-0">
+                    <RepoUrlField href={selectedPlugin.repoUrl} />
+                    <div className="mt-2">
+                      <SkillSourceBadge source={getSkillSource(selectedPlugin)} />
+                    </div>
                   </div>
                 </div>
 
@@ -349,7 +339,7 @@ ${skill.initialPrompt}
               </div>
 
               <section
-                className="flex h-full min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card"
+                className="flex min-h-[min(40vh,360px)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card"
                 aria-label="Plugin file detail"
               >
                 {pluginDetailView === 'files' ? (
@@ -410,25 +400,32 @@ ${skill.initialPrompt}
                         key={skill.id}
                         className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
                       >
-                        <PluginToggle
-                          size="sm"
-                          className="absolute right-3 top-3 z-10"
-                          checked={enabled}
-                          locked={locked}
-                          onCheckedChange={() =>
-                            setPluginEnabledById((prev) => ({
-                              ...prev,
-                              [skill.id]: !(prev[skill.id] !== false),
-                            }))
-                          }
-                          aria-label={
-                            locked
-                              ? `${pluginLabel} is on and locked by your organization`
-                              : enabled
-                                ? `Turn off ${pluginLabel}`
-                                : `Turn on ${pluginLabel}`
-                          }
-                        />
+                        <div
+                          className={cn(
+                            extensionsCatalogCardControlsClassName,
+                            extensionsCatalogCardControlClusterClassName,
+                          )}
+                        >
+                          <PluginToggle
+                            size="sm"
+                            checked={enabled}
+                            locked={locked}
+                            onCheckedChange={() =>
+                              setPluginEnabledById((prev) => ({
+                                ...prev,
+                                [skill.id]: !(prev[skill.id] !== false),
+                              }))
+                            }
+                            aria-label={
+                              locked
+                                ? `${pluginLabel} is on and locked by your organization`
+                                : enabled
+                                  ? `Turn off ${pluginLabel}`
+                                  : `Turn on ${pluginLabel}`
+                            }
+                          />
+                          <div className={extensionsCatalogCardMenuSlotClassName} aria-hidden />
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -436,7 +433,10 @@ ${skill.initialPrompt}
                               `/${EXTENSIONS_PLUGINS_BASE}/plugin/${encodeURIComponent(skill.id)}`,
                             );
                           }}
-                          className="w-full rounded-xl p-5 pr-14 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                          className={cn(
+                            'w-full rounded-xl p-5 pt-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
+                            extensionsCatalogCardBodyPrWithControlCluster,
+                          )}
                         >
                           <div className="flex items-start gap-3">
                             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">

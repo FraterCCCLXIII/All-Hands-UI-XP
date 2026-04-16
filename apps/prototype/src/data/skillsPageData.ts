@@ -2,13 +2,13 @@
  * Data for the Skills page: repository/task list and detail content.
  */
 
-/** Where the skill comes from in the catalog (shown as a tag on marketplace cards). */
+/** Where the skill comes from in the catalog (shown as a tag on marketplace cards). `openhands` displays as “System”. */
 export type SkillSource = 'personal' | 'organization' | 'openhands';
 
 export const SKILL_SOURCE_LABELS: Record<SkillSource, string> = {
   personal: 'Personal',
   organization: 'Organization',
-  openhands: 'OpenHands',
+  openhands: 'System',
 };
 
 export interface SkillRepositoryItem {
@@ -33,7 +33,7 @@ export interface SkillRepositoryItem {
   category?: string;
   /** When true, Extensions shows a plugin on/off toggle; skills omit the switch. */
   isPlugin?: boolean;
-  /** Catalog origin: personal, organization, or OpenHands platform. */
+  /** Catalog origin: personal, organization, or system (built-in) catalog. */
   skillSource?: SkillSource;
 }
 

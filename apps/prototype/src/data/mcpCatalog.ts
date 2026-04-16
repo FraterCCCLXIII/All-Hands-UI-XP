@@ -56,14 +56,12 @@ export const mcpCatalogEntries: McpCatalogEntry[] = [
   {
     id: 'mcp-postgres',
     name: 'PostgreSQL',
-    provider: 'Database',
     description: 'Parameterized queries against approved schemas for reporting and data checks.',
     tags: ['data', 'cloud'],
   },
   {
     id: 'mcp-aws',
     name: 'AWS',
-    provider: 'Amazon Web Services',
     description: 'Describe resources and invoke approved APIs for ops and deployment tasks.',
     tags: ['cloud'],
     docsUrl: 'https://docs.aws.amazon.com',
@@ -85,3 +83,31 @@ export const mcpCatalogEntries: McpCatalogEntry[] = [
     docsUrl: 'https://docs.snyk.io',
   },
 ];
+
+/** Local overrides when editing catalog MCP entries from the Extensions UI (prototype). */
+export type McpConnectionOverride = {
+  name: string;
+  serverType: string;
+  url: string;
+  hasApiKey: boolean;
+};
+
+/** Effective MCP endpoint URL for display and forms (catalog defaults + optional local overrides). */
+export function mcpCatalogDisplayUrl(
+  entry: McpCatalogEntry,
+  saved?: McpConnectionOverride | null
+): string {
+  return saved?.url ?? entry.docsUrl ?? `https://mcp.example/${encodeURIComponent(entry.id)}`;
+}
+
+export function mcpModalInitialValuesFromCatalog(
+  entry: McpCatalogEntry,
+  saved?: McpConnectionOverride | null
+): { name: string; serverType: string; url: string; hasApiKey: boolean } {
+  return {
+    name: saved?.name ?? entry.name,
+    serverType: saved?.serverType ?? 'http',
+    url: mcpCatalogDisplayUrl(entry, saved),
+    hasApiKey: saved?.hasApiKey ?? false,
+  };
+}

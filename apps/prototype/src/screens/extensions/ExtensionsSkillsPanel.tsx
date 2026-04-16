@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   ChevronDown,
@@ -7,9 +7,9 @@ import {
   Folder,
   GitBranch,
   Github,
-  MoreHorizontal,
   MoreVertical,
   Plus,
+  Settings,
 } from 'lucide-react';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { InfoCard } from '../../components/common/InfoCard';
@@ -30,7 +30,6 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import {
-  marketplaceCategories,
   marketplaceSkills,
   skillRepositoryMetadata,
   skillRepositoryItems,
@@ -41,13 +40,17 @@ import {
   EXTENSIONS_ALL_BASE,
   EXTENSIONS_PLUGINS_BASE,
   EXTENSIONS_SKILLS_BASE,
+  extensionsCatalogCardBodyPrWithControlCluster,
+  extensionsCatalogCardControlClusterClassName,
+  extensionsCatalogCardControlsClassName,
+  extensionsCatalogCardMenuSlotClassName,
   extensionsMainScrollClassName,
   extensionsPageContentClassName,
   extensionsShellRowClassName,
 } from '../../lib/extensionsRoutes';
 import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
-import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
+import { RepoUrlField } from './RepoUrlField';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
 import { cn } from '../../lib/utils';
@@ -381,6 +384,58 @@ function StartConversationDialog({
   );
 }
 
+function PersonalSkillsGuideDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add skills from your Git repository</DialogTitle>
+          <DialogDescription>
+            Personal skills live in a repository you control. Point your workspace to that repo under User settings so
+            they appear in Extensions.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <ol className="list-decimal space-y-3 pl-5 text-foreground/90">
+            <li>
+              In your <strong className="font-medium text-foreground">personal Git repository</strong>, add or update
+              skill files—for example Markdown under a{' '}
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">skills/</code> directory.
+            </li>
+            <li>
+              Open <strong className="font-medium text-foreground">Settings → User</strong> and set{' '}
+              <strong className="font-medium text-foreground">Personal skills repository</strong> to your repo (for
+              example <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">owner/repo</code> or a full
+              clone URL).
+            </li>
+            <li>Push your changes, then return here to browse and enable your skills.</li>
+          </ol>
+        </div>
+        <DialogFooter className="gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              onOpenChange(false);
+              navigateAppRoute('/settings/user');
+            }}
+          >
+            Open User settings
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type SkillsViewMode = 'marketplace' | 'repos';
 
 export type ExtensionsSkillsPanelProps = {
@@ -394,18 +449,11 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<SkillRepositoryItem | null>(null);
   const [addSkillModalOpen, setAddSkillModalOpen] = useState(false);
+  const [personalSkillsGuideOpen, setPersonalSkillsGuideOpen] = useState(false);
   const [addSkillTargetRepo, setAddSkillTargetRepo] = useState<string | null>(null);
   const [startConversationModalOpen, setStartConversationModalOpen] = useState(false);
   const [startConversationTargetRepo, setStartConversationTargetRepo] = useState<string | null>(null);
   const [startConversationTargetBranch, setStartConversationTargetBranch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [visibleCategoryCount, setVisibleCategoryCount] = useState<number>(marketplaceCategories.length);
-  const categoryTabsRef = useRef<HTMLDivElement>(null);
-  const categoryTabsWrapperRef = useRef<HTMLDivElement>(null);
-  const categoryTabsMeasureRef = useRef<HTMLDivElement>(null);
-
-  const isMarketplaceView = viewMode === 'marketplace' && !selectedItem;
-
   useEffect(() => {
     const applySkillFromPath = () => {
       const raw = getEffectiveAppRouteSegment();
@@ -431,45 +479,6 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
       window.removeEventListener(APP_ROUTE_EVENT, applySkillFromPath);
     };
   }, [location.pathname, location.search]);
-
-  useLayoutEffect(() => {
-    const wrapper = categoryTabsWrapperRef.current;
-    const measureContainer = categoryTabsMeasureRef.current;
-    if (!wrapper || !measureContainer || !isMarketplaceView) return;
-
-    const MENU_SLOT_WIDTH = 44;
-    const GAP = 8;
-
-    const updateVisibleCount = () => {
-      const availableWidth = wrapper.offsetWidth - MENU_SLOT_WIDTH - GAP;
-      const tabs = measureContainer.querySelectorAll<HTMLElement>('[role="tab"]');
-      if (tabs.length === 0) return;
-
-      let totalWidth = 0;
-      let visibleCount = 0;
-      for (let i = 0; i < tabs.length; i++) {
-        const w = tabs[i].offsetWidth + (i > 0 ? GAP : 0);
-        if (totalWidth + w > availableWidth) break;
-        totalWidth += w;
-        visibleCount = i + 1;
-      }
-      setVisibleCategoryCount(visibleCount);
-    };
-
-    const ro = new ResizeObserver(updateVisibleCount);
-    ro.observe(wrapper);
-    updateVisibleCount();
-    return () => ro.disconnect();
-  }, [isMarketplaceView]);
-
-  const overflowCategories = useMemo(
-    () => marketplaceCategories.slice(visibleCategoryCount - 1),
-    [visibleCategoryCount]
-  );
-  const visibleCategories = useMemo(
-    () => marketplaceCategories.slice(0, visibleCategoryCount - 1),
-    [visibleCategoryCount]
-  );
 
   const repoMetadataMap = useMemo(
     () => new Map(skillRepositoryMetadata.map((meta) => [meta.repo, meta])),
@@ -596,11 +605,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
   }, [displayItem]);
 
   const filteredMarketplaceSkills = useMemo(() => {
-    let items = marketplaceSkills;
-    if (selectedCategory) {
-      const cat = marketplaceCategories.find((c) => c.slug === selectedCategory);
-      if (cat) items = items.filter((s) => s.category === cat.name);
-    }
+    const items = marketplaceSkills;
     const q = browseControls.searchQuery.trim().toLowerCase();
     if (!q) return items;
     return items.filter(
@@ -608,7 +613,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
         (s.skillName ?? s.title).toLowerCase().includes(q) ||
         s.description.toLowerCase().includes(q)
     );
-  }, [browseControls.searchQuery, selectedCategory]);
+  }, [browseControls.searchQuery]);
 
   const isMarketplaceSkill =
     displayItem?.id != null && String(displayItem.id).startsWith('marketplace-');
@@ -619,120 +624,50 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
     <div className={extensionsShellRowClassName}>
       <ExtensionsShellSidebar browseControls={browseControls} />
 
-      <ExtensionsAnimatedMain className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
+      <ExtensionsAnimatedMain
+        className={cn(extensionsMainScrollClassName, 'repo-dropdown-scroll')}
+      >
         <div className={extensionsPageContentClassName}>
         {showMarketplace ? (
           <>
             <ExtensionsCatalogPageHeader
               title="Skills"
-              description="Discover skills to add to your workspace. Open a card for prompts, curl, and install flows. Filter by category below or search from the sidebar."
-              actions={<ExtensionsCatalogAddButton kind="skill" />}
+              description="Discover skills to add to your workspace. Open a card for prompts, curl, and install flows. Search from the sidebar to filter the list."
+              actions={
+                <div className="flex flex-wrap items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        aria-label="Skills page actions"
+                      >
+                        <MoreVertical className="h-4 w-4" aria-hidden />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[13rem]">
+                      <DropdownMenuItem
+                        onClick={() => setPersonalSkillsGuideOpen(true)}
+                        className="gap-2"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                        Add Skill
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => navigateAppRoute('/settings/user')}
+                        className="gap-2"
+                      >
+                        <Settings className="h-4 w-4 shrink-0" aria-hidden />
+                        Configure Skill Repo
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              }
             />
             <div className="flex flex-col gap-6">
-                  <div className="relative w-full overflow-hidden">
-                    {/* Hidden measurement container - all tabs for accurate width calculation on resize */}
-                    <div
-                      ref={categoryTabsMeasureRef}
-                      className="pointer-events-none invisible absolute left-0 top-0 z-[-1] flex flex-nowrap items-center gap-2"
-                      aria-hidden="true"
-                    >
-                      <button
-                        type="button"
-                        role="tab"
-                        tabIndex={-1}
-                        className="shrink-0 rounded-md px-4 py-2.5 text-sm font-medium"
-                      >
-                        All
-                      </button>
-                      {marketplaceCategories.map((cat) => (
-                        <button
-                          key={cat.slug}
-                          type="button"
-                          role="tab"
-                          tabIndex={-1}
-                          className="inline-flex shrink-0 items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium"
-                        >
-                          <span>{cat.name}</span>
-                          <span className="tabular-nums text-muted-foreground/80">
-                            {cat.exports.toLocaleString()}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                    <div
-                      ref={categoryTabsWrapperRef}
-                      className="flex items-center gap-2 rounded-lg p-2"
-                    >
-                      <div
-                        ref={categoryTabsRef}
-                        className="flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden"
-                        role="tablist"
-                        aria-label="Category"
-                      >
-                        <button
-                          type="button"
-                          role="tab"
-                          aria-selected={selectedCategory === null}
-                          onClick={() => setSelectedCategory(null)}
-                          className={cn(
-                            'shrink-0 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
-                            selectedCategory === null
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                          )}
-                        >
-                          All
-                        </button>
-                        {visibleCategories.map((cat) => (
-                          <button
-                            key={cat.slug}
-                            type="button"
-                            role="tab"
-                            aria-selected={selectedCategory === cat.slug}
-                            onClick={() => setSelectedCategory(cat.slug)}
-                            className={cn(
-                              'inline-flex shrink-0 items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors',
-                              selectedCategory === cat.slug
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                            )}
-                          >
-                            <span>{cat.name}</span>
-                            <span className={cn('tabular-nums', selectedCategory === cat.slug ? 'opacity-90' : 'text-muted-foreground/80')} aria-label={`${cat.exports.toLocaleString()} skills`}>
-                              {cat.exports.toLocaleString()}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                      <div className="h-9 w-9 shrink-0 flex items-center justify-center">
-                        {overflowCategories.length > 0 ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors"
-                                aria-label="More categories"
-                              >
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {overflowCategories.map((cat) => (
-                                <DropdownMenuItem
-                                  key={cat.slug}
-                                  onClick={() => setSelectedCategory(cat.slug)}
-                                >
-                                  {cat.name} ({cat.exports.toLocaleString()})
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className="h-9 w-9" aria-hidden="true" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {filteredMarketplaceSkills.map((skill) => {
                   const label = skill.skillName ?? skill.title;
@@ -744,25 +679,32 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       key={skill.id}
                       className="relative flex h-full min-h-[120px] flex-col rounded-xl border border-border bg-card text-left transition-colors hover:bg-muted/60 hover:border-muted-foreground/20"
                     >
-                      <PluginToggle
-                        size="sm"
-                        className="absolute right-3 top-3 z-10"
-                        checked={enabled}
-                        locked={locked}
-                        onCheckedChange={() =>
-                          setMarketplaceSwitchById((prev) => ({
-                            ...prev,
-                            [skill.id]: !(prev[skill.id] !== false),
-                          }))
-                        }
-                        aria-label={
-                          locked
-                            ? `${label} is on and locked by your organization`
-                            : enabled
-                              ? `Turn off ${label}`
-                              : `Turn on ${label}`
-                        }
-                      />
+                      <div
+                        className={cn(
+                          extensionsCatalogCardControlsClassName,
+                          extensionsCatalogCardControlClusterClassName,
+                        )}
+                      >
+                        <PluginToggle
+                          size="sm"
+                          checked={enabled}
+                          locked={locked}
+                          onCheckedChange={() =>
+                            setMarketplaceSwitchById((prev) => ({
+                              ...prev,
+                              [skill.id]: !(prev[skill.id] !== false),
+                            }))
+                          }
+                          aria-label={
+                            locked
+                              ? `${label} is on and locked by your organization`
+                              : enabled
+                                ? `Turn off ${label}`
+                                : `Turn on ${label}`
+                          }
+                        />
+                        <div className={extensionsCatalogCardMenuSlotClassName} aria-hidden />
+                      </div>
                       <button
                         type="button"
                         onClick={() => {
@@ -777,11 +719,14 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                             `/${EXTENSIONS_SKILLS_BASE}/skill/${encodeURIComponent(skill.id)}`,
                           );
                         }}
-                        className="flex flex-1 flex-col rounded-xl p-6 pr-14 pt-6 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                        className={cn(
+                          'flex flex-1 flex-col rounded-xl p-5 pt-5 text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
+                          extensionsCatalogCardBodyPrWithControlCluster,
+                        )}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
-                            <SkillIcon className="h-4 text-muted-foreground" />
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+                            <SkillIcon className="h-5 text-muted-foreground" />
                           </div>
                           <div className="flex min-w-0 flex-1 flex-col">
                             <span className="text-base font-medium text-foreground">{label}</span>
@@ -801,7 +746,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
             </div>
             </>
           ) : displayItem ? (
-            <div>
+            <div className="flex flex-col gap-6">
+              <div className="min-w-0">
               {isMarketplaceSkill && (
                 <button
                   type="button"
@@ -828,27 +774,11 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                 </button>
               )}
               {isMarketplaceSkill ? (
-                <div className="my-6">
+                <div className="my-6 w-full min-w-0 space-y-3">
                   <div className="flex items-start justify-between gap-4 min-w-0">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-xl font-semibold leading-6 text-foreground">
-                        {displayItem.skillName ?? displayItem.title}
-                      </h2>
-                      <p className="mt-2 text-sm text-muted-foreground">{displayItem.description}</p>
-                      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                        <a
-                          href={displayItem.repoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex min-w-0 max-w-full items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                        >
-                          <span className="truncate font-mono">
-                            {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                          </span>
-                        </a>
-                        <SkillSourceBadge source={getSkillSource(displayItem)} className="shrink-0" />
-                      </div>
-                    </div>
+                    <h2 className="min-w-0 flex-1 text-xl font-semibold leading-6 text-foreground">
+                      {displayItem.skillName ?? displayItem.title}
+                    </h2>
                     <PluginToggle
                       className="mt-0.5 shrink-0"
                       checked={
@@ -872,6 +802,22 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       }
                     />
                   </div>
+                  <p className="text-sm text-muted-foreground">{displayItem.description}</p>
+                  <div className="w-full min-w-0">
+                    <RepoUrlField href={displayItem.repoUrl} />
+                    <div className="mt-2">
+                      <SkillSourceBadge source={getSkillSource(displayItem)} />
+                    </div>
+                    <div className="mt-3">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleStartConversationModalChange(true)}
+                      >
+                        Start Conversation
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -879,18 +825,11 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                     {displayItem.skillName ?? displayItem.title}
                   </h2>
                   <p className="mt-2 text-sm text-muted-foreground">{displayItem.description}</p>
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                    <a
-                      href={displayItem.repoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-w-0 max-w-full items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                    >
-                      <span className="truncate font-mono">
-                        {displayItem.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                      </span>
-                    </a>
-                    <SkillSourceBadge source={getSkillSource(displayItem)} className="shrink-0" />
+                  <div className="mt-3 w-full min-w-0">
+                    <RepoUrlField href={displayItem.repoUrl} />
+                    <div className="mt-2">
+                      <SkillSourceBadge source={getSkillSource(displayItem)} />
+                    </div>
                   </div>
                 </>
               )}
@@ -910,16 +849,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   className="[&_textarea]:min-h-[100px]"
                 />
               </div>
-              <div className="mt-6">
-                {isMarketplaceSkill ? (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleStartConversationModalChange(true)}
-                  >
-                    Start Conversation
-                  </Button>
-                ) : (
+              {!isMarketplaceSkill && (
+                <div className="mt-6">
                   <div className="flex flex-wrap gap-2">
                     <Button variant="default" size="sm">
                       Create New Conversation
@@ -934,8 +865,8 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       </Button>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
               {displayItem && isMarketplaceSkill && (
                 <StartConversationDialog
                   open={startConversationModalOpen}
@@ -963,6 +894,36 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   onAdd={() => handleAddSkillModalChange(false)}
                 />
               )}
+              </div>
+
+              <section
+                className="flex min-h-[min(40vh,360px)] w-full flex-col overflow-hidden rounded-xl border border-border bg-card"
+                aria-label="Skill detail"
+              >
+                <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <span className="truncate text-sm font-medium text-foreground">skill.md</span>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        aria-label="More options"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>Copy link</DropdownMenuItem>
+                      <DropdownMenuItem>Open in new tab</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                <div className="repo-dropdown-scroll min-h-0 flex-1 overflow-y-auto p-4">
+                  <FileContentView content={skillFileContent} fileName="skill.md" />
+                </div>
+              </section>
             </div>
           ) : showRepoPage && selectedRepoGroup && selectedRepoMeta ? (
             <div>
@@ -979,16 +940,9 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                         </p>
                       )}
                       {selectedRepoMeta.repoUrl && (
-                        <a
-                          href={selectedRepoMeta.repoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-4 inline-flex min-w-0 max-w-full w-fit items-center rounded-full border border-border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                        >
-                          <span className="truncate font-mono">
-                            {selectedRepoMeta.repoUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                          </span>
-                        </a>
+                        <div className="mt-4 w-full min-w-0">
+                          <RepoUrlField href={selectedRepoMeta.repoUrl} />
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1020,38 +974,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
         </div>
       </ExtensionsAnimatedMain>
 
-      {displayItem && (
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-4">
-          <section
-            className="flex flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card w-full"
-            aria-label="Skill detail"
-          >
-            <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <span className="truncate text-sm font-medium text-foreground">skill.md</span>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                    aria-label="More options"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Copy link</DropdownMenuItem>
-                  <DropdownMenuItem>Open in new tab</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 repo-dropdown-scroll">
-              <FileContentView content={skillFileContent} fileName="skill.md" />
-            </div>
-          </section>
-        </div>
-      )}
+      <PersonalSkillsGuideDialog open={personalSkillsGuideOpen} onOpenChange={setPersonalSkillsGuideOpen} />
     </div>
   );
 }

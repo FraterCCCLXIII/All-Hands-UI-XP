@@ -1,11 +1,14 @@
-import { useMemo, useState } from 'react';
-import {
-  Box,
-  ExternalLink,
-  Webhook,
-} from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
+import { ExternalLink, MoreVertical, Pencil, Trash2, Webhook } from 'lucide-react';
+import { McpIcon } from '../../components/icons/McpIcon';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { Button } from '../../components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../../components/ui/dropdown-menu';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
 import { marketplaceSkills } from '../../data/skillsPageData';
 import {
@@ -13,17 +16,30 @@ import {
   hooksCatalogEntries,
   type HooksCatalogEntry,
 } from '../../data/hooksCatalog';
-import { mcpCatalogCategories, mcpCatalogEntries, type McpCatalogEntry } from '../../data/mcpCatalog';
+import {
+  mcpCatalogCategories,
+  mcpCatalogEntries,
+  mcpCatalogDisplayUrl,
+  mcpModalInitialValuesFromCatalog,
+  type McpCatalogEntry,
+  type McpConnectionOverride,
+} from '../../data/mcpCatalog';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 import {
   EXTENSIONS_PLUGINS_BASE,
   EXTENSIONS_SKILLS_BASE,
+  extensionsCatalogCardBodyPrWithControlCluster,
+  extensionsCatalogCardControlClusterClassName,
+  extensionsCatalogCardControlsClassName,
+  extensionsCatalogCardMenuSlotClassName,
+  extensionsCatalogCardOverflowMenuTriggerClassName,
   extensionsMainScrollClassName,
   extensionsPageContentClassName,
   extensionsShellRowClassName,
 } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
 import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
+import { AddMcpServerModal } from './extensionsCatalogAddModals';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
 import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
@@ -46,9 +62,11 @@ function mcpMatchesQuery(entry: McpCatalogEntry, q: string): boolean {
     const label = mcpCatalogCategories.find((c) => c.slug === tag)?.name?.toLowerCase() ?? '';
     return label.includes(s);
   });
+  const url = mcpCatalogDisplayUrl(entry, null).toLowerCase();
   return (
     entry.name.toLowerCase().includes(s) ||
     entry.description.toLowerCase().includes(s) ||
+    url.includes(s) ||
     (entry.provider?.toLowerCase().includes(s) ?? false) ||
     entry.tags.some((t) => t.toLowerCase().includes(s)) ||
     categoryLabelMatch
@@ -78,7 +96,22 @@ export type ExtensionsAllMixedViewProps = {
 export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedViewProps) {
   /** Enabled state for marketplace skills and plugins (toggle on cards). */
   const [marketplaceSwitchById, setMarketplaceSwitchById] = useState<Record<string, boolean>>({});
+  const [mcpSwitchById, setMcpSwitchById] = useState<Record<string, boolean>>({});
+  const [removedMcpIds, setRemovedMcpIds] = useState<Set<string>>(() => new Set());
+  const [mcpOverridesById, setMcpOverridesById] = useState<Record<string, McpConnectionOverride>>({});
+  const [mcpEditOpen, setMcpEditOpen] = useState(false);
+  const [mcpEditingId, setMcpEditingId] = useState<string | null>(null);
   const { searchQuery, scope } = browseControls;
+
+  const closeMcpEdit = useCallback(() => {
+    setMcpEditOpen(false);
+    setMcpEditingId(null);
+  }, []);
+
+  const mcpEditingEntry = useMemo(
+    () => (mcpEditingId ? mcpCatalogEntries.find((e) => e.id === mcpEditingId) ?? null : null),
+    [mcpEditingId]
+  );
 
   const filteredSkills = useMemo(
     () => marketplaceSkills.filter((skill) => skillMatchesQuery(skill, searchQuery)),
@@ -87,6 +120,10 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
   const filteredMcp = useMemo(
     () => mcpCatalogEntries.filter((e) => mcpMatchesQuery(e, searchQuery)),
     [searchQuery]
+  );
+  const visibleMcp = useMemo(
+    () => filteredMcp.filter((e) => !removedMcpIds.has(e.id)),
+    [filteredMcp, removedMcpIds]
   );
   const filteredHooks = useMemo(
     () => hooksCatalogEntries.filter((e) => hooksMatchesQuery(e, searchQuery)),
@@ -126,25 +163,32 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
         className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
       >
         {showToggle ? (
-          <PluginToggle
-            size="sm"
-            className="absolute right-3 top-3 z-10"
-            checked={enabled}
-            locked={locked}
-            onCheckedChange={() =>
-              setMarketplaceSwitchById((prev) => ({
-                ...prev,
-                [skill.id]: !(prev[skill.id] !== false),
-              }))
-            }
-            aria-label={
-              locked
-                ? `${label} is on and locked by your organization`
-                : enabled
-                  ? `Turn off ${label}`
-                  : `Turn on ${label}`
-            }
-          />
+          <div
+            className={cn(
+              extensionsCatalogCardControlsClassName,
+              extensionsCatalogCardControlClusterClassName,
+            )}
+          >
+            <PluginToggle
+              size="sm"
+              checked={enabled}
+              locked={locked}
+              onCheckedChange={() =>
+                setMarketplaceSwitchById((prev) => ({
+                  ...prev,
+                  [skill.id]: !(prev[skill.id] !== false),
+                }))
+              }
+              aria-label={
+                locked
+                  ? `${label} is on and locked by your organization`
+                  : enabled
+                    ? `Turn off ${label}`
+                    : `Turn on ${label}`
+              }
+            />
+            <div className={extensionsCatalogCardMenuSlotClassName} aria-hidden />
+          </div>
         ) : null}
         <button
           type="button"
@@ -157,7 +201,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
           }
           className={cn(
             'w-full rounded-xl p-5 text-left transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
-            showToggle ? 'pr-14 pt-5' : 'p-5'
+            showToggle && extensionsCatalogCardBodyPrWithControlCluster
           )}
         >
           <div className="flex items-start gap-3">
@@ -177,23 +221,97 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
     );
   };
 
+  const renderMcpCard = (entry: McpCatalogEntry) => {
+    const displayName = mcpOverridesById[entry.id]?.name ?? entry.name;
+    const displayUrl = mcpCatalogDisplayUrl(entry, mcpOverridesById[entry.id] ?? null);
+    const enabled = mcpSwitchById[entry.id] !== false;
+    return (
+      <div
+        key={entry.id}
+        className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
+      >
+        <div
+          className={cn(
+            extensionsCatalogCardControlsClassName,
+            extensionsCatalogCardControlClusterClassName,
+          )}
+        >
+          <PluginToggle
+            size="sm"
+            checked={enabled}
+            onCheckedChange={() =>
+              setMcpSwitchById((prev) => ({
+                ...prev,
+                [entry.id]: !(prev[entry.id] !== false),
+              }))
+            }
+            aria-label={
+              enabled ? `Turn off ${displayName}` : `Turn on ${displayName}`
+            }
+          />
+          <div className={extensionsCatalogCardMenuSlotClassName}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={extensionsCatalogCardOverflowMenuTriggerClassName}
+                  aria-label={`${displayName} options`}
+                >
+                  <MoreVertical className="h-4 w-4 shrink-0" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() => {
+                    setMcpEditingId(entry.id);
+                    setMcpEditOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() =>
+                    setRemovedMcpIds((prev) => new Set(prev).add(entry.id))
+                  }
+                >
+                  <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div
+          className={cn(
+            'w-full rounded-xl p-5 pt-5 text-left',
+            extensionsCatalogCardBodyPrWithControlCluster,
+          )}
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+              <McpIcon className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="text-base font-medium text-foreground">{displayName}</span>
+              <p className="mt-2 line-clamp-2 break-all text-sm text-muted-foreground" title={displayUrl}>
+                {displayUrl}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const skillsDescription =
     'Discover skills to add to your workspace. Open a card for prompts, curl, and install flows.';
   const pluginsDescription =
     'Enable plugin bundles that ship multiple skills together. Open a pack for files, toggles, and bundled skills.';
-  const mcpDescription = (
-    <>
-      Browse recommended Model Context Protocol servers. Add and manage connections in{' '}
-      <button
-        type="button"
-        className="font-medium text-foreground transition-colors hover:text-foreground/90"
-        onClick={() => navigateAppRoute('/settings/mcp')}
-      >
-        Settings
-      </button>
-      .
-    </>
-  );
+  const mcpDescription =
+    'Browse recommended Model Context Protocol servers. Enable servers to expose tools and data to your agents.';
 
   const hooksDescription = (
     <>
@@ -211,45 +329,10 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
 
   const mcpList = (
     <>
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {filteredMcp.map((entry) => (
-          <li
-            key={entry.id}
-            className="flex flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:bg-muted/30"
-          >
-            <div className="flex items-start gap-2">
-              <Box className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-              <div className="min-w-0">
-                <h3 className="text-base font-semibold text-foreground">{entry.name}</h3>
-                {entry.provider &&
-                entry.provider.trim().toLowerCase() !== entry.name.trim().toLowerCase() ? (
-                  <p className="mt-0.5 text-xs text-muted-foreground">{entry.provider}</p>
-                ) : null}
-              </div>
-            </div>
-            <p className="mt-3 line-clamp-4 text-sm text-muted-foreground">{entry.description}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button type="button" size="sm" variant="default" onClick={() => navigateAppRoute('/settings/mcp')}>
-                Add in Settings
-              </Button>
-              {entry.docsUrl ? (
-                <Button type="button" size="sm" variant="outline" asChild>
-                  <a
-                    href={entry.docsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5"
-                  >
-                    View docs
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                  </a>
-                </Button>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {filteredMcp.length === 0 ? (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {visibleMcp.map(renderMcpCard)}
+      </div>
+      {visibleMcp.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">No MCP servers match your search.</p>
       ) : null}
     </>
@@ -307,6 +390,37 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
 
   return (
     <div className={extensionsShellRowClassName}>
+      <AddMcpServerModal
+        open={mcpEditOpen && mcpEditingId !== null && mcpEditingEntry !== null}
+        onOpenChange={(open) => {
+          if (!open) closeMcpEdit();
+        }}
+        editingId={mcpEditingId}
+        initialValues={
+          mcpEditingEntry
+            ? mcpModalInitialValuesFromCatalog(
+                mcpEditingEntry,
+                mcpEditingId ? mcpOverridesById[mcpEditingId] ?? null : null
+              )
+            : null
+        }
+        onEdit={(id, payload) => {
+          setMcpOverridesById((prev) => {
+            const prior = prev[id];
+            const hasApiKey =
+              payload.apiKey.trim().length > 0 ? true : prior?.hasApiKey ?? false;
+            return {
+              ...prev,
+              [id]: {
+                name: payload.name,
+                serverType: payload.serverType,
+                url: payload.url,
+                hasApiKey,
+              },
+            };
+          });
+        }}
+      />
       <ExtensionsShellSidebar browseControls={browseControls} />
 
       <ExtensionsAnimatedMain className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
