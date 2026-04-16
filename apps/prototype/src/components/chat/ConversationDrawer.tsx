@@ -247,7 +247,7 @@ export function ConversationDrawer({
               data-conversation-id={conversation.id}
               tabIndex={0}
               className={cn(
-                'group relative h-auto w-full cursor-pointer rounded-lg p-3.5 outline-none transition-all duration-300',
+                'group relative h-auto w-full cursor-pointer rounded-lg py-3.5 pl-2.5 pr-3.5 outline-none transition-all duration-300',
                 'focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
                 // Match ChatStartScreen suggestion tiles + WelcomeScreen list rows
                 'hover:bg-muted/60 focus-visible:bg-muted/60',
@@ -270,7 +270,7 @@ export function ConversationDrawer({
                 openChatActive();
               }}
             >
-              <div className="flex items-start gap-2 pl-1">
+              <div className="flex items-start gap-2">
                 <div
                   className="relative flex h-6 w-3 shrink-0 items-center justify-center"
                   aria-hidden
@@ -418,7 +418,6 @@ export function ConversationDrawer({
                             <Pencil className="h-4 w-4" />
                             Rename
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-border" />
                           <DropdownMenuItem className={conversationMenuItemClass}>
                             <Download className="h-4 w-4" />
                             Export Conversation
