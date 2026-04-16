@@ -61,8 +61,9 @@ function buildChatRoute(options: {
 const RECENT_REPOS = ['FraterCCCLXIII/All-Hands-UI-XP', 'FraterCCCLXIII/pr-navigator', 'FraterCCCLXIII/All-Hands-UI'];
 const BRANCH_OPTIONS = ['main', 'develop', 'feature/kanban-drawer', 'bugfix/status-badge', 'release/v1.2.0'];
 const HOMEPAGE_COLUMN_VISIBLE_ITEMS = 5;
+/** Grow with list content; avoid a fixed-height scroll box for short preview lists. */
 const HOMEPAGE_COLUMN_LIST_CLASSNAME =
-  'h-[360px] max-h-[calc(100vh-420px)] overflow-y-auto custom-scrollbar transition-all duration-300 ease-in-out';
+  'transition-all duration-300 ease-in-out';
 const RECENT_CONVERSATIONS_PREVIEW_COUNT = HOMEPAGE_COLUMN_VISIBLE_ITEMS;
 const ALL_REPOS = [
   'FraterCCCLXIII/a1-hvac-local-leads',
@@ -121,14 +122,19 @@ function ConversationsColumnSkeleton() {
   return (
     <div className="flex flex-col">
       {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-2 p-[14px] animate-pulse">
-          <div className="flex items-center gap-2 pl-1">
-            <div className="h-1.5 w-1.5 rounded-full bg-muted" />
-            <div className="h-4 flex-1 rounded bg-muted" />
-          </div>
-          <div className="flex items-center justify-between gap-3 pl-1">
-            <div className="h-3 w-32 rounded bg-muted/70" />
-            <div className="h-3 w-10 rounded bg-muted/70" />
+        <div key={i} className="p-[14px] animate-pulse">
+          <div className="flex items-start gap-2 pl-1">
+            <div className="flex h-6 w-3 shrink-0 items-center justify-center">
+              <div className="h-1.5 w-1.5 rounded-full bg-muted" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="h-6 w-[85%] rounded bg-muted" />
+              <div className="flex items-center gap-1">
+                <div className="h-3 w-32 max-w-[55%] rounded bg-muted/70" />
+                <div className="h-4 w-14 shrink-0 rounded bg-muted/30" />
+                <div className="ml-auto h-3 w-10 shrink-0 rounded bg-muted/70" />
+              </div>
+            </div>
           </div>
         </div>
       ))}
@@ -141,13 +147,12 @@ function TasksColumnSkeleton() {
     <div className="flex flex-col">
       {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
         <div key={i} className="p-[14px] animate-pulse">
-          <div className="flex gap-2">
-            <div className="h-3 w-8 rounded bg-muted/70" />
-            <div className="h-4 flex-1 rounded bg-muted" />
-          </div>
-          <div className="mt-2 flex items-center gap-2 pl-10">
-            <div className="h-3 w-3 rounded bg-muted/70" />
-            <div className="h-3 w-48 max-w-full rounded bg-muted/60" />
+          <div className="flex items-start gap-1.5 pl-1">
+            <div className="h-4 w-7 shrink-0 rounded bg-muted/70" />
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="h-4 w-[90%] rounded bg-muted" />
+              <div className="h-3 w-full max-w-[95%] rounded bg-muted/60" />
+            </div>
           </div>
         </div>
       ))}
@@ -218,38 +223,39 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   }, []);
 
   const suggestedTasks = useMemo(
-    () => [
-      {
-        id: '#5',
-        title: 'Resolve merge conflicts',
-        subtitle: 'Ai interact 2',
-        repo: 'FraterCCCLXIII/chatrtk',
-      },
-      {
-        id: '#1',
-        title: 'Resolve merge conflicts',
-        subtitle: 'Fix LM Studio CORS issues with proxy server',
-        repo: 'FraterCCCLXIII/chatrtk',
-      },
-      {
-        id: '#7',
-        title: 'Audit auth edge cases',
-        subtitle: 'Harden the session expiry and refresh flow',
-        repo: 'acme/web-app',
-      },
-      {
-        id: '#12',
-        title: 'Polish token usage in nav shell',
-        subtitle: 'Replace hardcoded values with semantic tokens',
-        repo: 'acme/design-system',
-      },
-      {
-        id: '#19',
-        title: 'Stabilize flaky onboarding checks',
-        subtitle: 'Triage test instability in CI before release',
-        repo: 'FraterCCCLXIII/pr-navigator',
-      },
-    ],
+    () =>
+      [
+        {
+          id: '#5',
+          title: 'Resolve merge conflicts',
+          description: 'Ai interact 2',
+          repo: 'FraterCCCLXIII/chatrtk',
+        },
+        {
+          id: '#1',
+          title: 'Resolve merge conflicts',
+          description: 'Fix LM Studio CORS issues with proxy server',
+          repo: 'FraterCCCLXIII/chatrtk',
+        },
+        {
+          id: '#7',
+          title: 'Audit auth edge cases',
+          description: 'Harden the session expiry and refresh flow',
+          repo: 'acme/web-app',
+        },
+        {
+          id: '#12',
+          title: 'Polish token usage in nav shell',
+          description: 'Replace hardcoded values with semantic tokens',
+          repo: 'acme/design-system',
+        },
+        {
+          id: '#19',
+          title: 'Stabilize flaky onboarding checks',
+          description: 'Triage test instability in CI before release',
+          repo: 'FraterCCCLXIII/pr-navigator',
+        },
+      ] as const,
     []
   );
 
@@ -257,6 +263,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const recentConversationPreview = useMemo(
     () => conversationSummaries.slice(0, RECENT_CONVERSATIONS_PREVIEW_COUNT),
     []
+  );
+  const firstRunningPreviewIndex = useMemo(
+    () => recentConversationPreview.findIndex((c) => c.status === 'running'),
+    [recentConversationPreview]
   );
 
   const handleNavigateToSkills = useCallback(() => {
@@ -1072,7 +1082,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     />
                   ) : (
                     <div className="flex flex-col">
-                      {recentConversationPreview.map((conversation) => (
+                      {recentConversationPreview.map((conversation, index) => {
+                        const showRunningSpinner =
+                          conversation.status === 'running' && index === firstRunningPreviewIndex;
+                        return (
                         <button
                           key={conversation.id}
                           type="button"
@@ -1085,33 +1098,54 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                               })
                             );
                           }}
-                          className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                          className="p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
                         >
-                          <div className="flex items-center gap-2 pl-1">
-                            <div className="inline-flex">
-                              <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground" />
+                          <div className="flex items-start gap-2 pl-1">
+                            <div
+                              className="relative flex h-6 w-3 shrink-0 items-center justify-center"
+                              aria-hidden
+                            >
+                              {showRunningSpinner ? (
+                                <>
+                                  <span
+                                    className="pointer-events-none absolute h-3 w-3 animate-spin rounded-full border-2 border-solid border-transparent border-t-muted-foreground border-r-muted-foreground border-b-muted-foreground"
+                                    aria-hidden
+                                  />
+                                  <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+                                </>
+                              ) : (
+                                <div
+                                  className={cn(
+                                    'h-1.5 w-1.5 rounded-full',
+                                    conversation.status === 'running' ? 'bg-success' : 'bg-muted-foreground',
+                                  )}
+                                />
+                              )}
                             </div>
-                            <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                              {conversation.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground leading-4 font-normal">
-                            <div className="flex min-w-0 flex-nowrap items-center gap-3 overflow-hidden">
-                              <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden">
-                                <Github className="w-3 h-3" />
-                                <span className="min-w-0 whitespace-nowrap truncate">{conversation.repo}</span>
-                              </div>
-                              {conversation.branch ? (
-                                <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden">
-                                  <GitBranch className="w-3 h-3" />
-                                  <span className="min-w-0 whitespace-nowrap truncate">{conversation.branch}</span>
+                            <div className="min-w-0 flex-1 flex flex-col gap-1">
+                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                                {conversation.name}
+                              </span>
+                              <div className="flex flex-row items-center gap-2 text-xs leading-4 text-muted-foreground">
+                                <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+                                  <span className="min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                                    {conversation.repo}
+                                  </span>
+                                  {conversation.branch ? (
+                                    <span className="inline-flex shrink-0 items-center rounded bg-muted/30 px-1.5 py-px leading-none">
+                                      <span className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis text-[11px] leading-none">
+                                        {conversation.branch}
+                                      </span>
+                                    </span>
+                                  ) : null}
                                 </div>
-                              ) : null}
+                                <span className="ml-auto shrink-0 whitespace-nowrap">{conversation.time}</span>
+                              </div>
                             </div>
-                            <span className="shrink-0 whitespace-nowrap">{conversation.time}</span>
                           </div>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1139,23 +1173,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         <button
                           key={task.id}
                           type="button"
-                          className="w-full p-[14px] text-left flex items-center justify-between cursor-pointer rounded-lg transition-all duration-300 hover:bg-muted/60"
+                          className="w-full p-[14px] text-left cursor-pointer rounded-lg transition-all duration-300 hover:bg-muted/60"
                         >
-                          <div className="flex items-start gap-3 min-w-0 w-full">
-                            <div className="flex flex-col gap-1 min-w-0 flex-1">
-                              <div className="flex min-w-0 items-center gap-2">
-                                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal">
-                                  {task.id}
+                          <div className="flex items-baseline gap-1.5 pl-1">
+                            <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground leading-6 font-normal">
+                              {task.id}
+                            </span>
+                            <div className="min-w-0 flex-1 flex flex-col gap-1">
+                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                                {task.title}
+                              </span>
+                              <div className="flex w-full min-w-0 flex-nowrap items-center gap-1 overflow-hidden text-xs leading-4 text-muted-foreground font-normal">
+                                <span className="min-w-0 shrink truncate">{task.description}</span>
+                                <span className="shrink-0 text-muted-foreground/50" aria-hidden>
+                                  ·
                                 </span>
-                                <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                                  {task.title}
-                                </span>
-                              </div>
-                              <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden text-xs text-muted-foreground leading-4 font-normal">
-                                <Github className="w-3 h-3 shrink-0" />
-                                <span className="min-w-0 whitespace-nowrap truncate">
-                                  {task.repo} / {task.subtitle}
-                                </span>
+                                <span className="min-w-0 shrink truncate">{task.repo}</span>
                               </div>
                             </div>
                           </div>

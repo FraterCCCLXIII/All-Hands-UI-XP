@@ -113,6 +113,10 @@ export function ConversationDrawer({
   onRenameConversation,
 }: ConversationDrawerProps) {
   const items = useMemo(() => conversations, [conversations]);
+  const firstRunningIndex = useMemo(
+    () => items.findIndex((c) => c.status === 'running'),
+    [items]
+  );
   const panelRef = useRef<HTMLDivElement | null>(null);
   const menuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ConversationSummary | null>(null);
@@ -226,9 +230,11 @@ export function ConversationDrawer({
           data-testid="conversation-panel"
           className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-background pr-2 py-1 custom-scrollbar"
         >
-          {items.map((conversation) => {
+          {items.map((conversation, index) => {
             const isAutomation = conversation.tag === 'Automation';
             const isHighlighted = conversation.id === highlightedConversationId;
+            const showRunningSpinner =
+              conversation.status === 'running' && index === firstRunningIndex;
             const openChatActive = () => {
               onSelectConversation?.(conversation);
               navigateAppRoute('/chat');
@@ -264,49 +270,73 @@ export function ConversationDrawer({
                 openChatActive();
               }}
             >
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center gap-2 flex-1 min-w-0 overflow-hidden mr-2">
-                  <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                    {editingConversationId === conversation.id ? (
-                      <Input
-                        data-testid="conversation-card-title"
-                        data-conversation-rename-input={conversation.id}
-                        aria-label="Conversation name"
-                        className="h-7 min-w-0 flex-1 border-border bg-background px-2 py-0 text-xs font-normal leading-6 text-foreground shadow-sm"
-                        value={editingNameDraft}
-                        onChange={(e) => setEditingNameDraft(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          e.stopPropagation();
-                          if (e.key === 'Escape') {
-                            e.preventDefault();
-                            cancelInlineRename();
-                            return;
-                          }
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const trimmed = editingNameDraft.trim();
-                            if (trimmed) {
-                              commitInlineRename(conversation.id, editingNameDraft);
-                            } else {
-                              cancelInlineRename();
-                            }
-                          }
-                        }}
-                        onBlur={(e) => {
-                          const next = e.relatedTarget as Node | null;
-                          const card = (e.currentTarget as HTMLElement).closest('[data-conversation-id]');
-                          if (next && card?.contains(next)) return;
-                          if (ignoreRenameBlurOnceRef.current) {
-                            ignoreRenameBlurOnceRef.current = false;
-                            return;
-                          }
-                          cancelInlineRename();
-                        }}
+              <div className="flex items-start gap-2 pl-1">
+                <div
+                  className="relative flex h-6 w-3 shrink-0 items-center justify-center"
+                  aria-hidden
+                >
+                  {showRunningSpinner ? (
+                    <>
+                      <span
+                        className="pointer-events-none absolute h-3 w-3 animate-spin rounded-full border-2 border-solid border-transparent border-t-muted-foreground border-r-muted-foreground border-b-muted-foreground"
+                        aria-hidden
                       />
-                    ) : (
-                      <span className="flex min-w-0 items-center gap-1.5">
+                      <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+                    </>
+                  ) : (
+                    <div
+                      className={cn(
+                        'h-1.5 w-1.5 shrink-0 rounded-full',
+                        conversation.status === 'running' && 'bg-success',
+                        conversation.status === 'awaiting' && 'bg-warning',
+                        conversation.status === 'error' && 'bg-destructive',
+                        !conversation.status && 'bg-muted-foreground',
+                      )}
+                    />
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex items-start justify-between gap-2 min-w-0">
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
+                      {editingConversationId === conversation.id ? (
+                        <Input
+                          data-testid="conversation-card-title"
+                          data-conversation-rename-input={conversation.id}
+                          aria-label="Conversation name"
+                          className="h-7 min-w-0 flex-1 border-border bg-background px-2 py-0 text-xs font-normal leading-6 text-foreground shadow-sm"
+                          value={editingNameDraft}
+                          onChange={(e) => setEditingNameDraft(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Escape') {
+                              e.preventDefault();
+                              cancelInlineRename();
+                              return;
+                            }
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const trimmed = editingNameDraft.trim();
+                              if (trimmed) {
+                                commitInlineRename(conversation.id, editingNameDraft);
+                              } else {
+                                cancelInlineRename();
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const next = e.relatedTarget as Node | null;
+                            const card = (e.currentTarget as HTMLElement).closest('[data-conversation-id]');
+                            if (next && card?.contains(next)) return;
+                            if (ignoreRenameBlurOnceRef.current) {
+                              ignoreRenameBlurOnceRef.current = false;
+                              return;
+                            }
+                            cancelInlineRename();
+                          }}
+                        />
+                      ) : (
                         <p
                           data-testid="conversation-card-title"
                           className="min-w-0 truncate text-sm font-normal leading-6 text-foreground"
@@ -314,141 +344,134 @@ export function ConversationDrawer({
                         >
                           {conversation.name}
                         </p>
-                        <div className={cn(
-                          'h-1.5 w-1.5 rounded-full shrink-0',
-                          conversation.status === 'running' && 'bg-success',
-                          conversation.status === 'awaiting' && 'bg-warning',
-                          conversation.status === 'error' && 'bg-destructive',
-                          !conversation.status && 'bg-muted-foreground',
-                        )} />
+                      )}
+                      <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-xs font-semibold lowercase text-muted-foreground">
+                        {conversation.version}
                       </span>
-                    )}
-                    <span className="inline-flex shrink-0 cursor-help items-center rounded bg-muted/50 px-1.5 py-0.5 text-xs font-semibold lowercase text-muted-foreground">
-                      {conversation.version}
-                    </span>
-                    {isAutomation ? (
-                      <span
-                        className="inline-flex shrink-0 items-center text-success-foreground"
-                        role="img"
-                        aria-label="Automation conversation"
-                      >
-                        <AutomationDrawerIcon className="h-4 w-4" />
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="ml-auto flex items-center gap-2">
-                  <DropdownMenu
-                    open={openMenuConversationId === conversation.id}
-                    onOpenChange={(next) => {
-                      cancelMenuCloseTimer();
-                      setOpenMenuConversationId(next ? conversation.id : null);
-                      if (!next) {
-                        requestAnimationFrame(() => {
-                          const active = document.activeElement;
-                          if (active instanceof HTMLElement && active.closest('[data-conversation-menu-trigger="true"]')) {
-                            active.blur();
-                          }
-                        });
-                      }
-                    }}
-                    modal={false}
-                  >
-                    <div
-                      className="inline-flex shrink-0"
-                      onMouseEnter={() => {
-                        cancelMenuCloseTimer();
-                        setOpenMenuConversationId(conversation.id);
-                      }}
-                      onMouseLeave={() => {
-                        scheduleMenuClose();
-                      }}
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          data-testid="ellipsis-button"
-                          data-conversation-menu-trigger="true"
-                          type="button"
-                          className="relative z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-[opacity,color] duration-200 hover:text-foreground group-hover:opacity-100 data-[state=open]:text-foreground data-[state=open]:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                          aria-label="Conversation options"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                    </div>
-                    <DropdownMenuContent
-                      align="end"
-                      data-conversation-dropdown-menu
-                      className={conversationMenuContentClass}
-                      onMouseEnter={cancelMenuCloseTimer}
-                      onMouseLeave={scheduleMenuClose}
-                    >
-                      <DropdownMenuItem
-                        className={conversationMenuItemClass}
-                        onSelect={(event) => {
-                          event.preventDefault();
-                          setOpenMenuConversationId(null);
-                          ignoreRenameBlurOnceRef.current = true;
-                          setEditingConversationId(conversation.id);
-                          setEditingNameDraft(conversation.name);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-border" />
-                      <DropdownMenuItem className={conversationMenuItemClass}>
-                        <Download className="h-4 w-4" />
-                        Export Conversation
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-border" />
-                      <DropdownMenuItem
-                        className={cn(conversationMenuItemClass)}
-                        onSelect={(event) => {
-                          event.preventDefault();
-                          setDeleteTarget(conversation);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete Conversation
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-              <div className="flex flex-row items-center gap-2 mt-1 min-w-0 text-xs text-muted-foreground">
-                <div className="flex items-center gap-3 min-w-0 shrink overflow-hidden">
-                  <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-                    <span
-                      data-testid="conversation-card-selected-repository"
-                      className="whitespace-nowrap overflow-hidden text-ellipsis"
-                    >
-                      {conversation.repo}
-                    </span>
-                    {conversation.branch ? (
-                      <span className="inline-flex shrink-0 items-center rounded bg-muted/50 px-1.5 py-0.5">
+                      {isAutomation ? (
                         <span
-                          data-testid="conversation-card-selected-branch"
-                          className="whitespace-nowrap overflow-hidden text-ellipsis max-w-24"
+                          className="inline-flex shrink-0 items-center text-success-foreground"
+                          role="img"
+                          aria-label="Automation conversation"
                         >
-                          {conversation.branch}
+                          <AutomationDrawerIcon className="h-4 w-4" />
                         </span>
-                      </span>
-                    ) : null}
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 items-center">
+                      <DropdownMenu
+                        open={openMenuConversationId === conversation.id}
+                        onOpenChange={(next) => {
+                          cancelMenuCloseTimer();
+                          setOpenMenuConversationId(next ? conversation.id : null);
+                          if (!next) {
+                            requestAnimationFrame(() => {
+                              const active = document.activeElement;
+                              if (active instanceof HTMLElement && active.closest('[data-conversation-menu-trigger="true"]')) {
+                                active.blur();
+                              }
+                            });
+                          }
+                        }}
+                        modal={false}
+                      >
+                        <div
+                          className="inline-flex shrink-0"
+                          onMouseEnter={() => {
+                            cancelMenuCloseTimer();
+                            setOpenMenuConversationId(conversation.id);
+                          }}
+                          onMouseLeave={() => {
+                            scheduleMenuClose();
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              data-testid="ellipsis-button"
+                              data-conversation-menu-trigger="true"
+                              type="button"
+                              className="relative z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-[opacity,color] duration-200 hover:text-foreground group-hover:opacity-100 data-[state=open]:text-foreground data-[state=open]:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+                              aria-label="Conversation options"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                        </div>
+                        <DropdownMenuContent
+                          align="end"
+                          data-conversation-dropdown-menu
+                          className={conversationMenuContentClass}
+                          onMouseEnter={cancelMenuCloseTimer}
+                          onMouseLeave={scheduleMenuClose}
+                        >
+                          <DropdownMenuItem
+                            className={conversationMenuItemClass}
+                            onSelect={(event) => {
+                              event.preventDefault();
+                              setOpenMenuConversationId(null);
+                              ignoreRenameBlurOnceRef.current = true;
+                              setEditingConversationId(conversation.id);
+                              setEditingNameDraft(conversation.name);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-border" />
+                          <DropdownMenuItem className={conversationMenuItemClass}>
+                            <Download className="h-4 w-4" />
+                            Export Conversation
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-border" />
+                          <DropdownMenuItem
+                            className={cn(conversationMenuItemClass)}
+                            onSelect={(event) => {
+                              event.preventDefault();
+                              setDeleteTarget(conversation);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete Conversation
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                  {conversation.model ? (
-                    <span
-                      data-testid="conversation-card-model"
-                      className="shrink-0"
-                    >
-                      {conversation.model}
-                    </span>
-                  ) : null}
+                  <div className="flex min-w-0 flex-row items-center gap-2 text-xs leading-4 text-muted-foreground">
+                    <div className="flex min-w-0 shrink items-center gap-3 overflow-hidden">
+                      <div className="flex min-w-0 items-center gap-1 overflow-hidden">
+                        <span
+                          data-testid="conversation-card-selected-repository"
+                          className="whitespace-nowrap overflow-hidden text-ellipsis"
+                        >
+                          {conversation.repo}
+                        </span>
+                        {conversation.branch ? (
+                          <span className="inline-flex shrink-0 items-center rounded bg-muted/30 px-1.5 py-0.5">
+                            <span
+                              data-testid="conversation-card-selected-branch"
+                              className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis"
+                            >
+                              {conversation.branch}
+                            </span>
+                          </span>
+                        ) : null}
+                      </div>
+                      {conversation.model ? (
+                        <span
+                          data-testid="conversation-card-model"
+                          className="shrink-0"
+                        >
+                          {conversation.model}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="ml-auto shrink-0 whitespace-nowrap">
+                      <time>{conversation.time}</time>
+                    </p>
+                  </div>
                 </div>
-                <p className="ml-auto shrink-0 whitespace-nowrap">
-                  <time>{conversation.time}</time>
-                </p>
               </div>
             </div>
             );
