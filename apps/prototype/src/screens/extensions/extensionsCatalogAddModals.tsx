@@ -9,6 +9,7 @@ import {
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+import { OPENHANDS_HOOKS_DOCS_URL } from '../../data/hooksCatalog';
 import { showAppToast } from '../../lib/appToast';
 
 const inputLike =
@@ -245,45 +246,77 @@ export type AddHookModalProps = {
   onOpenChange: (open: boolean) => void;
   /** When provided, called with trimmed values after validation; use for persisting (e.g. org settings table). */
   onAdd?: (payload: { name: string; instructions: string }) => void;
+  editingId?: string | null;
+  initialValues?: { name: string; notes: string } | null;
+  onEdit?: (id: string, payload: { name: string; instructions: string }) => void;
 };
 
-export function AddHookModal({ open, onOpenChange, onAdd }: AddHookModalProps) {
+export function AddHookModal({
+  open,
+  onOpenChange,
+  onAdd,
+  editingId = null,
+  initialValues = null,
+  onEdit,
+}: AddHookModalProps) {
   const [hookName, setHookName] = useState('');
   const [instructions, setInstructions] = useState('');
 
+  const isEdit = Boolean(editingId);
+
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    if (editingId && initialValues) {
+      setHookName(initialValues.name);
+      setInstructions(initialValues.notes);
+    } else if (!editingId) {
       setHookName('');
       setInstructions('');
     }
-  }, [open]);
+  }, [open, editingId]);
 
   const submit = () => {
     const name = hookName.trim();
     if (!name) return;
     const instr = instructions.trim();
     onOpenChange(false);
-    onAdd?.({ name, instructions: instr });
-    showAppToast({ variant: 'success', message: 'Hook added.' });
+    if (editingId) {
+      onEdit?.(editingId, { name, instructions: instr });
+      showAppToast({ variant: 'success', message: 'Hook recipe updated.' });
+    } else {
+      onAdd?.({ name, instructions: instr });
+      showAppToast({ variant: 'success', message: 'Hook recipe saved.' });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Hook</DialogTitle>
+          <DialogTitle>{isEdit ? 'Edit hook recipe' : 'Add hook recipe'}</DialogTitle>
           <DialogDescription>
-            Name this automation hook and describe what should run when it fires.
+            OpenHands hooks are shell commands registered in{' '}
+            <code className="rounded bg-muted px-1 py-px font-mono text-xs">.openhands/hooks.json</code> — they run
+            at tool use, prompts, stop, or session boundaries (see{' '}
+            <a
+              href={OPENHANDS_HOOKS_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-2"
+            >
+              hooks documentation
+            </a>
+            ). Use this form to capture a workspace note; wire scripts in your repository.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-1">
           <div>
             <label htmlFor="hook-name" className="mb-1.5 block text-sm font-medium text-foreground">
-              Hook name
+              Display name
             </label>
             <Input
               id="hook-name"
-              placeholder="e.g. deployment-success"
+              placeholder="e.g. lint_on_stop"
               value={hookName}
               onChange={(e) => setHookName(e.target.value)}
               autoComplete="off"
@@ -291,12 +324,12 @@ export function AddHookModal({ open, onOpenChange, onAdd }: AddHookModalProps) {
           </div>
           <div>
             <label htmlFor="hook-instructions" className="mb-1.5 block text-sm font-medium text-foreground">
-              Instructions to run
+              Script path or notes
             </label>
             <textarea
               id="hook-instructions"
               className={textareaLike}
-              placeholder="Steps, commands, or prompts for the agent when this hook runs."
+              placeholder=".openhands/hooks/lint_on_stop.sh — or notes for your team."
               value={instructions}
               onChange={(e) => setInstructions(e.target.value)}
               rows={5}
@@ -308,7 +341,7 @@ export function AddHookModal({ open, onOpenChange, onAdd }: AddHookModalProps) {
             Cancel
           </Button>
           <Button type="button" size="sm" disabled={!hookName.trim()} onClick={submit}>
-            Add Hook
+            {isEdit ? 'Save changes' : 'Save'}
           </Button>
         </DialogFooter>
       </DialogContent>

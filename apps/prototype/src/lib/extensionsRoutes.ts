@@ -54,11 +54,11 @@ export const extensionsMainScrollClassName =
 export const extensionsMainNoScrollClassName =
   'relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pt-[var(--settings-main-padding-top)] pb-[var(--settings-main-padding-bottom)]';
 
-export type ExtensionsShellMode = 'all' | 'skills' | 'plugins';
+export type ExtensionsShellMode = 'all' | 'skills' | 'plugins' | 'mcp' | 'hooks';
 
 /**
  * Which full-screen Extensions child to render from the current pathname.
- * Skills browse + skill detail use `ExtensionsSkillsPanel`; plugins use `ExtensionsPluginsPanel`.
+ * Skills / plugins / MCP / hooks use dedicated panels; combined browse uses `ExtensionsAllMixedView`.
  */
 export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
   const pathPart = pathname.replace(/^\/+/, '').split('?')[0] ?? '';
@@ -71,6 +71,12 @@ export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
     pathPart.startsWith(`${EXTENSIONS_PLUGINS_BASE}/`)
   ) {
     return 'plugins';
+  }
+  if (pathPart === EXTENSIONS_MCP_BASE || pathPart.startsWith(`${EXTENSIONS_MCP_BASE}/`)) {
+    return 'mcp';
+  }
+  if (pathPart === EXTENSIONS_HOOKS_BASE || pathPart.startsWith(`${EXTENSIONS_HOOKS_BASE}/`)) {
+    return 'hooks';
   }
   return 'all';
 }

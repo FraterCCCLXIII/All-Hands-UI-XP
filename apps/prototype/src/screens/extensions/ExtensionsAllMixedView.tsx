@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { ExternalLink, MoreVertical, Pencil, Trash2, Webhook } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, Webhook } from 'lucide-react';
 import { McpIcon } from '../../components/icons/McpIcon';
 import { SkillIcon } from '../../components/icons/SkillIcon';
-import { Button } from '../../components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +13,9 @@ import { marketplaceSkills } from '../../data/skillsPageData';
 import {
   hooksCatalogCategories,
   hooksCatalogEntries,
+  hooksCatalogDisplaySubtext,
+  OPENHANDS_HOOKS_DOCS_URL,
+  type HookRecipeOverride,
   type HooksCatalogEntry,
 } from '../../data/hooksCatalog';
 import {
@@ -38,8 +40,7 @@ import {
   extensionsShellRowClassName,
 } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
-import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
-import { AddMcpServerModal } from './extensionsCatalogAddModals';
+import { AddHookModal, AddMcpServerModal } from './extensionsCatalogAddModals';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { getSkillSource, SkillSourceBadge } from './SkillSourceBadge';
 import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
@@ -80,10 +81,14 @@ function hooksMatchesQuery(entry: HooksCatalogEntry, q: string): boolean {
     const label = hooksCatalogCategories.find((c) => c.slug === tag)?.name?.toLowerCase() ?? '';
     return label.includes(s);
   });
+  const sub = hooksCatalogDisplaySubtext(entry, null).toLowerCase();
   return (
     entry.name.toLowerCase().includes(s) ||
     entry.description.toLowerCase().includes(s) ||
-    (entry.trigger?.toLowerCase().includes(s) ?? false) ||
+    sub.includes(s) ||
+    entry.eventType.toLowerCase().includes(s) ||
+    entry.configKey.toLowerCase().includes(s) ||
+    entry.matcherHint.toLowerCase().includes(s) ||
     entry.tags.some((t) => t.toLowerCase().includes(s)) ||
     categoryLabelMatch
   );
@@ -101,6 +106,11 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
   const [mcpOverridesById, setMcpOverridesById] = useState<Record<string, McpConnectionOverride>>({});
   const [mcpEditOpen, setMcpEditOpen] = useState(false);
   const [mcpEditingId, setMcpEditingId] = useState<string | null>(null);
+  const [hookSwitchById, setHookSwitchById] = useState<Record<string, boolean>>({});
+  const [removedHookIds, setRemovedHookIds] = useState<Set<string>>(() => new Set());
+  const [hookOverridesById, setHookOverridesById] = useState<Record<string, HookRecipeOverride>>({});
+  const [hookEditOpen, setHookEditOpen] = useState(false);
+  const [hookEditingId, setHookEditingId] = useState<string | null>(null);
   const { searchQuery, scope } = browseControls;
 
   const closeMcpEdit = useCallback(() => {
@@ -108,9 +118,19 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
     setMcpEditingId(null);
   }, []);
 
+  const closeHookEdit = useCallback(() => {
+    setHookEditOpen(false);
+    setHookEditingId(null);
+  }, []);
+
   const mcpEditingEntry = useMemo(
     () => (mcpEditingId ? mcpCatalogEntries.find((e) => e.id === mcpEditingId) ?? null : null),
     [mcpEditingId]
+  );
+
+  const hookEditingEntry = useMemo(
+    () => (hookEditingId ? hooksCatalogEntries.find((e) => e.id === hookEditingId) ?? null : null),
+    [hookEditingId]
   );
 
   const filteredSkills = useMemo(
@@ -128,6 +148,10 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
   const filteredHooks = useMemo(
     () => hooksCatalogEntries.filter((e) => hooksMatchesQuery(e, searchQuery)),
     [searchQuery]
+  );
+  const visibleHooks = useMemo(
+    () => filteredHooks.filter((e) => !removedHookIds.has(e.id)),
+    [filteredHooks, removedHookIds]
   );
 
   /** Skills-only rows (non-plugin marketplace items). */
@@ -306,6 +330,89 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
     );
   };
 
+  const renderHooksCard = (entry: HooksCatalogEntry) => {
+    const displayName = hookOverridesById[entry.id]?.name ?? entry.name;
+    const subtext = hooksCatalogDisplaySubtext(entry, hookOverridesById[entry.id] ?? null);
+    const enabled = hookSwitchById[entry.id] !== false;
+    return (
+      <div
+        key={entry.id}
+        className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60"
+      >
+        <div
+          className={cn(
+            extensionsCatalogCardControlsClassName,
+            extensionsCatalogCardControlClusterClassName,
+          )}
+        >
+          <PluginToggle
+            size="sm"
+            checked={enabled}
+            onCheckedChange={() =>
+              setHookSwitchById((prev) => ({
+                ...prev,
+                [entry.id]: !(prev[entry.id] !== false),
+              }))
+            }
+            aria-label={enabled ? `Turn off ${displayName}` : `Turn on ${displayName}`}
+          />
+          <div className={extensionsCatalogCardMenuSlotClassName}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={extensionsCatalogCardOverflowMenuTriggerClassName}
+                  aria-label={`${displayName} options`}
+                >
+                  <MoreVertical className="h-4 w-4 shrink-0" aria-hidden />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() => {
+                    setHookEditingId(entry.id);
+                    setHookEditOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onSelect={() =>
+                    setRemovedHookIds((prev) => new Set(prev).add(entry.id))
+                  }
+                >
+                  <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                  Remove
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div
+          className={cn(
+            'w-full rounded-xl p-5 pt-5 text-left',
+            extensionsCatalogCardBodyPrWithControlCluster,
+          )}
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+              <Webhook className="h-5 w-5 text-muted-foreground" aria-hidden />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="text-base font-medium text-foreground">{displayName}</span>
+              <p className="mt-2 line-clamp-2 break-all text-sm text-muted-foreground" title={subtext}>
+                {subtext}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const skillsDescription =
     'Discover skills to add to your workspace. Open a card for prompts, curl, and install flows.';
   const pluginsDescription =
@@ -315,14 +422,20 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
 
   const hooksDescription = (
     <>
-      Automation entry points for Git, CI, chat, and schedules. Configure webhooks and integrations in{' '}
-      <button
-        type="button"
-        className="font-medium text-foreground transition-colors hover:text-foreground/90"
-        onClick={() => navigateAppRoute('/settings/integrations')}
+      OpenHands runs your shell scripts at lifecycle points (before/after tools, on stop, session start/end, and when
+      prompts are submitted). Register them in{' '}
+      <code className="rounded border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-xs text-foreground">
+        .openhands/hooks.json
+      </code>{' '}
+      in the repository — compatible with Claude Code hooks. See the{' '}
+      <a
+        href={OPENHANDS_HOOKS_DOCS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium text-foreground underline underline-offset-2 hover:text-foreground/90"
       >
-        Settings
-      </button>
+        hooks guide
+      </a>
       .
     </>
   );
@@ -340,50 +453,11 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
 
   const hooksList = (
     <>
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {filteredHooks.map((entry) => (
-          <li
-            key={entry.id}
-            className="flex flex-col rounded-xl border border-border bg-card p-5 transition-colors hover:bg-muted/30"
-          >
-            <div className="flex items-start gap-2">
-              <Webhook className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-              <div className="min-w-0">
-                <h3 className="text-base font-semibold text-foreground">{entry.name}</h3>
-                {entry.trigger ? (
-                  <p className="mt-0.5 text-xs text-muted-foreground">{entry.trigger}</p>
-                ) : null}
-              </div>
-            </div>
-            <p className="mt-3 line-clamp-4 text-sm text-muted-foreground">{entry.description}</p>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="default"
-                onClick={() => navigateAppRoute('/settings/integrations')}
-              >
-                Configure in Settings
-              </Button>
-              {entry.docsUrl ? (
-                <Button type="button" size="sm" variant="outline" asChild>
-                  <a
-                    href={entry.docsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5"
-                  >
-                    View docs
-                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                  </a>
-                </Button>
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {filteredHooks.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">No hooks match your search.</p>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {visibleHooks.map(renderHooksCard)}
+      </div>
+      {visibleHooks.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">No hook patterns match your search.</p>
       ) : null}
     </>
   );
@@ -421,6 +495,29 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
           });
         }}
       />
+      <AddHookModal
+        open={hookEditOpen && hookEditingId !== null && hookEditingEntry !== null}
+        onOpenChange={(open) => {
+          if (!open) closeHookEdit();
+        }}
+        editingId={hookEditingId}
+        initialValues={
+          hookEditingEntry
+            ? {
+                name: hookOverridesById[hookEditingEntry.id]?.name ?? hookEditingEntry.name,
+                notes:
+                  hookOverridesById[hookEditingEntry.id]?.notes ??
+                  hooksCatalogDisplaySubtext(hookEditingEntry, null),
+              }
+            : null
+        }
+        onEdit={(id, payload) => {
+          setHookOverridesById((prev) => ({
+            ...prev,
+            [id]: { name: payload.name, notes: payload.instructions },
+          }));
+        }}
+      />
       <ExtensionsShellSidebar browseControls={browseControls} />
 
       <ExtensionsAnimatedMain className={cn('repo-dropdown-scroll', extensionsMainScrollClassName)}>
@@ -431,8 +528,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
             scope === 'all' && 'gap-12',
           )}
         >
-        {scope === 'all' ? (
-          <>
+        <>
             {showSkillsSection && (scope === 'all' || scope === 'skills') && (
               <section aria-labelledby="ext-skills-heading" className="flex flex-col gap-4">
                 <ExtensionsCatalogPageHeader
@@ -486,61 +582,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
                 <div>{hooksList}</div>
               </section>
             )}
-          </>
-        ) : (
-          <>
-            {scope === 'skills' && (
-              <section className="flex flex-col gap-4">
-                <ExtensionsCatalogPageHeader
-                  title="Skills"
-                  description={skillsDescription}
-                  actions={<ExtensionsCatalogAddButton kind="skill" />}
-                />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {skillCatalogItems.map(renderMarketplaceCard)}
-                </div>
-                {skillCatalogItems.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No skills match your search.</p>
-                ) : null}
-              </section>
-            )}
-            {scope === 'plugins' && (
-              <section className="flex flex-col gap-4">
-                <ExtensionsCatalogPageHeader
-                  title="Plugins"
-                  description={pluginsDescription}
-                  actions={<ExtensionsCatalogAddButton kind="plugin" />}
-                />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {pluginCatalogItems.map(renderMarketplaceCard)}
-                </div>
-                {pluginCatalogItems.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No plugins match your search.</p>
-                ) : null}
-              </section>
-            )}
-            {scope === 'mcp' && (
-              <section className="flex flex-col gap-4">
-                <ExtensionsCatalogPageHeader
-                  title="MCP servers"
-                  description={mcpDescription}
-                  actions={<ExtensionsCatalogAddButton kind="mcp" />}
-                />
-                {mcpList}
-              </section>
-            )}
-            {scope === 'hooks' && (
-              <section className="flex flex-col gap-4">
-                <ExtensionsCatalogPageHeader
-                  title="Hooks"
-                  description={hooksDescription}
-                  actions={<ExtensionsCatalogAddButton kind="hook" />}
-                />
-                {hooksList}
-              </section>
-            )}
-          </>
-        )}
+        </>
         </div>
       </ExtensionsAnimatedMain>
     </div>

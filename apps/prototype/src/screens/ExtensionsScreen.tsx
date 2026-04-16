@@ -11,6 +11,8 @@ import {
   type ExtensionsShellMode,
 } from '../lib/extensionsRoutes';
 import { ExtensionsAllMixedView } from './extensions/ExtensionsAllMixedView';
+import { ExtensionsHooksPanel } from './extensions/ExtensionsHooksPanel';
+import { ExtensionsMcpPanel } from './extensions/ExtensionsMcpPanel';
 import { ExtensionsPluginsPanel } from './extensions/ExtensionsPluginsPanel';
 import { ExtensionsSkillsPanel } from './extensions/ExtensionsSkillsPanel';
 import type { ExtensionsBrowseControls, ExtensionsCatalogScope } from './extensions/ExtensionsShellSidebar';
@@ -82,6 +84,12 @@ export function ExtensionsScreen() {
     return (
       <ExtensionsPluginsPanel browseControls={browseControls} />
     );
+  }
+  if (mode === 'mcp') {
+    return <ExtensionsMcpPanel browseControls={browseControls} />;
+  }
+  if (mode === 'hooks') {
+    return <ExtensionsHooksPanel browseControls={browseControls} />;
   }
   return (
     <ExtensionsAllMixedView browseControls={browseControls} />

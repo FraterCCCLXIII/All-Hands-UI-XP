@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { McpIcon } from '../../components/icons/McpIcon';
-import { SearchInput } from '../../components/ui/search-input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +9,9 @@ import {
 } from '../../components/ui/dropdown-menu';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
 import {
-  mcpCatalogCategories,
   mcpCatalogEntries,
   mcpCatalogDisplayUrl,
   mcpModalInitialValuesFromCatalog,
-  type McpCatalogEntry,
   type McpConnectionOverride,
 } from '../../data/mcpCatalog';
 import { AddMcpServerModal } from './extensionsCatalogAddModals';
@@ -26,31 +23,19 @@ import {
   extensionsCatalogCardOverflowMenuTriggerClassName,
   extensionsMainScrollClassName,
   extensionsPageContentClassName,
+  extensionsShellRowClassName,
 } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
+import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
+import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
+import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
 
-function entryMatchesQuery(entry: McpCatalogEntry, q: string): boolean {
-  if (!q.trim()) return true;
-  const s = q.toLowerCase();
-  const categoryLabelMatch = entry.tags.some((tag) => {
-    const label = mcpCatalogCategories.find((c) => c.slug === tag)?.name?.toLowerCase() ?? '';
-    return label.includes(s);
-  });
-  const url = mcpCatalogDisplayUrl(entry, null).toLowerCase();
-  return (
-    entry.name.toLowerCase().includes(s) ||
-    entry.description.toLowerCase().includes(s) ||
-    url.includes(s) ||
-    (entry.provider?.toLowerCase().includes(s) ?? false) ||
-    entry.tags.some((t) => t.toLowerCase().includes(s)) ||
-    categoryLabelMatch
-  );
-}
+export type ExtensionsMcpPanelProps = {
+  browseControls: ExtensionsBrowseControls;
+};
 
-export function ExtensionsMcpPanel() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categorySlug, setCategorySlug] = useState<string | null>(null);
+export function ExtensionsMcpPanel({ browseControls }: ExtensionsMcpPanelProps) {
   const [mcpSwitchById, setMcpSwitchById] = useState<Record<string, boolean>>({});
   const [removedMcpIds, setRemovedMcpIds] = useState<Set<string>>(() => new Set());
   const [mcpOverridesById, setMcpOverridesById] = useState<Record<string, McpConnectionOverride>>({});
@@ -67,23 +52,16 @@ export function ExtensionsMcpPanel() {
     [mcpEditingId]
   );
 
-  const filtered = useMemo(() => {
-    return mcpCatalogEntries.filter((entry) => {
-      if (categorySlug && !entry.tags.includes(categorySlug)) return false;
-      return entryMatchesQuery(entry, searchQuery);
-    });
-  }, [searchQuery, categorySlug]);
-
   const visible = useMemo(
-    () => filtered.filter((e) => !removedMcpIds.has(e.id)),
-    [filtered, removedMcpIds]
+    () => mcpCatalogEntries.filter((e) => !removedMcpIds.has(e.id)),
+    [removedMcpIds]
   );
 
   const description =
     'Browse recommended Model Context Protocol servers. Enable servers to expose tools and data to your agents.';
 
   return (
-    <div className={cn(extensionsMainScrollClassName, 'h-full min-h-0 flex-1')}>
+    <div className={extensionsShellRowClassName}>
       <AddMcpServerModal
         open={mcpEditOpen && mcpEditingId !== null && mcpEditingEntry !== null}
         onOpenChange={(open) => {
@@ -115,47 +93,15 @@ export function ExtensionsMcpPanel() {
           });
         }}
       />
-      <div className={extensionsPageContentClassName}>
-        <ExtensionsCatalogPageHeader title="MCP servers" description={description}>
-          <div className="max-w-lg">
-            <SearchInput
-              value={searchQuery}
-              onValueChange={setSearchQuery}
-              placeholder="Search by name, tag, or description"
-              aria-label="Search MCP catalog"
-              size="lg"
-            />
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Filter by category">
-            <button
-              type="button"
-              onClick={() => setCategorySlug(null)}
-              className={cn(
-                'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                categorySlug === null
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted/60',
-              )}
-            >
-              All
-            </button>
-            {mcpCatalogCategories.map((cat) => (
-              <button
-                key={cat.slug}
-                type="button"
-                onClick={() => setCategorySlug(cat.slug === categorySlug ? null : cat.slug)}
-                className={cn(
-                  'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                  categorySlug === cat.slug
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted/60',
-                )}
-              >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </ExtensionsCatalogPageHeader>
+      <ExtensionsShellSidebar browseControls={browseControls} />
+
+      <ExtensionsAnimatedMain className={cn(extensionsMainScrollClassName, 'repo-dropdown-scroll')}>
+        <div className={extensionsPageContentClassName}>
+        <ExtensionsCatalogPageHeader
+          title="MCP servers"
+          description={description}
+          actions={<ExtensionsCatalogAddButton kind="mcp" />}
+        />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {visible.map((entry) => {
@@ -244,7 +190,8 @@ export function ExtensionsMcpPanel() {
         {visible.length === 0 ? (
           <p className="py-12 text-center text-sm text-muted-foreground">No servers match your search.</p>
         ) : null}
-      </div>
+        </div>
+      </ExtensionsAnimatedMain>
     </div>
   );
 }
