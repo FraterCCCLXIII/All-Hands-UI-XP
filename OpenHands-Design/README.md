@@ -64,7 +64,7 @@ import './globals.css';
 
 ### 4. Theme class on `<html>` (optional)
 
-Tokens are defined on `:root` in `globals.css`; many apps also duplicate values under `.dark`. You can add `class="dark"` on `<html>` for Tailwind `dark:` variants and consistency with the **All Hands UI XP** prototype. **A full light theme is not product-ready** in the prototype — ship dark only until that work is scheduled.
+Tokens are defined on `:root` in `globals.css`; many apps also duplicate values under `.dark`. You can add `class="dark"` on `<html>` for Tailwind `dark:` variants and consistency with the **OpenHands** prototype. **A full light theme is not product-ready** in the prototype — ship dark only until that work is scheduled.
 
 ### 5. Start using components
 

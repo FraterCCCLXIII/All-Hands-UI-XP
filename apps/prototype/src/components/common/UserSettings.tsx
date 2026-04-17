@@ -16,7 +16,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ getThemeClasses, onClose })
 
   // Example organizations
   const organizations = [
-    'All Hands AI',
+    'OpenHands',
     'Acme Corp',
     'Beta Org',
   ];

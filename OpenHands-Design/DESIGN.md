@@ -1,6 +1,6 @@
 # OpenHands UI Design System
 
-## Scope & canonical locations (All Hands UI XP)
+## Scope & canonical locations (OpenHands)
 
 This document describes the design system implemented by the **prototype app** in this monorepo (`apps/prototype`). Portable copies live under **`OpenHands-Design/`** (synced to `packages/openhands-design/template/` via `npm run sync:openhands-design-template`). In a project that only copied `OpenHands-Design/`, use **`src/`** paths instead of **`apps/prototype/src/`** below.
 

@@ -134,7 +134,7 @@ export function ElectronTitleBar() {
   if (!api) return null;
 
   const title = (
-    <span className="truncate text-xs font-medium text-muted-foreground">All Hands UI XP</span>
+    <span className="truncate text-xs font-medium text-muted-foreground">OpenHands</span>
   );
 
   if (isMac) {

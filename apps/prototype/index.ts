@@ -1299,7 +1299,7 @@ function App() {
                     {/* Organization Settings Column */}
                     <div className="flex-1 pl-4">
                       <h4 className="font-semibold text-sm mb-2">Organization Settings</h4>
-                      <p className="text-xs opacity-70 mb-3">All Hands AI</p>
+                      <p className="text-xs opacity-70 mb-3">OpenHands</p>
                       <ul className="space-y-2 text-sm">
                         <li><a href="#" className={`block py-1 hover:${getThemeClasses('active-button-bg')} hover:${getThemeClasses('active-button-text')} rounded-md px-2`}>Plan & Usage</a></li>
                         <li><a href="#" className={`block py-1 hover:${getThemeClasses('active-button-bg')} hover:${getThemeClasses('active-button-text')} rounded-md px-2`}>Users</a></li>
@@ -1314,7 +1314,7 @@ function App() {
                       <div className="mt-4">
                         <h4 className="font-semibold text-sm mb-2">SWITCH ORGANIZATIONS</h4>
                         <div className={`flex items-center justify-between py-1 px-2 rounded-md ${getThemeClasses('active-button-bg')} ${getThemeClasses('active-button-text')} cursor-pointer`}>
-                          <span>All Hands AI</span>
+                          <span>OpenHands</span>
                           <CheckCircle className="w-4 h-4" />
                         </div>
                       </div>

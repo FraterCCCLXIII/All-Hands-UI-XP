@@ -193,18 +193,18 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
                     <code>
                       {`Here's the files and directories up to 2 levels deep in /workspace/project, excluding hidden items:
 /workspace/project/
-/workspace/project/All-Hands-UI-XP/
-/workspace/project/All-Hands-UI-XP/index.html
-/workspace/project/All-Hands-UI-XP/index.ts
-/workspace/project/All-Hands-UI-XP/node_modules/
-/workspace/project/All-Hands-UI-XP/package-lock.json
-/workspace/project/All-Hands-UI-XP/package.json
-/workspace/project/All-Hands-UI-XP/postcss.config.js
-/workspace/project/All-Hands-UI-XP/src/
-/workspace/project/All-Hands-UI-XP/tailwind.config.js
-/workspace/project/All-Hands-UI-XP/tsconfig.json
-/workspace/project/All-Hands-UI-XP/tsconfig.node.json
-/workspace/project/All-Hands-UI-XP/vite.config.ts
+/workspace/project/openhands/
+/workspace/project/openhands/index.html
+/workspace/project/openhands/index.ts
+/workspace/project/openhands/node_modules/
+/workspace/project/openhands/package-lock.json
+/workspace/project/openhands/package.json
+/workspace/project/openhands/postcss.config.js
+/workspace/project/openhands/src/
+/workspace/project/openhands/tailwind.config.js
+/workspace/project/openhands/tsconfig.json
+/workspace/project/openhands/tsconfig.node.json
+/workspace/project/openhands/vite.config.ts
 
 1 hidden files/directories in this directory are excluded. You can use 'ls -la /workspace/project' to see them.`}
                     </code>
@@ -220,7 +220,7 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
               <ToolDisclosure
                 verb="Read"
                 target="package.json"
-                fullPath="/workspace/project/All-Hands-UI-XP/package.json"
+                fullPath="/workspace/project/openhands/package.json"
                 expanded={packageJsonReadExpanded}
                 onToggle={() => setPackageJsonReadExpanded((e) => !e)}
               >
@@ -228,7 +228,7 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
                   <pre className="bg-card text-foreground p-4 rounded border border-border overflow-auto text-xs font-mono whitespace-pre">
                     <code>
                       {`{
-  "name": "all-hands-ui-xp",
+  "name": "openhands",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -252,7 +252,7 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
               <ToolDisclosure
                 verb="Ran"
                 target="cat server.log"
-                fullPath="sleep 2 && cat /workspace/project/All-Hands-UI-XP/server.log"
+                fullPath="sleep 2 && cat /workspace/project/openhands/server.log"
                 expanded={ranCommandExpanded}
                 onToggle={() => setRanCommandExpanded((e) => !e)}
               >
@@ -260,18 +260,18 @@ export function PublicShareScreen({ conversation }: PublicShareScreenProps) {
                   <p className="text-muted-foreground text-sm">
                     Command:{' '}
                     <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
-                      sleep 2 &amp;&amp; cat /workspace/project/All-Hands-UI-XP/server.log
+                      sleep 2 &amp;&amp; cat /workspace/project/openhands/server.log
                     </code>
                   </p>
                   <p className="text-muted-foreground text-sm">Output:</p>
                   <pre className="bg-background text-foreground p-4 rounded-lg border border-border overflow-auto text-xs font-mono whitespace-pre">
                     <code>
-                      {`[1]+  Exit 1                  cd /workspace/project/All-Hands-UI-XP && npm run dev -- --port 12000 --host 0.0.0.0 > server.log 2>&1
+                      {`[1]+  Exit 1                  cd /workspace/project/openhands && npm run dev -- --port 12000 --host 0.0.0.0 > server.log 2>&1
 
-> all-hands-ui-xp@1.0.0 dev
+> openhands@1.0.0 dev
 > vite --port 12000 --host 0.0.0.0
 
-/workspace/project/All-Hands-UI-XP/node_modules/rollup/dist/native.js:64
+/workspace/project/openhands/node_modules/rollup/dist/native.js:64
             throw new Error(
                   ^
 

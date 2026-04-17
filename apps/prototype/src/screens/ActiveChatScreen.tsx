@@ -151,7 +151,7 @@ const CANVAS_TAB_ARIA: Record<TabId, string> = {
 };
 
 /** Opens in a new tab from the Code tab external-link control */
-const CODE_EXTERNAL_REPO_URL = 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP';
+const CODE_EXTERNAL_REPO_URL = 'https://github.com/FraterCCCLXIII/openhands';
 
 const PLAN_PROMPT_FROM_CANVAS = 'Create a plan for this repository.';
 
@@ -220,7 +220,7 @@ const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
     name: 'PR review',
     type: 'skill',
     description: 'Summarizes code changes, flags risky diffs, and prepares reviewer-ready notes.',
-    repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
+    repositoryUrl: 'https://github.com/FraterCCCLXIII/openhands',
     source: 'Loaded from the conversation skill registry.',
     pageUrl: '/extensions/all',
     initialPrompt: 'Review this pull request for risky changes, unclear logic, regressions, and missing test coverage.',
@@ -234,7 +234,7 @@ const LOADED_CONVERSATION_SKILLS: ConversationCapability[] = [
     name: 'Release notes',
     type: 'skill',
     description: 'Builds concise release-note drafts from the current conversation and changes.',
-    repositoryUrl: 'https://github.com/FraterCCCLXIII/All-Hands-UI-XP',
+    repositoryUrl: 'https://github.com/FraterCCCLXIII/openhands',
     source: 'Loaded from the conversation skill registry.',
     pageUrl: '/extensions/all',
     initialPrompt: 'Draft release notes from the current conversation, grouped by user-facing changes, fixes, and operational impact.',
@@ -521,7 +521,7 @@ export function ActiveChatScreen({
   const canvasTipLabel = CANVAS_TIP_OPTIONS.find((option) => option.id === canvasTipVariant)?.label ?? 'None';
   const automationContextLabel =
     AUTOMATION_CONTEXT_OPTIONS.find((o) => o.title === automationContextTitle)?.label ?? 'None';
-  const connectedRepoName = repositoryName ?? 'FraterCCCLXIII/All-Hands-UI-XP';
+  const connectedRepoName = repositoryName ?? 'FraterCCCLXIII/openhands';
   const connectedBranchName = branchName ?? 'feature/kanban-drawer';
   const connectedRepoUrl = `https://github.com/${connectedRepoName}`;
   const connectedBranchUrl = `${connectedRepoUrl}/tree/${encodeURIComponent(connectedBranchName)}`;
@@ -1364,18 +1364,18 @@ export function ActiveChatScreen({
                                       <code>
                                         {`Here's the files and directories up to 2 levels deep in /workspace/project, excluding hidden items:
 /workspace/project/
-/workspace/project/All-Hands-UI-XP/
-/workspace/project/All-Hands-UI-XP/index.html
-/workspace/project/All-Hands-UI-XP/index.ts
-/workspace/project/All-Hands-UI-XP/node_modules/
-/workspace/project/All-Hands-UI-XP/package-lock.json
-/workspace/project/All-Hands-UI-XP/package.json
-/workspace/project/All-Hands-UI-XP/postcss.config.js
-/workspace/project/All-Hands-UI-XP/src/
-/workspace/project/All-Hands-UI-XP/tailwind.config.js
-/workspace/project/All-Hands-UI-XP/tsconfig.json
-/workspace/project/All-Hands-UI-XP/tsconfig.node.json
-/workspace/project/All-Hands-UI-XP/vite.config.ts
+/workspace/project/openhands/
+/workspace/project/openhands/index.html
+/workspace/project/openhands/index.ts
+/workspace/project/openhands/node_modules/
+/workspace/project/openhands/package-lock.json
+/workspace/project/openhands/package.json
+/workspace/project/openhands/postcss.config.js
+/workspace/project/openhands/src/
+/workspace/project/openhands/tailwind.config.js
+/workspace/project/openhands/tsconfig.json
+/workspace/project/openhands/tsconfig.node.json
+/workspace/project/openhands/vite.config.ts
 
 1 hidden files/directories in this directory are excluded. You can use 'ls -la /workspace/project' to see them.`}
                                       </code>
@@ -1391,7 +1391,7 @@ export function ActiveChatScreen({
                                 <div className="flex items-center justify-between font-normal text-muted-foreground">
                                   <div>
                                     <span className="text-muted-foreground">Read</span>{' '}
-                                    <span className="font-sans" title="/workspace/project/All-Hands-UI-XP/package.json">
+                                    <span className="font-sans" title="/workspace/project/openhands/package.json">
                                       package.json
                                     </span>
                                     <button
@@ -1414,7 +1414,7 @@ export function ActiveChatScreen({
                                     <pre className="bg-card text-foreground p-4 rounded border border-border overflow-auto text-xs font-mono whitespace-pre">
                                       <code>
                                         {`{
-  "name": "all-hands-ui-xp",
+  "name": "openhands",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -1440,7 +1440,7 @@ export function ActiveChatScreen({
                                 <div className="flex items-center justify-between font-normal text-muted-foreground">
                                   <div>
                                     <span className="text-muted-foreground">Ran</span>{' '}
-                                    <span className="font-sans" title="sleep 2 && cat /workspace/project/All-Hands-UI-XP/server.log">
+                                    <span className="font-sans" title="sleep 2 && cat /workspace/project/openhands/server.log">
                                       cat server.log
                                     </span>
                                     <button
@@ -1463,24 +1463,24 @@ export function ActiveChatScreen({
                                     <p className="text-muted-foreground text-sm">
                                       Command:{' '}
                                       <code className="bg-card text-foreground px-1.5 py-0.5 rounded border border-border text-xs font-mono">
-                                        sleep 2 &amp;&amp; cat /workspace/project/All-Hands-UI-XP/server.log
+                                        sleep 2 &amp;&amp; cat /workspace/project/openhands/server.log
                                       </code>
                                     </p>
                                     <p className="text-muted-foreground text-sm">Output:</p>
                                     <pre className="bg-background text-foreground p-4 rounded-lg border border-border overflow-auto text-xs font-mono whitespace-pre">
                                       <code>
-                                        {`[1]+  Exit 1                  cd /workspace/project/All-Hands-UI-XP && npm run dev -- --port 12000 --host 0.0.0.0 > server.log 2>&1
+                                        {`[1]+  Exit 1                  cd /workspace/project/openhands && npm run dev -- --port 12000 --host 0.0.0.0 > server.log 2>&1
 
-> all-hands-ui-xp@1.0.0 dev
+> openhands@1.0.0 dev
 > vite --port 12000 --host 0.0.0.0
 
-/workspace/project/All-Hands-UI-XP/node_modules/rollup/dist/native.js:64
+/workspace/project/openhands/node_modules/rollup/dist/native.js:64
                 throw new Error(
                       ^
 
 Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to optional dependencies (https://github.com/npm/cli/issues/4828). Please try \`npm i\` again after removing both package-lock.json and node_modules directory.
-    at requireWithFriendlyError (/workspace/project/All-Hands-UI-XP/node_modules/rollup/dist/native.js:64:9)
-    at Object.<anonymous> (/workspace/project/All-Hands-UI-XP/node_modules/rollup/dist/native.js:73:76)
+    at requireWithFriendlyError (/workspace/project/openhands/node_modules/rollup/dist/native.js:64:9)
+    at Object.<anonymous> (/workspace/project/openhands/node_modules/rollup/dist/native.js:73:76)
     at Module._compile (node:internal/modules/cjs/loader:1706:14)
     at Object..js (node:internal/modules/cjs/loader:1839:10)
     at Module.load (node:internal/modules/cjs/loader:1441:32)
@@ -2710,7 +2710,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <span className="text-xs font-semibold leading-4 text-muted-foreground">Most Recent</span>
                       </div>
                       {[
-                        'FraterCCCLXIII/All-Hands-UI-XP',
+                        'FraterCCCLXIII/openhands',
                         'FraterCCCLXIII/pr-navigator',
                         'FraterCCCLXIII/All-Hands-UI',
                       ].map((repo) => (

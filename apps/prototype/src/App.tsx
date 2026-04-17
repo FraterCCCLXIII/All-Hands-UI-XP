@@ -571,16 +571,18 @@ function App() {
   }, []);
 
   const syncFromLocation = useCallback(() => {
-    const search = typeof window !== 'undefined' ? window.location.search : '';
+    /** HashRouter keeps the path in the hash; `window.location.search` is often empty. Use React Router `location`. */
+    const search = location.search;
+    const pathnameFromRouter = location.pathname.replace(/^\/+/, '') || '';
     const pathname =
       typeof window !== 'undefined' && window.location.protocol === 'file:'
         ? ''
-        : window.location.pathname.replace(/^\/+/, '') || '';
+        : pathnameFromRouter;
     const legacyHash =
       window.location.hash.startsWith('#/') && !window.location.hash.startsWith('#figmacapture=')
         ? window.location.hash.slice(2).split(/[?&]/)[0] ?? ''
         : '';
-    const captureRoute = new URLSearchParams(window.location.search).get('captureRoute');
+    const captureRoute = new URLSearchParams(search).get('captureRoute');
     const normalizedCaptureRoute = captureRoute?.replace(/^\/+/, '') ?? '';
     if (!pathname && legacyHash && !normalizedCaptureRoute) {
       navigate({ pathname: routeToPath(legacyHash), search }, { replace: true });
@@ -689,6 +691,7 @@ function App() {
     }
     if (hash === 'chat') {
       setIsActiveChatView(true);
+      setIsWelcomeScreenActive(false);
       setActiveNavItem('code');
       setLastNonDrawerNavItem('code');
       setIsConversationDrawerOpen(drawerShouldBeOpen);
@@ -754,7 +757,7 @@ function App() {
     setActiveNavItem(action);
     setLastNonDrawerNavItem(action);
     setIsConversationDrawerOpen(drawerShouldBeOpen);
-  }, [lastNonDrawerNavItem, navigate]);
+  }, [lastNonDrawerNavItem, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     syncFromLocation();

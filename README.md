@@ -1,4 +1,4 @@
-# All Hands UI XP
+# OpenHands
 
 Monorepo containing the main prototype and supporting apps:
 

@@ -58,7 +58,7 @@ function buildChatRoute(options: {
   return `/chat?${params.toString()}`;
 }
 
-const RECENT_REPOS = ['FraterCCCLXIII/All-Hands-UI-XP', 'FraterCCCLXIII/pr-navigator', 'FraterCCCLXIII/All-Hands-UI'];
+const RECENT_REPOS = ['FraterCCCLXIII/openhands', 'FraterCCCLXIII/pr-navigator', 'FraterCCCLXIII/All-Hands-UI'];
 const BRANCH_OPTIONS = ['main', 'develop', 'feature/kanban-drawer', 'bugfix/status-badge', 'release/v1.2.0'];
 const HOMEPAGE_COLUMN_VISIBLE_ITEMS = 5;
 /** Grow with list content; avoid a fixed-height scroll box for short preview lists. */
@@ -1003,22 +1003,22 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
             </section>
 
-            <div className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible">
+            <button
+              type="button"
+              onClick={handleStartNewConversation}
+              className="w-full flex flex-col rounded-xl border border-border bg-secondary/80 p-[24px] text-left transition-colors hover:bg-muted/60 relative gap-[10px] overflow-visible"
+            >
               <div className="flex items-center gap-[10px] text-base font-bold text-foreground leading-5">
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 shrink-0" />
                 <span className="flex items-center">Start from Scratch</span>
               </div>
               <span className="text-sm text-muted-foreground">
                 Start a new conversation that is not connected to an existing repository.
               </span>
-              <button
-                type="button"
-                onClick={handleStartNewConversation}
-                className="h-10 flex items-center justify-center px-4 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/85 cursor-pointer transition-colors w-auto absolute bottom-5 left-5 right-5"
-              >
+              <span className="mt-1 inline-flex h-10 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground pointer-events-none">
                 New Conversation
-              </button>
-            </div>
+              </span>
+            </button>
               </>
             )}
           </div>

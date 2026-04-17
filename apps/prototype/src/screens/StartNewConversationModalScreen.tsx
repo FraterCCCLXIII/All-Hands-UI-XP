@@ -21,7 +21,7 @@ const DEMO_REPO_OPTIONS = [
   'acme/frontend-app',
   'acme/design-system',
   'acme/backend-api',
-  'FraterCCCLXIII/All-Hands-UI-XP',
+  'FraterCCCLXIII/openhands',
 ];
 
 const DEMO_BRANCH_OPTIONS = ['main', 'develop', 'release/v1.2.0', 'feature/kanban-drawer'];

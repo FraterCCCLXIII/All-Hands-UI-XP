@@ -1,5 +1,5 @@
 {
-  "name": "all-hands-ui-xp",
+  "name": "openhands",
   "private": true,
   "workspaces": [
     "apps/*",
