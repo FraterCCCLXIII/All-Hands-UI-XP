@@ -611,9 +611,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                       {selectedHomepageSkill ? (
                         <div className="flex flex-col gap-4 pt-2">
                           <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <SkillIcon className="h-4 text-muted-foreground" />
-                              <span className="text-sm font-medium text-foreground">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <SkillIcon className="h-4 shrink-0 text-muted-foreground" />
+                              <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
                                 {selectedHomepageSkill.skillName ?? selectedHomepageSkill.title}
                               </span>
                             </div>
@@ -1047,15 +1047,15 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                             key={skill.id}
                             type="button"
                             onClick={() => handleOpenSkillLaunchModal(skill)}
-                            className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                            className="flex min-w-0 w-full flex-col gap-1 p-[14px] cursor-pointer rounded-lg text-left transition-all duration-300 hover:bg-muted/60"
                           >
-                            <div className="flex items-center gap-2 pl-1">
-                              <SkillIcon className="h-3 text-muted-foreground" />
-                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                            <div className="flex min-w-0 w-full items-center gap-2 pl-1">
+                              <SkillIcon className="h-3 shrink-0 text-muted-foreground" />
+                              <span className="min-w-0 flex-1 truncate text-xs font-normal leading-6 text-foreground">
                                 {skill.skillName ?? skill.title}
                               </span>
                             </div>
-                            <span className="block min-w-0 whitespace-nowrap text-xs text-muted-foreground leading-4 font-normal pl-5 truncate">
+                            <span className="block min-w-0 w-full truncate pl-5 text-xs font-normal leading-4 text-muted-foreground">
                               {skill.description}
                             </span>
                           </button>

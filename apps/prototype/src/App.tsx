@@ -33,6 +33,7 @@ import { SettingsScreen } from './screens/SettingsScreen';
 import SharePreview from './components/common/SharePreview';
 import { AppToaster } from './components/common/AppToaster';
 import { Gripper } from './components/common/Gripper';
+import { ElectronTitleBar } from './components/shell/ElectronTitleBar';
 import { InspectorOverlay } from './components/common/InspectorOverlay';
 import {
   Dialog,
@@ -571,7 +572,10 @@ function App() {
 
   const syncFromLocation = useCallback(() => {
     const search = typeof window !== 'undefined' ? window.location.search : '';
-    const pathname = window.location.pathname.replace(/^\/+/, '') || '';
+    const pathname =
+      typeof window !== 'undefined' && window.location.protocol === 'file:'
+        ? ''
+        : window.location.pathname.replace(/^\/+/, '') || '';
     const legacyHash =
       window.location.hash.startsWith('#/') && !window.location.hash.startsWith('#figmacapture=')
         ? window.location.hash.slice(2).split(/[?&]/)[0] ?? ''
@@ -608,8 +612,12 @@ function App() {
       navigate({ pathname: '/chat-start', search }, { replace: true });
       return;
     }
-    if (hash === 'figma' || hash.startsWith('figma/')) {
-      setFigmaExportRoute(hash === 'figma' ? '__index__' : decodeURIComponent(hash.split('/').slice(1).join('/')));
+    if (hash === 'figma' || hash.startsWith('figma/') || hash === 'openhands-design') {
+      setFigmaExportRoute(
+        hash === 'figma' || hash === 'openhands-design'
+          ? '__index__'
+          : decodeURIComponent(hash.split('/').slice(1).join('/')),
+      );
       setActiveFlowPrototype(null);
       setIsActiveChatView(false);
       setIsConversationDrawerOpen(false);
@@ -806,6 +814,7 @@ function App() {
           : undefined
       }
     >
+      <ElectronTitleBar />
       <AnimatePresence>
         {isLoading ? (
           <LoadingScreen theme={theme} getThemeClasses={getThemeClasses} onLoadingComplete={handleLoadingComplete} />

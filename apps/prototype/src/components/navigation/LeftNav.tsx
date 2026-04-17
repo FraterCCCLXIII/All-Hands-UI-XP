@@ -272,8 +272,16 @@ export const LeftNav: React.FC<LeftNavProps> = ({
     logoPopoverTimeoutRef.current = setTimeout(() => setIsLogoPopoverOpen(false), 150);
   };
 
+  const isElectronShell =
+    typeof window !== 'undefined' && Boolean(window.electronAPI);
+
   return (
-  <aside className="pointer-events-auto fixed left-0 top-0 z-50 flex h-screen w-16 bg-sidebar">
+  <aside
+    className={cn(
+      'pointer-events-auto fixed left-0 z-50 flex w-16 flex-col bg-sidebar',
+      isElectronShell ? 'top-9 h-[calc(100dvh-2.25rem)]' : 'top-0 h-screen',
+    )}
+  >
     <div className="flex h-full w-16 flex-col px-2 py-4 text-sidebar-foreground">
       <div className="flex justify-center mb-3">
         <Popover open={isLogoPopoverOpen} onOpenChange={setIsLogoPopoverOpen}>

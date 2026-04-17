@@ -638,3 +638,11 @@ body[data-figma-fixed-canvas='true'] {
   max-height: 12px;
   fill: currentColor;
 }
+
+/* Electron frameless window: drag vs interactive regions */
+.electron-app-region-drag {
+  -webkit-app-region: drag;
+}
+.electron-app-region-no-drag {
+  -webkit-app-region: no-drag;
+}

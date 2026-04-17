@@ -34,7 +34,10 @@ export function normalizeAppRoute(route: string): string {
  */
 export function getEffectiveAppRouteSegment(): string {
   if (typeof window === 'undefined') return '';
-  const pathname = window.location.pathname.replace(/^\/+/, '') || '';
+  const pathname =
+    window.location.protocol === 'file:'
+      ? ''
+      : window.location.pathname.replace(/^\/+/, '') || '';
   const legacyHash =
     window.location.hash.startsWith('#/') && !window.location.hash.startsWith('#figmacapture=')
       ? window.location.hash.slice(2).split(/[?&]/)[0] ?? ''

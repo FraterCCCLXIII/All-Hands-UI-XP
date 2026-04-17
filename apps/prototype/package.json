@@ -7,8 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "electron:dev": "ELECTRON=1 ELECTRON_DEV=1 concurrently -k \"vite\" \"wait-on http://127.0.0.1:3000 && electron ./electron/main.cjs\"",
+    "electron:start": "npm run build && electron ./electron/main.cjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "main": "electron/main.cjs",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -36,8 +39,11 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
+    "concurrently": "^9.1.2",
+    "electron": "^34.0.0",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
-    "vite": "^5.1.4"
+    "vite": "^5.1.4",
+    "wait-on": "^8.0.1"
   }
 }

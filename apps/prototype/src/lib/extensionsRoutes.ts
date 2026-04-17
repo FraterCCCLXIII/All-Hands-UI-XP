@@ -1,4 +1,4 @@
-import { navigateAppRoute } from './captureNavigation';
+import { getEffectiveAppRouteSegment, navigateAppRoute } from './captureNavigation';
 
 /** Default browse: skills, plugins, MCP, and hooks in one scroll. */
 export const EXTENSIONS_ALL_BASE = 'extensions/all';
@@ -87,7 +87,7 @@ export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
  */
 export function tryNormalizeExtensionsPath(): boolean {
   if (typeof window === 'undefined') return false;
-  const raw = window.location.pathname.replace(/^\/+/, '').split('?')[0] ?? '';
+  const raw = getEffectiveAppRouteSegment();
 
   if (raw === 'extensions') {
     navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`, { replace: true });

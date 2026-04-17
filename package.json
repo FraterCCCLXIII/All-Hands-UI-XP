@@ -13,6 +13,8 @@
     "dev:plugin-marketplace": "npm --workspace @all-hands/plugin-marketplace run dev",
     "build": "npm --workspace apps/prototype run build && npm --workspace apps/flowcharts run build && npm --workspace apps/docs run build && npm --workspace @all-hands/plugin-marketplace run build",
     "preview": "npm --workspace apps/prototype run preview",
+    "electron:dev": "npm --workspace @all-hands/app-prototype run electron:dev",
+    "electron:start": "npm --workspace @all-hands/app-prototype run electron:start",
     "sync:openhands-design-template": "rsync -a --delete --exclude='.git' OpenHands-Design/ packages/openhands-design/template/"
   }
 }
