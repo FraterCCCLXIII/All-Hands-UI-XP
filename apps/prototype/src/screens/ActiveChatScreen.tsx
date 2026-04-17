@@ -2143,10 +2143,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       >
                                         <DropdownMenuItem
                                           data-testid="code-option"
-                                          className={cn(
-                                            'rounded p-2 text-left data-[highlighted]:bg-muted/60',
-                                            chatMode === 'build' && 'bg-muted/60'
-                                          )}
+                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
                                           onSelect={() => setChatMode('build')}
                                         >
                                           <div className="flex w-full flex-col gap-1">
@@ -2164,10 +2161,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                           data-testid="ask-option"
-                                          className={cn(
-                                            'rounded p-2 text-left data-[highlighted]:bg-muted/60',
-                                            chatMode === 'ask' && 'bg-info/10'
-                                          )}
+                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
                                           onSelect={() => setChatMode('ask')}
                                         >
                                           <div className="flex w-full flex-col gap-1">
@@ -2176,7 +2170,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                                 <MessageCircleQuestion className="h-4 w-4 shrink-0" />
                                                 <span className="text-sm text-foreground">Ask</span>
                                               </div>
-                                              {chatMode === 'ask' ? <Check className="h-3.5 w-3.5 shrink-0 text-info" /> : null}
+                                              {chatMode === 'ask' ? <Check className="h-3.5 w-3.5 shrink-0 text-foreground" /> : null}
                                             </div>
                                             <span className="pl-7 text-xs font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Explore ideas, ask questions, and get guidance before making changes.
@@ -2185,10 +2179,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                           data-testid="plan-option"
-                                          className={cn(
-                                            'rounded p-2 text-left data-[highlighted]:bg-muted/60',
-                                            chatMode === 'plan' && 'bg-success/10'
-                                          )}
+                                          className="rounded p-2 text-left data-[highlighted]:bg-muted/60"
                                           onSelect={() => setChatMode('plan')}
                                         >
                                           <div className="flex w-full flex-col gap-1">
@@ -2197,7 +2188,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                                 <PlanModeIcon className="h-4 w-4 shrink-0" />
                                                 <span className="text-sm text-foreground">Plan</span>
                                               </div>
-                                              {chatMode === 'plan' ? <Check className="h-3.5 w-3.5 shrink-0 text-success-foreground" /> : null}
+                                              {chatMode === 'plan' ? <Check className="h-3.5 w-3.5 shrink-0 text-foreground" /> : null}
                                             </div>
                                             <span className="pl-7 text-xs font-normal leading-4 text-muted-foreground whitespace-pre-wrap break-words">
                                               Outline goals, structure tasks, and map your next steps.
