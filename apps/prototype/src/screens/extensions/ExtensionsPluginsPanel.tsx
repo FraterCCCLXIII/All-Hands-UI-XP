@@ -275,13 +275,13 @@ ${skill.initialPrompt}
                 </button>
 
                 <div className="my-6 w-full min-w-0 space-y-3">
-                  <div className="flex items-start justify-between gap-4 min-w-0">
+                  <div className="flex items-center justify-between gap-4 min-w-0">
                     <h2 className="min-w-0 flex-1 text-xl font-semibold leading-6 text-foreground">
                       {selectedPlugin.skillName ?? selectedPlugin.title}
                     </h2>
                     {selectedPlugin.isPlugin ? (
                       <PluginToggle
-                        className="mt-0.5 shrink-0"
+                        className="shrink-0 self-center"
                         checked={
                           selectedPlugin.switchLocked === true
                             ? true
@@ -307,9 +307,9 @@ ${skill.initialPrompt}
                   <p className="text-sm text-muted-foreground">{selectedPlugin.description}</p>
                   <div className="w-full min-w-0">
                     <RepoUrlField href={selectedPlugin.repoUrl} />
-                    <div className="mt-2">
-                      <SkillSourceBadge source={getSkillSource(selectedPlugin)} />
-                    </div>
+                  </div>
+                  <div className="hidden pt-3" aria-hidden>
+                    <SkillSourceBadge source={getSkillSource(selectedPlugin)} />
                   </div>
                 </div>
 
@@ -447,7 +447,7 @@ ${skill.initialPrompt}
                               <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                                 {skill.description}
                               </p>
-                              <div className="mt-3">
+                              <div className="mt-3 hidden" aria-hidden>
                                 <SkillSourceBadge source={getSkillSource(skill)} />
                               </div>
                             </div>

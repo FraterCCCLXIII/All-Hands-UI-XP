@@ -53,7 +53,13 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
     if (!hasInput) return;
     onSend?.(inputValue.trim());
     setInputValue('');
-    if (inputRef.current) inputRef.current.innerText = '';
+    if (inputRef.current) inputRef.current.innerHTML = '';
+  };
+
+  const normalizeEmptyComposer = (el: HTMLDivElement) => {
+    if (el.innerText.replace(/\u200b/g, '').trim() !== '') return;
+    el.innerHTML = '';
+    setInputValue('');
   };
 
   return (
@@ -65,7 +71,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
       style={{ padding: '0.75rem' }}
     >
       {/* Input row */}
-      <div className="box-border flex flex-row items-end justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
+      <div className="box-border flex w-full shrink-0 flex-row items-end px-0 pb-[18px] pt-3">
         <div className="relative min-w-0 flex-1 flex flex-row items-end justify-start p-0">
           <div className="min-w-0 flex-1 flex flex-row items-start justify-start min-h-6 p-0">
             <div
@@ -78,6 +84,7 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
               role="textbox"
               aria-multiline="true"
               onInput={(e) => setInputValue((e.target as HTMLDivElement).innerText)}
+              onBlur={(e) => normalizeEmptyComposer(e.currentTarget)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -87,26 +94,11 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
             />
           </div>
         </div>
-        <button
-          type="button"
-          className={cn(
-            'flex items-center justify-center rounded-full border size-[35px] transition-colors shrink-0',
-            hasInput
-              ? 'bg-primary text-primary-foreground border-primary cursor-pointer hover:opacity-90'
-              : 'border-[hsl(0,0%,24%)] text-[hsl(0,0%,70%)] cursor-not-allowed'
-          )}
-          data-testid="submit-button"
-          disabled={!hasInput}
-          aria-label="Send"
-          onClick={handleSend}
-        >
-          <ArrowUp className="w-6 h-6" aria-hidden="true" />
-        </button>
       </div>
 
       {/* Toolbar row */}
-      <div className="w-full flex items-center justify-between">
-        <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+      <div className="flex w-full items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 flex-nowrap overflow-hidden">
         <button
           type="button"
           className="flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200 hover:scale-105 hover:bg-muted active:scale-[0.97] cursor-not-allowed text-muted-foreground"
@@ -262,6 +254,21 @@ export function ChatInputBox({ placeholder = 'What do you want to build?', onSen
           </DropdownMenuContent>
         </DropdownMenu>
         </div>
+        <button
+          type="button"
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full border size-[35px] transition-colors',
+            hasInput
+              ? 'bg-primary text-primary-foreground border-primary cursor-pointer hover:opacity-90'
+              : 'border-[hsl(0,0%,24%)] text-[hsl(0,0%,70%)] cursor-not-allowed'
+          )}
+          data-testid="submit-button"
+          disabled={!hasInput}
+          aria-label="Send"
+          onClick={handleSend}
+        >
+          <ArrowUp className="w-6 h-6" aria-hidden="true" />
+        </button>
       </div>
     </div>
   );

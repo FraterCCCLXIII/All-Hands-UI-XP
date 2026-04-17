@@ -758,7 +758,7 @@ export function ActiveChatScreen({
     if (text) {
       setChatInput('');
       setChatInputMaxHeightPx(null);
-      if (chatInputRef.current) chatInputRef.current.innerText = '';
+      if (chatInputRef.current) chatInputRef.current.innerHTML = '';
       setIsCommandMenuOpen(false);
       setCommandQuery('');
       requestAnimationFrame(() => adjustChatInputHeight());
@@ -1906,7 +1906,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                     </div>
                                   </div>
                                 )}
-                                <div className="box-border content-stretch flex flex-row items-end justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
+                                <div className="relative box-border flex w-full shrink-0 flex-row items-end px-0 pb-[18px] pt-3">
                                   <div className="relative min-w-0 flex-1 box-border content-stretch flex flex-row items-end justify-start p-0">
                                     <div className="min-w-0 flex-1 box-border flex flex-row items-start justify-start min-h-6 p-0">
                                       <div
@@ -1940,7 +1940,14 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                             blurTimeoutRef.current = null;
                                           }
                                         }}
-                                        onBlur={() => {
+                                        onBlur={(e) => {
+                                          const el = e.currentTarget;
+                                          if (el.innerText.replace(/\u200b/g, '').trim() === '') {
+                                            el.innerHTML = '';
+                                            setChatInput('');
+                                            updateCommandMenuState('');
+                                            requestAnimationFrame(() => adjustChatInputHeight());
+                                          }
                                           blurTimeoutRef.current = window.setTimeout(() => {
                                             setIsCommandMenuOpen(false);
                                             setCommandQuery('');
@@ -1949,24 +1956,9 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       />
                                     </div>
                                   </div>
-                                  <button
-                                    type="button"
-                                    className={cn(
-                                      'flex items-center justify-center rounded-full border size-[35px] transition-colors',
-                                      hasInput
-                                        ? 'bg-primary text-primary-foreground border-primary cursor-pointer hover:opacity-90'
-                                        : 'border-[hsl(0,0%,24%)] text-[hsl(0,0%,70%)] cursor-not-allowed'
-                                    )}
-                                    data-testid="submit-button"
-                                    disabled={!hasInput}
-                                    aria-label="Send"
-                                    onClick={hasInput ? handleSendMessage : undefined}
-                                  >
-                                    <ArrowUp className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </button>
                                 </div>
-                                <div className="w-full flex items-center justify-between">
-                                  <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+                                <div className="flex w-full items-center justify-between gap-2">
+                                  <div className="flex min-w-0 flex-1 items-center gap-2 flex-nowrap overflow-hidden">
                                     <button
                                       type="button"
                                       className={cn(
@@ -2259,7 +2251,24 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </div>
-                                  <AgentStatusBadge state={composerStatusBadgeState} />
+                                  <div className="flex shrink-0 items-center gap-2">
+                                    <AgentStatusBadge state={composerStatusBadgeState} />
+                                    <button
+                                      type="button"
+                                      className={cn(
+                                        'flex items-center justify-center rounded-full border size-[35px] transition-colors shrink-0',
+                                        hasInput
+                                          ? 'bg-primary text-primary-foreground border-primary cursor-pointer hover:opacity-90'
+                                          : 'border-[hsl(0,0%,24%)] text-[hsl(0,0%,70%)] cursor-not-allowed'
+                                      )}
+                                      data-testid="submit-button"
+                                      disabled={!hasInput}
+                                      aria-label="Send"
+                                      onClick={hasInput ? handleSendMessage : undefined}
+                                    >
+                                      <ArrowUp className="w-6 h-6" strokeLinecap="round" strokeLinejoin="round" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>

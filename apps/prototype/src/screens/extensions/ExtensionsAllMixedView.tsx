@@ -235,7 +235,7 @@ export function ExtensionsAllMixedView({ browseControls }: ExtensionsAllMixedVie
             <div className="flex min-w-0 flex-1 flex-col">
               <span className="text-base font-medium text-foreground">{label}</span>
               <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{skill.description}</p>
-              <div className="mt-3">
+              <div className="mt-3 hidden" aria-hidden>
                 <SkillSourceBadge source={source} />
               </div>
             </div>

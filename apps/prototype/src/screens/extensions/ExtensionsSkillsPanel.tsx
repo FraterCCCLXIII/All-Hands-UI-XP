@@ -733,7 +733,7 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                             <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
                               {skill.description}
                             </p>
-                            <div className="mt-3">
+                            <div className="mt-3 hidden" aria-hidden>
                               <SkillSourceBadge source={source} />
                             </div>
                           </div>
@@ -775,12 +775,12 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
               )}
               {isMarketplaceSkill ? (
                 <div className="my-6 w-full min-w-0 space-y-3">
-                  <div className="flex items-start justify-between gap-4 min-w-0">
+                  <div className="flex items-center justify-between gap-4 min-w-0">
                     <h2 className="min-w-0 flex-1 text-xl font-semibold leading-6 text-foreground">
                       {displayItem.skillName ?? displayItem.title}
                     </h2>
                     <PluginToggle
-                      className="mt-0.5 shrink-0"
+                      className="shrink-0 self-center"
                       checked={
                         displayItem.switchLocked === true
                           ? true
@@ -805,9 +805,6 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   <p className="text-sm text-muted-foreground">{displayItem.description}</p>
                   <div className="w-full min-w-0">
                     <RepoUrlField href={displayItem.repoUrl} />
-                    <div className="mt-2">
-                      <SkillSourceBadge source={getSkillSource(displayItem)} />
-                    </div>
                     <div className="mt-3">
                       <Button
                         variant="default"
@@ -818,6 +815,9 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                       </Button>
                     </div>
                   </div>
+                  <div className="hidden pt-3" aria-hidden>
+                    <SkillSourceBadge source={getSkillSource(displayItem)} />
+                  </div>
                 </div>
               ) : (
                 <>
@@ -827,9 +827,9 @@ export function ExtensionsSkillsPanel({ browseControls }: ExtensionsSkillsPanelP
                   <p className="mt-2 text-sm text-muted-foreground">{displayItem.description}</p>
                   <div className="mt-3 w-full min-w-0">
                     <RepoUrlField href={displayItem.repoUrl} />
-                    <div className="mt-2">
-                      <SkillSourceBadge source={getSkillSource(displayItem)} />
-                    </div>
+                  </div>
+                  <div className="hidden pt-3" aria-hidden>
+                    <SkillSourceBadge source={getSkillSource(displayItem)} />
                   </div>
                 </>
               )}
