@@ -5,7 +5,7 @@ import {
   ArrowUp,
   ArrowDownToLine,
   MoreHorizontal,
-  Paperclip,
+  Plus,
   Pin,
   PinOff,
   Square,
@@ -1907,29 +1907,15 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                   </div>
                                 )}
                                 <div className="box-border content-stretch flex flex-row items-end justify-between p-0 relative shrink-0 w-full pb-[18px] gap-2">
-                                  <div className="relative min-w-0 flex-1 box-border content-stretch flex flex-row gap-4 items-end justify-start p-0">
-                                    <button
-                                      type="button"
-                                      className={cn(
-                                        'flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200',
-                                        attachmentPreviewsEnabled
-                                          ? 'cursor-pointer text-muted-foreground hover:scale-105 hover:bg-muted hover:text-foreground active:scale-[0.97]'
-                                          : 'cursor-not-allowed text-muted-foreground/60'
-                                      )}
-                                      data-testid="paperclip-icon"
-                                      aria-label="Attach"
-                                      aria-disabled={!attachmentPreviewsEnabled}
-                                      onClick={handleAttachmentClick}
-                                    >
-                                      <Paperclip className="w-4 h-4" />
-                                    </button>
+                                  <div className="relative min-w-0 flex-1 box-border content-stretch flex flex-row items-end justify-start p-0">
                                     <div className="min-w-0 flex-1 box-border flex flex-row items-start justify-start min-h-6 p-0">
                                       <div
                                         ref={chatInputRef}
                                         contentEditable
+                                        data-no-focus-ring
                                         data-placeholder="What do you want to build?"
                                         data-testid="chat-input"
-                                        className="chat-input min-w-0 max-w-full bg-transparent text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 w-full block break-words whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
+                                        className="chat-input min-w-0 max-w-full bg-transparent pl-2 text-foreground text-base font-normal leading-5 outline-none resize-none custom-scrollbar min-h-5 w-full block break-words whitespace-pre-wrap empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground"
                                         role="textbox"
                                         aria-multiline="true"
                                         aria-expanded={isCommandMenuOpen}
@@ -1981,6 +1967,21 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 </div>
                                 <div className="w-full flex items-center justify-between">
                                   <div className="flex items-center gap-2 flex-nowrap overflow-hidden">
+                                    <button
+                                      type="button"
+                                      className={cn(
+                                        'flex items-center justify-center rounded-full size-8 shrink-0 transition-all duration-200',
+                                        attachmentPreviewsEnabled
+                                          ? 'cursor-pointer text-muted-foreground hover:scale-105 hover:bg-muted hover:text-foreground active:scale-[0.97]'
+                                          : 'cursor-not-allowed text-muted-foreground/60'
+                                      )}
+                                      data-testid="composer-add-button"
+                                      aria-label="Add attachment"
+                                      aria-disabled={!attachmentPreviewsEnabled}
+                                      onClick={handleAttachmentClick}
+                                    >
+                                      <Plus className="w-4 h-4" />
+                                    </button>
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
                                     <button
