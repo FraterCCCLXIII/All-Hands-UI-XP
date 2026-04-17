@@ -11,6 +11,18 @@ export default {
       },
     },
     extend: {
+      /* Entire UI uses normal weight (400); semantic names map to 400 so existing classes stay valid. */
+      fontWeight: {
+        thin: "400",
+        extralight: "400",
+        light: "400",
+        normal: "400",
+        medium: "400",
+        semibold: "400",
+        bold: "400",
+        extrabold: "400",
+        black: "400",
+      },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
