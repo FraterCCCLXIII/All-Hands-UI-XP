@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import React, { useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Boxes,
@@ -246,55 +245,15 @@ export const LeftNav: React.FC<LeftNavProps> = ({
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
   const personalWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'personal');
   const gitOrganizationWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'org');
-  const prefersReducedMotion = useReducedMotion();
-  const accountPopoverBodyTransition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const };
-  const accountPopoverLayoutTransition = prefersReducedMotion
-    ? { duration: 0 }
-    : { duration: 0.32, ease: [0.4, 0, 0.2, 1] as const };
 
-  /** Body below the workspace selector: staged fade → layout → fade (selector uses `activeWorkspaceId` immediately). */
-  type AccountBodyPhase = 'idle' | 'fadeOut' | 'size' | 'fadeIn';
-  const [accountBodyDisplayedWorkspaceId, setAccountBodyDisplayedWorkspaceId] = useState(activeWorkspaceId);
-  const [accountBodyPhase, setAccountBodyPhase] = useState<AccountBodyPhase>('idle');
-  const activeWorkspaceIdRef = useRef(activeWorkspaceId);
-  activeWorkspaceIdRef.current = activeWorkspaceId;
-
-  const displayedAccountBodyWorkspace =
-    accountWorkspaceOptions.find((o) => o.id === accountBodyDisplayedWorkspaceId) ??
-    accountWorkspaceOptions[0];
   const accountNavSections = useMemo(
     () =>
       getAccountPopoverNavSections({
-        type: displayedAccountBodyWorkspace.type,
-        role: displayedAccountBodyWorkspace.role,
+        type: selectedWorkspace.type,
+        role: selectedWorkspace.role,
       }),
-    [displayedAccountBodyWorkspace.type, displayedAccountBodyWorkspace.role],
+    [selectedWorkspace.type, selectedWorkspace.role],
   );
-
-  useEffect(() => {
-    if (activeWorkspaceId === accountBodyDisplayedWorkspaceId) return;
-    if (prefersReducedMotion) {
-      setAccountBodyDisplayedWorkspaceId(activeWorkspaceId);
-      setAccountBodyPhase('idle');
-      return;
-    }
-    if (accountBodyPhase === 'idle' || accountBodyPhase === 'fadeIn') {
-      setAccountBodyPhase('fadeOut');
-    } else if (accountBodyPhase === 'size') {
-      setAccountBodyDisplayedWorkspaceId(activeWorkspaceId);
-    }
-  }, [activeWorkspaceId, accountBodyDisplayedWorkspaceId, accountBodyPhase, prefersReducedMotion]);
-
-  /** If layout does not animate (e.g. unchanged size), `onLayoutAnimationComplete` may not fire — avoid a stuck `size` phase. */
-  useEffect(() => {
-    if (accountBodyPhase !== 'size' || prefersReducedMotion) return;
-    const t = window.setTimeout(() => {
-      setAccountBodyPhase((p) => (p === 'size' ? 'fadeIn' : p));
-    }, 600);
-    return () => window.clearTimeout(t);
-  }, [accountBodyPhase, accountBodyDisplayedWorkspaceId, prefersReducedMotion]);
 
   const isOrgAccount = selectedWorkspace.type === 'org';
   const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
@@ -528,15 +487,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             sideOffset={8}
             className="w-max max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground [max-height:min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border -translate-y-12"
           >
-            <motion.div
-              layout
-              transition={{ layout: accountPopoverLayoutTransition }}
-              onLayoutAnimationComplete={() => {
-                setAccountBodyPhase((p) => (p === 'size' ? 'fadeIn' : p));
-              }}
+            <div
               className={cn(
                 'inline-grid w-max max-w-full items-stretch gap-4 overflow-hidden',
-                displayedAccountBodyWorkspace.type === 'org'
+                selectedWorkspace.type === 'org'
                   ? 'grid-cols-1'
                   : 'grid-cols-[max-content_max-content]',
               )}
@@ -617,26 +571,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   </DropdownMenu>
                 </div>
 
-                <motion.div
-                  animate={{
-                    opacity:
-                      accountBodyPhase === 'idle' || accountBodyPhase === 'fadeIn' ? 1 : 0,
-                  }}
-                  transition={accountPopoverBodyTransition}
-                  onAnimationComplete={() => {
-                    setAccountBodyPhase((prev) => {
-                      if (prev === 'fadeOut') {
-                        setAccountBodyDisplayedWorkspaceId(activeWorkspaceIdRef.current);
-                        return 'size';
-                      }
-                      if (prev === 'fadeIn') {
-                        return 'idle';
-                      }
-                      return prev;
-                    });
-                  }}
-                  className="flex min-h-0 flex-col"
-                >
+                <div className="flex min-h-0 flex-col">
                   {accountNavSections.map((section, sectionIndex) => (
                     <React.Fragment key={`${section.label ?? 'nav'}-${sectionIndex}`}>
                       {sectionIndex > 0 ? <div className="border-t border-sidebar-border my-3" /> : null}
@@ -681,7 +616,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       <UserPlus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                       Invite Team
                     </button>
-                    {displayedAccountBodyWorkspace.type === 'personal' ? (
+                    {selectedWorkspace.type === 'personal' ? (
                       <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
                         <Plus className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                         Create New Organization
@@ -701,29 +636,20 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       Log Out
                     </button>
                   </div>
-                </motion.div>
+                </div>
               </div>
 
               {/* Enterprise CTA — personal workspace only (hidden on org accounts) */}
-              {displayedAccountBodyWorkspace.type === 'personal' ? (
+              {selectedWorkspace.type === 'personal' ? (
                 <div className="flex h-full min-h-0 w-max max-w-[min(20rem,calc(100vw-3rem))] flex-col">
-                  <motion.div
-                    animate={{
-                      opacity:
-                        accountBodyPhase === 'idle' || accountBodyPhase === 'fadeIn' ? 1 : 0,
-                    }}
-                    transition={accountPopoverBodyTransition}
-                    className="flex h-full min-h-0 flex-col"
-                  >
-                    <EnterpriseCtaCard
-                      showIcon
-                      className="pointer-events-auto h-full min-h-0 rounded-lg"
-                      onLearnMoreClick={onEnterpriseLearnMoreClick}
-                    />
-                  </motion.div>
+                  <EnterpriseCtaCard
+                    showIcon
+                    className="pointer-events-auto h-full min-h-0 rounded-lg"
+                    onLearnMoreClick={onEnterpriseLearnMoreClick}
+                  />
                 </div>
               ) : null}
-            </motion.div>
+            </div>
           </PopoverContent>
         </Popover>
       </div>

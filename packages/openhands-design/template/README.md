@@ -62,13 +62,9 @@ In your app entry point (e.g., `main.tsx` or `App.tsx`):
 import './globals.css';
 ```
 
-### 4. Add the dark class
+### 4. Theme class on `<html>` (optional)
 
-The system is dark-first. Add the `dark` class to your `<html>` tag:
-
-```html
-<html lang="en" class="dark">
-```
+Tokens are defined on `:root` in `globals.css`; many apps also duplicate values under `.dark`. You can add `class="dark"` on `<html>` for Tailwind `dark:` variants and consistency with the **All Hands UI XP** prototype. **A full light theme is not product-ready** in the prototype — ship dark only until that work is scheduled.
 
 ### 5. Start using components
 
@@ -185,37 +181,15 @@ Edit the HSL values in `globals.css`. Every UI element updates automatically:
 }
 ```
 
-### Adding a light theme
+### Light theme
 
-Create a new class block in `globals.css` with inverted values:
-
-```css
-.light {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 5%;
-  --card: 0 0% 97%;
-  --border: 0 0% 88%;
-  /* ... */
-}
-```
-
-Then toggle `class="light"` on the `<html>` element.
+**Not implemented** in the current OpenHands prototype (dark mode only). Do not add a `.light` block or ship light surfaces until the product explicitly schedules that work; keep documentation and new UI aligned with **dark tokens** only.
 
 ## Reference
 
-See [DESIGN.md](./DESIGN.md) for the complete specification including:
+See [DESIGN.md](./DESIGN.md) for the complete specification, including scope (monorepo paths vs copied `OpenHands-Design/`), visual theme, color palette, typography, components, layout, elevation, do's and don'ts, responsive behavior, motion, and the agent prompt guide.
 
-1. Visual theme and atmosphere
-2. Full color palette with hex values
-3. Typography rules and type scale
-4. Component styling recipes
-5. Layout principles and spacing system
-6. Depth and elevation system
-7. Do's and Don'ts
-8. Responsive behavior
-9. Interaction and motion patterns
-10. AI agent prompt guide
-11. Normalization backlog
+In this repo, **`DESIGN.md` is kept in sync with `apps/prototype`** (run `npm run sync:openhands-design-template` to refresh the packaged template).
 
 ## License
 
