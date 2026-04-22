@@ -3,7 +3,8 @@ import { ChevronDown } from 'lucide-react';
 
 import { cn } from '../../lib/utils';
 
-const nativeSelectClassName =
+/** Shared styles for `NativeSelect` and select-like triggers (e.g. dropdown menus). */
+export const nativeSelectClassName =
   'h-10 w-full appearance-none rounded-md border border-border bg-muted/40 py-2 pl-3 pr-10 text-sm text-foreground ring-offset-background hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted/30 disabled:opacity-50';
 
 export type NativeSelectProps = React.ComponentPropsWithoutRef<'select'> & {

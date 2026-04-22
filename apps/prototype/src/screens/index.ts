@@ -16,3 +16,4 @@ export { PublicShareScreen } from './PublicShareScreen';
 export { ChatComponentsScreen } from './ChatComponentsScreen';
 export { StartNewConversationModalScreen } from './StartNewConversationModalScreen';
 export { LaunchFromPluginModalScreen } from './LaunchFromPluginModalScreen';
+export { OrgAdminDashboardScreen } from './OrgAdminDashboardScreen';

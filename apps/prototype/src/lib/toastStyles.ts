@@ -17,8 +17,9 @@ export type ToastVariant = keyof typeof toastVariantSurfaceClasses;
 export const TOAST_SURFACE_APP_CLASS =
   'pointer-events-auto flex w-full min-w-0 items-start gap-3 rounded-md px-4 py-3 shadow-lg';
 
+/** `!` overrides global `svg.lucide { color: muted }` in index.css so toast icons match the variant. */
 export const toastIconAccentClasses: Record<ToastVariant, string> = {
-  success: 'text-success',
-  error: 'text-destructive',
-  info: 'text-info',
+  success: '!text-success',
+  error: '!text-destructive',
+  info: '!text-info',
 };

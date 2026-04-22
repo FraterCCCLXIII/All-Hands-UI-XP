@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   ChevronDown,
+  LayoutDashboard,
   List,
   LogOut,
   Megaphone,
@@ -29,14 +30,7 @@ import { Theme, ThemeElement } from '../../types/theme';
 import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 import { cn } from '../../lib/utils';
 import { getAccountPopoverNavSections } from '../../config/settingsWorkspaceNav';
-
-/** Mirrors Settings org selector options for a consistent workspace switcher. */
-const accountWorkspaceOptions = [
-  { id: 'personal', name: 'Personal Account', role: null as string | null, type: 'personal' as const },
-  { id: 'acme-owner', name: 'Acme Inc', role: 'Owner' as const, type: 'org' as const },
-  { id: 'starlight-admin', name: 'Starlight Labs', role: 'Admin' as const, type: 'org' as const },
-  { id: 'nova-member', name: 'Nova Group', role: 'Member' as const, type: 'org' as const },
-] as const;
+import { accountWorkspaceOptions, isOrgAdminOrOwner } from '../../config/accountWorkspaces';
 
 /** True when the browser path is the given Settings tab (including secrets sub-routes). */
 function isSettingsTabPathActive(pathname: string, tabId: string) {
@@ -256,6 +250,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   );
 
   const isOrgAccount = selectedWorkspace.type === 'org';
+  const showOrgAdminDashboard = isOrgAdminOrOwner(activeWorkspaceId);
   const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
   const logoPopoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -460,6 +455,24 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             </div>
           </PopoverContent>
         </Popover>
+        {showOrgAdminDashboard ? (
+          <LeftNavTooltip label="Admin dashboard">
+            <button
+              type="button"
+              aria-label="Organization admin dashboard"
+              aria-pressed={activeNavItem === 'org-admin-dashboard'}
+              onClick={() => onNavItemClick('org-admin-dashboard')}
+              className={cn(
+                'inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-sidebar text-sidebar-foreground transition-colors hover:bg-sidebar-accent',
+                activeNavItem === 'org-admin-dashboard'
+                  ? 'bg-sidebar-accent text-sidebar-foreground'
+                  : 'text-muted-foreground hover:text-sidebar-foreground'
+              )}
+            >
+              <LayoutDashboard className="h-5 w-5" aria-hidden />
+            </button>
+          </LeftNavTooltip>
+        ) : null}
         <Popover>
           <PopoverTrigger asChild>
             <button

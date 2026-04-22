@@ -30,6 +30,7 @@ import {
   LaunchFromPluginModalScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { OrgAdminDashboardScreen } from './screens/OrgAdminDashboardScreen';
 import SharePreview from './components/common/SharePreview';
 import { AppToaster } from './components/common/AppToaster';
 import { Gripper } from './components/common/Gripper';
@@ -78,6 +79,7 @@ const actionSlugs: Record<string, string> = {
   'chat-components': 'chat-components',
   'start-new-conversation-modal': 'start-new-conversation-modal',
   'launch-from-plugin-modal': 'launch-from-plugin-modal',
+  'org-admin-dashboard': 'org-admin',
 };
 
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
@@ -256,6 +258,7 @@ function App() {
   const isChatComponentsView = activeNavItem === 'chat-components';
   const isStartNewConversationModalView = activeNavItem === 'start-new-conversation-modal';
   const isLaunchFromPluginModalView = activeNavItem === 'launch-from-plugin-modal';
+  const isOrgAdminDashboardView = activeNavItem === 'org-admin-dashboard';
   const showStandaloneFlow = Boolean(activeFlowPrototype);
   const showFigmaExportView = figmaExportRoute !== null;
   const isFigmaCaptureSession = isFigmaCaptureActive();
@@ -270,7 +273,8 @@ function App() {
     !isWorkflowsView &&
     !isChatComponentsView &&
     !isStartNewConversationModalView &&
-    !isLaunchFromPluginModalView;
+    !isLaunchFromPluginModalView &&
+    !isOrgAdminDashboardView;
   const showLeftNav =
     !showFigmaExportView &&
     !isShareView &&
@@ -997,6 +1001,7 @@ function App() {
                 {isChatComponentsView && <ChatComponentsScreen />}
                 {isStartNewConversationModalView && <StartNewConversationModalScreen />}
                 {isLaunchFromPluginModalView && <LaunchFromPluginModalScreen />}
+                {isOrgAdminDashboardView && <OrgAdminDashboardScreen activeWorkspaceId={activeWorkspaceId} />}
                 {showChatView && !isActiveChatView && (
                   <div className="flex w-full h-full">
                     {/* Chat Area Column */}
