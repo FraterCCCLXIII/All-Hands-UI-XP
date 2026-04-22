@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import type { KeyboardEvent, ReactNode, SyntheticEvent } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import {
   Loader2,
   ArrowUp,
@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Plus,
   Pin,
-  PinOff,
   Square,
   Code2,
   Terminal,
@@ -665,12 +664,7 @@ export function ActiveChatScreen({
   );
 
   const togglePinned = useCallback((id: TabId) => {
-    setPinnedTabs((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      const count = (Object.values(next) as boolean[]).filter(Boolean).length;
-      if (count === 0) return prev;
-      return next;
-    });
+    setPinnedTabs((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const rightPanelWidth = 100 - leftPanelWidth;
@@ -1081,7 +1075,7 @@ export function ActiveChatScreen({
               </div>
             </div>
             <div className="relative w-full flex flex-row justify-start lg:justify-end items-center gap-1">
-              {pinnedTabs.changes && (
+              {(pinnedTabs.changes || (canvasOpen && activeTab === 'changes')) && (
                 <CanvasNavTooltip label={CANVAS_TAB_ARIA.changes}>
                   <span data-aria-label="Changes">
                     <button
@@ -1107,7 +1101,7 @@ export function ActiveChatScreen({
                   </span>
                 </CanvasNavTooltip>
               )}
-              {pinnedTabs.code && (
+              {(pinnedTabs.code || (canvasOpen && activeTab === 'code')) && (
                 <CanvasNavTooltip label={CANVAS_TAB_ARIA.code} externalRepoUrl={CODE_EXTERNAL_REPO_URL}>
                   <TabButton
                     label="Code"
@@ -1118,19 +1112,19 @@ export function ActiveChatScreen({
                   />
                 </CanvasNavTooltip>
               )}
-              {pinnedTabs.terminal && (
-                <span data-aria-label="Terminal (read-only)">
+              {(pinnedTabs.terminal || (canvasOpen && activeTab === 'terminal')) && (
+                <span data-aria-label="Terminal">
                   <TabButton
                     label="Terminal"
                     active={activeTab === 'terminal' && canvasOpen}
                     onClick={() => handleCanvasTabClick('terminal')}
-                    ariaLabel="Terminal (read-only)"
+                    ariaLabel="Terminal"
                     icon={<Terminal className="w-4 h-4 flex-shrink-0" />}
                     tooltip={CANVAS_TAB_ARIA.terminal}
                   />
                 </span>
               )}
-              {pinnedTabs.app && (
+              {(pinnedTabs.app || (canvasOpen && activeTab === 'app')) && (
                 <TabButton
                   label="App"
                   active={activeTab === 'app' && canvasOpen}
@@ -1140,7 +1134,7 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.app}
                 />
               )}
-              {pinnedTabs.browser && (
+              {(pinnedTabs.browser || (canvasOpen && activeTab === 'browser')) && (
                 <TabButton
                   label="Browser"
                   active={activeTab === 'browser' && canvasOpen}
@@ -1150,7 +1144,7 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.browser}
                 />
               )}
-              {pinnedTabs.planner && (
+              {(pinnedTabs.planner || (canvasOpen && activeTab === 'planner')) && (
                 <TabButton
                   label="Planner"
                   active={activeTab === 'planner' && canvasOpen}
@@ -1160,7 +1154,7 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.planner}
                 />
               )}
-              {pinnedTabs.tasks && (
+              {(pinnedTabs.tasks || (canvasOpen && activeTab === 'tasks')) && (
                 <TabButton
                   label="Tasks"
                   active={activeTab === 'tasks' && canvasOpen}
@@ -1189,7 +1183,7 @@ export function ActiveChatScreen({
                     [
                       { id: 'changes' as const, label: 'Changes', icon: <FileDiff className="w-4 h-4" /> },
                       { id: 'code' as const, label: 'Code', icon: <Code2 className="w-4 h-4" /> },
-                      { id: 'terminal' as const, label: 'Terminal (read-only)', icon: <Terminal className="w-4 h-4" /> },
+                      { id: 'terminal' as const, label: 'Terminal', icon: <Terminal className="w-4 h-4" /> },
                       { id: 'app' as const, label: 'App', icon: <Monitor className="w-4 h-4" /> },
                       { id: 'browser' as const, label: 'Browser', icon: <Globe className="w-4 h-4" /> },
                       { id: 'planner' as const, label: 'Planner', icon: <ClipboardList className="w-4 h-4" /> },
@@ -1202,23 +1196,9 @@ export function ActiveChatScreen({
                         key={id}
                         data-testid="context-menu-list-item"
                         className="cursor-pointer gap-2"
-                        onSelect={(event) => {
-                          // Radix often sets target to the menu item, not the click origin — use composedPath
-                          const native = (event as unknown as SyntheticEvent).nativeEvent as
-                            | (Event & { composedPath?: () => EventTarget[] })
-                            | undefined;
-                          const path =
-                            typeof native?.composedPath === 'function' ? native.composedPath() : [];
-                          const pinHit =
-                            path.some(
-                              (node) => node instanceof HTMLElement && node.hasAttribute('data-pin-toggle')
-                            ) ||
-                            (event.target as HTMLElement | null)?.closest?.('[data-pin-toggle]');
-                          if (pinHit) {
-                            event.preventDefault();
-                            togglePinned(id);
-                            return;
-                          }
+                        onSelect={() => {
+                          // open/focus the canvas tab; pin toggle is handled on the pin control so it does not
+                          // use Radix’s CustomEvent `onSelect` (no real click target in that event)
                           handleCanvasTabClick(id);
                         }}
                       >
@@ -1227,20 +1207,24 @@ export function ActiveChatScreen({
                         <span
                           data-pin-toggle
                           data-pinned={isPinned ? 'true' : 'false'}
-                          className={cn(
-                            'inline-flex shrink-0 rounded p-0.5 -m-0.5 hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                            isPinned &&
-                              'bg-primary/15 [&_svg]:text-primary group-hover:[&_svg]:!text-primary'
-                          )}
+                          className="inline-flex shrink-0 items-center justify-center rounded p-0.5 -m-0.5 transition-colors hover:bg-muted/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            togglePinned(id);
+                          }}
                           aria-label={isPinned ? 'Pinned to toolbar — click to unpin' : 'Not pinned — click to pin to toolbar'}
                           aria-pressed={isPinned}
                           title={isPinned ? 'Pinned to toolbar (click to unpin)' : 'Not pinned (click to pin)'}
                         >
-                          {isPinned ? (
-                            <PinOff className="h-4 w-4 shrink-0" aria-hidden />
-                          ) : (
-                            <Pin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                          )}
+                          <Pin
+                            className={cn(
+                              'h-3.5 w-3.5 shrink-0',
+                              // keep pin colors independent of row highlight ([&_svg]:!text-white on DropdownMenuItem)
+                              isPinned ? '!text-white' : '!text-muted-foreground'
+                            )}
+                            aria-hidden
+                          />
                         </span>
                       </DropdownMenuItem>
                     );

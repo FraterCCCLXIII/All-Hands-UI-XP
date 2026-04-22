@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local fork clone (nested git repo; not part of monorepo releases)
+apps/openhands-index-results/
