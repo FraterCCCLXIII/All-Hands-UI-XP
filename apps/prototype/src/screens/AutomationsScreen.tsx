@@ -590,6 +590,52 @@ function formatAutomationTriggerSelectionLabel(selectionId: string): string {
   return formatWorkflowTriggerBubbleLabel(selectionId);
 }
 
+const CUSTOM_WEBHOOK_TRIGGER_SEARCH_HAYSTACK =
+  'custom webhooks linear event issue action create';
+
+/** Lowercase, drop punctuation, treat hyphens/underscores/em dashes as spaces (hyphen-free search). */
+function normalizeTriggerSearchText(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[\u2014\u2013\-_/]/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Common shorthand before tokenization (e.g. PR → pull request). */
+function expandTriggerSearchAbbreviations(raw: string): string {
+  return raw
+    .replace(/\bpr\b/gi, 'pull request')
+    .replace(/\bgh\b/gi, 'github');
+}
+
+function triggerSearchQueryTokens(raw: string): string[] {
+  const expanded = expandTriggerSearchAbbreviations(raw.trim());
+  const normalized = normalizeTriggerSearchText(expanded);
+  if (!normalized) return [];
+  return normalized.split(' ').filter(Boolean);
+}
+
+/** Order-independent: every query token must match part of the haystack (word equality, prefix ≥3 chars, or substring ≥3). */
+function haystackMatchesTriggerSearchTokens(normalizedHaystack: string, tokens: string[]): boolean {
+  if (tokens.length === 0) return false;
+  const words = normalizedHaystack.split(' ').filter(Boolean);
+  return tokens.every((tok) => {
+    if (words.some((w) => w === tok)) return true;
+    if (tok.length >= 3 && words.some((w) => w.startsWith(tok))) return true;
+    if (tok.length >= 3 && normalizedHaystack.includes(tok)) return true;
+    return false;
+  });
+}
+
+function workflowTriggerSearchCandidateMatches(userQuery: string, ...haystackParts: string[]): boolean {
+  const tokens = triggerSearchQueryTokens(userQuery);
+  if (tokens.length === 0) return false;
+  const haystack = normalizeTriggerSearchText(haystackParts.join(' '));
+  return haystackMatchesTriggerSearchTokens(haystack, tokens);
+}
+
 const scheduleDayChoices = [
   'Daily',
   'Weekdays',
@@ -702,32 +748,74 @@ function MultiSelectBubbleInput({
     return availableOptions.filter((opt) => opt.toLowerCase().includes(q));
   }, [availableOptions, menuQuery, menuSearchable]);
 
-  const filteredWorkflowTriggerEvents = useMemo(() => {
-    if (!workflowTriggerEvents?.length) return [];
-    const q = menuQuery.trim().toLowerCase();
-    if (!menuSearchable || !q) return [...workflowTriggerEvents];
-    return workflowTriggerEvents.filter((ev) => {
-      if (
-        humanizeWorkflowEventKey(ev.key).toLowerCase().includes(q) ||
-        ev.key.toLowerCase().includes(q)
-      ) {
-        return true;
-      }
-      if (!ev.types) return false;
-      return ev.types.some(
-        (t) =>
-          humanizeWorkflowActivityType(t).toLowerCase().includes(q) ||
-          t.toLowerCase().includes(q)
-      );
-    });
-  }, [workflowTriggerEvents, menuQuery, menuSearchable]);
-
   const showCustomWebhookExample = useMemo(() => {
     if (!workflowMenuActive) return false;
-    const q = menuQuery.trim().toLowerCase();
+    const q = menuQuery.trim();
     if (!menuSearchable || !q) return true;
-    return /custom|webhook|linear/.test(q);
+    return workflowTriggerSearchCandidateMatches(q, CUSTOM_WEBHOOK_TRIGGER_SEARCH_HAYSTACK);
   }, [workflowMenuActive, menuSearchable, menuQuery]);
+
+  const searchQueryActive = menuSearchable && menuQuery.trim().length > 0;
+
+  type WorkflowTriggerSearchHit = {
+    id: string;
+    sourceCaption: string;
+    matchTitle: string;
+  };
+
+  const workflowTriggerSearchHits = useMemo((): WorkflowTriggerSearchHit[] => {
+    if (!workflowMenuActive || !menuSearchable || !workflowTriggerEvents?.length) return [];
+    if (!menuQuery.trim()) return [];
+
+    const rows: WorkflowTriggerSearchHit[] = [];
+
+    for (const ev of workflowTriggerEvents) {
+      const eventLabel = humanizeWorkflowEventKey(ev.key);
+      if (ev.types == null) {
+        if (workflowTriggerSearchCandidateMatches(menuQuery, ev.key, eventLabel)) {
+          rows.push({ id: ev.key, sourceCaption: 'GitHub', matchTitle: eventLabel });
+        }
+        continue;
+      }
+      for (const t of ev.types) {
+        const typeLabel = humanizeWorkflowActivityType(t);
+        const combined = `${eventLabel} — ${typeLabel}`;
+        if (
+          workflowTriggerSearchCandidateMatches(
+            menuQuery,
+            ev.key,
+            eventLabel,
+            t,
+            typeLabel,
+            combined
+          )
+        ) {
+          rows.push({ id: `${ev.key}:${t}`, sourceCaption: 'GitHub', matchTitle: combined });
+        }
+      }
+    }
+
+    if (workflowTriggerSearchCandidateMatches(menuQuery, CUSTOM_WEBHOOK_TRIGGER_SEARCH_HAYSTACK)) {
+      rows.push({
+        id: CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID,
+        sourceCaption: 'Custom Webhooks',
+        matchTitle: 'Linear · Event: Issue · Action: Create',
+      });
+    }
+
+    rows.sort((a, b) => {
+      const bySource = a.sourceCaption.localeCompare(b.sourceCaption);
+      if (bySource !== 0) return bySource;
+      return a.matchTitle.localeCompare(b.matchTitle);
+    });
+
+    return rows;
+  }, [
+    workflowMenuActive,
+    menuSearchable,
+    workflowTriggerEvents,
+    menuQuery,
+  ]);
 
   const bubbleLabel = (value: string) =>
     formatTriggerSelectionLabel ? formatTriggerSelectionLabel(value) : value;
@@ -741,9 +829,9 @@ function MultiSelectBubbleInput({
   const flexMenuLayout = Boolean(menuSearchable || workflowMenuActive);
 
   const customWebhookLinearExampleTaken = selectedValues.includes(CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID);
-  const hasGithubWorkflowTriggers = filteredWorkflowTriggerEvents.length > 0;
+  const hasGithubWorkflowTriggers = (workflowTriggerEvents?.length ?? 0) > 0;
 
-  const githubWorkflowMenuItems = filteredWorkflowTriggerEvents.map((ev) => {
+  const githubWorkflowMenuItems = (workflowTriggerEvents ?? []).map((ev) => {
     if (ev.types == null) {
       const id = ev.key;
       const taken = selectedValues.includes(id);
@@ -913,12 +1001,7 @@ function MultiSelectBubbleInput({
                     />
                   </div>
                 ) : null}
-                <div
-                  className={cn(
-                    'shrink-0 p-1',
-                    hasGithubWorkflowTriggers && 'border-b border-border bg-popover'
-                  )}
-                >
+                <div className="shrink-0 p-1">
                   <DropdownMenuItem
                     className="font-medium"
                     onSelect={() => onAdd(SCHEDULE_TRIGGER_OPTION)}
@@ -965,16 +1048,60 @@ function MultiSelectBubbleInput({
                       </DropdownMenuSub>
                     </>
                   ) : null}
+                  {showCustomWebhookExample && !searchQueryActive ? <DropdownMenuSeparator /> : null}
+                  {!searchQueryActive ? (
+                    <>
+                      <DropdownMenuLabel className="px-2 py-1.5 text-xs font-normal text-muted-foreground">
+                        Source
+                      </DropdownMenuLabel>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>Github</DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="min-w-[260px]">
+                          {hasGithubWorkflowTriggers ? (
+                            githubWorkflowMenuItems
+                          ) : (
+                            <div className="px-2 py-3 text-sm text-muted-foreground">No events</div>
+                          )}
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </>
+                  ) : null}
                 </div>
-                <div className="dropdown-scroll min-h-0 flex-1 overflow-y-auto p-1">
-                  {!hasGithubWorkflowTriggers && !showCustomWebhookExample ? (
-                    <div className="px-2 py-3 text-sm text-muted-foreground">
-                      {menuSearchable && menuQuery.trim() ? 'No matching events' : 'No events'}
-                    </div>
-                  ) : (
-                    hasGithubWorkflowTriggers ? githubWorkflowMenuItems : null
-                  )}
-                </div>
+                {searchQueryActive ? (
+                  <div className="dropdown-scroll min-h-0 flex-1 overflow-y-auto border-t border-border p-1">
+                    {workflowTriggerSearchHits.length === 0 ? (
+                      <div className="px-2 py-3 text-sm text-muted-foreground">No matching events</div>
+                    ) : (
+                      workflowTriggerSearchHits.map((hit) => {
+                        const taken = selectedValues.includes(hit.id);
+                        return (
+                          <DropdownMenuItem
+                            key={hit.id}
+                            disabled={taken}
+                            onSelect={() => {
+                              if (!taken) onAdd(hit.id);
+                            }}
+                            className={cn(
+                              'items-start gap-0',
+                              taken
+                                ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+                                : undefined
+                            )}
+                          >
+                            <div className="flex min-w-0 flex-col gap-0.5 py-0.5">
+                              <span className="text-xs font-normal leading-tight text-muted-foreground">
+                                {hit.sourceCaption}
+                              </span>
+                              <span className="text-sm leading-tight text-popover-foreground">
+                                {hit.matchTitle}
+                              </span>
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })
+                    )}
+                  </div>
+                ) : null}
               </>
             ) : menuTriggerMode ? (
               <>
