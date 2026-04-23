@@ -39,9 +39,20 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
+import {
+  formatWorkflowTriggerBubbleLabel,
+  GITHUB_WORKFLOW_TRIGGER_EVENTS,
+  humanizeWorkflowActivityType,
+  humanizeWorkflowEventKey,
+  type WorkflowTriggerEventConfig,
+} from '../lib/githubWorkflowTriggers';
 import { DeleteWorkflowDialog } from '../components/workflow/DeleteWorkflowDialog';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -567,21 +578,17 @@ const metadataSections: Array<{
 
 const configurationMetadataSection = metadataSections[0];
 
-const eventTriggerOptions = [
-  'Pull request opened',
-  'Pull request synchronized',
-  'Pull request reopened',
-  'Pull request merged',
-  'Push to branch',
-  'Tag created',
-  'Release published',
-  'Issue opened',
-  'Issue labeled',
-  'Comment created',
-  'Workflow run completed',
-];
-
 const SCHEDULE_TRIGGER_OPTION = 'Schedule';
+
+/** Example custom webhook path in the trigger menu (third-party payload shape). */
+const CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID = 'webhook:linear:issue:create';
+
+function formatAutomationTriggerSelectionLabel(selectionId: string): string {
+  if (selectionId === CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID) {
+    return 'Custom Webhook · Linear · Event: Issue · Action: Create';
+  }
+  return formatWorkflowTriggerBubbleLabel(selectionId);
+}
 
 const scheduleDayChoices = [
   'Daily',
@@ -659,6 +666,8 @@ function MultiSelectBubbleInput({
   menuSearchable = false,
   menuSearchPlaceholder = 'Search…',
   menuTriggerMode = false,
+  workflowTriggerEvents,
+  formatTriggerSelectionLabel,
 }: {
   label: string;
   addActionLabel: string;
@@ -672,11 +681,16 @@ function MultiSelectBubbleInput({
   menuSearchPlaceholder?: string;
   /** Schedule on top + separator; git triggers stay visible but disabled when already added */
   menuTriggerMode?: boolean;
+  /** When set with `menuTriggerMode`, lists GitHub workflow events; types open in a nested submenu. */
+  workflowTriggerEvents?: readonly WorkflowTriggerEventConfig[];
+  /** Maps stored selection ids (e.g. `pull_request:opened`) to bubble copy. */
+  formatTriggerSelectionLabel?: (selectionId: string) => string;
 }) {
   const menuSearchRef = useRef<HTMLInputElement>(null);
   const [menuQuery, setMenuQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const workflowMenuActive = Boolean(menuTriggerMode && workflowTriggerEvents?.length);
   const selectedSet = new Set(selectedValues);
   const availableOptions = menuTriggerMode
     ? options
@@ -688,11 +702,106 @@ function MultiSelectBubbleInput({
     return availableOptions.filter((opt) => opt.toLowerCase().includes(q));
   }, [availableOptions, menuQuery, menuSearchable]);
 
+  const filteredWorkflowTriggerEvents = useMemo(() => {
+    if (!workflowTriggerEvents?.length) return [];
+    const q = menuQuery.trim().toLowerCase();
+    if (!menuSearchable || !q) return [...workflowTriggerEvents];
+    return workflowTriggerEvents.filter((ev) => {
+      if (
+        humanizeWorkflowEventKey(ev.key).toLowerCase().includes(q) ||
+        ev.key.toLowerCase().includes(q)
+      ) {
+        return true;
+      }
+      if (!ev.types) return false;
+      return ev.types.some(
+        (t) =>
+          humanizeWorkflowActivityType(t).toLowerCase().includes(q) ||
+          t.toLowerCase().includes(q)
+      );
+    });
+  }, [workflowTriggerEvents, menuQuery, menuSearchable]);
+
+  const showCustomWebhookExample = useMemo(() => {
+    if (!workflowMenuActive) return false;
+    const q = menuQuery.trim().toLowerCase();
+    if (!menuSearchable || !q) return true;
+    return /custom|webhook|linear/.test(q);
+  }, [workflowMenuActive, menuSearchable, menuQuery]);
+
+  const bubbleLabel = (value: string) =>
+    formatTriggerSelectionLabel ? formatTriggerSelectionLabel(value) : value;
+
   useEffect(() => {
     if (menuOpen && menuSearchable) {
       queueMicrotask(() => menuSearchRef.current?.focus());
     }
   }, [menuOpen, menuSearchable]);
+
+  const flexMenuLayout = Boolean(menuSearchable || workflowMenuActive);
+
+  const customWebhookLinearExampleTaken = selectedValues.includes(CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID);
+  const hasGithubWorkflowTriggers = filteredWorkflowTriggerEvents.length > 0;
+
+  const githubWorkflowMenuItems = filteredWorkflowTriggerEvents.map((ev) => {
+    if (ev.types == null) {
+      const id = ev.key;
+      const taken = selectedValues.includes(id);
+      return (
+        <DropdownMenuItem
+          key={id}
+          disabled={taken}
+          onSelect={() => {
+            if (!taken) onAdd(id);
+          }}
+          className={
+            taken
+              ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+              : undefined
+          }
+        >
+          {humanizeWorkflowEventKey(ev.key)}
+        </DropdownMenuItem>
+      );
+    }
+    const allTypesTaken = ev.types.every((t) => selectedValues.includes(`${ev.key}:${t}`));
+    return (
+      <DropdownMenuSub key={ev.key}>
+        <DropdownMenuSubTrigger
+          disabled={allTypesTaken}
+          className={
+            allTypesTaken
+              ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+              : undefined
+          }
+        >
+          {humanizeWorkflowEventKey(ev.key)}
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent className="min-w-[12rem]">
+          {ev.types.map((t) => {
+            const id = `${ev.key}:${t}`;
+            const taken = selectedValues.includes(id);
+            return (
+              <DropdownMenuItem
+                key={t}
+                disabled={taken}
+                onSelect={() => {
+                  if (!taken) onAdd(id);
+                }}
+                className={
+                  taken
+                    ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+                    : undefined
+                }
+              >
+                {humanizeWorkflowActivityType(t)}
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
+    );
+  });
 
   return (
     <div className="space-y-2">
@@ -719,12 +828,12 @@ function MultiSelectBubbleInput({
             key={value}
             className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
           >
-            {value}
+            {bubbleLabel(value)}
             <button
               type="button"
               onClick={() => onRemove(value)}
               className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label={`Remove ${value}`}
+              aria-label={`Remove ${bubbleLabel(value)}`}
             >
               <X className="h-3 w-3" />
             </button>
@@ -755,12 +864,12 @@ function MultiSelectBubbleInput({
           <DropdownMenuContent
             align="start"
             className={cn(
-              menuSearchable
-                ? 'flex max-h-72 min-w-[260px] w-[var(--radix-dropdown-menu-trigger-width)] flex-col overflow-hidden p-0'
+              flexMenuLayout
+                ? 'flex max-h-[min(24rem,calc(100dvh-2rem))] min-w-[280px] w-[var(--radix-dropdown-menu-trigger-width)] flex-col overflow-hidden p-0'
                 : 'max-h-60'
             )}
           >
-            {menuSearchable ? (
+            {menuSearchable && !workflowMenuActive ? (
               <>
                 <div className="shrink-0 overflow-hidden rounded-t-md border-b border-border bg-popover p-0">
                   <SearchInput
@@ -785,6 +894,85 @@ function MultiSelectBubbleInput({
                         {opt}
                       </DropdownMenuItem>
                     ))
+                  )}
+                </div>
+              </>
+            ) : workflowMenuActive ? (
+              <>
+                {menuSearchable ? (
+                  <div className="shrink-0 overflow-hidden rounded-t-md border-b border-border bg-popover p-0">
+                    <SearchInput
+                      ref={menuSearchRef}
+                      size="sm"
+                      placeholder={menuSearchPlaceholder}
+                      value={menuQuery}
+                      onValueChange={setMenuQuery}
+                      onKeyDown={(e) => e.stopPropagation()}
+                      aria-label={menuSearchPlaceholder}
+                      className="w-full [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-muted/50 [&_input]:shadow-none focus-visible:[&_input]:ring-0 focus-visible:[&_input]:ring-offset-0"
+                    />
+                  </div>
+                ) : null}
+                <div
+                  className={cn(
+                    'shrink-0 p-1',
+                    hasGithubWorkflowTriggers && 'border-b border-border bg-popover'
+                  )}
+                >
+                  <DropdownMenuItem
+                    className="font-medium"
+                    onSelect={() => onAdd(SCHEDULE_TRIGGER_OPTION)}
+                  >
+                    {SCHEDULE_TRIGGER_OPTION}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {showCustomWebhookExample ? (
+                    <>
+                      <DropdownMenuLabel className="px-2 py-1.5 text-xs font-normal text-muted-foreground">
+                        Custom Webhooks
+                      </DropdownMenuLabel>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger
+                          disabled={customWebhookLinearExampleTaken}
+                          className={
+                            customWebhookLinearExampleTaken
+                              ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+                              : undefined
+                          }
+                        >
+                          Linear
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="min-w-[14rem]">
+                          <DropdownMenuItem
+                            disabled={customWebhookLinearExampleTaken}
+                            onSelect={() => {
+                              if (!customWebhookLinearExampleTaken) {
+                                onAdd(CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID);
+                              }
+                            }}
+                            className={
+                              customWebhookLinearExampleTaken
+                                ? 'cursor-default text-muted-foreground opacity-50 data-[disabled]:opacity-50'
+                                : undefined
+                            }
+                          >
+                            <span className="flex flex-col items-start gap-0.5">
+                              <span>Event: Issue</span>
+                              <span className="text-muted-foreground">Action: Create</span>
+                            </span>
+                          </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                      </DropdownMenuSub>
+                    </>
+                  ) : null}
+                </div>
+                <div className="dropdown-scroll min-h-0 flex-1 overflow-y-auto p-1">
+                  {!hasGithubWorkflowTriggers && !showCustomWebhookExample ? (
+                    <div className="px-2 py-3 text-sm text-muted-foreground">
+                      {menuSearchable && menuQuery.trim() ? 'No matching events' : 'No events'}
+                    </div>
+                  ) : (
+                    hasGithubWorkflowTriggers ? githubWorkflowMenuItems : null
                   )}
                 </div>
               </>
@@ -1263,7 +1451,9 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           ? [...scheduleTimezoneSet].join(', ')
           : undefined;
     const eventFromTriggers =
-      selectedTriggerEvents.length > 0 ? selectedTriggerEvents.join(', ') : undefined;
+      selectedTriggerEvents.length > 0
+        ? selectedTriggerEvents.map(formatAutomationTriggerSelectionLabel).join(', ')
+        : undefined;
 
     const createdAutomation: AutomationItem = {
       id: `auto-${now.getTime()}`,
@@ -1732,8 +1922,12 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               <MultiSelectBubbleInput
                 label="Trigger Events"
                 addActionLabel="Add Trigger"
-                options={eventTriggerOptions}
+                options={[]}
+                workflowTriggerEvents={GITHUB_WORKFLOW_TRIGGER_EVENTS}
+                formatTriggerSelectionLabel={formatAutomationTriggerSelectionLabel}
                 menuTriggerMode
+                menuSearchable
+                menuSearchPlaceholder="Search GitHub events…"
                 selectedValues={selectedTriggerEvents}
                 additionalItems={newAutomationSchedules.map((entry) => ({
                   id: entry.id,
