@@ -28,8 +28,8 @@
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
 
-  --color-destructive: hsl(var(--destructive) / <alpha-value>);
-  --color-destructive-foreground: hsl(var(--destructive-foreground) / <alpha-value>);
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
 
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
@@ -53,10 +53,10 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
-  --color-success: hsl(var(--success) / <alpha-value>);
-  --color-success-foreground: hsl(var(--success-foreground) / <alpha-value>);
-  --color-warning: hsl(var(--warning) / <alpha-value>);
-  --color-info: hsl(var(--info) / <alpha-value>);
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-info: hsl(var(--info));
 
   --color-agent: hsl(var(--agent-active));
   --color-agent-glow: hsl(var(--agent-glow));

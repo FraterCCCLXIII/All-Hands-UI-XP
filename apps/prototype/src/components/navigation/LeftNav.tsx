@@ -498,7 +498,9 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             side="right"
             align="start"
             sideOffset={8}
-            className="w-max max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground [max-height:min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border -translate-y-12"
+            showScrollbar={false}
+            hugContent
+            className="max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border -translate-y-12"
           >
             <div
               className={cn(
