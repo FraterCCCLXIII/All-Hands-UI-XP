@@ -8,9 +8,9 @@ import {
   Copy,
   Download,
   ExternalLink,
+  LayoutDashboard,
   MessageSquare,
   OctagonPause,
-  Server,
 } from 'lucide-react';
 import { getWorkspaceLabel, isOrgAdminOrOwner } from '../config/accountWorkspaces';
 import {
@@ -502,7 +502,7 @@ export function OrgAdminDashboardScreen({ activeWorkspaceId }: OrgAdminDashboard
   if (!allowed) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-        <Server className="h-10 w-10 text-muted-foreground" aria-hidden />
+        <LayoutDashboard className="h-10 w-10 text-muted-foreground" aria-hidden />
         <div>
           <h1 className="text-lg font-semibold text-foreground">Admin dashboard</h1>
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
