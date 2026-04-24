@@ -90,7 +90,7 @@ const settingsTabs = [
   { id: 'api-keys', label: 'API Keys', icon: Key },
   { id: 'mcp', label: 'MCP', icon: McpIcon },
   { id: 'organizations', label: 'Organization', icon: Building2 },
-  { id: 'org-plugins', label: 'Extensions', icon: Layers },
+  { id: 'org-plugins', label: 'Organization Skills', icon: Layers },
   { id: 'org-hooks', label: 'Hooks', icon: Webhook },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
@@ -138,7 +138,7 @@ const settingsTabDescriptions: Record<string, string> = {
     'Add Model Context Protocol servers, control team visibility, and choose whether each server is used in every new conversation.',
   organizations: 'Manage credits, organization details, and Git conversation routing.',
   'org-plugins':
-    'Add extension repositories from Git URLs, choose which plugins and skills appear for your organization, and enable them in every conversation.',
+    'Connect skill repositories from Git URLs, manage organization-wide skill visibility, and set which skills are enabled by default in conversations.',
   'org-hooks':
     'Define organization hooks and control whether members see them in the UI and whether they run automatically in every new conversation.',
   skills: 'Choose which skills are available for your organization and how they appear in conversations.',
@@ -268,7 +268,7 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
     name: 'Static Analysis',
     pluginRepo: 'github.com/OpenHands/static-analysis',
     marketplaceSkillId: 'marketplace-deps',
-    kind: 'plugin',
+    kind: 'skill',
     visible: true,
     availableAllConversations: false,
   },
@@ -277,7 +277,7 @@ const initialOrgPluginCatalog: OrgPluginCatalogItem[] = [
     name: 'Code Search',
     pluginRepo: 'github.com/OpenHands/code-search',
     marketplaceSkillId: 'marketplace-performance',
-    kind: 'plugin',
+    kind: 'skill',
     visible: true,
     availableAllConversations: true,
   },
@@ -2329,15 +2329,16 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           )}
 
-          {/* Org plugins & skills (Admin / Owner) */}
+          {/* Organization skills — repos + permissions (Admin / Owner) */}
           {activeTab === 'org-plugins' && (
             <div className="contents">
               <div className={cn('flex w-full flex-col', settingsSectionStackGap)}>
                 <div className={cn('flex flex-col', settingsSublineToContentGap)}>
                   <div className="space-y-1">
-                    <h3 className="text-base font-semibold leading-snug text-foreground">Extension repositories</h3>
+                    <h3 className="text-base font-semibold leading-snug text-foreground">Connect Skill Repositories</h3>
                     <p className="text-sm text-muted-foreground">
-                      Add plugin repositories from Git URLs. Added repositories appear in the plugin marketplace.
+                      Add skill repositories from Git URLs. Added repositories load skills into the list below; new skills
+                      are disabled by default until you turn them on.
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
@@ -2378,16 +2379,17 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </ul>
                     ) : (
                       <div className="px-3 pt-3 pb-4 text-sm text-muted-foreground">
-                        No extension repositories added yet.
+                        No skill repositories added yet.
                       </div>
                     )}
                   </div>
                 </div>
                 <div className={cn('flex w-full flex-col', settingsSublineToContentGap, settingsSectionRule)}>
                   <div className="space-y-1">
-                    <h3 className="text-base font-semibold leading-snug text-foreground">Plugins & skills</h3>
+                    <h3 className="text-base font-semibold leading-snug text-foreground">Skills Permissions</h3>
                     <p className="text-sm text-muted-foreground">
-                      Search and filter by repository path, plugin vs skill, or narrow by repository.
+                      Organization-wide skills can be visible to everyone and turned on for all users. Skills enabled for
+                      all conversations cannot be disabled by individual members.
                     </p>
                   </div>
                   <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">

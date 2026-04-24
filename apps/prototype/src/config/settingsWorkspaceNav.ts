@@ -111,7 +111,7 @@ export const ORG_SETTINGS_NAV: SettingsNavItem[] = [
   },
   { id: 'llm', label: 'Language Model (LLM)', tabId: 'llm', icon: Cpu, requiredPermission: 'view_llm_settings' },
   { id: 'billing', label: 'Billing', tabId: 'billing', icon: CreditCard, requiredPermission: 'view_billing' },
-  { id: 'org-plugins', label: 'Extensions', tabId: 'org-plugins', icon: Layers, requiredPermission: 'manage_org_plugins' },
+  { id: 'org-plugins', label: 'Skills', tabId: 'org-plugins', icon: Layers, requiredPermission: 'manage_org_plugins' },
   { id: 'org-hooks', label: 'Hooks', tabId: 'org-hooks', icon: Webhook, requiredPermission: 'manage_org_hooks' },
 ];
 
