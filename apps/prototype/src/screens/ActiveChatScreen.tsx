@@ -1370,9 +1370,7 @@ export function ActiveChatScreen({
 /workspace/project/All-Hands-UI-XP/node_modules/
 /workspace/project/All-Hands-UI-XP/package-lock.json
 /workspace/project/All-Hands-UI-XP/package.json
-/workspace/project/All-Hands-UI-XP/postcss.config.js
 /workspace/project/All-Hands-UI-XP/src/
-/workspace/project/All-Hands-UI-XP/tailwind.config.js
 /workspace/project/All-Hands-UI-XP/tsconfig.json
 /workspace/project/All-Hands-UI-XP/tsconfig.node.json
 /workspace/project/All-Hands-UI-XP/vite.config.ts

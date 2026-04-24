@@ -1,6 +1,9 @@
 {
   "name": "all-hands-ui-xp",
   "private": true,
+  "overrides": {
+    "tailwindcss": "4.2.4"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"

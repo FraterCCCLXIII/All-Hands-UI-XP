@@ -130,7 +130,7 @@ export function ComponentLibraryDocs() {
                 id: 'canvas-loading-panel',
                 name: 'Canvas loading panel',
                 description:
-                  'Full-height loading state for canvas/preview columns. Implemented in `Canvas.tsx` when `isContentLoading` is true; `ActiveChatScreen` adds an optional absolutely positioned bottom slot for protips (tailwindcss-animate in/out). Status copy uses the `gradient-flow` utility from `apps/prototype/src/index.css`.',
+                  'Full-height loading state for canvas/preview columns. Implemented in `Canvas.tsx` when `isContentLoading` is true; `ActiveChatScreen` adds an optional absolutely positioned bottom slot for protips (tw-animate-css in/out). Status copy uses the `gradient-flow` utility from `apps/prototype/src/index.css`.',
                 usage: `<div className="flex flex-col flex-1 gap-3 min-w-max h-full min-h-0">
   <div className="bg-muted/60 border border-border rounded-xl flex flex-col items-center justify-center h-full w-full min-h-[200px] relative">
     {/* Optional (ActiveChatScreen): bottom tip — absolute bottom-4, animate-in/out */}
