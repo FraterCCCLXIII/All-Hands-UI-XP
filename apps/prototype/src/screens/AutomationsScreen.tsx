@@ -1399,6 +1399,36 @@ interface AutomationsScreenProps {
   onOpenConversation?: (conversationId: string) => void;
 }
 
+function AutomationsSidebar({ activeCount }: { activeCount: number }) {
+  return (
+    <aside className="relative z-10 flex w-72 shrink-0 flex-col gap-6 border-r border-border px-6 pb-8 pt-8">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xl font-semibold leading-6 text-foreground">Automations</h2>
+        <DocIconLink aria-label="Automations documentation" />
+      </div>
+
+      <nav className="flex flex-col gap-3" aria-label="Automation sections">
+        <div className="space-y-2">
+          <div className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Use Cases
+          </div>
+          <button
+            type="button"
+            className="group flex h-9 w-full items-center gap-3 rounded-lg bg-muted/60 px-3 text-left text-sm text-foreground transition-colors"
+            aria-current="page"
+          >
+            <Zap className="h-5 w-5 shrink-0 text-white" aria-hidden />
+            <span className="min-w-0 flex-1 truncate font-normal">Active Automations (Current)</span>
+            <span className="shrink-0 rounded bg-background/60 px-1.5 py-0.5 text-xs font-mono text-muted-foreground">
+              {activeCount}
+            </span>
+          </button>
+        </div>
+      </nav>
+    </aside>
+  );
+}
+
 export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   onRunNow,
   onOpenConversation,
@@ -2038,7 +2068,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                   value={newAutomationTitle}
                   onChange={(event) => setNewAutomationTitle(event.target.value)}
                   placeholder="Weekly release risk check"
-                  className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+                  className="h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
                 />
               </label>
 
@@ -2050,7 +2080,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                     onChange={(event) => setNewAutomationPrompt(event.target.value)}
                     rows={5}
                     placeholder="Describe what the automation should do..."
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground"
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
                   />
                 </label>
               </div>
@@ -2177,7 +2207,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                     value={newAutomationNotification}
                     onChange={(event) => setNewAutomationNotification(event.target.value)}
                     placeholder="e.g. Slack digest to #channel, email alias, or PagerDuty service"
-                    className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground"
+                    className="h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-base text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 md:text-sm"
                   />
                 </div>
               </div>
@@ -2306,13 +2336,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
 
   return (
     <>
-    <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+    <div className="flex h-full w-full overflow-hidden bg-background">
+      <AutomationsSidebar activeCount={activeAutomations.length} />
+      <div className="min-w-0 flex-1 overflow-auto px-8 py-8">
       <div className="mx-auto w-full max-w-4xl">
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-semibold leading-6 text-foreground">Automations</h2>
-            <DocIconLink aria-label="Automations documentation" />
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
             View active and inactive automations, search by metadata, and inspect read-only details.
@@ -2417,6 +2448,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           }
         }}
       />
+      </div>
       </div>
     </div>
     {automationsFabAndGuideModal}

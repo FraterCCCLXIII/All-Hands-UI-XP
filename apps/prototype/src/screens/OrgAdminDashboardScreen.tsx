@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  BarChart3,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -11,6 +12,8 @@ import {
   LayoutDashboard,
   MessageSquare,
   OctagonPause,
+  TrendingUp,
+  Users,
 } from 'lucide-react';
 import { getWorkspaceLabel, isOrgAdminOrOwner } from '../config/accountWorkspaces';
 import {
@@ -52,6 +55,23 @@ import { SimulatedConversationSample } from '../components/chat/SimulatedConvers
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../components/ui/sheet';
 
 const ORG_ADMIN_PAGE_SIZE_OPTIONS = [5, 10, 25, 50] as const;
+
+const usageTrendData = [
+  { label: 'Mon', conversations: 42, tokens: 118 },
+  { label: 'Tue', conversations: 58, tokens: 146 },
+  { label: 'Wed', conversations: 51, tokens: 132 },
+  { label: 'Thu', conversations: 69, tokens: 184 },
+  { label: 'Fri', conversations: 76, tokens: 205 },
+  { label: 'Sat', conversations: 34, tokens: 88 },
+  { label: 'Sun', conversations: 29, tokens: 73 },
+];
+
+const usageTeamData = [
+  { label: 'Engineering', value: 48 },
+  { label: 'Product', value: 24 },
+  { label: 'Design', value: 16 },
+  { label: 'Support', value: 12 },
+];
 
 function stackCreatedUpdated(c: OrgConversation) {
   return {
@@ -327,6 +347,144 @@ function MetricCard({
   );
 }
 
+type OrgAdminDashboardPage = 'usage' | 'conversations';
+
+function OrgAdminSidebar({
+  activePage,
+  onPageChange,
+}: {
+  activePage: OrgAdminDashboardPage;
+  onPageChange: (page: OrgAdminDashboardPage) => void;
+}) {
+  const navItems = [
+    { id: 'usage' as const, label: 'Usage', icon: BarChart3 },
+    { id: 'conversations' as const, label: 'Conversations', icon: MessageSquare },
+  ];
+
+  return (
+    <aside className="relative z-10 flex w-72 shrink-0 flex-col gap-6 border-r border-border px-6 pb-8 pt-8">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold leading-6 text-foreground">Admin dashboard</h2>
+        <p className="text-xs text-muted-foreground">Organization controls</p>
+      </div>
+
+      <nav className="flex flex-col gap-1" aria-label="Admin dashboard sections">
+        {navItems.map(({ id, label, icon: Icon }) => {
+          const active = activePage === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onPageChange(id)}
+              className={cn(
+                'group flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors',
+                active
+                  ? 'bg-muted/60 text-foreground'
+                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+              )}
+              aria-current={active ? 'page' : undefined}
+            >
+              <Icon
+                className={cn(
+                  'h-5 w-5 shrink-0',
+                  active ? 'text-white' : 'text-muted-foreground group-hover:text-white'
+                )}
+                aria-hidden
+              />
+              <span className="min-w-0 truncate font-normal">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+
+function UsageOverview() {
+  const maxTokens = Math.max(...usageTrendData.map((d) => d.tokens));
+  const maxConversations = Math.max(...usageTrendData.map((d) => d.conversations));
+
+  return (
+    <section id="admin-usage" className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Usage</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            At-a-glance org consumption and activity trends using sample data.
+          </p>
+        </div>
+        <span className="rounded-full border border-border bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
+          Last 7 days
+        </span>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <MetricCard label="Active users" value="128" hint="+14% vs prior week" icon={Users} />
+        <MetricCard label="Agent runs" value="359" hint="51 daily average" icon={TrendingUp} />
+        <MetricCard label="Token usage" value="946k" hint="$412 estimated spend" icon={Coins} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.8fr)]">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium text-foreground">Daily usage</h3>
+              <p className="mt-1 text-xs text-muted-foreground">Tokens and conversations by day</p>
+            </div>
+          </div>
+          <div className="mt-5 flex h-48 items-end gap-3">
+            {usageTrendData.map((item) => (
+              <div key={item.label} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                <div className="flex h-36 w-full max-w-12 items-end justify-center gap-1">
+                  <div
+                    className="w-3 rounded-t bg-primary/80"
+                    style={{ height: `${Math.max(10, (item.tokens / maxTokens) * 100)}%` }}
+                    title={`${item.tokens}k tokens`}
+                  />
+                  <div
+                    className="w-3 rounded-t bg-muted-foreground/45"
+                    style={{ height: `${Math.max(10, (item.conversations / maxConversations) * 100)}%` }}
+                    title={`${item.conversations} conversations`}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-primary/80" aria-hidden />
+              Tokens
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-muted-foreground/45" aria-hidden />
+              Conversations
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          <h3 className="text-sm font-medium text-foreground">Usage by team</h3>
+          <p className="mt-1 text-xs text-muted-foreground">Share of total runs</p>
+          <div className="mt-5 space-y-4">
+            {usageTeamData.map((item) => (
+              <div key={item.label} className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="text-foreground">{item.label}</span>
+                  <span className="font-mono text-muted-foreground">{item.value}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div className="h-full rounded-full bg-primary/75" style={{ width: `${item.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export interface OrgAdminDashboardScreenProps {
   activeWorkspaceId: string;
 }
@@ -353,6 +511,7 @@ export function OrgAdminDashboardScreen({ activeWorkspaceId }: OrgAdminDashboard
   const [activityDateTo, setActivityDateTo] = useState('');
   const [updatedWithinHours, setUpdatedWithinHours] = useState<number | null>(null);
   const [activityTimeWindow, setActivityTimeWindow] = useState<ActivityTimeWindowPreset>('all');
+  const [activePage, setActivePage] = useState<OrgAdminDashboardPage>('usage');
 
   const listQuery = useMemo(
     () => ({
@@ -515,10 +674,25 @@ export function OrgAdminDashboardScreen({ activeWorkspaceId }: OrgAdminDashboard
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-background">
+    <div className="flex min-h-0 flex-1 overflow-hidden bg-background">
+      <OrgAdminSidebar activePage={activePage} onPageChange={setActivePage} />
+      <div className="min-w-0 flex-1 overflow-auto">
       <div className="flex flex-col gap-6 px-6 pb-8 pt-8">
+        {activePage === 'usage' ? (
+          <>
+            <div className="space-y-1">
+              <h1 className="text-xl font-semibold leading-6 tracking-tight text-foreground">Usage</h1>
+              <p className="text-sm text-muted-foreground">
+                At-a-glance OpenHands usage for <span className="text-foreground">{orgLabel}</span>.
+              </p>
+            </div>
+
+            <UsageOverview />
+          </>
+        ) : (
+          <>
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold leading-6 tracking-tight text-foreground">Admin dashboard</h1>
+          <h1 className="text-xl font-semibold leading-6 tracking-tight text-foreground">Conversations</h1>
           <p className="text-sm text-muted-foreground">
             Org-wide OpenHands activity for <span className="text-foreground">{orgLabel}</span> — active sessions,
             runtimes, and triage.
@@ -552,7 +726,7 @@ export function OrgAdminDashboardScreen({ activeWorkspaceId }: OrgAdminDashboard
           />
         </div>
 
-        <div className="rounded-xl border border-border bg-card/40 p-4 shadow-sm">
+        <div id="admin-conversations" className="rounded-xl border border-border bg-card/40 p-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filters</p>
             <Button
@@ -944,6 +1118,9 @@ export function OrgAdminDashboardScreen({ activeWorkspaceId }: OrgAdminDashboard
             </span>
           </div>
         </div>
+          </>
+        )}
+      </div>
       </div>
 
       <Sheet open={drawerConv !== null} onOpenChange={(o) => !o && setDrawerConv(null)}>

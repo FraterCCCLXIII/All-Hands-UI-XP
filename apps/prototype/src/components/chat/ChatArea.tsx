@@ -32,6 +32,13 @@ interface ChatAreaProps {
   onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
   welcomeScreenVariant?: 'default' | 'chat-start' | 'new-chat-start';
   onEnterpriseLearnMoreClick?: () => void;
+  isInspectorEnabled?: boolean;
+  onInspectorToggle?: () => void;
+  onStartUxTour?: (tourId: string) => void;
+  uxTourLinks?: Array<{ id: string; label: string }>;
+  isUxFlowMenuOpen?: boolean;
+  onUxFlowMenuOpenChange?: (open: boolean) => void;
+  onPrototypeNavItemClick?: (action: string) => void;
   /** `inline` = in-flow under messages / on welcome (default). `fixed` = bottom-right overlay. */
   enterpriseCtaPlacement?: 'fixed' | 'inline';
   /** When true (URL `/`), show the three-column landing again (e.g. after left-nav Plus). */
@@ -58,6 +65,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onEnterpriseCtaVisibilityChange,
   welcomeScreenVariant = 'default',
   onEnterpriseLearnMoreClick,
+  isInspectorEnabled,
+  onInspectorToggle,
+  onStartUxTour,
+  uxTourLinks,
+  isUxFlowMenuOpen,
+  onUxFlowMenuOpenChange,
+  onPrototypeNavItemClick,
   enterpriseCtaPlacement = 'inline',
   isHomeRoute = false,
 }) => {
@@ -193,6 +207,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
           getThemeClasses={getThemeClasses}
           userName={userName}
           variant={welcomeScreenVariant}
+          isInspectorEnabled={isInspectorEnabled}
+          onInspectorToggle={onInspectorToggle}
+          onStartUxTour={onStartUxTour}
+          uxTourLinks={uxTourLinks}
+          isUxFlowMenuOpen={isUxFlowMenuOpen}
+          onUxFlowMenuOpenChange={onUxFlowMenuOpenChange}
+          onPrototypeNavItemClick={onPrototypeNavItemClick}
         />
         <AnimatePresence>
           {showEnterpriseCta && (

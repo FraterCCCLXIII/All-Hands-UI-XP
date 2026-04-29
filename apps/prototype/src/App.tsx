@@ -814,12 +814,6 @@ function App() {
                 onWidthChange={setLeftNavWidth}
                 onNavItemClick={handleNavItemClick}
                 activeNavItem={activeNavItem}
-                isInspectorEnabled={isInspectorEnabled}
-                onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
-                onStartUxTour={uxTourController.startTour}
-                uxTourLinks={uxTourLinks}
-                isUxFlowMenuOpen={isUxFlowMenuOpen}
-                onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
                 onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
@@ -1036,6 +1030,13 @@ function App() {
                               : 'default'
                         }
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
+                        isInspectorEnabled={isInspectorEnabled}
+                        onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
+                        onStartUxTour={uxTourController.startTour}
+                        uxTourLinks={uxTourLinks}
+                        isUxFlowMenuOpen={isUxFlowMenuOpen}
+                        onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
+                        onPrototypeNavItemClick={handleNavItemClick}
                         isHomeRoute={
                           location.pathname === '/chat-start' ||
                           location.pathname === '/' ||

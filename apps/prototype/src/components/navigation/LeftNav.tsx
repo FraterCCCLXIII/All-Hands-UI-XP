@@ -12,6 +12,8 @@ import {
   Clock3,
   Filter,
   Folder,
+  FolderMinus,
+  FolderOpen,
   FolderPlus,
   GitBranch,
   LayoutDashboard,
@@ -25,7 +27,6 @@ import {
   Plus,
   PlusCircle,
   SquareKanban,
-  Sparkles,
   Star,
   User,
   UserPlus,
@@ -111,7 +112,7 @@ const highlightCards = [
   },
 ];
 
-function AutomationsIcon({ className }: { className?: string }) {
+function AutomationsIcon({ className, spinOuter = false }: { className?: string; spinOuter?: boolean }) {
   return (
     <svg
       width="20"
@@ -123,19 +124,21 @@ function AutomationsIcon({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <g clipPath="url(#automations-icon-clip)">
-        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        <g className={cn(spinOuter && 'origin-center animate-spin [transform-box:fill-box]')}>
+          <path d="M10 18.1818V16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M10 1.81812V3.45448" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M1.81824 10H3.4546" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M18.1818 10H16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+        </g>
         <path d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z" fill="currentColor" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
       </g>
       <defs>
@@ -151,7 +154,6 @@ const navItems = [
   { icon: Plus, label: 'New Conversation', action: 'new-project' },
   { icon: Boxes, label: 'Extensions', action: 'extensions' },
   { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
-  { icon: SquareKanban, label: 'Workspaces', action: 'dashboard' },
 ];
 
 interface ConversationFolder {
@@ -191,6 +193,18 @@ function ThreadList({
   onSelectConversation?: (conversation: ConversationSummary) => void;
 }) {
   const folders = useMemo(() => buildConversationFolders(conversations), [conversations]);
+  const chronologicalConversations = useMemo(
+    () => [...conversations].sort((a, b) => Number(Boolean(a.archived)) - Number(Boolean(b.archived))),
+    [conversations]
+  );
+  const automationIndicatorIds = useMemo(
+    () =>
+      conversations
+        .filter((conversation) => conversation.tag === 'Automation' && !conversation.archived)
+        .slice(0, 2)
+        .map((conversation) => conversation.id),
+    [conversations]
+  );
   const [organizeBy, setOrganizeBy] = useState<'project' | 'chronological'>('project');
   const [sortBy, setSortBy] = useState<'created' | 'updated'>('updated');
   const [showFilter, setShowFilter] = useState<'all' | 'relevant'>('all');
@@ -198,6 +212,19 @@ function ThreadList({
     llmProfiles: false,
     repoBranch: false,
   });
+  const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(() => new Set());
+
+  const toggleFolder = (folderId: string) => {
+    setCollapsedFolderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
 
   const filterSections = [
     {
@@ -306,18 +333,72 @@ function ThreadList({
       </div>
 
       <nav aria-label="Conversation threads" className="space-y-3">
-        {folders.map((folder) => (
-          <section key={folder.id} aria-labelledby={`thread-folder-${folder.id}`}>
-            <div
-              id={`thread-folder-${folder.id}`}
-              className="flex h-8 min-w-0 items-center gap-2 rounded-md px-1.5 text-sm font-medium text-muted-foreground"
-            >
-              <Folder className="h-4 w-4 shrink-0" aria-hidden />
-              <span className="truncate">{folder.label}</span>
-            </div>
+        {(organizeBy === 'project'
+          ? folders.map((folder) => ({ id: folder.id, label: folder.label, conversations: folder.conversations }))
+          : [{ id: 'chronological', label: null, conversations: chronologicalConversations }]
+        ).map((group) => {
+          const isFolderCollapsed = collapsedFolderIds.has(group.id);
+
+          return (
+          <section key={group.id} aria-labelledby={group.label ? `thread-folder-${group.id}` : undefined}>
+            {group.label ? (
+              <div
+                role="button"
+                tabIndex={0}
+                aria-expanded={!isFolderCollapsed}
+                id={`thread-folder-${group.id}`}
+                onClick={() => toggleFolder(group.id)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
+                  toggleFolder(group.id);
+                }}
+                className="group/folder flex h-8 min-w-0 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:bg-sidebar-accent focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <span className="relative h-4 w-4 shrink-0" aria-hidden>
+                  <Folder className="absolute inset-0 h-4 w-4 opacity-100 transition-opacity group-hover/folder:opacity-0 group-focus-visible/folder:opacity-0" />
+                  {isFolderCollapsed ? (
+                    <FolderOpen className="absolute inset-0 h-4 w-4 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100" />
+                  ) : (
+                    <FolderMinus className="absolute inset-0 h-4 w-4 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100" />
+                  )}
+                </span>
+                <span className="truncate">{group.label}</span>
+                <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-within/folder:opacity-100">
+                  <button
+                    type="button"
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    aria-label={`Add conversation to ${group.label}`}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <Plus className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        aria-label={`${group.label} folder options`}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" aria-hidden />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" sideOffset={6} className="w-44">
+                      <DropdownMenuItem className="cursor-pointer">Rename folder</DropdownMenuItem>
+                      <DropdownMenuItem className="cursor-pointer">New conversation</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="cursor-pointer">Archive folder</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            ) : null}
+            {!isFolderCollapsed ? (
             <div className="space-y-0.5">
-              {folder.conversations.map((conversation) => {
+              {group.conversations.map((conversation) => {
                 const isActive = conversation.id === activeConversationId;
+                const automationIndicatorIndex = automationIndicatorIds.indexOf(conversation.id);
                 const metadataRows = [
                   visibleMetadata.repoBranch
                     ? [conversation.repo, conversation.branch].filter(Boolean).join(' · ')
@@ -345,6 +426,24 @@ function ThreadList({
                         className="absolute left-2.5 top-[0.9375rem] h-3 w-3 -translate-y-1/2 text-muted-foreground"
                         aria-hidden
                       />
+                    ) : conversation.tag === 'Automation' ? (
+                      automationIndicatorIndex >= 0 ? (
+                        <AutomationsIcon
+                          spinOuter={automationIndicatorIndex === 0}
+                          className={cn(
+                            'absolute left-2 top-[0.9375rem] h-4 w-4 -translate-y-1/2',
+                            automationIndicatorIndex === 0 ? 'text-success' : 'text-muted-foreground'
+                          )}
+                        />
+                      ) : (
+                        <span
+                          className={cn(
+                            'absolute left-3 top-[0.9375rem] h-1.5 w-1.5 -translate-y-1/2 rounded-full',
+                            conversation.status === 'running' ? 'bg-success' : 'bg-muted-foreground/60'
+                          )}
+                          aria-hidden
+                        />
+                      )
                     ) : (
                       <span
                         className={cn(
@@ -377,8 +476,10 @@ function ThreadList({
                 );
               })}
             </div>
+            ) : null}
           </section>
-        ))}
+          );
+        })}
       </nav>
     </div>
   );
@@ -390,6 +491,7 @@ function LeftNavTooltip({ label, children }: { label: string; children: React.Re
 
   return (
     <span
+      data-left-nav-no-expand="true"
       className="relative inline-flex group"
       onMouseEnter={() => setDismissed(false)}
       onClickCapture={() => setDismissed(true)}
@@ -422,12 +524,6 @@ export interface LeftNavProps {
   onExpandChange: (expanded: boolean) => void;
   onNavItemClick: (action: string) => void;
   activeNavItem: string;
-  isInspectorEnabled: boolean;
-  onInspectorToggle: () => void;
-  onStartUxTour?: (tourId: string) => void;
-  uxTourLinks?: Array<{ id: string; label: string }>;
-  isUxFlowMenuOpen?: boolean;
-  onUxFlowMenuOpenChange?: (open: boolean) => void;
   onEnterpriseLearnMoreClick?: () => void;
   /** Workspace id from `accountWorkspaceOptions`; non-`personal` shows org chrome on the account button. */
   activeWorkspaceId?: string;
@@ -443,43 +539,11 @@ export interface LeftNavProps {
   onWidthChange?: (width: number) => void;
 }
 
-const prototypeMenuEntries = [
-  {
-    id: 'launch-from-plugin-modal',
-    label: 'Launch from plugin modal',
-    navAction: 'launch-from-plugin-modal',
-  },
-  {
-    id: 'start-new-conversation-modal',
-    label: 'Start New Conversation Modal',
-    navAction: 'start-new-conversation-modal',
-  },
-  { id: 'new-chat-start', label: 'New Chat Start', navAction: 'new-chat-start' },
-  { id: 'chat-components', label: 'All Chat Components', navAction: 'chat-components' },
-  { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
-  { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
-  { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
-  {
-    id: 'user-journey-cta',
-    label: 'User Journey - Create in-app call-to-actions (CTAs)',
-    navAction: 'code',
-  },
-  { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
-  { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', navAction: 'new-llm-switcher-2' },
-  { id: 'loading-screen', label: 'Loading Screen', navAction: 'loading-screen' },
-];
-
 export const LeftNav: React.FC<LeftNavProps> = ({
   isExpanded,
   onExpandChange,
   onNavItemClick,
   activeNavItem,
-  isInspectorEnabled,
-  onInspectorToggle,
-  onStartUxTour,
-  uxTourLinks = [],
-  isUxFlowMenuOpen,
-  onUxFlowMenuOpenChange,
   onEnterpriseLearnMoreClick,
   activeWorkspaceId = 'personal',
   onActiveWorkspaceChange,
@@ -509,16 +573,27 @@ export const LeftNav: React.FC<LeftNavProps> = ({
 
   const isOrgAccount = selectedWorkspace.type === 'org';
   const showOrgAdminDashboard = isOrgAdminOrOwner(activeWorkspaceId);
+  const workspaceNavItems = [
+    { icon: SquareKanban, label: 'Workspaces', action: 'dashboard' },
+    ...(showOrgAdminDashboard
+      ? [{ icon: LayoutDashboard, label: 'Admin dashboard', action: 'org-admin-dashboard' }]
+      : []),
+  ];
   const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
   const [isCollapsedRailHovered, setIsCollapsedRailHovered] = useState(false);
   const [isMiddleNavScrolled, setIsMiddleNavScrolled] = useState(false);
+  const [isNavResizing, setIsNavResizing] = useState(false);
   const logoPopoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navResizePointerIdRef = useRef<number | null>(null);
 
   const isInteractiveSidebarTarget = (target: EventTarget | null) => {
-    if (!(target instanceof HTMLElement)) return false;
-    return Boolean(target.closest('button, a, input, select, textarea, [role="button"], [role="separator"], [data-radix-popper-content-wrapper]'));
+    if (!(target instanceof Element)) return false;
+    return Boolean(
+      target.closest(
+        'button, a, input, select, textarea, [role="button"], [role="separator"], [data-left-nav-no-expand="true"], [data-radix-popper-content-wrapper]'
+      )
+    );
   };
 
   const handleLogoMouseEnter = () => {
@@ -544,13 +619,53 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   const handleResizePointerEnd = (event: React.PointerEvent<HTMLDivElement>) => {
     if (navResizePointerIdRef.current !== event.pointerId) return;
     navResizePointerIdRef.current = null;
+    setIsNavResizing(false);
     event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+
+  const renderNavButton = (item: (typeof navItems)[number] | (typeof workspaceNavItems)[number]) => {
+    const Icon = item.icon;
+    const isActive =
+      item.action === 'new-project'
+        ? activeNavItem === 'new-project' ||
+          ((activeNavItem === 'code' ||
+            activeNavItem === 'chat-start' ||
+            activeNavItem === 'new-chat-start') &&
+            isHomeRoute)
+        : activeNavItem === item.action;
+    const navButton = (
+      <button
+        type="button"
+        aria-label={item.label}
+        aria-pressed={isActive}
+        onClick={() => onNavItemClick(item.action)}
+        className={cn(
+          'inline-flex h-9 w-full items-center rounded-lg text-sm transition-colors',
+          isExpanded ? 'gap-3 px-3' : 'justify-center px-0',
+          isActive
+            ? 'bg-sidebar-accent text-sidebar-foreground'
+            : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
+        )}
+      >
+        <span className="inline-flex leading-none transition-transform duration-500 ease-out">
+          <Icon className="w-5 h-5" />
+        </span>
+        {isExpanded ? <span className="truncate">{item.label}</span> : null}
+      </button>
+    );
+
+    return (
+      <React.Fragment key={item.action}>
+        {isExpanded ? navButton : <LeftNavTooltip label={item.label}>{navButton}</LeftNavTooltip>}
+      </React.Fragment>
+    );
   };
 
   return (
   <aside
     className={cn(
-      'pointer-events-auto fixed left-0 top-0 z-50 flex h-screen border-r border-sidebar-border bg-sidebar transition-[width] duration-200',
+      'pointer-events-auto fixed left-0 top-0 z-50 flex h-screen border-r border-sidebar-border bg-sidebar',
+      !isNavResizing && 'transition-[width] duration-200',
       !isExpanded && 'w-12'
     )}
     style={isExpanded ? { width: clampedWidth } : undefined}
@@ -660,165 +775,34 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       <div
         className={cn(
           'flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden pt-3 scrollbar-on-hover',
-          isExpanded ? 'pr-1' : 'pr-0'
+          isExpanded ? '-mx-3' : '-mx-1'
         )}
         onScroll={(event) => setIsMiddleNavScrolled(event.currentTarget.scrollTop > 0)}
       >
-        <div className="flex flex-col gap-1">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            item.action === 'new-project'
-                ? activeNavItem === 'new-project' ||
-                  ((activeNavItem === 'code' ||
-                    activeNavItem === 'chat-start' ||
-                    activeNavItem === 'new-chat-start') &&
-                    isHomeRoute)
-                : activeNavItem === item.action;
-          const navButton = (
-            <button
-              type="button"
-              aria-label={item.label}
-              aria-pressed={isActive}
-              onClick={() => onNavItemClick(item.action)}
-              className={cn(
-                'inline-flex h-9 w-full items-center rounded-lg text-sm transition-colors',
-                isExpanded ? 'gap-3 px-3' : 'justify-center px-0',
-                isActive
-                  ? 'bg-sidebar-accent text-sidebar-foreground'
-                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
-              )}
-            >
-              <span className="inline-flex leading-none transition-transform duration-500 ease-out">
-                <Icon className="w-5 h-5" />
-              </span>
-              {isExpanded ? <span className="truncate">{item.label}</span> : null}
-            </button>
-          );
-
-          return (
-            <React.Fragment key={item.action}>
-              {isExpanded ? navButton : <LeftNavTooltip label={item.label}>{navButton}</LeftNavTooltip>}
-            </React.Fragment>
-          );
-        })}
+        <div className={cn('flex min-h-0 flex-col', isExpanded ? 'px-3' : 'px-1')}>
+          <div className="flex flex-col gap-1">
+          {navItems.map(renderNavButton)}
+          </div>
+          <div className={cn('flex flex-col gap-1', !isExpanded && 'mt-1')}>
+            {workspaceNavItems.map(renderNavButton)}
+          </div>
+          {isExpanded ? (
+            <ThreadList
+              conversations={conversations}
+              activeConversationId={activeConversationId}
+              onSelectConversation={onSelectConversation}
+            />
+          ) : null}
         </div>
-        {isExpanded ? (
-          <ThreadList
-            conversations={conversations}
-            activeConversationId={activeConversationId}
-            onSelectConversation={onSelectConversation}
-          />
-        ) : null}
       </div>
-      <div className={cn('mt-auto space-y-2', isExpanded ? 'px-2' : 'flex flex-col items-center px-0')}>
-        {/* UX tours entry points */}
-        <Popover open={isUxFlowMenuOpen} onOpenChange={onUxFlowMenuOpenChange}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
-              aria-label="UX flow tutorials"
-              data-tour-id="left-nav.ux-flow-icon"
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent
-            side="right"
-            align="end"
-            sideOffset={8}
-            className="bg-sidebar text-sidebar-foreground border border-border rounded-xl w-56 p-3"
-          >
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
-              UX Flows
-            </div>
-            {uxTourLinks.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-muted-foreground">
-                No UX tours available yet.
-              </div>
-            ) : (
-              uxTourLinks.map((tour) => (
-                <button
-                  key={tour.id}
-                  type="button"
-                  onClick={() => {
-                    onUxFlowMenuOpenChange?.(false);
-                    onStartUxTour?.(tour.id);
-                  }}
-                  className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
-                >
-                  {tour.label}
-                </button>
-              ))
-            )}
-            <div className="mt-3 border-t border-border pt-2">
-              <div className="px-1 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Prototypes
-              </div>
-              {prototypeMenuEntries.map((entry) => (
-                <button
-                  key={entry.id}
-                  type="button"
-                  onClick={() => {
-                    onUxFlowMenuOpenChange?.(false);
-                    onNavItemClick(entry.navAction);
-                  }}
-                  className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
-                >
-                  {entry.label}
-                </button>
-              ))}
-            </div>
-            <div className="mt-3 border-t border-border pt-3">
-              <div className="flex items-center justify-between px-1">
-                <div>
-                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Inspector mode
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Click any element to view code.
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={isInspectorEnabled}
-                  data-testid="inspector-toggle"
-                  data-tour-id="left-nav.inspector-toggle"
-                  onClick={onInspectorToggle}
-                  className={`h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors ${
-                    isInspectorEnabled ? 'bg-foreground/80' : 'bg-muted/60'
-                  }`}
-                >
-                  <span
-                    className={`h-4 w-4 rounded-full bg-background shadow transition-transform ${
-                      isInspectorEnabled ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-        {showOrgAdminDashboard ? (
-          <LeftNavTooltip label="Admin dashboard">
-            <button
-              type="button"
-              aria-label="Organization admin dashboard"
-              aria-pressed={activeNavItem === 'org-admin-dashboard'}
-              onClick={() => onNavItemClick('org-admin-dashboard')}
-              className={cn(
-                'inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-sidebar text-sidebar-foreground transition-colors hover:bg-sidebar-accent',
-                activeNavItem === 'org-admin-dashboard'
-                  ? 'bg-sidebar-accent text-sidebar-foreground'
-                  : 'text-muted-foreground hover:text-sidebar-foreground'
-              )}
-            >
-              <LayoutDashboard className="h-5 w-5" aria-hidden />
-            </button>
-          </LeftNavTooltip>
-        ) : null}
+      <div
+        className={cn(
+          'mt-auto space-y-2',
+          isExpanded
+            ? 'border-t border-sidebar-border px-2 pt-3'
+            : 'flex flex-col items-center px-0'
+        )}
+      >
         <Popover>
           <PopoverTrigger asChild>
             <button
@@ -1022,6 +1006,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
           className="absolute bottom-0 right-0 top-0 z-10 w-2 cursor-col-resize touch-none"
           onPointerDown={(event) => {
             navResizePointerIdRef.current = event.pointerId;
+            setIsNavResizing(true);
             event.currentTarget.setPointerCapture(event.pointerId);
             event.preventDefault();
           }}
@@ -1029,7 +1014,12 @@ export const LeftNav: React.FC<LeftNavProps> = ({
           onPointerUp={handleResizePointerEnd}
           onPointerCancel={handleResizePointerEnd}
         >
-          <span className="absolute bottom-0 right-0 top-0 w-px bg-transparent transition-colors hover:bg-sidebar-border" />
+          <span
+            className={cn(
+              'absolute bottom-0 right-0 top-0 w-px transition-colors',
+              isNavResizing ? 'bg-white' : 'bg-transparent hover:bg-sidebar-border'
+            )}
+          />
         </div>
       ) : null}
     </div>

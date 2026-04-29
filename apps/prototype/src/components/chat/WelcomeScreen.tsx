@@ -9,6 +9,7 @@ import {
   Key,
   Plus,
   Settings,
+  Sparkles,
 } from 'lucide-react';
 import { AutomationGlyph } from '../icons/AutomationGlyph';
 import { SkillIcon } from '../icons/SkillIcon';
@@ -30,6 +31,13 @@ interface WelcomeScreenProps {
   getThemeClasses: (element: ThemeElement) => string;
   userName: string;
   variant?: 'default' | 'chat-start' | 'new-chat-start';
+  isInspectorEnabled?: boolean;
+  onInspectorToggle?: () => void;
+  onStartUxTour?: (tourId: string) => void;
+  uxTourLinks?: Array<{ id: string; label: string }>;
+  isUxFlowMenuOpen?: boolean;
+  onUxFlowMenuOpenChange?: (open: boolean) => void;
+  onPrototypeNavItemClick?: (action: string) => void;
 }
 
 function buildChatRoute(options: {
@@ -90,6 +98,32 @@ const ALL_REPOS = [
   'FraterCCCLXIII/chronofy-flow-33',
   'FraterCCCLXIII/cli-palette-builder',
   ...RECENT_REPOS,
+];
+
+const prototypeMenuEntries = [
+  {
+    id: 'launch-from-plugin-modal',
+    label: 'Launch from plugin modal',
+    navAction: 'launch-from-plugin-modal',
+  },
+  {
+    id: 'start-new-conversation-modal',
+    label: 'Start New Conversation Modal',
+    navAction: 'start-new-conversation-modal',
+  },
+  { id: 'new-chat-start', label: 'New Chat Start', navAction: 'new-chat-start' },
+  { id: 'chat-components', label: 'All Chat Components', navAction: 'chat-components' },
+  { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
+  { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
+  { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
+  {
+    id: 'user-journey-cta',
+    label: 'User Journey - Create in-app call-to-actions (CTAs)',
+    navAction: 'code',
+  },
+  { id: 'new-llm-switcher', label: 'New LLM Switcher', navAction: 'new-llm-switcher' },
+  { id: 'new-llm-switcher-2', label: 'New LLM Switcher 2', navAction: 'new-llm-switcher-2' },
+  { id: 'loading-screen', label: 'Loading Screen', navAction: 'loading-screen' },
 ];
 
 type HomeColumnId = 'skills' | 'conversations' | 'tasks';
@@ -174,6 +208,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   getThemeClasses,
   userName,
   variant = 'default',
+  isInspectorEnabled = false,
+  onInspectorToggle,
+  onStartUxTour,
+  uxTourLinks = [],
+  isUxFlowMenuOpen,
+  onUxFlowMenuOpenChange,
+  onPrototypeNavItemClick,
 }) => {
   const [repoInput, setRepoInput] = useState('');
   const [branchInput, setBranchInput] = useState('');
@@ -1207,18 +1248,107 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       </div>
 
       {variant === 'chat-start' ? (
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="fixed bottom-6 right-6 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label="Column list demo states"
-              data-testid="chat-start-column-demo"
+        <>
+          <Popover open={isUxFlowMenuOpen} onOpenChange={onUxFlowMenuOpenChange}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="fixed bottom-20 right-7 z-[60] shrink-0 outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 w-8 h-8 rounded-lg flex items-center justify-center bg-sidebar text-sidebar-foreground hover:bg-sidebar-accent transition-colors border border-transparent hover:border-border"
+                aria-label="UX flow tutorials"
+                data-tour-id="left-nav.ux-flow-icon"
+              >
+                <Sparkles className="w-5 h-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              side="left"
+              align="end"
+              sideOffset={8}
+              className="bg-sidebar text-sidebar-foreground border border-border rounded-xl w-56 p-3"
             >
-              <Settings className="h-5 w-5" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent side="top" align="end" sideOffset={8} className="w-80 border-border bg-card p-3">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                UX Flows
+              </div>
+              {uxTourLinks.length === 0 ? (
+                <div className="px-3 py-2 text-xs text-muted-foreground">
+                  No UX tours available yet.
+                </div>
+              ) : (
+                uxTourLinks.map((tour) => (
+                  <button
+                    key={tour.id}
+                    type="button"
+                    onClick={() => {
+                      onUxFlowMenuOpenChange?.(false);
+                      onStartUxTour?.(tour.id);
+                    }}
+                    className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
+                  >
+                    {tour.label}
+                  </button>
+                ))
+              )}
+              <div className="mt-3 border-t border-border pt-2">
+                <div className="px-1 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Prototypes
+                </div>
+                {prototypeMenuEntries.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    onClick={() => {
+                      onUxFlowMenuOpenChange?.(false);
+                      onPrototypeNavItemClick?.(entry.navAction);
+                    }}
+                    className="inline-flex items-center gap-2 text-sm text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-2 transition-colors text-left"
+                  >
+                    {entry.label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 border-t border-border pt-3">
+                <div className="flex items-center justify-between px-1">
+                  <div>
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Inspector mode
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Click any element to view code.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isInspectorEnabled}
+                    data-testid="inspector-toggle"
+                    data-tour-id="left-nav.inspector-toggle"
+                    onClick={onInspectorToggle}
+                    className={`h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors ${
+                      isInspectorEnabled ? 'bg-foreground/80' : 'bg-muted/60'
+                    }`}
+                  >
+                    <span
+                      className={`h-4 w-4 rounded-full bg-background shadow transition-transform ${
+                        isInspectorEnabled ? 'translate-x-4' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="fixed bottom-6 right-6 z-[60] flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label="Column list demo states"
+                data-testid="chat-start-column-demo"
+              >
+                <Settings className="h-5 w-5" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="end" sideOffset={8} className="w-80 border-border bg-card p-3">
             <div className="flex flex-col gap-3">
               <p className="text-xs font-semibold text-muted-foreground">Home columns (prototype)</p>
               {(
@@ -1250,8 +1380,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 </div>
               ))}
             </div>
-          </PopoverContent>
-        </Popover>
+            </PopoverContent>
+          </Popover>
+        </>
       ) : null}
     </div>
   );
