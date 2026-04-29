@@ -1,24 +1,7 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Download, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
+import { Filter, Folder, FolderPlus } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
-import { Sheet, SheetContent } from '../ui/sheet';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { Sheet, SheetContent, SheetTitle } from '../ui/sheet';
 import { type ConversationSummary } from '../../data/conversations';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 
@@ -31,78 +14,37 @@ interface ConversationDrawerProps {
   onRenameConversation?: (conversationId: string, name: string) => void;
 }
 
-/** Dropdown menu is portaled outside the Sheet; Sheet must ignore those interactions. */
-function isDropdownMenuElement(target: EventTarget | null): boolean {
-  if (!(target instanceof Element)) return false;
-  return Boolean(
-    target.closest('[data-conversation-dropdown-menu]') ||
-      target.closest('[data-radix-dropdown-menu-content]') ||
-      target.closest('[data-radix-dropdown-menu-sub-content]')
-  );
+interface ConversationFolder {
+  id: string;
+  label: string;
+  conversations: ConversationSummary[];
 }
 
-/** Pointer/focus targets can be wrong for portaled menus; walk composedPath when available. */
-function isDropdownMenuInteraction(event: {
-  target: EventTarget | null;
-  composedPath?: () => EventTarget[];
-}): boolean {
-  const path =
-    typeof event.composedPath === 'function' ? event.composedPath() : [event.target as EventTarget];
-  return path.some((node) => isDropdownMenuElement(node));
+function getConversationFolderName(conversation: ConversationSummary): string {
+  if (conversation.repo === 'No Repository') return 'Personal';
+  if (conversation.tag === 'Automation') return 'Sidekicks';
+
+  return conversation.repo.split('/').at(-1) ?? conversation.repo;
 }
 
-/** Matches left-nav Automations icon at drawer list size; unique clip id per instance. */
-function AutomationDrawerIcon({ className }: { className?: string }) {
-  const clipId = `automation-drawer-clip-${useId().replace(/:/g, '')}`;
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      className={cn('lucide block', className)}
-      aria-hidden
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <clipPath id={clipId}>
-          <rect width="18" height="18" fill="white" transform="translate(1 1)" />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${clipId})`}>
-        <path d="M10 18.1818V16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M10 1.81812V3.45448" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M1.81824 10H3.4546" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M18.1818 10H16.5454" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M5.93359 17.1019L6.74359 15.6782" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M14.0663 2.89819L13.2563 4.32183" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M2.89819 5.93359L4.32183 6.74359" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M17.1019 14.0663L15.6782 13.2563" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M5.92542 2.90625L6.7436 4.3217" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M14.0909 17.0854L13.2727 15.6699" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M17.0855 5.90918L15.67 6.72736" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M2.91455 14.0909L4.33001 13.2727" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-        <path
-          d="M10 16.5455C13.615 16.5455 16.5455 13.615 16.5455 10C16.5455 6.38509 13.615 3.45459 10 3.45459C6.38509 3.45459 3.45459 6.38509 3.45459 10C3.45459 13.615 6.38509 16.5455 10 16.5455Z"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M12.5854 9.77916L8.80545 7.59461C8.63363 7.49643 8.41272 7.61916 8.41272 7.81552V12.1846C8.41272 12.381 8.62545 12.5119 8.80545 12.4055L12.5854 10.221C12.7573 10.1228 12.7573 9.86916 12.5854 9.77098V9.77916Z"
-          fill="currentColor"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </g>
-    </svg>
-  );
+function buildConversationFolders(conversations: ConversationSummary[]): ConversationFolder[] {
+  const folders = conversations.reduce<Map<string, ConversationSummary[]>>((acc, conversation) => {
+    const folderName = getConversationFolderName(conversation);
+    acc.set(folderName, [...(acc.get(folderName) ?? []), conversation]);
+    return acc;
+  }, new Map());
+
+  return Array.from(folders.entries()).map(([label, folderConversations]) => ({
+    id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    label,
+    conversations: folderConversations,
+  }));
 }
 
-const conversationMenuContentClass =
-  'z-[110] min-w-[12rem] rounded-lg border border-border/70 bg-card p-1 text-foreground shadow-md overflow-hidden';
-
-const conversationMenuItemClass =
-  'gap-2 cursor-pointer rounded-md text-sm text-foreground [&_svg]:text-muted-foreground';
+function getThreadRowLabel(conversation: ConversationSummary): string {
+  if (conversation.archived) return `${conversation.name} (archived)`;
+  return conversation.name;
+}
 
 export function ConversationDrawer({
   open,
@@ -110,76 +52,9 @@ export function ConversationDrawer({
   conversations,
   highlightedConversationId = null,
   onSelectConversation,
-  onRenameConversation,
 }: ConversationDrawerProps) {
-  const items = useMemo(() => {
-    const active = conversations.filter((c) => !c.archived);
-    const archivedRows = conversations.filter((c) => c.archived);
-    return [...active, ...archivedRows];
-  }, [conversations]);
-  const firstRunningIndex = useMemo(
-    () => items.findIndex((c) => c.status === 'running'),
-    [items]
-  );
+  const folders = useMemo(() => buildConversationFolders(conversations), [conversations]);
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const menuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<ConversationSummary | null>(null);
-  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
-  const [editingNameDraft, setEditingNameDraft] = useState('');
-  const ignoreRenameBlurOnceRef = useRef(false);
-  const [openMenuConversationId, setOpenMenuConversationId] = useState<string | null>(null);
-
-  const cancelInlineRename = () => {
-    setEditingConversationId(null);
-    setEditingNameDraft('');
-  };
-
-  const commitInlineRename = (conversationId: string, name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    onRenameConversation?.(conversationId, trimmed);
-    cancelInlineRename();
-  };
-
-  const cancelMenuCloseTimer = () => {
-    if (menuCloseTimerRef.current) {
-      clearTimeout(menuCloseTimerRef.current);
-      menuCloseTimerRef.current = null;
-    }
-  };
-
-  const scheduleMenuClose = () => {
-    cancelMenuCloseTimer();
-    menuCloseTimerRef.current = setTimeout(() => {
-      setOpenMenuConversationId(null);
-      menuCloseTimerRef.current = null;
-    }, 220);
-  };
-
-  useEffect(() => {
-    return () => cancelMenuCloseTimer();
-  }, []);
-
-  useEffect(() => {
-    if (!open) {
-      cancelMenuCloseTimer();
-      setOpenMenuConversationId(null);
-      setEditingConversationId(null);
-      setEditingNameDraft('');
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!editingConversationId) return;
-    const id = requestAnimationFrame(() => {
-      const el = document.querySelector<HTMLInputElement>(
-        `[data-conversation-rename-input="${editingConversationId}"]`
-      );
-      el?.focus();
-      el?.select();
-    });
-    return () => cancelAnimationFrame(id);
-  }, [editingConversationId]);
 
   useEffect(() => {
     if (!open || !highlightedConversationId || !panelRef.current) {
@@ -194,351 +69,91 @@ export function ConversationDrawer({
   }, [highlightedConversationId, open]);
 
   return (
-    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
         overlayClassName="z-[40] bg-transparent pointer-events-none left-16 right-0"
         hideClose
-        onInteractOutside={(event) => {
-          // If a conversation menu is open, any "outside" interaction is a menu click — keep sheet open.
-          if (openMenuConversationId !== null || isDropdownMenuInteraction(event)) {
-            event.preventDefault();
-          }
-        }}
         onPointerDownOutside={(event) => {
-          if (openMenuConversationId !== null || isDropdownMenuInteraction(event)) {
-            event.preventDefault();
-            return;
-          }
           const target = event.target as HTMLElement | null;
           if (target?.closest('[data-conversation-toggle="true"]')) {
             // Let the nav toggle button control open/close state itself.
             event.preventDefault();
           }
         }}
-        onFocusOutside={(event) => {
-          if (openMenuConversationId !== null) {
-            event.preventDefault();
-            return;
-          }
-          const related = (event as unknown as FocusEvent).relatedTarget;
-          if (isDropdownMenuElement(related)) {
-            event.preventDefault();
-          }
-        }}
-        className="flex h-full max-h-screen min-h-0 flex-col overflow-hidden p-0 w-full md:w-[400px] sm:max-w-none border-r border-border bg-background left-16 z-[49]"
+        className="left-16 z-[49] flex h-full max-h-screen min-h-0 w-[320px] flex-col overflow-hidden border-r border-sidebar-border bg-sidebar p-0 text-sidebar-foreground shadow-none sm:max-w-none"
       >
+        <SheetTitle className="sr-only">Threads</SheetTitle>
         <div
           ref={panelRef}
           data-testid="conversation-panel"
-          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-background pr-2 py-1 custom-scrollbar"
+          className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-4 custom-scrollbar"
         >
-          {items.map((conversation, index) => {
-            const isAutomation = conversation.tag === 'Automation';
-            const isArchived = Boolean(conversation.archived);
-            const isHighlighted = conversation.id === highlightedConversationId;
-            const showRunningSpinner =
-              !isArchived &&
-              conversation.status === 'running' &&
-              index === firstRunningIndex;
-            const openChatActive = () => {
-              onSelectConversation?.(conversation);
-              navigateAppRoute('/chat');
-            };
+          <div className="mb-2 flex items-center justify-between px-1">
+            <h2 className="text-sm font-medium text-muted-foreground">Threads</h2>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                aria-label="Create thread folder"
+              >
+                <FolderPlus className="h-4 w-4" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                aria-label="Filter threads"
+              >
+                <Filter className="h-4 w-4" aria-hidden />
+              </button>
+            </div>
+          </div>
 
-            return (
-            <div
-              key={conversation.id}
-              data-testid="conversation-card"
-              data-conversation-id={conversation.id}
-              tabIndex={0}
-              className={cn(
-                'group relative h-auto w-full cursor-pointer rounded-lg py-3.5 pl-2.5 pr-3.5 outline-none transition-all duration-300',
-                'focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card',
-                // Match ChatStartScreen suggestion tiles + WelcomeScreen list rows
-                'hover:bg-muted/60 focus-visible:bg-muted/60',
-                isHighlighted && 'bg-muted/40 ring-1 ring-inset ring-border/60',
-                isArchived && 'text-muted-foreground',
-              )}
-              data-archived={isArchived || undefined}
-              aria-label={
-                isArchived ? `Open archived ${conversation.name} in chat` : `Open ${conversation.name} in chat`
-              }
-              onClick={() => {
-                if (editingConversationId === conversation.id) return;
-                if (editingConversationId && editingConversationId !== conversation.id) {
-                  setEditingConversationId(null);
-                  setEditingNameDraft('');
-                }
-                openChatActive();
-              }}
-              onKeyDown={(event) => {
-                if (editingConversationId === conversation.id) return;
-                if (event.key !== 'Enter' && event.key !== ' ') return;
-                if ((event.target as HTMLElement).closest('[data-conversation-menu-trigger="true"]')) return;
-                event.preventDefault();
-                openChatActive();
-              }}
-            >
-              <div className="flex items-start gap-2">
+          <nav aria-label="Conversation threads" className="space-y-3">
+            {folders.map((folder) => (
+              <section key={folder.id} aria-labelledby={`thread-folder-${folder.id}`}>
                 <div
-                  className="relative flex h-6 w-2 shrink-0 items-center justify-center"
-                  aria-hidden
+                  id={`thread-folder-${folder.id}`}
+                  className="flex h-8 min-w-0 items-center gap-2 rounded-md px-1.5 text-sm font-medium text-muted-foreground"
                 >
-                  {showRunningSpinner ? (
-                    <>
-                      <span
-                        className="pointer-events-none absolute h-3 w-3 animate-spin rounded-full border-2 border-solid border-transparent border-t-muted-foreground border-r-muted-foreground border-b-muted-foreground"
-                        aria-hidden
-                      />
-                      <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-                    </>
-                  ) : (
-                    <div
-                      className={cn(
-                        'h-1.5 w-1.5 shrink-0 rounded-full',
-                        isArchived && 'bg-muted-foreground/50',
-                        !isArchived && conversation.status === 'running' && 'bg-success',
-                        !isArchived && conversation.status === 'awaiting' && 'bg-warning',
-                        !isArchived && conversation.status === 'error' && 'bg-destructive',
-                        !isArchived && !conversation.status && 'bg-muted-foreground',
-                      )}
-                    />
-                  )}
+                  <Folder className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="truncate">{folder.label}</span>
                 </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <div className="flex items-start justify-between gap-2 min-w-0">
-                    <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-                      {editingConversationId === conversation.id ? (
-                        <Input
-                          data-testid="conversation-card-title"
-                          data-conversation-rename-input={conversation.id}
-                          aria-label="Conversation name"
-                          className="h-7 min-w-0 flex-1 border-border bg-background px-2 py-0 text-xs font-normal leading-6 text-foreground shadow-sm"
-                          value={editingNameDraft}
-                          onChange={(e) => setEditingNameDraft(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onKeyDown={(e) => {
-                            e.stopPropagation();
-                            if (e.key === 'Escape') {
-                              e.preventDefault();
-                              cancelInlineRename();
-                              return;
-                            }
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              const trimmed = editingNameDraft.trim();
-                              if (trimmed) {
-                                commitInlineRename(conversation.id, editingNameDraft);
-                              } else {
-                                cancelInlineRename();
-                              }
-                            }
-                          }}
-                          onBlur={(e) => {
-                            const next = e.relatedTarget as Node | null;
-                            const card = (e.currentTarget as HTMLElement).closest('[data-conversation-id]');
-                            if (next && card?.contains(next)) return;
-                            if (ignoreRenameBlurOnceRef.current) {
-                              ignoreRenameBlurOnceRef.current = false;
-                              return;
-                            }
-                            cancelInlineRename();
-                          }}
-                        />
-                      ) : (
-                        <p
-                          data-testid="conversation-card-title"
-                          className={cn(
-                            'min-w-0 truncate text-sm font-normal leading-6',
-                            isArchived ? 'text-muted-foreground' : 'text-foreground',
-                          )}
-                          title={conversation.name}
-                        >
-                          {conversation.name}
-                        </p>
-                      )}
-                      <span
+                <div className="space-y-0.5">
+                  {folder.conversations.map((conversation) => {
+                    const isHighlighted = conversation.id === highlightedConversationId;
+                    const openChatActive = () => {
+                      onSelectConversation?.(conversation);
+                      navigateAppRoute('/chat');
+                    };
+
+                    return (
+                      <button
+                        key={conversation.id}
+                        type="button"
+                        data-testid="conversation-card"
+                        data-conversation-id={conversation.id}
+                        data-archived={conversation.archived || undefined}
+                        aria-label={`Open ${getThreadRowLabel(conversation)} in chat`}
+                        onClick={openChatActive}
                         className={cn(
-                          'inline-flex shrink-0 cursor-help items-center rounded px-1.5 py-0.5 text-xs font-semibold lowercase',
-                          isArchived
-                            ? 'border border-border/50 bg-muted/25 text-muted-foreground'
-                            : 'bg-muted/50 text-muted-foreground',
+                          'group flex h-8 w-full min-w-0 items-center gap-2 rounded-lg pl-7 pr-2 text-left text-sm outline-none transition-colors',
+                          'text-sidebar-foreground hover:bg-sidebar-accent focus-visible:bg-sidebar-accent focus-visible:ring-1 focus-visible:ring-ring',
+                          isHighlighted && 'bg-sidebar-accent',
+                          conversation.archived && 'text-muted-foreground',
                         )}
                       >
-                        {conversation.version}
-                      </span>
-                      {isArchived ? (
-                        <span
-                          data-testid="conversation-card-archive-badge"
-                          className="inline-flex shrink-0 items-center rounded border border-border/60 bg-muted/30 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                        >
-                          Archived
-                        </span>
-                      ) : null}
-                      {isAutomation ? (
-                        <span
-                          className={cn(
-                            'inline-flex shrink-0 items-center',
-                            isArchived ? 'text-muted-foreground' : 'text-success-foreground',
-                          )}
-                          role="img"
-                          aria-label="Automation conversation"
-                        >
-                          <AutomationDrawerIcon className="h-4 w-4" />
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 items-center">
-                      <DropdownMenu
-                        open={openMenuConversationId === conversation.id}
-                        onOpenChange={(next) => {
-                          cancelMenuCloseTimer();
-                          setOpenMenuConversationId(next ? conversation.id : null);
-                          if (!next) {
-                            requestAnimationFrame(() => {
-                              const active = document.activeElement;
-                              if (active instanceof HTMLElement && active.closest('[data-conversation-menu-trigger="true"]')) {
-                                active.blur();
-                              }
-                            });
-                          }
-                        }}
-                        modal={false}
-                      >
-                        <div
-                          className="inline-flex shrink-0"
-                          onMouseEnter={() => {
-                            cancelMenuCloseTimer();
-                            setOpenMenuConversationId(conversation.id);
-                          }}
-                          onMouseLeave={() => {
-                            scheduleMenuClose();
-                          }}
-                        >
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              data-testid="ellipsis-button"
-                              data-conversation-menu-trigger="true"
-                              type="button"
-                              className="relative z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm text-muted-foreground opacity-0 transition-[opacity,color] duration-200 hover:text-foreground group-hover:opacity-100 data-[state=open]:text-foreground data-[state=open]:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
-                              aria-label="Conversation options"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </DropdownMenuTrigger>
-                        </div>
-                        <DropdownMenuContent
-                          align="end"
-                          data-conversation-dropdown-menu
-                          className={conversationMenuContentClass}
-                          onMouseEnter={cancelMenuCloseTimer}
-                          onMouseLeave={scheduleMenuClose}
-                        >
-                          <DropdownMenuItem
-                            className={conversationMenuItemClass}
-                            onSelect={(event) => {
-                              event.preventDefault();
-                              setOpenMenuConversationId(null);
-                              ignoreRenameBlurOnceRef.current = true;
-                              setEditingConversationId(conversation.id);
-                              setEditingNameDraft(conversation.name);
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            Rename
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className={conversationMenuItemClass}>
-                            <Download className="h-4 w-4" />
-                            Export Conversation
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="bg-border" />
-                          <DropdownMenuItem
-                            className={cn(conversationMenuItemClass)}
-                            onSelect={(event) => {
-                              event.preventDefault();
-                              setDeleteTarget(conversation);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete Conversation
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                  <div
-                    className={cn(
-                      'flex min-w-0 flex-row items-center gap-2 text-xs leading-4',
-                      isArchived ? 'text-muted-foreground/80' : 'text-muted-foreground',
-                    )}
-                  >
-                    <div className="flex min-w-0 shrink items-center gap-3 overflow-hidden">
-                      <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-                        <span
-                          data-testid="conversation-card-selected-repository"
-                          className="whitespace-nowrap overflow-hidden text-ellipsis"
-                        >
-                          {conversation.repo}
-                        </span>
-                        {conversation.branch ? (
-                          <span className="inline-flex shrink-0 items-center rounded bg-muted/20 px-1.5 py-0.5">
-                            <span
-                              data-testid="conversation-card-selected-branch"
-                              className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis"
-                            >
-                              {conversation.branch}
-                            </span>
-                          </span>
-                        ) : null}
-                      </div>
-                      {conversation.model ? (
-                        <span
-                          data-testid="conversation-card-model"
-                          className="shrink-0"
-                        >
-                          {conversation.model}
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="ml-auto shrink-0 whitespace-nowrap">
-                      <time>{conversation.time}</time>
-                    </p>
-                  </div>
+                        <span className="min-w-0 flex-1 truncate">{conversation.name}</span>
+                        <time className="shrink-0 text-xs text-muted-foreground">{conversation.time}</time>
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-            </div>
-            );
-          })}
+              </section>
+            ))}
+          </nav>
         </div>
       </SheetContent>
     </Sheet>
-
-    <Dialog open={deleteTarget !== null} onOpenChange={(dialogOpen) => { if (!dialogOpen) setDeleteTarget(null); }}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Delete conversation?</DialogTitle>
-          <DialogDescription>
-            <span className="font-medium text-foreground">{deleteTarget?.name}</span>
-            {' '}will be permanently deleted. This action cannot be undone.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setDeleteTarget(null)}
-          >
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-    </>
   );
 }

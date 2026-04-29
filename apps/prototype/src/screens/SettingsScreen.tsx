@@ -805,7 +805,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         type="button"
         onClick={() => handleTabClick(item.tabId)}
         className={cn(
-          'group flex w-full items-center gap-3 rounded-md px-3.5 py-2 text-left transition-colors duration-200',
+          'group flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left transition-colors duration-200',
           isActive ? 'bg-muted/60' : 'hover:bg-muted/60',
         )}
       >
@@ -900,7 +900,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           {showOrgAdminNav ? (
             <>
               <div className="px-3.5 pt-0.5">
@@ -908,18 +908,18 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   Org settings
                 </span>
               </div>
-              <div className="flex flex-col gap-0.5">{filterNav(ORG_SETTINGS_NAV).map(renderNavButton)}</div>
+              <div className="flex flex-col gap-1">{filterNav(ORG_SETTINGS_NAV).map(renderNavButton)}</div>
               <div className="border-t border-border" />
               <div className="px-3.5">
                 <span className="text-[11px] font-medium uppercase tracking-wide leading-5 text-muted-foreground">
                   Personal settings
                 </span>
               </div>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {filterNav(ORG_ADMIN_PERSONAL_SETTINGS_NAV).map(renderNavButton)}
               </div>
               <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
+              <div className="flex flex-col gap-1">{filterNav(ACCOUNT_NAV).map(renderNavButton)}</div>
             </>
           ) : showOrgMemberNav ? (
             <>
@@ -928,24 +928,24 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   Personal settings
                 </span>
               </div>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
                 {filterNav(INTEGRATIONS_ONLY_NAV).map(renderNavButton)}
               </div>
               <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {filterNav(ACCOUNT_NAV).map(renderNavButton)}
                 {filterNav(SKILLS_ONLY_NAV).map(renderNavButton)}
               </div>
             </>
           ) : (
             <>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
                 {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
               </div>
               <div className="border-t border-border" />
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1">
                 {filterNav(PERSONAL_ACCOUNT_WITH_BILLING_NAV).map(renderNavButton)}
               </div>
             </>
@@ -956,7 +956,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <button
                 type="button"
                 onClick={() => setCreateOrgModalOpen(true)}
-                className="group flex items-center gap-3 rounded-md px-3.5 py-2 text-left transition-colors hover:bg-muted/60"
+                className="group flex h-9 items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-muted/60"
               >
                 <Plus className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
                 <span className="text-sm font-normal text-muted-foreground group-hover:text-white">

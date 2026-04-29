@@ -109,7 +109,7 @@ export function DashboardScreen() {
         <NewWorkspaceDialog repositories={workspaceRepositoryOptions} onCreateWorkspace={handleCreateWorkspace} />
       </div>
       <nav
-        className="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden whitespace-nowrap"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden whitespace-nowrap"
         aria-label="Workspaces"
       >
         {workspaceList.map((workspace) => {
@@ -124,7 +124,7 @@ export function DashboardScreen() {
                 setActiveRepo(workspace.repoKey);
               }}
               className={cn(
-                'group flex w-full min-w-0 items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
+                'group flex h-9 w-full min-w-0 items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors',
                 isActive
                   ? 'bg-muted/60 text-foreground'
                   : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -355,7 +355,7 @@ export function DashboardScreen() {
                   />
                 </div>
                 <nav
-                  className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden"
+                  className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden"
                   aria-label="Workspaces"
                 >
                   {insightsRepositories.map((repo) => {
@@ -369,7 +369,7 @@ export function DashboardScreen() {
                           scrollToSection(repo.name);
                         }}
                         className={cn(
-                          'group flex w-full min-w-0 items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
+                          'group flex h-9 w-full min-w-0 items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors',
                           isActive
                             ? 'bg-muted/60 text-foreground'
                             : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',

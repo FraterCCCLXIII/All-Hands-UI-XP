@@ -291,9 +291,8 @@ export function ComponentLibraryScreen({
   const [isRunningPreview, setIsRunningPreview] = useState(false);
   const [isCanvasVisiblePreview, setIsCanvasVisiblePreview] = useState(false);
   const [activeNavItemPreview, setActiveNavItemPreview] = useState('code');
-  const isConversationDrawerOpenPreview = false;
   const [isInspectorPreview, setIsInspectorPreview] = useState(false);
-  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
+  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(true);
   const [pluginToggleOn, setPluginToggleOn] = useState(true);
   const [libraryMainTab, setLibraryMainTab] = useState<'components' | 'blocks'>('components');
   const mainScrollRef = useRef<HTMLDivElement>(null);
@@ -1746,7 +1745,7 @@ export function ComponentLibraryScreen({
             description: 'Primary left navigation rail.',
             usage: `<LeftNav theme="dark" onNavItemClick={...} />`,
             preview: (
-              <div className="h-72 w-20 overflow-hidden rounded-lg border border-border bg-sidebar">
+              <div className="h-72 w-80 overflow-hidden rounded-lg border border-border bg-sidebar">
                 <LeftNav
                   theme="dark"
                   getThemeClasses={previewThemeClasses}
@@ -1754,10 +1753,11 @@ export function ComponentLibraryScreen({
                   onExpandChange={setIsLeftNavExpanded}
                   onNavItemClick={setActiveNavItemPreview}
                   activeNavItem={activeNavItemPreview}
-                  isConversationDrawerOpen={isConversationDrawerOpenPreview}
                   isInspectorEnabled={isInspectorPreview}
                   onInspectorToggle={() => setIsInspectorPreview((prev) => !prev)}
                   activeWorkspaceId="acme-owner"
+                  conversations={previewDrawerConversations}
+                  activeConversationId={previewDrawerConversations[0]?.id}
                 />
               </div>
             ),

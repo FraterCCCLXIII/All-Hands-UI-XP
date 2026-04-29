@@ -60,7 +60,7 @@ export function ExtensionsShellSidebar({
             aria-label="Search extensions"
             size="sm"
           />
-          <nav className="flex flex-col gap-2" aria-label="Filter by type">
+          <nav className="flex flex-col gap-1" aria-label="Filter by type">
             {SCOPE_ITEMS.map(({ id, label, icon: Icon }) => {
               const isActive = browseControls.scope === id;
               return (
@@ -69,7 +69,7 @@ export function ExtensionsShellSidebar({
                   type="button"
                   onClick={() => browseControls.onScopeChange(id)}
                   className={cn(
-                    'group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm transition-colors',
+                    'group flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors',
                     isActive
                       ? 'bg-muted/60 text-foreground'
                       : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
@@ -90,10 +90,10 @@ export function ExtensionsShellSidebar({
           </nav>
         </>
       ) : (
-        <nav aria-label="Extensions scope">
+        <nav className="flex flex-col gap-1" aria-label="Extensions scope">
           {isAllActive ? (
             <div
-              className="flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm bg-muted/60 text-foreground"
+              className="flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left text-sm bg-muted/60 text-foreground"
               aria-current="page"
             >
               <Layers3 className="h-5 w-5 shrink-0 text-foreground" aria-hidden />
@@ -103,7 +103,7 @@ export function ExtensionsShellSidebar({
             <button
               type="button"
               onClick={() => navigateAppRoute(`/${EXTENSIONS_ALL_BASE}`)}
-              className="group flex w-full items-center gap-3 rounded-md px-[14px] py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+              className="group flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
             >
               <Layers3 className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
               <span className="font-normal group-hover:text-white">All active</span>

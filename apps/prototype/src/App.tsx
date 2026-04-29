@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
-import { ConversationDrawer } from './components/chat/ConversationDrawer';
 import { Canvas } from './components/canvas/Canvas';
 import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
@@ -62,6 +61,10 @@ import { tryNormalizeExtensionsPath } from './lib/extensionsRoutes';
 import { themeAppClassMap as themeClasses } from './theme/themeAppClassMap';
 
 type CanvasTipVariant = 'none' | ProtipVariant;
+
+const LEFT_NAV_COLLAPSED_WIDTH = 48;
+const LEFT_NAV_MIN_WIDTH = 320;
+const LEFT_NAV_MAX_WIDTH = 480;
 
 const actionSlugs: Record<string, string> = {
   code: 'chat',
@@ -163,7 +166,8 @@ function App() {
   const [activeNavItem, setActiveNavItem] = useState('chat-start');
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
-  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(false);
+  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(true);
+  const [leftNavWidth, setLeftNavWidth] = useState(LEFT_NAV_MIN_WIDTH);
   const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
   const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
   const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('chat-start');
@@ -380,25 +384,6 @@ function App() {
     }
   }, [isRunning]);
 
-  const handleConversationDrawerChange = useCallback(
-    (open: boolean) => {
-      setIsConversationDrawerOpen(open);
-      if (!open) {
-        setActiveConversationId(null);
-      }
-      const backgroundRoute = getConversationDrawerBackgroundRoute(
-        location.search,
-        getConversationDrawerBackgroundFallback(location.pathname, location.search, lastNonDrawerNavItem)
-      );
-      navigateAppRoute(
-        open
-          ? `/conversations?from=${encodeURIComponent(backgroundRoute)}`
-          : backgroundRoute
-      );
-    },
-    [lastNonDrawerNavItem, location.pathname, location.search]
-  );
-
   const handleAutomationRunNow = useCallback(
     (payload: { automationTitle: string; repository: string; branch: string; model: string }) => {
       const shortId = Math.random().toString(16).slice(2, 7);
@@ -418,7 +403,8 @@ function App() {
         ...prev,
       ]);
       setActiveConversationId(conversationId);
-      setIsConversationDrawerOpen(true);
+      setIsConversationDrawerOpen(false);
+      navigateAppRoute('/chat');
       return { conversationId, conversationName };
     },
     []
@@ -426,13 +412,9 @@ function App() {
 
   const handleOpenAutomationConversation = useCallback((conversationId: string) => {
     setActiveConversationId(conversationId);
-    setIsConversationDrawerOpen(true);
-    const backgroundRoute = getConversationDrawerBackgroundRoute(
-      location.search,
-      getConversationDrawerBackgroundFallback(location.pathname, location.search, lastNonDrawerNavItem)
-    );
-    navigateAppRoute(`/conversations?from=${encodeURIComponent(backgroundRoute)}`);
-  }, [lastNonDrawerNavItem, location.pathname, location.search]);
+    setIsConversationDrawerOpen(false);
+    navigateAppRoute('/chat');
+  }, []);
 
   const handleNavItemClick = useCallback(
     (action: string) => {
@@ -826,9 +808,12 @@ function App() {
                 getThemeClasses={getThemeClasses}
                 isExpanded={isLeftNavExpanded}
                 onExpandChange={setIsLeftNavExpanded}
+                width={leftNavWidth}
+                minWidth={LEFT_NAV_MIN_WIDTH}
+                maxWidth={LEFT_NAV_MAX_WIDTH}
+                onWidthChange={setLeftNavWidth}
                 onNavItemClick={handleNavItemClick}
                 activeNavItem={activeNavItem}
-                isConversationDrawerOpen={isConversationDrawerOpen}
                 isInspectorEnabled={isInspectorEnabled}
                 onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
                 onStartUxTour={uxTourController.startTour}
@@ -843,11 +828,25 @@ function App() {
                   location.pathname === '/' ||
                   location.pathname === '/new-chat-start'
                 }
+                conversations={drawerConversations}
+                activeConversationId={activeConversationId}
+                onSelectConversation={(conversation) => {
+                  setActiveConversationId(conversation.id);
+                  setIsConversationDrawerOpen(false);
+                  navigateAppRoute('/chat');
+                }}
               />
             )}
             <div
-              className={`flex min-h-0 flex-1 flex-col transition-all duration-200 ${activeFlowPrototype || showFigmaExportView || isShareView ? '' : 'ml-16'}`}
-              style={{ minWidth: 0 }}
+              className="flex min-h-0 flex-1 flex-col transition-all duration-200"
+              style={{
+                minWidth: 0,
+                ...(
+                  activeFlowPrototype || showFigmaExportView || isShareView
+                    ? {}
+                    : { marginLeft: isLeftNavExpanded ? leftNavWidth : LEFT_NAV_COLLAPSED_WIDTH }
+                ),
+              }}
             >
               {showMainApp && !isEmbedded && (
                 <InspectorOverlay
@@ -1096,20 +1095,6 @@ function App() {
                 </AnimatePresence>
               </div>
             </div>
-            {showMainApp && showLeftNav && (
-              <ConversationDrawer
-                open={isConversationDrawerOpen}
-                onOpenChange={handleConversationDrawerChange}
-                conversations={drawerConversations}
-                highlightedConversationId={activeConversationId}
-                onSelectConversation={(c) => setActiveConversationId(c.id)}
-                onRenameConversation={(conversationId, name) => {
-                  setDrawerConversations((prev) =>
-                    prev.map((c) => (c.id === conversationId ? { ...c, name } : c))
-                  );
-                }}
-              />
-            )}
             <UxTourOverlay
               isActive={uxTourController.isActive}
               step={uxTourController.activeStep}
