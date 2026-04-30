@@ -65,6 +65,7 @@ import {
   type RepositoryTarget,
 } from '../components/automation/repositoryTargetsField';
 import { UseCasesScreen } from './UseCasesScreen';
+import { AutomationGlyph } from '../components/icons/AutomationGlyph';
 
 /** Placeholder; replace with real docs URL when available. */
 const AUTOMATIONS_DOCUMENTATION_HREF = '#';
@@ -1748,52 +1749,23 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   };
 
   const renderAutomationRow = (automation: AutomationItem) => (
-    <div className="rounded-xl border border-border bg-card transition-colors hover:bg-muted/60 hover:border-muted-foreground/20">
-      <div className="flex items-start justify-between gap-4 p-5">
-        <button
-          type="button"
-          onClick={() => setSelectedAutomationId(automation.id)}
-          className="flex min-w-0 flex-1 flex-col text-left"
-        >
-          <div className="flex items-center gap-3">
-            <h3 className="truncate text-base font-medium text-foreground">{automation.title}</h3>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
-              <Github className="h-3.5 w-3.5" />
-              {formatRepositories(automation)}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
-              {automation.trigger === 'schedule' ? (
-                <CalendarClock className="h-3.5 w-3.5" />
-              ) : (
-                <Zap className="h-3.5 w-3.5" />
-              )}
-              {automation.trigger === 'schedule'
-                ? `${automation.schedule} (${automation.timezone})`
-                : (automation.event ?? 'Event')}
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
-              <AutomationModelIcon className="h-3.5 w-3.5" />
-              {automation.model}
-            </span>
-          </div>
-        </button>
-
-        <div className="flex items-center gap-3">
-          <PluginToggle
-            checked={displayAutomationStatus(automation) === 'active'}
-            onCheckedChange={() => handleToggle(automation.id)}
-            aria-label={`${displayAutomationStatus(automation) === 'active' ? 'Deactivate' : 'Activate'} ${automation.title}`}
-          />
+    <div className="relative rounded-xl border border-border bg-card transition-colors hover:bg-muted/60 hover:border-muted-foreground/20">
+      <div className="absolute right-5 top-3 z-10 flex flex-row-reverse items-center gap-0.5">
+        <PluginToggle
+          checked={displayAutomationStatus(automation) === 'active'}
+          onCheckedChange={() => handleToggle(automation.id)}
+          aria-label={`${displayAutomationStatus(automation) === 'active' ? 'Deactivate' : 'Activate'} ${automation.title}`}
+          size="sm"
+        />
+        <div className="flex h-6 w-7 shrink-0 items-center justify-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                aria-label={`Open actions for ${automation.title}`}
+                className="flex h-6 w-7 shrink-0 items-center justify-center rounded-md px-1.5 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                aria-label={`${automation.title} options`}
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4 shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
@@ -1824,6 +1796,42 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           </DropdownMenu>
         </div>
       </div>
+      <button
+        type="button"
+        onClick={() => setSelectedAutomationId(automation.id)}
+        className="w-full rounded-xl p-5 pr-24 text-left"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+            <AutomationGlyph className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-base font-medium text-foreground">{automation.title}</span>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
+                <Github className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{formatRepositories(automation)}</span>
+              </span>
+              <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
+                {automation.trigger === 'schedule' ? (
+                  <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5 shrink-0" />
+                )}
+                <span className="truncate">
+                  {automation.trigger === 'schedule'
+                    ? `${automation.schedule} (${automation.timezone})`
+                    : (automation.event ?? 'Event')}
+                </span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
+                <AutomationModelIcon className="h-3.5 w-3.5" />
+                {automation.model}
+              </span>
+            </div>
+          </div>
+        </div>
+      </button>
     </div>
   );
 
@@ -2434,7 +2442,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               {activeAutomations.length}
             </span>
           </div>
-          <div className="space-y-3">
+          <div className="grid gap-3 xl:grid-cols-2">
             <AnimatePresence initial={false} mode="popLayout">
               {activeAutomations.map((automation) => (
                 <motion.div
@@ -2467,7 +2475,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
               {inactiveAutomations.length}
             </span>
           </div>
-          <div className="space-y-3">
+          <div className="grid gap-3 xl:grid-cols-2">
             <AnimatePresence initial={false} mode="popLayout">
               {inactiveAutomations.map((automation) => (
                 <motion.div

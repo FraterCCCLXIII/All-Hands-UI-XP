@@ -309,56 +309,38 @@ function UseCaseGroupSection({ group }: { group: UseCaseGroup }) {
         </span>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid gap-3 xl:grid-cols-2">
         {visibleTasks.map((task) => (
           <div
             key={task.name}
-            className="rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/20 hover:bg-muted/60"
+            className="relative rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/20 hover:bg-muted/60"
           >
-            <div className="flex items-start justify-between gap-4 p-5">
-              <div className="flex min-w-0 flex-1 flex-col text-left">
-                <div className="flex items-center gap-3">
-                  <h3 className="truncate text-base font-medium text-foreground">{task.name}</h3>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
-                    <SkillIcon className="h-3.5 text-muted-foreground" />
-                    {task.skillName}
-                  </span>
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <button
-                  type="button"
-                  className="inline-flex h-8 min-w-[7.25rem] items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/85"
-                  aria-label={`Run ${task.name}`}
-                >
-                  <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
-                  Run
-                </button>
-                <PluginToggle
-                  checked={enabledTasks.has(task.name)}
-                  onCheckedChange={(checked) =>
-                    setEnabledTasks((previous) => {
-                      const next = new Set(previous);
-                      if (checked) {
-                        next.add(task.name);
-                      } else {
-                        next.delete(task.name);
-                      }
-                      return next;
-                    })
-                  }
-                  aria-label={`${enabledTasks.has(task.name) ? 'Disable' : 'Enable'} ${task.name}`}
-                />
+            <div className="absolute right-5 top-3 z-10 flex flex-row-reverse items-center gap-0.5">
+              <PluginToggle
+                checked={enabledTasks.has(task.name)}
+                onCheckedChange={(checked) =>
+                  setEnabledTasks((previous) => {
+                    const next = new Set(previous);
+                    if (checked) {
+                      next.add(task.name);
+                    } else {
+                      next.delete(task.name);
+                    }
+                    return next;
+                  })
+                }
+                aria-label={`${enabledTasks.has(task.name) ? 'Disable' : 'Enable'} ${task.name}`}
+                size="sm"
+              />
+              <div className="flex h-6 w-7 shrink-0 items-center justify-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
-                      aria-label={`Open actions for ${task.name}`}
+                      className="flex h-6 w-7 shrink-0 items-center justify-center rounded-md px-1.5 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                      aria-label={`${task.name} options`}
                     >
-                      <MoreVertical className="h-4 w-4" aria-hidden />
+                      <MoreVertical className="h-4 w-4 shrink-0" aria-hidden />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-44">
@@ -385,6 +367,32 @@ function UseCaseGroupSection({ group }: { group: UseCaseGroup }) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
+            </div>
+            <div className="w-full rounded-xl p-5 pr-24 text-left">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
+                  <Icon className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-base font-medium text-foreground">{task.name}</span>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
+                      <SkillIcon className="h-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{task.skillName}</span>
+                    </span>
+                  </div>
+                  <div className="mt-4">
+                    <button
+                      type="button"
+                      className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/85"
+                      aria-label={`Run ${task.name}`}
+                    >
+                      <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
+                      Run
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
