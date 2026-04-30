@@ -408,9 +408,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               ×
             </button>
           </div>
-          <div className="h-[80px] flex items-center">
-            <h1 className="text-[32px] text-foreground font-bold leading-5 tracking-[-1px]">Let&apos;s Start Building!</h1>
-          </div>
         </header>
 
         <div className="pt-[25px] flex justify-center">
