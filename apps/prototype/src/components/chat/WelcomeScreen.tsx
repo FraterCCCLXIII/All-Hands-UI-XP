@@ -410,6 +410,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           </div>
         </header>
 
+        <main className="flex flex-1 flex-col justify-center">
         <div className="pt-[25px] flex justify-center">
           <div className="flex flex-col gap-5 px-6 sm:max-w-full sm:min-w-full md:flex-row lg:px-0 lg:max-w-[960px] lg:min-w-[960px]">
             {variant === 'chat-start' || variant === 'new-chat-start' || variant === 'old-chat-start' ? (
@@ -1265,6 +1266,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
             </section>
           </div>
         </div>
+        </main>
       </div>
 
       {variant === 'chat-start' ? (
