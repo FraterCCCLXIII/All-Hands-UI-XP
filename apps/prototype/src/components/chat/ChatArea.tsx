@@ -30,7 +30,7 @@ interface ChatAreaProps {
   onChatWindowTabChange: (tabId: ChatWindowTabId) => void;
   disableAutoScroll?: boolean;
   onEnterpriseCtaVisibilityChange?: (isVisible: boolean) => void;
-  welcomeScreenVariant?: 'default' | 'chat-start' | 'new-chat-start';
+  welcomeScreenVariant?: 'default' | 'chat-start' | 'new-chat-start' | 'old-chat-start';
   onEnterpriseLearnMoreClick?: () => void;
   isInspectorEnabled?: boolean;
   onInspectorToggle?: () => void;

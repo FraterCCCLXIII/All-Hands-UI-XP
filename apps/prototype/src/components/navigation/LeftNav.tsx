@@ -630,7 +630,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
         ? activeNavItem === 'new-project' ||
           ((activeNavItem === 'code' ||
             activeNavItem === 'chat-start' ||
-            activeNavItem === 'new-chat-start') &&
+            activeNavItem === 'new-chat-start' ||
+            activeNavItem === 'old-chat-start') &&
             isHomeRoute)
         : activeNavItem === item.action;
     const navButton = (

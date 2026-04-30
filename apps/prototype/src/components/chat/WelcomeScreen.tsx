@@ -19,6 +19,7 @@ import { marketplaceSkills } from '../../data/skillsPageData';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 import { cn } from '../../lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { StartNewConversationDialog } from './StartNewConversationDialog';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,7 @@ interface WelcomeScreenProps {
   theme: string;
   getThemeClasses: (element: ThemeElement) => string;
   userName: string;
-  variant?: 'default' | 'chat-start' | 'new-chat-start';
+  variant?: 'default' | 'chat-start' | 'new-chat-start' | 'old-chat-start';
   isInspectorEnabled?: boolean;
   onInspectorToggle?: () => void;
   onStartUxTour?: (tourId: string) => void;
@@ -101,6 +102,7 @@ const ALL_REPOS = [
 ];
 
 const prototypeMenuEntries = [
+  { id: 'old-chat-start', label: 'Old Chat Start', navAction: 'old-chat-start' },
   {
     id: 'launch-from-plugin-modal',
     label: 'Launch from plugin modal',
@@ -222,6 +224,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(true);
   const [openRepoModalOpen, setOpenRepoModalOpen] = useState(false);
+  const [startConversationModalOpen, setStartConversationModalOpen] = useState(false);
   const [openSkillLaunchModalOpen, setOpenSkillLaunchModalOpen] = useState(false);
   const [selectedHomepageSkill, setSelectedHomepageSkill] = useState<(typeof marketplaceSkills)[number] | null>(null);
   const [homeColumnModes, setHomeColumnModes] = useState<Record<HomeColumnId, HomeColumnDemoMode>>({
@@ -412,9 +415,9 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
         <div className="pt-[25px] flex justify-center">
           <div className="flex flex-col gap-5 px-6 sm:max-w-full sm:min-w-full md:flex-row lg:px-0 lg:max-w-[960px] lg:min-w-[960px]">
-            {variant === 'chat-start' || variant === 'new-chat-start' ? (
+            {variant === 'chat-start' || variant === 'new-chat-start' || variant === 'old-chat-start' ? (
               <>
-                {variant === 'chat-start' ? (
+                {variant === 'old-chat-start' ? (
                   <button
                     type="button"
                     onClick={handleNavigateToSkills}
@@ -430,29 +433,45 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
                 <button
                   type="button"
-                  onClick={() => setOpenRepoModalOpen(true)}
+                  onClick={() => {
+                    if (variant === 'chat-start') {
+                      setStartConversationModalOpen(true);
+                    } else {
+                      setOpenRepoModalOpen(true);
+                    }
+                  }}
                   className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/60 transition-colors text-left"
                 >
-                  <Folder className="w-5 h-5 text-foreground shrink-0" />
-                  <span className="text-base font-bold text-foreground leading-5">Open Repository</span>
+                  {variant === 'chat-start' ? (
+                    <Plus className="w-5 h-5 text-foreground shrink-0" />
+                  ) : (
+                    <Folder className="w-5 h-5 text-foreground shrink-0" />
+                  )}
+                  <span className="text-base font-bold text-foreground leading-5">
+                    {variant === 'chat-start' ? 'Start Conversation' : 'Open Repository'}
+                  </span>
                   <span className="text-sm text-muted-foreground">
-                    Select or insert a URL to open an existing repository.
+                    {variant === 'chat-start'
+                      ? 'Start a new conversation with an optional prompt and linked repositories.'
+                      : 'Select or insert a URL to open an existing repository.'}
                   </span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleStartNewConversation}
-                  className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/60 transition-colors text-left"
-                >
-                  <Plus className="w-5 h-5 text-foreground shrink-0" />
-                  <span className="text-base font-bold text-foreground leading-5">Start from Scratch</span>
-                  <span className="text-sm text-muted-foreground">
-                    Start a new conversation that is not connected to an existing repository.
-                  </span>
-                </button>
+                {variant !== 'chat-start' ? (
+                  <button
+                    type="button"
+                    onClick={handleStartNewConversation}
+                    className="w-full flex flex-col rounded-xl p-[24px] border border-border bg-secondary/80 relative gap-[10px] overflow-visible hover:bg-muted/60 transition-colors text-left"
+                  >
+                    <Plus className="w-5 h-5 text-foreground shrink-0" />
+                    <span className="text-base font-bold text-foreground leading-5">Start from Scratch</span>
+                    <span className="text-sm text-muted-foreground">
+                      Start a new conversation that is not connected to an existing repository.
+                    </span>
+                  </button>
+                ) : null}
 
-                {variant === 'new-chat-start' ? (
+                {variant === 'chat-start' || variant === 'new-chat-start' ? (
                   <>
                     <button
                       type="button"
@@ -643,6 +662,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                     </div>
                   </DialogContent>
                 </Dialog>
+                <StartNewConversationDialog
+                  open={startConversationModalOpen}
+                  onOpenChange={setStartConversationModalOpen}
+                />
                 {variant === 'chat-start' ? (
                   <Dialog open={openSkillLaunchModalOpen} onOpenChange={setOpenSkillLaunchModalOpen}>
                     <DialogContent className="border-border sm:max-w-[480px]">

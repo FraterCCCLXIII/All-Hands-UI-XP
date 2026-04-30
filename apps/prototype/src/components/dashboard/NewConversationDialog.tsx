@@ -1,5 +1,5 @@
 import { ReactNode, useCallback, useState } from 'react';
-import { Github } from 'lucide-react';
+import { ChevronDown, Github } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -28,10 +28,18 @@ export function NewConversationDialog({
 }: NewConversationDialogProps) {
   const [selectedBranch, setSelectedBranch] = useState(branches[0] ?? '');
   const [prompt, setPrompt] = useState('');
+  const [openAfterStarting, setOpenAfterStarting] = useState(true);
+  const [performAgentOnboarding, setPerformAgentOnboarding] = useState(false);
+  const [moreOptionsOpen, setMoreOptionsOpen] = useState(false);
 
   const handleLaunch = useCallback(() => {
-    console.log('Launch conversation', { selectedBranch, prompt });
-  }, [selectedBranch, prompt]);
+    console.log('Launch conversation', {
+      selectedBranch,
+      prompt,
+      openAfterStarting,
+      performAgentOnboarding,
+    });
+  }, [selectedBranch, prompt, openAfterStarting, performAgentOnboarding]);
 
   return (
     <Dialog>
@@ -116,6 +124,42 @@ export function NewConversationDialog({
               onChange={(event) => setPrompt(event.target.value)}
             />
           </div>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            aria-expanded={moreOptionsOpen}
+            onClick={() => setMoreOptionsOpen((open) => !open)}
+          >
+            More Options
+            <ChevronDown className={cn('h-4 w-4 transition-transform', moreOptionsOpen && 'rotate-180')} />
+          </button>
+          {moreOptionsOpen ? (
+            <div className="space-y-3">
+              <label className="grid cursor-pointer grid-cols-[1rem_1fr] items-start gap-3 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={openAfterStarting}
+                  onChange={(event) => setOpenAfterStarting(event.target.checked)}
+                  className="mt-0.5 h-4 min-h-4 w-4 min-w-4 shrink-0 accent-primary"
+                />
+                <span className="leading-5">Open conversation after starting</span>
+              </label>
+              <label className="grid cursor-pointer grid-cols-[1rem_1fr] items-start gap-3 text-sm font-medium text-foreground">
+                <input
+                  type="checkbox"
+                  checked={performAgentOnboarding}
+                  onChange={(event) => setPerformAgentOnboarding(event.target.checked)}
+                  className="mt-0.5 h-4 min-h-4 w-4 min-w-4 shrink-0 accent-primary"
+                />
+                <span className="leading-5">
+                  Perform OpenHands Agent onboarding on repo (if not already enabled)
+                </span>
+              </label>
+            </div>
+          ) : null}
         </div>
 
         <DialogFooter className="mt-4 flex items-center gap-3">

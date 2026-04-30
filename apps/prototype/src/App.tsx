@@ -70,6 +70,7 @@ const actionSlugs: Record<string, string> = {
   code: 'chat',
   'chat-start': 'chat-start',
   'new-chat-start': 'new-chat-start',
+  'old-chat-start': 'old-chat-start',
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
@@ -1027,6 +1028,8 @@ function App() {
                             ? 'chat-start'
                             : activeNavItem === 'new-chat-start'
                               ? 'new-chat-start'
+                              : activeNavItem === 'old-chat-start'
+                                ? 'old-chat-start'
                               : 'default'
                         }
                         onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
@@ -1040,7 +1043,8 @@ function App() {
                         isHomeRoute={
                           location.pathname === '/chat-start' ||
                           location.pathname === '/' ||
-                          location.pathname === '/new-chat-start'
+                          location.pathname === '/new-chat-start' ||
+                          location.pathname === '/old-chat-start'
                         }
                       activeChatWindowTab={activeChatWindowTab}
                       onChatWindowTabChange={handleChatWindowTabChange}
