@@ -13,6 +13,7 @@ import {
   Box,
   Plus,
   Play,
+  Sparkles,
   Zap,
   MoreVertical,
   Power,
@@ -63,6 +64,7 @@ import {
   RepositoryTargetsBubbleField,
   type RepositoryTarget,
 } from '../components/automation/repositoryTargetsField';
+import { UseCasesScreen } from './UseCasesScreen';
 
 /** Placeholder; replace with real docs URL when available. */
 const AUTOMATIONS_DOCUMENTATION_HREF = '#';
@@ -70,6 +72,7 @@ const AUTOMATIONS_DOCUMENTATION_HREF = '#';
 type AutomationStatus = 'active' | 'inactive';
 type AutomationRunStatus = 'success' | 'failed' | 'running';
 type AutomationTrigger = 'schedule' | 'event';
+type AutomationsTab = 'active-automations' | 'use-cases';
 
 type AutomationRunLogEntry = {
   id: string;
@@ -1372,9 +1375,9 @@ function ActivityLogSection({
                       {isRunning ? (
                         <Spinner className="h-3.5 w-3.5" color="border-t-warning" />
                       ) : isSuccess ? (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
                       ) : (
-                        <XCircle className="h-3.5 w-3.5" />
+                        <XCircle className="h-3.5 w-3.5 text-destructive" />
                       )}
                       {isRunning ? 'Running' : isSuccess ? 'Successful' : 'Failed'}
                     </div>
@@ -1399,9 +1402,25 @@ interface AutomationsScreenProps {
   onOpenConversation?: (conversationId: string) => void;
 }
 
-function AutomationsSidebar({ activeCount }: { activeCount: number }) {
+function AutomationsSidebar({
+  activeCount,
+  activeTab,
+  onTabChange,
+}: {
+  activeCount: number;
+  activeTab: AutomationsTab;
+  onTabChange: (tab: AutomationsTab) => void;
+}) {
+  const tabButtonClassName = (tab: AutomationsTab) =>
+    cn(
+      'group flex h-9 w-full items-center gap-3 rounded-lg px-3 text-left text-sm transition-colors',
+      activeTab === tab
+        ? 'bg-muted/60 text-foreground'
+        : 'text-muted-foreground hover:bg-muted/40 hover:text-foreground'
+    );
+
   return (
-    <aside className="relative z-10 flex w-72 shrink-0 flex-col gap-6 border-r border-border px-6 pb-8 pt-8">
+    <aside className="relative z-10 flex w-72 shrink-0 flex-col gap-6 px-6 pb-8 pt-8">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-xl font-semibold leading-6 text-foreground">Automations</h2>
         <DocIconLink aria-label="Automations documentation" />
@@ -1409,15 +1428,34 @@ function AutomationsSidebar({ activeCount }: { activeCount: number }) {
 
       <nav className="flex flex-col gap-3" aria-label="Automation sections">
         <div className="space-y-2">
-          <div className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Use Cases
-          </div>
           <button
             type="button"
-            className="group flex h-9 w-full items-center gap-3 rounded-lg bg-muted/60 px-3 text-left text-sm text-foreground transition-colors"
-            aria-current="page"
+            onClick={() => onTabChange('use-cases')}
+            className={tabButtonClassName('use-cases')}
+            aria-current={activeTab === 'use-cases' ? 'page' : undefined}
           >
-            <Zap className="h-5 w-5 shrink-0 text-white" aria-hidden />
+            <Sparkles
+              className={cn(
+                'h-5 w-5 shrink-0',
+                activeTab === 'use-cases' ? 'text-white' : 'text-muted-foreground group-hover:text-foreground'
+              )}
+              aria-hidden
+            />
+            <span className="min-w-0 flex-1 truncate font-normal">Use Cases</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onTabChange('active-automations')}
+            className={tabButtonClassName('active-automations')}
+            aria-current={activeTab === 'active-automations' ? 'page' : undefined}
+          >
+            <Zap
+              className={cn(
+                'h-5 w-5 shrink-0',
+                activeTab === 'active-automations' ? 'text-white' : 'text-muted-foreground group-hover:text-foreground'
+              )}
+              aria-hidden
+            />
             <span className="min-w-0 flex-1 truncate font-normal">Active Automations (Current)</span>
             <span className="shrink-0 rounded bg-background/60 px-1.5 py-0.5 text-xs font-mono text-muted-foreground">
               {activeCount}
@@ -1460,6 +1498,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   const [newAutomationSchedules, setNewAutomationSchedules] = useState<AutomationScheduleEntry[]>([]);
   const [useModalForAddAutomation, setUseModalForAddAutomation] = useState(false);
   const [isAddAutomationGuideModalOpen, setIsAddAutomationGuideModalOpen] = useState(false);
+  const [activeAutomationTab, setActiveAutomationTab] = useState<AutomationsTab>('active-automations');
   const [toggleOptimisticStatus, setToggleOptimisticStatus] = useState<
     Partial<Record<string, AutomationStatus>>
   >({});
@@ -1909,10 +1948,32 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     </>
   );
 
+  const handleAutomationTabChange = (tab: AutomationsTab) => {
+    setActiveAutomationTab(tab);
+    if (tab === 'use-cases') {
+      setSelectedAutomationId(null);
+      setIsCreatingAutomation(false);
+      resetCreateForm();
+    }
+  };
+
+  const renderAutomationsShell = (content: React.ReactNode) => (
+    <>
+      <div className="flex h-full w-full overflow-hidden bg-background">
+        <AutomationsSidebar
+          activeCount={totalActiveCount}
+          activeTab={activeAutomationTab}
+          onTabChange={handleAutomationTabChange}
+        />
+        {content}
+      </div>
+      {automationsFabAndGuideModal}
+    </>
+  );
+
   if (selectedAutomation) {
-    return (
-      <>
-      <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+    return renderAutomationsShell(
+      <div className="min-w-0 flex-1 overflow-auto px-8 py-8">
         <div className="mx-auto w-full max-w-4xl">
         <button
           type="button"
@@ -2031,15 +2092,13 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
         />
         </div>
       </div>
-      {automationsFabAndGuideModal}
-      </>
     );
   }
 
   if (isCreatingAutomation) {
-    return (
+    return renderAutomationsShell(
       <>
-        <div className="flex h-full w-full flex-col overflow-auto bg-background px-8 py-8">
+        <div className="min-w-0 flex-1 overflow-auto px-8 py-8">
           <div className="mx-auto w-full max-w-4xl">
             <button
               type="button"
@@ -2329,15 +2388,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
           }
           description="Choose a repository and branch for this automation. You can add more than one target."
         />
-      {automationsFabAndGuideModal}
       </>
     );
   }
 
-  return (
-    <>
-    <div className="flex h-full w-full overflow-hidden bg-background">
-      <AutomationsSidebar activeCount={activeAutomations.length} />
+  return renderAutomationsShell(
+    activeAutomationTab === 'use-cases' ? (
+        <UseCasesScreen />
+      ) : (
       <div className="min-w-0 flex-1 overflow-auto px-8 py-8">
       <div className="mx-auto w-full max-w-4xl">
       <div className="flex items-start justify-between gap-4">
@@ -2450,8 +2508,6 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       />
       </div>
       </div>
-    </div>
-    {automationsFabAndGuideModal}
-    </>
+      )
   );
 };

@@ -1,6 +1,7 @@
 export { LoadingScreen } from './LoadingScreen';
 export { DashboardScreen } from './DashboardScreen';
 export { AutomationsScreen } from './AutomationsScreen';
+export { UseCasesScreen } from './UseCasesScreen';
 export { ExtensionsScreen } from './ExtensionsScreen';
 export { LoginScreen } from './LoginScreen';
 export { ActiveChatScreen, type StatusBadgeState } from './ActiveChatScreen';
