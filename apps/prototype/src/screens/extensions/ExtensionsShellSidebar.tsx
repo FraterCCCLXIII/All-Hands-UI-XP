@@ -1,14 +1,15 @@
-import { Box, Layers3, Webhook } from 'lucide-react';
+import { Box, Grid2x2Plus, Layers3, Webhook } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { DocIconLink } from '../../components/common/DocIconLink';
 import { McpIcon } from '../../components/icons/McpIcon';
+import { NutIcon } from '../../components/icons/NutIcon';
 import { SkillIcon } from '../../components/icons/SkillIcon';
 import { SearchInput } from '../../components/ui/search-input';
 import { navigateAppRoute } from '../../lib/captureNavigation';
 import { EXTENSIONS_ALL_BASE, extensionsSectionStackGap } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
 
-export type ExtensionsCatalogScope = 'all' | 'skills' | 'plugins' | 'mcp' | 'hooks';
+export type ExtensionsCatalogScope = 'all' | 'skills' | 'plugins' | 'addons' | 'mcp' | 'hooks' | 'webhooks';
 
 export type ExtensionsBrowseControls = {
   searchQuery: string;
@@ -20,13 +21,15 @@ export type ExtensionsBrowseControls = {
 const SCOPE_ITEMS: {
   id: ExtensionsCatalogScope;
   label: string;
-  icon: LucideIcon | typeof SkillIcon | typeof McpIcon;
+  icon: LucideIcon | typeof SkillIcon | typeof McpIcon | typeof NutIcon;
 }[] = [
   { id: 'all', label: 'All active', icon: Layers3 },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
   { id: 'plugins', label: 'Plugins', icon: Box },
   { id: 'mcp', label: 'MCP servers', icon: McpIcon },
-  { id: 'hooks', label: 'Hooks', icon: Webhook },
+  { id: 'hooks', label: 'Hooks', icon: NutIcon },
+  { id: 'webhooks', label: 'Webhooks', icon: Webhook },
+  { id: 'addons', label: 'Add-Ons', icon: Grid2x2Plus },
 ];
 
 export type ExtensionsShellSidebarProps = {

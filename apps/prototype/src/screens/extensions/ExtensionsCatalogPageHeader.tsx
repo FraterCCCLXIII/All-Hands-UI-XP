@@ -5,7 +5,7 @@ export type ExtensionsCatalogPageHeaderProps = {
   title: string;
   /** Sets `id` on the `<h2>` for `aria-labelledby` on surrounding `<section>`. */
   titleId?: string;
-  description: ReactNode;
+  description?: ReactNode;
   /** Primary actions on the right (e.g. + Skill / + Plugin). */
   actions?: ReactNode;
   /** Extra controls below the description (e.g. search + filters). */
@@ -37,7 +37,7 @@ export function ExtensionsCatalogPageHeader({
           <h2 id={titleId} className="text-xl font-semibold leading-6 text-foreground">
             {title}
           </h2>
-          <div className="max-w-2xl text-sm text-muted-foreground">{description}</div>
+          {description ? <div className="max-w-2xl text-sm text-muted-foreground">{description}</div> : null}
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center justify-start gap-2 sm:justify-end sm:pt-0.5">

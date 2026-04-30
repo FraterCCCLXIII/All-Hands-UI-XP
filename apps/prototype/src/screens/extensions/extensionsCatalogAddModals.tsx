@@ -10,7 +10,12 @@ import {
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { OPENHANDS_HOOKS_DOCS_URL } from '../../data/hooksCatalog';
+import {
+  DEFAULT_WEBHOOK_CONFIGURATION,
+  OPENHANDS_EVENT_AUTOMATIONS_DOCS_URL,
+} from '../../data/webhooksCatalog';
 import { showAppToast } from '../../lib/appToast';
+import { cn } from '../../lib/utils';
 
 const inputLike =
   'flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50';
@@ -73,6 +78,82 @@ export function AddRepoExtensionModal({ open, onOpenChange }: AddRepoExtensionMo
           </Button>
           <Button type="button" size="sm" disabled={!repoUrl.trim()} onClick={submit}>
             Add
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export type WebhookSetupModalProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  editingId?: string | null;
+  initialValues?: { name: string; command?: string } | null;
+  onSave?: (id: string | null, payload: { command: string }) => void;
+};
+
+export function WebhookSetupModal({
+  open,
+  onOpenChange,
+  editingId = null,
+  initialValues = null,
+  onSave,
+}: WebhookSetupModalProps) {
+  const [webhookInfo, setWebhookInfo] = useState(DEFAULT_WEBHOOK_CONFIGURATION);
+  const isEdit = Boolean(editingId);
+
+  useEffect(() => {
+    if (!open) return;
+    setWebhookInfo(initialValues?.command?.trim() || DEFAULT_WEBHOOK_CONFIGURATION);
+  }, [open, initialValues?.command]);
+
+  const submit = () => {
+    const trimmed = webhookInfo.trim();
+    if (!trimmed) return;
+    onSave?.(editingId, { command: trimmed });
+    onOpenChange(false);
+    showAppToast({ variant: 'success', message: isEdit ? 'Webhook updated.' : 'Webhook added.' });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? 'Edit Webhook' : 'Add Webhook'}</DialogTitle>
+          <DialogDescription>
+            Add the webhook details OpenHands needs to receive and verify events. See the{' '}
+            <a
+              href={OPENHANDS_EVENT_AUTOMATIONS_DOCS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline underline-offset-2 hover:text-foreground/90"
+            >
+              event-based automations documentation
+            </a>{' '}
+            for setup guidance.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-1">
+          <div>
+            <label htmlFor="webhook-configuration" className="mb-1.5 block text-sm font-medium text-foreground">
+              Webhook details
+            </label>
+            <textarea
+              id="webhook-configuration"
+              className={cn(textareaLike, 'min-h-[260px] font-mono text-xs leading-5')}
+              value={webhookInfo}
+              onChange={(e) => setWebhookInfo(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="button" size="sm" disabled={!webhookInfo.trim()} onClick={submit}>
+            {isEdit ? 'Save' : 'Add Webhook'}
           </Button>
         </DialogFooter>
       </DialogContent>

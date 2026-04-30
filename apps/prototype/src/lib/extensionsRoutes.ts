@@ -1,12 +1,14 @@
 import { navigateAppRoute } from './captureNavigation';
 
-/** Default browse: skills, plugins, MCP, and hooks in one scroll. */
+/** Default browse: skills, plugins, add-ons, MCP, hooks, and webhooks in one scroll. */
 export const EXTENSIONS_ALL_BASE = 'extensions/all';
 
 export const EXTENSIONS_SKILLS_BASE = 'extensions/skills';
 export const EXTENSIONS_PLUGINS_BASE = 'extensions/plugins';
+export const EXTENSIONS_ADDONS_BASE = 'extensions/add-ons';
 export const EXTENSIONS_MCP_BASE = 'extensions/mcp';
 export const EXTENSIONS_HOOKS_BASE = 'extensions/hooks';
+export const EXTENSIONS_WEBHOOKS_BASE = 'extensions/webhooks';
 
 /** Same vertical rhythm as Settings `settingsSectionStackGap`. */
 export const extensionsSectionStackGap = 'gap-6';
@@ -54,11 +56,11 @@ export const extensionsMainScrollClassName =
 export const extensionsMainNoScrollClassName =
   'relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden pt-[var(--settings-main-padding-top)] pb-[var(--settings-main-padding-bottom)]';
 
-export type ExtensionsShellMode = 'all' | 'skills' | 'plugins' | 'mcp' | 'hooks';
+export type ExtensionsShellMode = 'all' | 'skills' | 'plugins' | 'addons' | 'mcp' | 'hooks' | 'webhooks';
 
 /**
  * Which full-screen Extensions child to render from the current pathname.
- * Skills / plugins / MCP / hooks use dedicated panels; combined browse uses `ExtensionsAllMixedView`.
+ * Skills / plugins / add-ons / MCP / hooks / webhooks use dedicated panels; combined browse uses `ExtensionsAllMixedView`.
  */
 export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
   const pathPart = pathname.replace(/^\/+/, '').split('?')[0] ?? '';
@@ -72,11 +74,17 @@ export function getExtensionsShellMode(pathname: string): ExtensionsShellMode {
   ) {
     return 'plugins';
   }
+  if (pathPart === EXTENSIONS_ADDONS_BASE || pathPart.startsWith(`${EXTENSIONS_ADDONS_BASE}/`)) {
+    return 'addons';
+  }
   if (pathPart === EXTENSIONS_MCP_BASE || pathPart.startsWith(`${EXTENSIONS_MCP_BASE}/`)) {
     return 'mcp';
   }
   if (pathPart === EXTENSIONS_HOOKS_BASE || pathPart.startsWith(`${EXTENSIONS_HOOKS_BASE}/`)) {
     return 'hooks';
+  }
+  if (pathPart === EXTENSIONS_WEBHOOKS_BASE || pathPart.startsWith(`${EXTENSIONS_WEBHOOKS_BASE}/`)) {
+    return 'webhooks';
   }
   return 'all';
 }

@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { MoreVertical, Pencil, Trash2, Webhook } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,13 +7,11 @@ import {
   DropdownMenuTrigger,
 } from '../../components/ui/dropdown-menu';
 import { PluginToggle } from '../../components/ui/plugin-toggle';
-import { NutIcon } from '../../components/icons/NutIcon';
+import { Button } from '../../components/ui/button';
 import {
-  hooksCatalogEntries,
-  hooksCatalogDisplaySubtext,
-  type HookRecipeOverride,
-} from '../../data/hooksCatalog';
-import { AddHookModal } from './extensionsCatalogAddModals';
+  webhookCatalogEntries,
+  webhooksCatalogEntryMatchesQuery,
+} from '../../data/webhooksCatalog';
 import {
   extensionsCatalogCardBodyPrWithControlCluster,
   extensionsCatalogCardControlClusterClassName,
@@ -26,68 +24,54 @@ import {
 } from '../../lib/extensionsRoutes';
 import { cn } from '../../lib/utils';
 import { ExtensionsAnimatedMain } from './ExtensionsAnimatedMain';
-import { ExtensionsCatalogAddButton } from './ExtensionsCatalogAddButton';
 import { ExtensionsCatalogPageHeader } from './ExtensionsCatalogPageHeader';
 import { ExtensionsShellSidebar, type ExtensionsBrowseControls } from './ExtensionsShellSidebar';
+import { WebhookSetupModal } from './extensionsCatalogAddModals';
 
-const hooksPageDescription = (
-  <>
-    Lifecycle hooks run shell scripts registered in{' '}
-    <code className="rounded border border-border bg-muted/60 px-1.5 py-0.5 font-mono text-xs text-foreground">
-      .openhands/hooks.json
-    </code>{' '}
-    in your repository. Enable patterns below to opt into them for your workspace; edit labels and script paths as
-    needed.
-  </>
-);
+const webhooksPageDescription =
+  'Receive external events from services and trigger OpenHands workflows, automations, or conversations.';
 
-export type ExtensionsHooksPanelProps = {
+export type ExtensionsWebhooksPanelProps = {
   browseControls: ExtensionsBrowseControls;
 };
 
-export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelProps) {
-  const [hookSwitchById, setHookSwitchById] = useState<Record<string, boolean>>({});
-  const [removedHookIds, setRemovedHookIds] = useState<Set<string>>(() => new Set());
-  const [hookOverridesById, setHookOverridesById] = useState<Record<string, HookRecipeOverride>>({});
-  const [hookEditOpen, setHookEditOpen] = useState(false);
-  const [hookEditingId, setHookEditingId] = useState<string | null>(null);
-
-  const closeHookEdit = useCallback(() => {
-    setHookEditOpen(false);
-    setHookEditingId(null);
-  }, []);
-
-  const hookEditingEntry = useMemo(
-    () => (hookEditingId ? hooksCatalogEntries.find((e) => e.id === hookEditingId) ?? null : null),
-    [hookEditingId]
-  );
+export function ExtensionsWebhooksPanel({ browseControls }: ExtensionsWebhooksPanelProps) {
+  const [webhookSwitchById, setWebhookSwitchById] = useState<Record<string, boolean>>({});
+  const [removedWebhookIds, setRemovedWebhookIds] = useState<Set<string>>(() => new Set());
+  const [webhookCommandById, setWebhookCommandById] = useState<Record<string, string>>({});
+  const [webhookDialogOpen, setWebhookDialogOpen] = useState(false);
+  const [webhookEditingId, setWebhookEditingId] = useState<string | null>(null);
+  const query = browseControls.searchQuery.trim().toLowerCase();
 
   const visible = useMemo(
-    () => hooksCatalogEntries.filter((e) => !removedHookIds.has(e.id)),
-    [removedHookIds]
+    () =>
+      webhookCatalogEntries.filter((entry) => {
+        if (removedWebhookIds.has(entry.id)) return false;
+        return webhooksCatalogEntryMatchesQuery(entry, query);
+      }),
+    [query, removedWebhookIds]
   );
 
   return (
     <div className={extensionsShellRowClassName}>
-      <AddHookModal
-        open={hookEditOpen && hookEditingId !== null && hookEditingEntry !== null}
+      <WebhookSetupModal
+        open={webhookDialogOpen}
         onOpenChange={(open) => {
-          if (!open) closeHookEdit();
+          setWebhookDialogOpen(open);
+          if (!open) setWebhookEditingId(null);
         }}
-        editingId={hookEditingId}
+        editingId={webhookEditingId}
         initialValues={
-          hookEditingEntry
+          webhookEditingId
             ? {
-                name: hookOverridesById[hookEditingEntry.id]?.name ?? hookEditingEntry.name,
-                notes: hookOverridesById[hookEditingEntry.id]?.notes ?? hooksCatalogDisplaySubtext(hookEditingEntry, null),
+                name: webhookCatalogEntries.find((entry) => entry.id === webhookEditingId)?.name ?? 'Webhook',
+                command: webhookCommandById[webhookEditingId],
               }
             : null
         }
-        onEdit={(id, payload) => {
-          setHookOverridesById((prev) => ({
-            ...prev,
-            [id]: { name: payload.name, notes: payload.instructions },
-          }));
+        onSave={(id, payload) => {
+          if (!id) return;
+          setWebhookCommandById((prev) => ({ ...prev, [id]: payload.command }));
         }}
       />
       <ExtensionsShellSidebar browseControls={browseControls} />
@@ -95,16 +79,27 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
       <ExtensionsAnimatedMain className={cn(extensionsMainScrollClassName, 'repo-dropdown-scroll')}>
         <div className={extensionsPageContentClassName}>
           <ExtensionsCatalogPageHeader
-            title="Hooks"
-            description={hooksPageDescription}
-            actions={<ExtensionsCatalogAddButton kind="hook" />}
+            title="Webhooks"
+            description={webhooksPageDescription}
+            actions={
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="shrink-0"
+                onClick={() => {
+                  setWebhookEditingId(null);
+                  setWebhookDialogOpen(true);
+                }}
+              >
+                + Webhook
+              </Button>
+            }
           />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {visible.map((entry) => {
-              const displayName = hookOverridesById[entry.id]?.name ?? entry.name;
-              const subtext = hooksCatalogDisplaySubtext(entry, hookOverridesById[entry.id] ?? null);
-              const enabled = hookSwitchById[entry.id] !== false;
+              const enabled = webhookSwitchById[entry.id] !== false;
               return (
                 <div
                   key={entry.id}
@@ -113,19 +108,19 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
                   <div
                     className={cn(
                       extensionsCatalogCardControlsClassName,
-                      extensionsCatalogCardControlClusterClassName,
+                      extensionsCatalogCardControlClusterClassName
                     )}
                   >
                     <PluginToggle
                       size="sm"
                       checked={enabled}
                       onCheckedChange={() =>
-                        setHookSwitchById((prev) => ({
+                        setWebhookSwitchById((prev) => ({
                           ...prev,
                           [entry.id]: !(prev[entry.id] !== false),
                         }))
                       }
-                      aria-label={enabled ? `Turn off ${displayName}` : `Turn on ${displayName}`}
+                      aria-label={enabled ? `Turn off ${entry.name}` : `Turn on ${entry.name}`}
                     />
                     <div className={extensionsCatalogCardMenuSlotClassName}>
                       <DropdownMenu>
@@ -133,7 +128,7 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
                           <button
                             type="button"
                             className={extensionsCatalogCardOverflowMenuTriggerClassName}
-                            aria-label={`${displayName} options`}
+                            aria-label={`${entry.name} options`}
                           >
                             <MoreVertical className="h-4 w-4 shrink-0" aria-hidden />
                           </button>
@@ -142,8 +137,8 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
                           <DropdownMenuItem
                             className="gap-2"
                             onSelect={() => {
-                              setHookEditingId(entry.id);
-                              setHookEditOpen(true);
+                              setWebhookEditingId(entry.id);
+                              setWebhookDialogOpen(true);
                             }}
                           >
                             <Pencil className="h-4 w-4 shrink-0" aria-hidden />
@@ -151,9 +146,7 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="gap-2"
-                            onSelect={() =>
-                              setRemovedHookIds((prev) => new Set(prev).add(entry.id))
-                            }
+                            onSelect={() => setRemovedWebhookIds((prev) => new Set(prev).add(entry.id))}
                           >
                             <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
                             Remove
@@ -165,20 +158,20 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
                   <div
                     className={cn(
                       'w-full rounded-xl p-5 pt-5 text-left',
-                      extensionsCatalogCardBodyPrWithControlCluster,
+                      extensionsCatalogCardBodyPrWithControlCluster
                     )}
                   >
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
-                        <NutIcon className="h-5 w-5 text-muted-foreground" aria-hidden />
+                        <Webhook className="h-5 w-5 text-muted-foreground" aria-hidden />
                       </div>
                       <div className="flex min-w-0 flex-1 flex-col">
-                        <span className="text-base font-medium text-foreground">{displayName}</span>
+                        <span className="text-base font-medium text-foreground">{entry.name}</span>
                         <p
                           className="mt-2 line-clamp-2 break-all text-sm text-muted-foreground"
-                          title={subtext}
+                          title={entry.endpoint}
                         >
-                          {subtext}
+                          {entry.endpoint}
                         </p>
                       </div>
                     </div>
@@ -188,7 +181,7 @@ export function ExtensionsHooksPanel({ browseControls }: ExtensionsHooksPanelPro
             })}
           </div>
           {visible.length === 0 ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">No hook patterns match your search.</p>
+            <p className="py-12 text-center text-sm text-muted-foreground">No webhooks match your search.</p>
           ) : null}
         </div>
       </ExtensionsAnimatedMain>
