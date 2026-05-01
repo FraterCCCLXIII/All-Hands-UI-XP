@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronLeft,
+  Filter,
   Github,
   History,
   Info,
@@ -96,6 +97,7 @@ type AutomationItem = {
   schedule?: string;
   timezone?: string;
   event?: string;
+  eventFilter?: string;
   model: string;
   notification: string;
   owner: string;
@@ -594,6 +596,32 @@ function formatAutomationTriggerSelectionLabel(selectionId: string): string {
   return formatWorkflowTriggerBubbleLabel(selectionId);
 }
 
+function isGithubWorkflowTriggerSelection(selectionId: string): boolean {
+  const [eventKey, activityType] = selectionId.split(':');
+  const eventConfig = GITHUB_WORKFLOW_TRIGGER_EVENTS.find((event) => event.key === eventKey);
+
+  if (!eventConfig) return false;
+  if (!activityType) return true;
+
+  return eventConfig.types?.includes(activityType) ?? false;
+}
+
+function formatAutomationEventFilters(selectionIds: string[], filtersBySelectionId: Record<string, string>): string | undefined {
+  const filteredSelections = selectionIds
+    .map((selectionId) => ({
+      label: formatAutomationTriggerSelectionLabel(selectionId),
+      filter: filtersBySelectionId[selectionId]?.trim(),
+    }))
+    .filter((selection): selection is { label: string; filter: string } => Boolean(selection.filter));
+
+  if (filteredSelections.length === 0) return undefined;
+  if (filteredSelections.length === 1) return filteredSelections[0]!.filter;
+
+  return filteredSelections
+    .map(({ label, filter }) => `${label}: ${filter}`)
+    .join('\n');
+}
+
 const CUSTOM_WEBHOOK_TRIGGER_SEARCH_HAYSTACK =
   'custom webhooks linear event issue action create';
 
@@ -716,6 +744,9 @@ function MultiSelectBubbleInput({
   onRemoveAdditional,
   onAdd,
   onRemove,
+  filterValues,
+  isFilterableValue,
+  onFilterChange,
   menuSearchable = false,
   menuSearchPlaceholder = 'Search…',
   menuTriggerMode = false,
@@ -730,6 +761,9 @@ function MultiSelectBubbleInput({
   onRemoveAdditional?: (id: string) => void;
   onAdd: (value: string) => void;
   onRemove: (value: string) => void;
+  filterValues?: Record<string, string>;
+  isFilterableValue?: (value: string) => boolean;
+  onFilterChange?: (value: string, filter: string) => void;
   menuSearchable?: boolean;
   menuSearchPlaceholder?: string;
   /** Schedule on top + separator; git triggers stay visible but disabled when already added */
@@ -741,6 +775,8 @@ function MultiSelectBubbleInput({
 }) {
   const [menuQuery, setMenuQuery] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [filterDialogValue, setFilterDialogValue] = useState<string | null>(null);
+  const [filterDraft, setFilterDraft] = useState('');
 
   const workflowMenuActive = Boolean(menuTriggerMode && workflowTriggerEvents?.length);
   const selectedSet = new Set(selectedValues);
@@ -842,6 +878,18 @@ function MultiSelectBubbleInput({
   const bubbleLabel = (value: string) =>
     formatTriggerSelectionLabel ? formatTriggerSelectionLabel(value) : value;
 
+  const openEventFilterDialog = (value: string) => {
+    setFilterDialogValue(value);
+    setFilterDraft(filterValues?.[value] ?? '');
+  };
+
+  const submitEventFilter = () => {
+    if (!filterDialogValue) return;
+    onFilterChange?.(filterDialogValue, filterDraft.trim());
+    setFilterDialogValue(null);
+    setFilterDraft('');
+  };
+
   const flexMenuLayout = Boolean(menuSearchable || workflowMenuActive);
 
   const customWebhookLinearExampleTaken = selectedValues.includes(CUSTOM_WEBHOOK_LINEAR_ISSUE_CREATE_ID);
@@ -927,22 +975,52 @@ function MultiSelectBubbleInput({
             </button>
           </span>
         ))}
-        {selectedValues.map((value) => (
-          <span
-            key={value}
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
-          >
-            {bubbleLabel(value)}
-            <button
-              type="button"
-              onClick={() => onRemove(value)}
-              className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label={`Remove ${bubbleLabel(value)}`}
+        {selectedValues.map((value) => {
+          const label = bubbleLabel(value);
+          const filterValue = filterValues?.[value]?.trim();
+          const filterable = Boolean(isFilterableValue?.(value) && onFilterChange);
+
+          return (
+            <span
+              key={value}
+              className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-background/60 px-2.5 py-1 text-xs text-foreground"
             >
-              <X className="h-3 w-3" />
-            </button>
-          </span>
-        ))}
+              <span className="min-w-0 truncate">{label}</span>
+              {filterValue ? (
+                <button
+                  type="button"
+                  onClick={() => openEventFilterDialog(value)}
+                  className="max-w-[180px] truncate rounded-full border border-border bg-muted/40 px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label={`Edit event filter for ${label}`}
+                  title={filterValue}
+                >
+                  <Filter className="mr-1 inline h-3 w-3 align-[-2px]" aria-hidden />
+                  {filterValue}
+                </button>
+              ) : filterable ? (
+                <button
+                  type="button"
+                  onClick={() => openEventFilterDialog(value)}
+                  className="rounded-full border border-border bg-muted/30 px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label={`Add event filter for ${label}`}
+                >
+                  + Filter
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => {
+                  onRemove(value);
+                  onFilterChange?.(value, '');
+                }}
+                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label={`Remove ${label}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          );
+        })}
         <DropdownMenu
           modal={false}
           open={menuOpen}
@@ -1171,6 +1249,74 @@ function MultiSelectBubbleInput({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <Dialog
+        open={filterDialogValue !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setFilterDialogValue(null);
+            setFilterDraft('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add event filter</DialogTitle>
+            <DialogDescription>
+              Add an event filter for{' '}
+              <span className="font-medium text-foreground">
+                {filterDialogValue ? bubbleLabel(filterDialogValue) : 'this trigger'}
+              </span>
+              . Use the filter syntax supported by the selected event source.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="automation-event-filter" className="text-sm font-medium text-foreground">
+              Event filter
+            </label>
+            <textarea
+              id="automation-event-filter"
+              value={filterDraft}
+              onChange={(event) => setFilterDraft(event.target.value)}
+              placeholder={'branches: [main]\npaths: [src/**]'}
+              className="min-h-28 w-full rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs leading-5 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              spellCheck={false}
+            />
+            <p className="text-xs text-muted-foreground">
+              Examples may include branch, tag, path, label, or payload filters supported by the selected event.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setFilterDialogValue(null);
+                setFilterDraft('');
+              }}
+            >
+              Cancel
+            </Button>
+            {filterDialogValue && filterValues?.[filterDialogValue]?.trim() ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onFilterChange?.(filterDialogValue, '');
+                  setFilterDialogValue(null);
+                  setFilterDraft('');
+                }}
+              >
+                Remove filter
+              </Button>
+            ) : null}
+            <Button type="button" size="sm" onClick={submitEventFilter}>
+              Save filter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1262,6 +1408,8 @@ function MetadataSection({
           const Icon = field.icon;
           const value = field.value ? field.value(automation) : String(automation[field.key]);
           const isRepositoriesField = field.key === 'repository';
+          const isEventField = field.key === 'event';
+          const eventFilter = automation.eventFilter?.trim();
 
           return (
             <div key={field.key} className="pb-4">
@@ -1281,6 +1429,14 @@ function MetadataSection({
                       </span>
                     </React.Fragment>
                   ))}
+                </div>
+              ) : isEventField && eventFilter ? (
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-foreground">
+                  <span>{value}</span>
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
+                    <Filter className="h-3 w-3 shrink-0" aria-hidden />
+                    <span className="whitespace-pre-wrap">{eventFilter}</span>
+                  </span>
                 </div>
               ) : (
                 <div className="mt-2 text-sm text-foreground">{value}</div>
@@ -1489,6 +1645,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
   const [newAutomationModel, setNewAutomationModel] = useState('GPT-5');
   const [newAutomationNotification, setNewAutomationNotification] = useState('');
   const [selectedTriggerEvents, setSelectedTriggerEvents] = useState<string[]>([]);
+  const [selectedTriggerEventFilters, setSelectedTriggerEventFilters] = useState<Record<string, string>>({});
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [scheduleDraft, setScheduleDraft] = useState<NewAutomationScheduleConfig>({
@@ -1625,6 +1782,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     setNewAutomationModel('GPT-5');
     setNewAutomationNotification('');
     setSelectedTriggerEvents([]);
+    setSelectedTriggerEventFilters({});
     setSelectedPlugins([]);
     setScheduleModalOpen(false);
     setNewAutomationSchedules([]);
@@ -1674,6 +1832,10 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       selectedTriggerEvents.length > 0
         ? selectedTriggerEvents.map(formatAutomationTriggerSelectionLabel).join(', ')
         : undefined;
+    const eventFilterFromTriggers = formatAutomationEventFilters(
+      selectedTriggerEvents,
+      selectedTriggerEventFilters
+    );
 
     const createdAutomation: AutomationItem = {
       id: `auto-${now.getTime()}`,
@@ -1687,6 +1849,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       schedule: scheduleSummary,
       timezone: scheduleTimezone,
       event: eventFromTriggers ?? (!hasSchedule ? 'Push to branch' : undefined),
+      eventFilter: eventFilterFromTriggers,
       model: newAutomationModel.trim() || 'GPT-5',
       notification: newAutomationNotification.trim(),
       owner: '',
@@ -1823,6 +1986,12 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                     ? `${automation.schedule} (${automation.timezone})`
                     : (automation.event ?? 'Event')}
                 </span>
+                {automation.eventFilter?.trim() ? (
+                  <span className="inline-flex min-w-0 max-w-[180px] items-center gap-1 rounded-full border border-border bg-background/50 px-1.5 py-0.5 text-[11px] leading-none text-muted-foreground">
+                    <Filter className="h-3 w-3 shrink-0" aria-hidden />
+                    <span className="truncate">{automation.eventFilter.trim()}</span>
+                  </span>
+                ) : null}
               </span>
               <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1">
                 <AutomationModelIcon className="h-3.5 w-3.5" />
@@ -2176,6 +2345,8 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 menuSearchable
                 menuSearchPlaceholder="Search all event triggers"
                 selectedValues={selectedTriggerEvents}
+                filterValues={selectedTriggerEventFilters}
+                isFilterableValue={isGithubWorkflowTriggerSelection}
                 additionalItems={newAutomationSchedules.map((entry) => ({
                   id: entry.id,
                   label: `Schedule · ${buildScheduleSummary(entry)} (${entry.timezone})`,
@@ -2199,6 +2370,17 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
                 }}
                 onRemove={(value) =>
                   setSelectedTriggerEvents((prev) => prev.filter((item) => item !== value))
+                }
+                onFilterChange={(value, filter) =>
+                  setSelectedTriggerEventFilters((prev) => {
+                    const next = { ...prev };
+                    if (filter.trim()) {
+                      next[value] = filter.trim();
+                    } else {
+                      delete next[value];
+                    }
+                    return next;
+                  })
                 }
               />
 
