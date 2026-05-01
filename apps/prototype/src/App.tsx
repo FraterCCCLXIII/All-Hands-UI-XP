@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ChatArea } from './components/chat/ChatArea';
+import { StartNewConversationDialog } from './components/chat/StartNewConversationDialog';
 import { Canvas } from './components/canvas/Canvas';
 import { TopBar } from './components/navigation/TopBar';
 import { LeftNav } from './components/navigation/LeftNav';
@@ -65,6 +66,7 @@ type CanvasTipVariant = 'none' | ProtipVariant;
 const LEFT_NAV_COLLAPSED_WIDTH = 48;
 const LEFT_NAV_MIN_WIDTH = 320;
 const LEFT_NAV_MAX_WIDTH = 480;
+const LEFT_NAV_EXPANDED_STORAGE_KEY = 'openhands:left-nav-expanded';
 
 const actionSlugs: Record<string, string> = {
   code: 'chat',
@@ -167,9 +169,13 @@ function App() {
   const [activeNavItem, setActiveNavItem] = useState('chat-start');
   const [isRunning, setIsRunning] = useState(false);
   const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
-  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(true);
+  const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(LEFT_NAV_EXPANDED_STORAGE_KEY) === 'true';
+  });
   const [leftNavWidth, setLeftNavWidth] = useState(LEFT_NAV_MIN_WIDTH);
   const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
+  const [isStartConversationDialogOpen, setIsStartConversationDialogOpen] = useState(false);
   const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
   const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('chat-start');
   const [isEnterpriseCtaVisible, setIsEnterpriseCtaVisible] = useState(true);
@@ -249,6 +255,10 @@ function App() {
     const id = window.setTimeout(() => setShowCanvasLoading(false), 2000);
     return () => window.clearTimeout(id);
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(LEFT_NAV_EXPANDED_STORAGE_KEY, String(isLeftNavExpanded));
+  }, [isLeftNavExpanded]);
 
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
@@ -514,6 +524,12 @@ function App() {
     setActiveFlowPrototype('enterprise-learn-more');
     setIsConversationDrawerOpen(false);
     navigateAppRoute('/enterprise-learn-more');
+  }, []);
+
+  const handleOpenStartConversationDialog = useCallback(() => {
+    setActiveFlowPrototype(null);
+    setIsConversationDrawerOpen(false);
+    setIsStartConversationDialogOpen(true);
   }, []);
 
   const handleEnterpriseRequestSubmitted = useCallback(() => {
@@ -816,6 +832,7 @@ function App() {
                 onNavItemClick={handleNavItemClick}
                 activeNavItem={activeNavItem}
                 onEnterpriseLearnMoreClick={handleEnterpriseLearnMoreClick}
+                onStartConversationClick={handleOpenStartConversationDialog}
                 activeWorkspaceId={activeWorkspaceId}
                 onActiveWorkspaceChange={setActiveWorkspaceId}
                 isHomeRoute={
@@ -961,6 +978,10 @@ function App() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                <StartNewConversationDialog
+                  open={isStartConversationDialogOpen}
+                  onOpenChange={setIsStartConversationDialogOpen}
+                />
                 {isDashboardView && <DashboardScreen />}
                 {isAutomationsView && (
                   <AutomationsScreen

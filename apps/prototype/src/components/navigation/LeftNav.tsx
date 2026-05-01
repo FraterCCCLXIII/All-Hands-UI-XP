@@ -10,8 +10,11 @@ import {
   Check,
   ChevronDown,
   Clock3,
+  Cpu,
+  ExternalLink,
   Filter,
   Folder,
+  FolderX,
   FolderMinus,
   FolderOpen,
   FolderPlus,
@@ -26,8 +29,10 @@ import {
   PanelLeftOpen,
   Plus,
   PlusCircle,
+  StopCircle,
   SquareKanban,
   Star,
+  Trash2,
   User,
   UserPlus,
   Users,
@@ -162,8 +167,12 @@ interface ConversationFolder {
   conversations: ConversationSummary[];
 }
 
+type ConversationOrganizeBy = 'project' | 'chronological' | 'type';
+
+const TYPE_GROUP_LIMIT = 5;
+
 function getConversationFolderName(conversation: ConversationSummary): string {
-  if (conversation.repo === 'No Repository') return 'Personal';
+  if (conversation.repo === 'No Repository') return 'No Repo';
   if (conversation.tag === 'Automation') return 'Sidekicks';
 
   return conversation.repo.split('/').at(-1) ?? conversation.repo;
@@ -183,16 +192,37 @@ function buildConversationFolders(conversations: ConversationSummary[]): Convers
   }));
 }
 
+function buildConversationTypeFolders(conversations: ConversationSummary[]): ConversationFolder[] {
+  const automationConversations = conversations.filter(
+    (conversation) => conversation.tag === 'Automation' && !conversation.archived
+  );
+  const regularConversations = conversations.filter(
+    (conversation) => conversation.tag !== 'Automation' && !conversation.archived
+  );
+  const archivedConversations = conversations.filter((conversation) => conversation.archived);
+
+  return [
+    { id: 'automation', label: 'Automation', conversations: automationConversations },
+    { id: 'conversation', label: 'Conversation', conversations: regularConversations },
+    { id: 'archived', label: 'Archived', conversations: archivedConversations },
+  ].filter((folder) => folder.conversations.length > 0);
+}
+
 function ThreadList({
   conversations,
   activeConversationId,
   onSelectConversation,
+  onNavItemClick,
+  onStartConversationClick,
 }: {
   conversations: ConversationSummary[];
   activeConversationId?: string | null;
   onSelectConversation?: (conversation: ConversationSummary) => void;
+  onNavItemClick: (action: string) => void;
+  onStartConversationClick?: () => void;
 }) {
   const folders = useMemo(() => buildConversationFolders(conversations), [conversations]);
+  const typeFolders = useMemo(() => buildConversationTypeFolders(conversations), [conversations]);
   const chronologicalConversations = useMemo(
     () => [...conversations].sort((a, b) => Number(Boolean(a.archived)) - Number(Boolean(b.archived))),
     [conversations]
@@ -205,14 +235,16 @@ function ThreadList({
         .map((conversation) => conversation.id),
     [conversations]
   );
-  const [organizeBy, setOrganizeBy] = useState<'project' | 'chronological'>('project');
+  const [organizeBy, setOrganizeBy] = useState<ConversationOrganizeBy>('project');
   const [sortBy, setSortBy] = useState<'created' | 'updated'>('updated');
   const [showFilter, setShowFilter] = useState<'all' | 'relevant'>('all');
   const [visibleMetadata, setVisibleMetadata] = useState({
+    agent: false,
     llmProfiles: false,
     repoBranch: false,
   });
   const [collapsedFolderIds, setCollapsedFolderIds] = useState<Set<string>>(() => new Set());
+  const [expandedTypeGroupIds, setExpandedTypeGroupIds] = useState<Set<string>>(() => new Set());
 
   const toggleFolder = (folderId: string) => {
     setCollapsedFolderIds((prev) => {
@@ -226,14 +258,26 @@ function ThreadList({
     });
   };
 
+  const handleGroupAddClick = (groupId: string) => {
+    if (organizeBy === 'type' && groupId === 'automation') {
+      onNavItemClick('automations');
+      return;
+    }
+
+    if (organizeBy === 'type' && groupId === 'conversation') {
+      onStartConversationClick?.();
+    }
+  };
+
   const filterSections = [
     {
       label: 'Organize',
       value: organizeBy,
-      onSelect: (id: string) => setOrganizeBy(id as 'project' | 'chronological'),
+      onSelect: (id: string) => setOrganizeBy(id as ConversationOrganizeBy),
       items: [
         { id: 'project', label: 'By project', icon: Folder },
         { id: 'chronological', label: 'Chronological list', icon: Clock3 },
+        { id: 'type', label: 'Type', icon: MessageCircle },
       ],
     },
     {
@@ -258,14 +302,15 @@ function ThreadList({
       label: 'Metadata',
       value: visibleMetadata,
       onSelect: (id: string) => {
-        setVisibleMetadata((prev) =>
-          id === 'llm-profiles'
-            ? { ...prev, llmProfiles: !prev.llmProfiles }
-            : { ...prev, repoBranch: !prev.repoBranch }
-        );
+        setVisibleMetadata((prev) => {
+          if (id === 'agent') return { ...prev, agent: !prev.agent };
+          if (id === 'llm-profiles') return { ...prev, llmProfiles: !prev.llmProfiles };
+          return { ...prev, repoBranch: !prev.repoBranch };
+        });
       },
       items: [
-        { id: 'llm-profiles', label: 'LLM Profiles', icon: Bot },
+        { id: 'agent', label: 'Agent', icon: Bot },
+        { id: 'llm-profiles', label: 'LLM Profile', icon: Cpu },
         { id: 'repo-branch', label: 'Repo and Branch', icon: GitBranch },
       ],
     },
@@ -308,9 +353,11 @@ function ThreadList({
                     const Icon = item.icon;
                       const isSelected =
                         section.label === 'Metadata'
-                          ? item.id === 'llm-profiles'
-                            ? visibleMetadata.llmProfiles
-                            : visibleMetadata.repoBranch
+                          ? item.id === 'agent'
+                            ? visibleMetadata.agent
+                            : item.id === 'llm-profiles'
+                              ? visibleMetadata.llmProfiles
+                              : visibleMetadata.repoBranch
                           : section.value === item.id;
 
                     return (
@@ -334,10 +381,44 @@ function ThreadList({
 
       <nav aria-label="Conversation threads" className="space-y-3">
         {(organizeBy === 'project'
-          ? folders.map((folder) => ({ id: folder.id, label: folder.label, conversations: folder.conversations }))
-          : [{ id: 'chronological', label: null, conversations: chronologicalConversations }]
+          ? folders.map((folder) => ({
+              id: folder.id,
+              label: folder.label,
+              conversations: folder.conversations,
+              totalCount: folder.conversations.length,
+            }))
+          : organizeBy === 'type'
+            ? typeFolders.map((folder) => {
+                const isExpanded = expandedTypeGroupIds.has(folder.id);
+                return {
+                  id: folder.id,
+                  label: folder.label,
+                  conversations: isExpanded ? folder.conversations : folder.conversations.slice(0, TYPE_GROUP_LIMIT),
+                  totalCount: folder.conversations.length,
+                };
+              })
+            : [
+                {
+                  id: 'chronological',
+                  label: null,
+                  conversations: chronologicalConversations,
+                  totalCount: chronologicalConversations.length,
+                },
+              ]
         ).map((group) => {
           const isFolderCollapsed = collapsedFolderIds.has(group.id);
+          const isNoRepoFolder = group.id === 'no-repo';
+          const hasMoreTypeConversations =
+            organizeBy === 'type' && group.totalCount > group.conversations.length;
+          const showGroupAddButton = organizeBy !== 'type' || group.id !== 'archived';
+          const typeGroupIcon =
+            organizeBy === 'type' && group.id === 'automation' ? (
+              <AutomationsIcon className="absolute inset-0 h-4 w-4" />
+            ) : organizeBy === 'type' && group.id === 'conversation' ? (
+              <MessageCircle className="absolute inset-0 h-4 w-4" />
+            ) : organizeBy === 'type' && group.id === 'archived' ? (
+              <Archive className="absolute inset-0 h-4 w-4" />
+            ) : null;
 
           return (
           <section key={group.id} aria-labelledby={group.label ? `thread-folder-${group.id}` : undefined}>
@@ -356,41 +437,56 @@ function ThreadList({
                 className="group/folder flex h-8 min-w-0 cursor-pointer items-center gap-2 rounded-md px-1.5 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:bg-sidebar-accent focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <span className="relative h-4 w-4 shrink-0" aria-hidden>
-                  <Folder className="absolute inset-0 h-4 w-4 opacity-100 transition-opacity group-hover/folder:opacity-0 group-focus-visible/folder:opacity-0" />
-                  {isFolderCollapsed ? (
-                    <FolderOpen className="absolute inset-0 h-4 w-4 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100" />
+                  {typeGroupIcon ? (
+                    typeGroupIcon
+                  ) : isNoRepoFolder ? (
+                    <FolderX className="absolute inset-0 h-4 w-4 opacity-100" />
                   ) : (
-                    <FolderMinus className="absolute inset-0 h-4 w-4 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100" />
+                    <>
+                      <Folder className="absolute inset-0 h-4 w-4 opacity-100 transition-opacity group-hover/folder:opacity-0 group-focus-visible/folder:opacity-0" />
+                      {isFolderCollapsed ? (
+                        <FolderOpen className="absolute inset-0 h-4 w-4 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100" />
+                      ) : (
+                        <FolderMinus className="absolute inset-0 h-4 w-4 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-visible/folder:opacity-100" />
+                      )}
+                    </>
                   )}
                 </span>
                 <span className="truncate">{group.label}</span>
                 <div className="ml-auto flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/folder:opacity-100 group-focus-within/folder:opacity-100">
-                  <button
-                    type="button"
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    aria-label={`Add conversation to ${group.label}`}
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <Plus className="h-3.5 w-3.5" aria-hidden />
-                  </button>
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        aria-label={`${group.label} folder options`}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        <MoreVertical className="h-3.5 w-3.5" aria-hidden />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" sideOffset={6} className="w-44">
-                      <DropdownMenuItem className="cursor-pointer">Rename folder</DropdownMenuItem>
-                      <DropdownMenuItem className="cursor-pointer">New conversation</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="cursor-pointer">Archive folder</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {showGroupAddButton ? (
+                    <button
+                      type="button"
+                      className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      aria-label={`Add conversation to ${group.label}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleGroupAddClick(group.id);
+                      }}
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  ) : null}
+                  {organizeBy !== 'type' ? (
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          aria-label={`${group.label} folder options`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" sideOffset={6} className="w-44">
+                        <DropdownMenuItem className="cursor-pointer">Rename folder</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer">New conversation</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer">Archive folder</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </div>
               </div>
             ) : null}
@@ -399,22 +495,31 @@ function ThreadList({
               {group.conversations.map((conversation) => {
                 const isActive = conversation.id === activeConversationId;
                 const automationIndicatorIndex = automationIndicatorIds.indexOf(conversation.id);
+                const agentName = conversation.agent ?? 'OpenHands Agent';
                 const metadataRows = [
                   visibleMetadata.repoBranch
                     ? [conversation.repo, conversation.branch].filter(Boolean).join(' · ')
                     : null,
+                  visibleMetadata.agent ? agentName : null,
                   visibleMetadata.llmProfiles ? conversation.model : null,
                 ].filter(Boolean);
                 const metadataText = metadataRows.join(' · ');
 
                 return (
-                  <button
+                  <div
                     key={conversation.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     data-testid="left-nav-thread"
                     aria-current={isActive ? 'page' : undefined}
                     onClick={() => onSelectConversation?.(conversation)}
+                    onKeyDown={(event) => {
+                      if (event.key !== 'Enter' && event.key !== ' ') return;
+                      event.preventDefault();
+                      onSelectConversation?.(conversation);
+                    }}
                     className={cn(
+                      'cursor-pointer',
                       'group relative flex min-h-8 w-full min-w-0 items-start gap-2 rounded-lg py-1.5 pl-7 pr-2 text-left text-sm outline-none transition-colors',
                       'text-sidebar-foreground hover:bg-sidebar-accent focus-visible:bg-sidebar-accent focus-visible:ring-1 focus-visible:ring-ring',
                       isActive && 'bg-sidebar-accent',
@@ -465,16 +570,53 @@ function ThreadList({
                       <time className="block text-xs text-muted-foreground transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0">
                         {conversation.time}
                       </time>
-                      <span
-                        className="absolute right-0 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
-                        aria-hidden
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </span>
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="absolute right-0 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground opacity-0 transition-opacity hover:bg-sidebar-accent hover:text-sidebar-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring group-hover:opacity-100 group-focus-visible:opacity-100"
+                            aria-label={`${conversation.name} options`}
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                          >
+                            <MoreVertical className="h-4 w-4" aria-hidden />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" sideOffset={6} className="w-64">
+                          <DropdownMenuItem className="gap-2">
+                            <ExternalLink className="h-4 w-4" aria-hidden />
+                            View in New Tab
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2">
+                            <StopCircle className="h-4 w-4" aria-hidden />
+                            Stop Conversation (Close Runtime)
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="gap-2">
+                            <Trash2 className="h-4 w-4" aria-hidden />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </span>
-                  </button>
+                  </div>
                 );
               })}
+              {hasMoreTypeConversations ? (
+                <button
+                  type="button"
+                  className="ml-7 mt-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  onClick={() =>
+                    setExpandedTypeGroupIds((prev) => {
+                      const next = new Set(prev);
+                      next.add(group.id);
+                      return next;
+                    })
+                  }
+                >
+                  Show more
+                </button>
+              ) : null}
             </div>
             ) : null}
           </section>
@@ -525,6 +667,7 @@ export interface LeftNavProps {
   onNavItemClick: (action: string) => void;
   activeNavItem: string;
   onEnterpriseLearnMoreClick?: () => void;
+  onStartConversationClick?: () => void;
   /** Workspace id from `accountWorkspaceOptions`; non-`personal` shows org chrome on the account button. */
   activeWorkspaceId?: string;
   onActiveWorkspaceChange?: (workspaceId: string) => void;
@@ -545,6 +688,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onNavItemClick,
   activeNavItem,
   onEnterpriseLearnMoreClick,
+  onStartConversationClick,
   activeWorkspaceId = 'personal',
   onActiveWorkspaceChange,
   isHomeRoute = false,
@@ -792,6 +936,8 @@ export const LeftNav: React.FC<LeftNavProps> = ({
               conversations={conversations}
               activeConversationId={activeConversationId}
               onSelectConversation={onSelectConversation}
+              onNavItemClick={onNavItemClick}
+              onStartConversationClick={onStartConversationClick}
             />
           ) : null}
         </div>
