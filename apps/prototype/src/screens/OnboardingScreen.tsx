@@ -2,16 +2,15 @@ import React, { useMemo, useState } from 'react';
 import {
   Bot,
   Check,
-  Cloud,
+  Cpu,
   Github,
-  Key,
-  LockKeyhole,
+  MessageSquarePlus,
   Play,
-  Settings,
   Sparkles,
 } from 'lucide-react';
 
 import { cn } from '../lib/utils';
+import { navigateAppRoute } from '../lib/captureNavigation';
 
 type OnboardingStepStatus = 'done' | 'current' | 'todo';
 
@@ -21,17 +20,25 @@ type OnboardingModule = {
   description: string;
   icon: React.ElementType;
   status: OnboardingStepStatus;
-  tasks: string[];
+  primaryAction: {
+    label: string;
+    type: 'route' | 'external' | 'start-conversation';
+    target?: string;
+  };
 };
 
 const onboardingModules: OnboardingModule[] = [
   {
     id: 'welcome',
     title: 'Welcome to OpenHands',
-    description: 'Get familiar with the workspace, navigation, and where conversations live.',
+    description: 'Welcome to OpenHands. Review the documentation to learn how to set up your workspace and start building.',
     icon: Sparkles,
     status: 'done',
-    tasks: ['Review the left navigation', 'Open the New conversation flow', 'Find recent conversations'],
+    primaryAction: {
+      label: 'Read documentation',
+      type: 'external',
+      target: 'https://docs.openhands.dev/',
+    },
   },
   {
     id: 'connect-git',
@@ -39,39 +46,46 @@ const onboardingModules: OnboardingModule[] = [
     description: 'Connect your repositories so OpenHands can work with code, branches, and pull requests.',
     icon: Github,
     status: 'current',
-    tasks: ['Connect GitHub or GitLab', 'Choose a default organization', 'Confirm repository access'],
+    primaryAction: {
+      label: 'Connect Git',
+      type: 'route',
+      target: '/settings/integrations',
+    },
   },
   {
-    id: 'configure-backend',
-    title: 'Configure Backend Server',
-    description: 'Select Local or Cloud execution and add any backend servers your team uses.',
-    icon: Cloud,
+    id: 'agent-llm',
+    title: 'Add Your Agent and LLM',
+    description: 'Finish agent and model setup if it was not completed in the first setup wizard.',
+    icon: Cpu,
     status: 'todo',
-    tasks: ['Pick Local or Cloud', 'Add backend server URL', 'Validate API key access'],
+    primaryAction: {
+      label: 'Configure agent and LLM',
+      type: 'route',
+      target: '/settings/llm',
+    },
   },
   {
-    id: 'api-key',
-    title: 'Get an API Key',
-    description: 'Create an API key for SDK workflows, scripts, and external integrations.',
-    icon: Key,
+    id: 'first-conversation',
+    title: 'Start Your First Conversation',
+    description: 'Open a new conversation and ask OpenHands to help with a concrete task in your workspace.',
+    icon: MessageSquarePlus,
     status: 'todo',
-    tasks: ['Open Settings', 'Create a named API key', 'Store the key securely'],
-  },
-  {
-    id: 'secrets',
-    title: 'Add Secrets',
-    description: 'Store tokens and credentials that automations and conversations can use safely.',
-    icon: LockKeyhole,
-    status: 'todo',
-    tasks: ['Add Git provider token', 'Add integration credentials', 'Review secret naming'],
+    primaryAction: {
+      label: 'Start conversation',
+      type: 'start-conversation',
+    },
   },
   {
     id: 'skills',
-    title: 'Choose Skills',
-    description: 'Enable skills that match your team workflows, like code review, docs, and testing.',
+    title: 'Add and Create Skills',
+    description: 'Enable existing skills or create new ones that match your team workflows.',
     icon: Bot,
     status: 'todo',
-    tasks: ['Browse the skills library', 'Enable common team skills', 'Start a conversation with a skill'],
+    primaryAction: {
+      label: 'Open skills',
+      type: 'route',
+      target: '/settings/skills',
+    },
   },
   {
     id: 'automations',
@@ -79,15 +93,11 @@ const onboardingModules: OnboardingModule[] = [
     description: 'Turn recurring work into scheduled or event-driven OpenHands automations.',
     icon: Play,
     status: 'todo',
-    tasks: ['Review the automation library', 'Create a first automation', 'Run it once manually'],
-  },
-  {
-    id: 'preferences',
-    title: 'Review Preferences',
-    description: 'Set app defaults, model preferences, notification behavior, and team settings.',
-    icon: Settings,
-    status: 'todo',
-    tasks: ['Review app settings', 'Confirm model defaults', 'Invite teammates when ready'],
+    primaryAction: {
+      label: 'Create automation',
+      type: 'route',
+      target: '/automations',
+    },
   },
 ];
 
@@ -97,17 +107,46 @@ const statusLabel: Record<OnboardingStepStatus, string> = {
   todo: 'Todo',
 };
 
-export function OnboardingScreen() {
+interface OnboardingScreenProps {
+  onStartConversationClick?: () => void;
+}
+
+export function OnboardingScreen({ onStartConversationClick }: OnboardingScreenProps) {
   const [activeModuleId, setActiveModuleId] = useState(onboardingModules[0]?.id ?? 'welcome');
+  const [completedModuleIds, setCompletedModuleIds] = useState(
+    () => new Set(onboardingModules.filter((module) => module.status === 'done').map((module) => module.id))
+  );
 
   const completionCount = useMemo(
-    () => onboardingModules.filter((module) => module.status === 'done').length,
-    []
+    () => completedModuleIds.size,
+    [completedModuleIds]
   );
 
   const handleSelectModule = (moduleId: string) => {
     setActiveModuleId(moduleId);
     document.getElementById(moduleId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handlePrimaryAction = (module: OnboardingModule) => {
+    const { primaryAction } = module;
+
+    if (primaryAction.type === 'external' && primaryAction.target) {
+      window.open(primaryAction.target, '_blank', 'noreferrer');
+      return;
+    }
+
+    if (primaryAction.type === 'route' && primaryAction.target) {
+      navigateAppRoute(primaryAction.target);
+      return;
+    }
+
+    if (primaryAction.type === 'start-conversation') {
+      onStartConversationClick?.();
+    }
+  };
+
+  const handleMarkComplete = (moduleId: string) => {
+    setCompletedModuleIds((prev) => new Set(prev).add(moduleId));
   };
 
   return (
@@ -125,6 +164,7 @@ export function OnboardingScreen() {
             {onboardingModules.map((module) => {
               const Icon = module.icon;
               const isActive = module.id === activeModuleId;
+              const isComplete = completedModuleIds.has(module.id);
 
               return (
                 <button
@@ -140,7 +180,7 @@ export function OnboardingScreen() {
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden />
                   <span className="min-w-0 flex-1 truncate">{module.title}</span>
-                  {module.status === 'done' ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
+                  {isComplete ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
                 </button>
               );
             })}
@@ -150,18 +190,11 @@ export function OnboardingScreen() {
 
       <main className="min-w-0 flex-1 overflow-y-auto scroll-smooth px-6 py-8 lg:px-10">
         <div className="mx-auto flex max-w-4xl flex-col gap-8">
-          <header className="rounded-xl border border-border bg-card p-6">
-            <p className="text-sm font-medium text-muted-foreground">OpenHands onboarding</p>
-            <h1 className="mt-2 text-2xl font-semibold text-foreground">Finish setting up your workspace</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Work through each module to connect your tools, configure execution, and prepare OpenHands for
-              conversations, skills, and automations.
-            </p>
-          </header>
-
           <div className="flex flex-col gap-5">
             {onboardingModules.map((module, index) => {
               const Icon = module.icon;
+              const isComplete = completedModuleIds.has(module.id);
+              const displayedStatus = isComplete ? 'done' : module.status;
 
               return (
                 <section
@@ -177,21 +210,28 @@ export function OnboardingScreen() {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-xs font-medium text-muted-foreground">Step {index + 1}</span>
                         <span className="rounded-full border border-border bg-muted/30 px-2 py-0.5 text-xs text-muted-foreground">
-                          {statusLabel[module.status]}
+                          {statusLabel[displayedStatus]}
                         </span>
                       </div>
                       <h2 className="mt-2 text-lg font-semibold text-foreground">{module.title}</h2>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{module.description}</p>
-                      <ul className="mt-5 grid gap-3 sm:grid-cols-3">
-                        {module.tasks.map((task) => (
-                          <li
-                            key={task}
-                            className="rounded-lg border border-border bg-background/40 px-3 py-3 text-sm text-foreground"
-                          >
-                            {task}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="mt-5 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handlePrimaryAction(module)}
+                          className="inline-flex h-9 items-center justify-center rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          {module.primaryAction.label}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMarkComplete(module.id)}
+                          disabled={isComplete}
+                          className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-transparent px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted/60 disabled:cursor-default disabled:opacity-60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                        >
+                          {isComplete ? 'Completed' : 'Mark as complete'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </section>

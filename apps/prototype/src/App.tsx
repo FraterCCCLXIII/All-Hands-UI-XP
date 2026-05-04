@@ -990,7 +990,7 @@ function App() {
                   open={isStartConversationDialogOpen}
                   onOpenChange={setIsStartConversationDialogOpen}
                 />
-                {isOnboardingView && <OnboardingScreen />}
+                {isOnboardingView && <OnboardingScreen onStartConversationClick={handleOpenStartConversationDialog} />}
                 {isDashboardView && <DashboardScreen />}
                 {isAutomationsView && (
                   <AutomationsScreen
