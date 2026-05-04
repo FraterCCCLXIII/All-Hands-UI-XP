@@ -66,7 +66,7 @@ import { usePageTransitions } from '../contexts/PageTransitionsContext';
 import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
 import {
   ACCOUNT_NAV,
-  CLOUD_SERVER_NAV,
+  BACKEND_SERVER_NAV,
   INTEGRATIONS_AND_SKILLS_NAV,
   INTEGRATIONS_ONLY_NAV,
   ORG_ADMIN_PERSONAL_SETTINGS_NAV,
@@ -96,7 +96,7 @@ const settingsTabs = [
   { id: 'org-hooks', label: 'Hooks', icon: Webhook },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
-  { id: 'cloud-server', label: 'Cloud Server', icon: Cloud },
+  { id: 'backend-server', label: 'Backend Server', icon: Cloud },
 ];
 
 type SecretsView = 'list' | 'add' | 'edit';
@@ -145,7 +145,7 @@ const settingsTabDescriptions: Record<string, string> = {
   'org-hooks':
     'Define organization hooks and control whether members see them in the UI and whether they run automatically in every new conversation.',
   skills: 'Choose which skills are available for your organization and how they appear in conversations.',
-  'cloud-server': 'Configure the cloud servers available from the environment selector.',
+  'backend-server': 'Configure the local and cloud servers available from the environment selector.',
 };
 
 /** Border + padding below the line only. Parent stacks sections with `gap-6`; extra `mt-*` here doubles the gap above the rule. */
@@ -350,9 +350,12 @@ type OpenHandsApiKeyRow = {
   lastUsed: string;
 };
 
-type CloudServerRow = {
+type BackendServerKind = 'local' | 'cloud';
+
+type BackendServerRow = {
   id: string;
   nickname: string;
+  kind: BackendServerKind;
   url: string;
   apiKeyPreview: string;
 };
@@ -362,9 +365,10 @@ const initialOpenHandsApiKeys: OpenHandsApiKeyRow[] = [
   { id: 'api-key-cli', name: 'CLI', created: '9/19/2025, 5:09:37 PM', lastUsed: 'Never' },
 ];
 
-const initialCloudServers: CloudServerRow[] = [
-  { id: 'hetzner', nickname: 'Hetzner', url: 'https://hetzner.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
-  { id: 'aws', nickname: 'AWS', url: 'https://aws.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
+const initialBackendServers: BackendServerRow[] = [
+  { id: 'local', nickname: 'Local', kind: 'local', url: 'http://localhost:3000', apiKeyPreview: 'Not required' },
+  { id: 'hetzner', nickname: 'Hetzner', kind: 'cloud', url: 'https://hetzner.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
+  { id: 'aws', nickname: 'AWS', kind: 'cloud', url: 'https://aws.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
 ];
 
 /** Demo-only: generate a one-time display secret for the “API Key Created” modal. */
@@ -474,12 +478,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [newApiKeyName, setNewApiKeyName] = useState('');
   const [apiKeyCreatedModalOpen, setApiKeyCreatedModalOpen] = useState(false);
   const [revealedApiKey, setRevealedApiKey] = useState('');
-  const [cloudServers, setCloudServers] = useState<CloudServerRow[]>(initialCloudServers);
-  const [cloudServerDialogOpen, setCloudServerDialogOpen] = useState(false);
-  const [cloudServerEditingId, setCloudServerEditingId] = useState<string | null>(null);
-  const [cloudServerNickname, setCloudServerNickname] = useState('');
-  const [cloudServerUrl, setCloudServerUrl] = useState('');
-  const [cloudServerApiKey, setCloudServerApiKey] = useState('');
+  const [backendServers, setBackendServers] = useState<BackendServerRow[]>(initialBackendServers);
+  const [backendServerDialogOpen, setBackendServerDialogOpen] = useState(false);
+  const [backendServerEditingId, setBackendServerEditingId] = useState<string | null>(null);
+  const [backendServerNickname, setBackendServerNickname] = useState('');
+  const [backendServerKind, setBackendServerKind] = useState<BackendServerKind>('cloud');
+  const [backendServerUrl, setBackendServerUrl] = useState('');
+  const [backendServerApiKey, setBackendServerApiKey] = useState('');
   /** Demo: unlocked after adding ≥$10 on Billing, or via prototype FAB (API Keys). */
   const [hasOpenHandsLlmKeyAccess, setHasOpenHandsLlmKeyAccess] = useState(false);
   /** Demo: Organization → Git Conversation Routing shows empty state (prototype FAB). */
@@ -644,7 +649,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     return [
       ...filter(PERSONAL_WORKSPACE_TOP_NAV),
       ...filter(INTEGRATIONS_AND_SKILLS_NAV),
-      ...filter(CLOUD_SERVER_NAV),
+      ...filter(BACKEND_SERVER_NAV),
       ...filter(PERSONAL_ACCOUNT_WITH_BILLING_NAV),
     ];
   }, [showOrgAdminNav, showOrgMemberNav, workspaceNavCtx]);
@@ -826,51 +831,59 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setPluginRepoInput('');
   };
 
-  const resetCloudServerForm = () => {
-    setCloudServerEditingId(null);
-    setCloudServerNickname('');
-    setCloudServerUrl('');
-    setCloudServerApiKey('');
+  const resetBackendServerForm = () => {
+    setBackendServerEditingId(null);
+    setBackendServerNickname('');
+    setBackendServerKind('cloud');
+    setBackendServerUrl('');
+    setBackendServerApiKey('');
   };
 
-  const handleOpenCloudServerDialog = (server?: CloudServerRow) => {
+  const handleOpenBackendServerDialog = (server?: BackendServerRow) => {
     if (server) {
-      setCloudServerEditingId(server.id);
-      setCloudServerNickname(server.nickname);
-      setCloudServerUrl(server.url);
-      setCloudServerApiKey('');
+      setBackendServerEditingId(server.id);
+      setBackendServerNickname(server.nickname);
+      setBackendServerKind(server.kind);
+      setBackendServerUrl(server.url);
+      setBackendServerApiKey('');
     } else {
-      resetCloudServerForm();
+      resetBackendServerForm();
     }
 
-    setCloudServerDialogOpen(true);
+    setBackendServerDialogOpen(true);
   };
 
-  const handleSaveCloudServer = () => {
-    const nickname = cloudServerNickname.trim();
-    const url = cloudServerUrl.trim();
+  const handleSaveBackendServer = () => {
+    const nickname = backendServerNickname.trim();
+    const url = backendServerUrl.trim();
 
     if (!nickname || !url) {
       return;
     }
 
-    const existingServer = cloudServerEditingId
-      ? cloudServers.find((server) => server.id === cloudServerEditingId)
+    const existingServer = backendServerEditingId
+      ? backendServers.find((server) => server.id === backendServerEditingId)
       : null;
-    const nextServer: CloudServerRow = {
-      id: cloudServerEditingId ?? `cloud-server-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    const nextServer: BackendServerRow = {
+      id: backendServerEditingId ?? `backend-server-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       nickname,
+      kind: backendServerKind,
       url,
-      apiKeyPreview: cloudServerApiKey.trim() ? '••••••••••••••••' : existingServer?.apiKeyPreview ?? '••••••••••••••••',
+      apiKeyPreview:
+        backendServerKind === 'local'
+          ? 'Not required'
+          : backendServerApiKey.trim()
+            ? '••••••••••••••••'
+            : existingServer?.apiKeyPreview ?? '••••••••••••••••',
     };
 
-    setCloudServers((prev) =>
-      cloudServerEditingId
-        ? prev.map((server) => (server.id === cloudServerEditingId ? { ...server, ...nextServer } : server))
+    setBackendServers((prev) =>
+      backendServerEditingId
+        ? prev.map((server) => (server.id === backendServerEditingId ? { ...server, ...nextServer } : server))
         : [nextServer, ...prev]
     );
-    setCloudServerDialogOpen(false);
-    resetCloudServerForm();
+    setBackendServerDialogOpen(false);
+    resetBackendServerForm();
   };
 
   const chatGPTConnectSection = (
@@ -1050,7 +1063,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-1">
                 {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
                 {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
-                {filterNav(CLOUD_SERVER_NAV).map(renderNavButton)}
+                {filterNav(BACKEND_SERVER_NAV).map(renderNavButton)}
               </div>
               <div className="border-t border-border" />
               <div className="flex flex-col gap-1">
@@ -2222,13 +2235,13 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             </div>
           )}
 
-          {activeTab === 'cloud-server' && selectedOrg?.type === 'personal' && (
+          {activeTab === 'backend-server' && selectedOrg?.type === 'personal' && (
             <div className="contents">
               <div className={cn('flex flex-col', settingsSectionStackGap)}>
                 <div>
-                  <Button type="button" onClick={() => handleOpenCloudServerDialog()}>
+                  <Button type="button" onClick={() => handleOpenBackendServerDialog()}>
                     <Plus className="h-4 w-4 shrink-0" aria-hidden />
-                    Add Cloud Server
+                    Add Backend Server
                   </Button>
                 </div>
 
@@ -2239,6 +2252,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         <tr className={dataTableHeadRowClassName}>
                           <th scope="col" className={dataTableTh('px-4 text-left')}>
                             Nickname
+                          </th>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
+                            Environment
                           </th>
                           <th scope="col" className={dataTableTh('px-4 text-left')}>
                             Backend URL
@@ -2252,20 +2268,23 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         </tr>
                       </thead>
                       <tbody className={dataTableBodyClassName}>
-                        {cloudServers.length === 0 ? (
+                        {backendServers.length === 0 ? (
                           <tr className="bg-card">
-                            <td colSpan={4} className="px-4 py-12 text-center" role="status" aria-live="polite">
+                            <td colSpan={5} className="px-4 py-12 text-center" role="status" aria-live="polite">
                               <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                                No cloud servers connected. Add a backend to make it available from the environment
+                                No backend servers configured. Add a local or cloud backend to make it available from the environment
                                 dropdown.
                               </p>
                             </td>
                           </tr>
                         ) : (
-                          cloudServers.map((server) => (
+                          backendServers.map((server) => (
                             <tr key={server.id} className={dataTableRowClassName}>
                               <td className="max-w-[180px] truncate px-4 py-3.5 align-middle text-sm text-foreground">
                                 {server.nickname}
+                              </td>
+                              <td className="px-4 py-3.5 align-middle text-sm text-muted-foreground">
+                                {server.kind === 'local' ? 'Local' : 'Cloud'}
                               </td>
                               <td
                                 className="max-w-[280px] truncate px-4 py-3.5 align-middle text-sm text-muted-foreground"
@@ -2282,7 +2301,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                     type="button"
                                     aria-label={`Edit ${server.nickname}`}
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                                    onClick={() => handleOpenCloudServerDialog(server)}
+                                    onClick={() => handleOpenBackendServerDialog(server)}
                                   >
                                     <Pencil className="h-4 w-4" aria-hidden />
                                   </button>
@@ -2291,7 +2310,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                                     aria-label={`Remove ${server.nickname}`}
                                     className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                                     onClick={() =>
-                                      setCloudServers((prev) => prev.filter((row) => row.id !== server.id))
+                                      setBackendServers((prev) => prev.filter((row) => row.id !== server.id))
                                     }
                                   >
                                     <Trash2 className="h-4 w-4" aria-hidden />
@@ -2307,56 +2326,70 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                 </div>
 
                 <Dialog
-                  open={cloudServerDialogOpen}
+                  open={backendServerDialogOpen}
                   onOpenChange={(open) => {
-                    setCloudServerDialogOpen(open);
-                    if (!open) resetCloudServerForm();
+                    setBackendServerDialogOpen(open);
+                    if (!open) resetBackendServerForm();
                   }}
                 >
                   <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                      <DialogTitle>{cloudServerEditingId ? 'Edit cloud server' : 'Add cloud server'}</DialogTitle>
+                      <DialogTitle>{backendServerEditingId ? 'Edit backend server' : 'Add backend server'}</DialogTitle>
                       <DialogDescription>
                         Add the connection details used by the environment selector.
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-1">
                       <div>
-                        <label htmlFor="cloud-server-nickname" className="mb-1.5 block text-sm font-medium text-foreground">
+                        <label htmlFor="backend-server-nickname" className="mb-1.5 block text-sm font-medium text-foreground">
                           Nickname
                         </label>
                         <Input
-                          id="cloud-server-nickname"
+                          id="backend-server-nickname"
                           type="text"
-                          value={cloudServerNickname}
-                          onChange={(event) => setCloudServerNickname(event.target.value)}
+                          value={backendServerNickname}
+                          onChange={(event) => setBackendServerNickname(event.target.value)}
                           placeholder="Production"
                           autoComplete="off"
                         />
                       </div>
                       <div>
-                        <label htmlFor="cloud-server-url" className="mb-1.5 block text-sm font-medium text-foreground">
+                        <label htmlFor="backend-server-kind" className="mb-1.5 block text-sm font-medium text-foreground">
+                          Environment
+                        </label>
+                        <select
+                          id="backend-server-kind"
+                          value={backendServerKind}
+                          onChange={(event) => setBackendServerKind(event.target.value as BackendServerKind)}
+                          className="flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-base text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 md:text-sm"
+                        >
+                          <option value="local">Local</option>
+                          <option value="cloud">Cloud</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="backend-server-url" className="mb-1.5 block text-sm font-medium text-foreground">
                           Backend URL
                         </label>
                         <Input
-                          id="cloud-server-url"
+                          id="backend-server-url"
                           type="text"
-                          value={cloudServerUrl}
-                          onChange={(event) => setCloudServerUrl(event.target.value)}
+                          value={backendServerUrl}
+                          onChange={(event) => setBackendServerUrl(event.target.value)}
                           placeholder="https://your-instance.example.com"
                           autoComplete="off"
                         />
                       </div>
                       <div>
-                        <label htmlFor="cloud-server-api-key" className="mb-1.5 block text-sm font-medium text-foreground">
+                        <label htmlFor="backend-server-api-key" className="mb-1.5 block text-sm font-medium text-foreground">
                           API Key
                         </label>
                         <Input
-                          id="cloud-server-api-key"
+                          id="backend-server-api-key"
                           type="password"
-                          value={cloudServerApiKey}
-                          onChange={(event) => setCloudServerApiKey(event.target.value)}
-                          placeholder={cloudServerEditingId ? 'Leave blank to keep existing key' : 'Enter your API key...'}
+                          value={backendServerApiKey}
+                          onChange={(event) => setBackendServerApiKey(event.target.value)}
+                          placeholder={backendServerEditingId ? 'Leave blank to keep existing key' : 'Enter your API key...'}
                           autoComplete="off"
                         />
                       </div>
@@ -2367,8 +2400,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setCloudServerDialogOpen(false);
-                          resetCloudServerForm();
+                          setBackendServerDialogOpen(false);
+                          resetBackendServerForm();
                         }}
                       >
                         Cancel
@@ -2376,10 +2409,10 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       <Button
                         type="button"
                         size="sm"
-                        disabled={!cloudServerNickname.trim() || !cloudServerUrl.trim()}
-                        onClick={handleSaveCloudServer}
+                        disabled={!backendServerNickname.trim() || !backendServerUrl.trim()}
+                        onClick={handleSaveBackendServer}
                       >
-                        {cloudServerEditingId ? 'Save changes' : 'Add server'}
+                        {backendServerEditingId ? 'Save changes' : 'Add server'}
                       </Button>
                     </DialogFooter>
                   </DialogContent>

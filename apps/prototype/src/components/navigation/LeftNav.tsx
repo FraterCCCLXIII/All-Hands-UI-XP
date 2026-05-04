@@ -1086,7 +1086,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="cursor-pointer gap-2 text-sidebar-foreground"
-                    onClick={() => onNavItemClick('settings/cloud-server')}
+                    onClick={() => onNavItemClick('settings/backend-server')}
                   >
                     <Settings className="h-4 w-4 shrink-0" aria-hidden />
                     Configure

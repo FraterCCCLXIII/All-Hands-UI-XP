@@ -144,8 +144,8 @@ export const SKILLS_ONLY_NAV: SettingsNavItem[] = [
 
 export const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [...INTEGRATIONS_ONLY_NAV, ...SKILLS_ONLY_NAV];
 
-export const CLOUD_SERVER_NAV: SettingsNavItem[] = [
-  { id: 'cloud-server', label: 'Cloud Server', tabId: 'cloud-server', icon: Cloud },
+export const BACKEND_SERVER_NAV: SettingsNavItem[] = [
+  { id: 'backend-server', label: 'Backend Server', tabId: 'backend-server', icon: Cloud },
 ];
 
 /** Org admin/owner: Personal settings = core + Integrations + Skills under MCP, then Account. */
@@ -183,7 +183,7 @@ export function isSettingsNavItemVisible(item: SettingsNavItem, ctx: WorkspaceNa
   if (ctx.workspaceType === 'personal' && (item.tabId === 'org-plugins' || item.tabId === 'org-hooks')) {
     return false;
   }
-  if (ctx.workspaceType === 'org' && item.tabId === 'cloud-server') return false;
+  if (ctx.workspaceType === 'org' && item.tabId === 'backend-server') return false;
   return true;
 }
 
