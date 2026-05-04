@@ -604,6 +604,19 @@ body[data-figma-fixed-canvas='true'] {
 }
 
 @layer utilities {
+  .electron-drag-region {
+    -webkit-app-region: drag;
+  }
+
+  .electron-no-drag {
+    -webkit-app-region: no-drag;
+  }
+
+  .electron-shell [data-left-nav] {
+    top: 2.25rem;
+    height: calc(100vh - 2.25rem);
+  }
+
   .text-gradient-agent {
     background: var(--gradient-agent);
     -webkit-background-clip: text;

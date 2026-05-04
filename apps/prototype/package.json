@@ -3,9 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:web": "vite",
+    "electron:dev": "node electron/dev.mjs",
+    "electron:start": "npm run build && electron dist-electron/main.js",
+    "build": "tsc && vite build && npm run build:electron",
+    "build:electron": "tsc -p electron/tsconfig.json",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -36,6 +41,7 @@
     "@tailwindcss/postcss": "^4.2.4",
     "@tailwindcss/vite": "^4.2.4",
     "@vitejs/plugin-react": "^4.2.1",
+    "electron": "^41.5.0",
     "tailwindcss": "^4.2.4",
     "tw-animate-css": "^1.4.0",
     "vite": "^5.1.4"

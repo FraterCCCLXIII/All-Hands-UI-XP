@@ -35,6 +35,7 @@ import SharePreview from './components/common/SharePreview';
 import { AppToaster } from './components/common/AppToaster';
 import { Gripper } from './components/common/Gripper';
 import { InspectorOverlay } from './components/common/InspectorOverlay';
+import { ElectronTitleBar } from './components/electron/ElectronTitleBar';
 import {
   Dialog,
   DialogContent,
@@ -793,10 +794,11 @@ function App() {
     };
   }, [isFigmaCaptureSession]);
 
+  const isElectronShell = typeof window !== 'undefined' && Boolean(window.openHandsWindowControls);
 
   return (
     <div
-      className={`flex w-full flex-col ${isFigmaCaptureSession ? 'min-h-[900px]' : 'h-screen'} ${getThemeClasses('bg')} ${getThemeClasses('text')}`}
+      className={`flex w-full flex-col ${isFigmaCaptureSession ? 'min-h-[900px]' : 'h-screen'} ${isElectronShell && !isFigmaCaptureSession ? 'electron-shell pt-9' : ''} ${getThemeClasses('bg')} ${getThemeClasses('text')}`}
       style={
         isFigmaCaptureSession
           ? {
@@ -809,6 +811,7 @@ function App() {
           : undefined
       }
     >
+      {!isFigmaCaptureSession && <ElectronTitleBar />}
       <AnimatePresence>
         {isLoading ? (
           <LoadingScreen theme={theme} getThemeClasses={getThemeClasses} onLoadingComplete={handleLoadingComplete} />
@@ -1000,6 +1003,8 @@ function App() {
                     onTabChange={(tab) => {
                       navigateAppRoute(`/settings/${tab}`);
                     }}
+                    selectedOrgId={activeWorkspaceId}
+                    onOrgChange={setActiveWorkspaceId}
                     pluginRepositories={installedPluginRepos}
                     onAddPluginRepository={(repoUrl: string) =>
                       setInstalledPluginRepos((prev) =>

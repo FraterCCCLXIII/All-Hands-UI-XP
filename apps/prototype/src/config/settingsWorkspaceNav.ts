@@ -3,10 +3,12 @@ import {
   AppWindow,
   Building2,
   Blocks,
+  Cloud,
   Cpu,
   CreditCard,
   Key,
   Layers,
+  Settings,
   Shield,
   User,
   Users,
@@ -142,6 +144,10 @@ export const SKILLS_ONLY_NAV: SettingsNavItem[] = [
 
 export const INTEGRATIONS_AND_SKILLS_NAV: SettingsNavItem[] = [...INTEGRATIONS_ONLY_NAV, ...SKILLS_ONLY_NAV];
 
+export const CLOUD_SERVER_NAV: SettingsNavItem[] = [
+  { id: 'cloud-server', label: 'Cloud Server', tabId: 'cloud-server', icon: Cloud },
+];
+
 /** Org admin/owner: Personal settings = core + Integrations + Skills under MCP, then Account. */
 export const ORG_ADMIN_PERSONAL_SETTINGS_NAV: SettingsNavItem[] = [
   ...PERSONAL_SETTINGS_CORE_NAV,
@@ -161,6 +167,10 @@ export const PERSONAL_WORKSPACE_BILLING_NAV: SettingsNavItem[] = [
 
 export const PERSONAL_ACCOUNT_WITH_BILLING_NAV: SettingsNavItem[] = [...ACCOUNT_NAV, ...PERSONAL_WORKSPACE_BILLING_NAV];
 
+export const ACCOUNT_POPOVER_SETTINGS_NAV: SettingsNavItem[] = [
+  { id: 'settings', label: 'Settings', tabId: '', icon: Settings },
+];
+
 export type WorkspaceNavContext = {
   workspaceType: 'personal' | 'org';
   effectiveRole: OrgRole;
@@ -173,6 +183,7 @@ export function isSettingsNavItemVisible(item: SettingsNavItem, ctx: WorkspaceNa
   if (ctx.workspaceType === 'personal' && (item.tabId === 'org-plugins' || item.tabId === 'org-hooks')) {
     return false;
   }
+  if (ctx.workspaceType === 'org' && item.tabId === 'cloud-server') return false;
   return true;
 }
 
@@ -185,29 +196,6 @@ export function getAccountPopoverNavSections(selected: {
   type: 'personal' | 'org';
   role: string | null;
 }): Array<{ label?: string; items: SettingsNavItem[] }> {
-  const effectiveRole: OrgRole =
-    selected.type === 'personal' ? 'Owner' : ((selected.role as OrgRole) ?? 'Member');
-  const ctx: WorkspaceNavContext = { workspaceType: selected.type, effectiveRole };
-  const filter = (items: SettingsNavItem[]) => filterSettingsNav(items, ctx);
-
-  if (selected.type === 'org' && (effectiveRole === 'Admin' || effectiveRole === 'Owner')) {
-    return [
-      { label: 'Org settings', items: filter(ORG_SETTINGS_NAV) },
-      { label: 'Personal settings', items: filter(ORG_ADMIN_PERSONAL_SETTINGS_NAV) },
-      { items: filter(ACCOUNT_NAV) },
-    ];
-  }
-  if (selected.type === 'org' && effectiveRole === 'Member') {
-    return [
-      {
-        label: 'Personal settings',
-        items: filter([...PERSONAL_WORKSPACE_TOP_NAV, ...INTEGRATIONS_ONLY_NAV]),
-      },
-      { items: filter([...ACCOUNT_NAV, ...SKILLS_ONLY_NAV]) },
-    ];
-  }
-  return [
-    { items: filter([...PERSONAL_WORKSPACE_TOP_NAV, ...INTEGRATIONS_AND_SKILLS_NAV]) },
-    { items: filter(PERSONAL_ACCOUNT_WITH_BILLING_NAV) },
-  ];
+  void selected;
+  return [{ items: ACCOUNT_POPOVER_SETTINGS_NAV }];
 }

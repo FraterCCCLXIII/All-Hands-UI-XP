@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AppWindow,
   Building2,
+  Cloud,
   Copy,
   Cpu,
   CreditCard,
@@ -65,6 +66,7 @@ import { usePageTransitions } from '../contexts/PageTransitionsContext';
 import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
 import {
   ACCOUNT_NAV,
+  CLOUD_SERVER_NAV,
   INTEGRATIONS_AND_SKILLS_NAV,
   INTEGRATIONS_ONLY_NAV,
   ORG_ADMIN_PERSONAL_SETTINGS_NAV,
@@ -94,6 +96,7 @@ const settingsTabs = [
   { id: 'org-hooks', label: 'Hooks', icon: Webhook },
   { id: 'manage-team', label: 'Organization Members', icon: Users },
   { id: 'skills', label: 'Skills', icon: SkillIcon },
+  { id: 'cloud-server', label: 'Cloud Server', icon: Cloud },
 ];
 
 type SecretsView = 'list' | 'add' | 'edit';
@@ -104,7 +107,7 @@ function parseSettingsRoute(tab: string | undefined): {
   editingSecretId: string | null;
 } {
   if (!tab) {
-    return { tabId: 'api-keys', secretsView: 'list', editingSecretId: null };
+    return { tabId: 'llm', secretsView: 'list', editingSecretId: null };
   }
   if (tab === 'secrets' || tab.startsWith('secrets/')) {
     if (tab === 'secrets') {
@@ -123,7 +126,7 @@ function parseSettingsRoute(tab: string | undefined): {
   if (settingsTabs.some((t) => t.id === tab)) {
     return { tabId: tab, secretsView: 'list', editingSecretId: null };
   }
-  return { tabId: 'api-keys', secretsView: 'list', editingSecretId: null };
+  return { tabId: 'llm', secretsView: 'list', editingSecretId: null };
 }
 
 const settingsTabDescriptions: Record<string, string> = {
@@ -142,6 +145,7 @@ const settingsTabDescriptions: Record<string, string> = {
   'org-hooks':
     'Define organization hooks and control whether members see them in the UI and whether they run automatically in every new conversation.',
   skills: 'Choose which skills are available for your organization and how they appear in conversations.',
+  'cloud-server': 'Configure the cloud servers available from the environment selector.',
 };
 
 /** Border + padding below the line only. Parent stacks sections with `gap-6`; extra `mt-*` here doubles the gap above the rule. */
@@ -346,9 +350,21 @@ type OpenHandsApiKeyRow = {
   lastUsed: string;
 };
 
+type CloudServerRow = {
+  id: string;
+  nickname: string;
+  url: string;
+  apiKeyPreview: string;
+};
+
 const initialOpenHandsApiKeys: OpenHandsApiKeyRow[] = [
   { id: 'api-key-cli-2', name: 'CLI 2', created: '9/23/2025, 8:58:05 PM', lastUsed: 'Never' },
   { id: 'api-key-cli', name: 'CLI', created: '9/19/2025, 5:09:37 PM', lastUsed: 'Never' },
+];
+
+const initialCloudServers: CloudServerRow[] = [
+  { id: 'hetzner', nickname: 'Hetzner', url: 'https://hetzner.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
+  { id: 'aws', nickname: 'AWS', url: 'https://aws.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
 ];
 
 /** Demo-only: generate a one-time display secret for the “API Key Created” modal. */
@@ -458,6 +474,12 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [newApiKeyName, setNewApiKeyName] = useState('');
   const [apiKeyCreatedModalOpen, setApiKeyCreatedModalOpen] = useState(false);
   const [revealedApiKey, setRevealedApiKey] = useState('');
+  const [cloudServers, setCloudServers] = useState<CloudServerRow[]>(initialCloudServers);
+  const [cloudServerDialogOpen, setCloudServerDialogOpen] = useState(false);
+  const [cloudServerEditingId, setCloudServerEditingId] = useState<string | null>(null);
+  const [cloudServerNickname, setCloudServerNickname] = useState('');
+  const [cloudServerUrl, setCloudServerUrl] = useState('');
+  const [cloudServerApiKey, setCloudServerApiKey] = useState('');
   /** Demo: unlocked after adding ≥$10 on Billing, or via prototype FAB (API Keys). */
   const [hasOpenHandsLlmKeyAccess, setHasOpenHandsLlmKeyAccess] = useState(false);
   /** Demo: Organization → Git Conversation Routing shows empty state (prototype FAB). */
@@ -603,6 +625,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const showOrgAdminNav =
     selectedOrg?.type === 'org' && (effectiveRole === 'Admin' || effectiveRole === 'Owner');
   const showOrgMemberNav = selectedOrg?.type === 'org' && effectiveRole === 'Member';
+  const visibleSettingsNavItems = useMemo(() => {
+    const filter = (items: SettingsNavItem[]) => filterSettingsNav(items, workspaceNavCtx);
+
+    if (showOrgAdminNav) {
+      return [...filter(ORG_SETTINGS_NAV), ...filter(ORG_ADMIN_PERSONAL_SETTINGS_NAV), ...filter(ACCOUNT_NAV)];
+    }
+
+    if (showOrgMemberNav) {
+      return [
+        ...filter(PERSONAL_WORKSPACE_TOP_NAV),
+        ...filter(INTEGRATIONS_ONLY_NAV),
+        ...filter(ACCOUNT_NAV),
+        ...filter(SKILLS_ONLY_NAV),
+      ];
+    }
+
+    return [
+      ...filter(PERSONAL_WORKSPACE_TOP_NAV),
+      ...filter(INTEGRATIONS_AND_SKILLS_NAV),
+      ...filter(CLOUD_SERVER_NAV),
+      ...filter(PERSONAL_ACCOUNT_WITH_BILLING_NAV),
+    ];
+  }, [showOrgAdminNav, showOrgMemberNav, workspaceNavCtx]);
+  const firstVisibleSettingsTab = visibleSettingsNavItems[0]?.tabId ?? 'llm';
   const canInviteMembers = hasPermission('invite_user_to_organization');
   const canManageOrgClaims = true;
   const activeOrgName = selectedOrg?.name ?? 'Personal Account';
@@ -611,6 +657,20 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     hasPermission('change_user_role:admin') ||
     hasPermission('change_user_role:owner');
   const canAssignOwner = hasPermission('change_user_role:owner');
+
+  useEffect(() => {
+    const route = parseSettingsRoute(initialTab);
+    const routeTabIsVisible = visibleSettingsNavItems.some((item) => item.tabId === route.tabId);
+    const nextTab = initialTab && routeTabIsVisible ? route.tabId : firstVisibleSettingsTab;
+
+    if (activeTab !== nextTab) {
+      setActiveTab(nextTab);
+    }
+
+    if (!initialTab || !routeTabIsVisible) {
+      onTabChange?.(nextTab);
+    }
+  }, [activeTab, firstVisibleSettingsTab, initialTab, onTabChange, visibleSettingsNavItems]);
 
   const handleMemberRoleChange = (memberId: string, role: OrgRole) => {
     setTeamMembers((prev) =>
@@ -764,6 +824,53 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     if (!repoUrl) return;
     onAddPluginRepository?.(repoUrl);
     setPluginRepoInput('');
+  };
+
+  const resetCloudServerForm = () => {
+    setCloudServerEditingId(null);
+    setCloudServerNickname('');
+    setCloudServerUrl('');
+    setCloudServerApiKey('');
+  };
+
+  const handleOpenCloudServerDialog = (server?: CloudServerRow) => {
+    if (server) {
+      setCloudServerEditingId(server.id);
+      setCloudServerNickname(server.nickname);
+      setCloudServerUrl(server.url);
+      setCloudServerApiKey('');
+    } else {
+      resetCloudServerForm();
+    }
+
+    setCloudServerDialogOpen(true);
+  };
+
+  const handleSaveCloudServer = () => {
+    const nickname = cloudServerNickname.trim();
+    const url = cloudServerUrl.trim();
+
+    if (!nickname || !url) {
+      return;
+    }
+
+    const existingServer = cloudServerEditingId
+      ? cloudServers.find((server) => server.id === cloudServerEditingId)
+      : null;
+    const nextServer: CloudServerRow = {
+      id: cloudServerEditingId ?? `cloud-server-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      nickname,
+      url,
+      apiKeyPreview: cloudServerApiKey.trim() ? '••••••••••••••••' : existingServer?.apiKeyPreview ?? '••••••••••••••••',
+    };
+
+    setCloudServers((prev) =>
+      cloudServerEditingId
+        ? prev.map((server) => (server.id === cloudServerEditingId ? { ...server, ...nextServer } : server))
+        : [nextServer, ...prev]
+    );
+    setCloudServerDialogOpen(false);
+    resetCloudServerForm();
   };
 
   const chatGPTConnectSection = (
@@ -943,6 +1050,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-1">
                 {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
                 {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
+                {filterNav(CLOUD_SERVER_NAV).map(renderNavButton)}
               </div>
               <div className="border-t border-border" />
               <div className="flex flex-col gap-1">
@@ -2111,6 +2219,172 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+            </div>
+          )}
+
+          {activeTab === 'cloud-server' && selectedOrg?.type === 'personal' && (
+            <div className="contents">
+              <div className={cn('flex flex-col', settingsSectionStackGap)}>
+                <div>
+                  <Button type="button" onClick={() => handleOpenCloudServerDialog()}>
+                    <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                    Add Cloud Server
+                  </Button>
+                </div>
+
+                <div className={dataTableShellClassName}>
+                  <div className={dataTableInnerClassName}>
+                    <table className={dataTableClassName}>
+                      <thead>
+                        <tr className={dataTableHeadRowClassName}>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
+                            Nickname
+                          </th>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
+                            Backend URL
+                          </th>
+                          <th scope="col" className={dataTableTh('px-4 text-left')}>
+                            API Key
+                          </th>
+                          <th scope="col" className={dataTableTh('px-4 text-right')}>
+                            Actions
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className={dataTableBodyClassName}>
+                        {cloudServers.length === 0 ? (
+                          <tr className="bg-card">
+                            <td colSpan={4} className="px-4 py-12 text-center" role="status" aria-live="polite">
+                              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                                No cloud servers connected. Add a backend to make it available from the environment
+                                dropdown.
+                              </p>
+                            </td>
+                          </tr>
+                        ) : (
+                          cloudServers.map((server) => (
+                            <tr key={server.id} className={dataTableRowClassName}>
+                              <td className="max-w-[180px] truncate px-4 py-3.5 align-middle text-sm text-foreground">
+                                {server.nickname}
+                              </td>
+                              <td
+                                className="max-w-[280px] truncate px-4 py-3.5 align-middle text-sm text-muted-foreground"
+                                title={server.url}
+                              >
+                                {server.url}
+                              </td>
+                              <td className="px-4 py-3.5 align-middle font-mono text-sm text-muted-foreground">
+                                {server.apiKeyPreview}
+                              </td>
+                              <td className="px-4 py-3.5 align-middle text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <button
+                                    type="button"
+                                    aria-label={`Edit ${server.nickname}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() => handleOpenCloudServerDialog(server)}
+                                  >
+                                    <Pencil className="h-4 w-4" aria-hidden />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label={`Remove ${server.nickname}`}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                    onClick={() =>
+                                      setCloudServers((prev) => prev.filter((row) => row.id !== server.id))
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" aria-hidden />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <Dialog
+                  open={cloudServerDialogOpen}
+                  onOpenChange={(open) => {
+                    setCloudServerDialogOpen(open);
+                    if (!open) resetCloudServerForm();
+                  }}
+                >
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>{cloudServerEditingId ? 'Edit cloud server' : 'Add cloud server'}</DialogTitle>
+                      <DialogDescription>
+                        Add the connection details used by the environment selector.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-1">
+                      <div>
+                        <label htmlFor="cloud-server-nickname" className="mb-1.5 block text-sm font-medium text-foreground">
+                          Nickname
+                        </label>
+                        <Input
+                          id="cloud-server-nickname"
+                          type="text"
+                          value={cloudServerNickname}
+                          onChange={(event) => setCloudServerNickname(event.target.value)}
+                          placeholder="Production"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cloud-server-url" className="mb-1.5 block text-sm font-medium text-foreground">
+                          Backend URL
+                        </label>
+                        <Input
+                          id="cloud-server-url"
+                          type="text"
+                          value={cloudServerUrl}
+                          onChange={(event) => setCloudServerUrl(event.target.value)}
+                          placeholder="https://your-instance.example.com"
+                          autoComplete="off"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="cloud-server-api-key" className="mb-1.5 block text-sm font-medium text-foreground">
+                          API Key
+                        </label>
+                        <Input
+                          id="cloud-server-api-key"
+                          type="password"
+                          value={cloudServerApiKey}
+                          onChange={(event) => setCloudServerApiKey(event.target.value)}
+                          placeholder={cloudServerEditingId ? 'Leave blank to keep existing key' : 'Enter your API key...'}
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setCloudServerDialogOpen(false);
+                          resetCloudServerForm();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={!cloudServerNickname.trim() || !cloudServerUrl.trim()}
+                        onClick={handleSaveCloudServer}
+                      >
+                        {cloudServerEditingId ? 'Save changes' : 'Add server'}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           )}
 

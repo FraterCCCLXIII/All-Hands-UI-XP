@@ -11,10 +11,12 @@
   "scripts": {
     "dev": "npm --workspace apps/prototype run dev",
     "dev:prototype": "npm --workspace apps/prototype run dev",
+    "dev:electron": "npm --workspace apps/prototype run electron:dev",
     "dev:flowcharts": "npm --workspace apps/flowcharts run dev",
     "dev:docs": "npm --workspace apps/docs run dev",
     "dev:plugin-marketplace": "npm --workspace @all-hands/plugin-marketplace run dev",
     "build": "npm --workspace apps/prototype run build && npm --workspace apps/flowcharts run build && npm --workspace apps/docs run build && npm --workspace @all-hands/plugin-marketplace run build",
+    "start:electron": "npm --workspace apps/prototype run electron:start",
     "preview": "npm --workspace apps/prototype run preview",
     "sync:openhands-design-template": "rsync -a --delete --exclude='.git' OpenHands-Design/ packages/openhands-design/template/"
   }

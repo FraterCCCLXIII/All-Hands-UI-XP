@@ -3,6 +3,8 @@ import tailwindcss from '@tailwindcss/vite'
 import tailwindPostcss from '@tailwindcss/postcss'
 import react from '@vitejs/plugin-react'
 
+const isElectronDev = process.env.ELECTRON_DEV === 'true'
+
 export default defineConfig({
   css: {
     postcss: {
@@ -12,6 +14,6 @@ export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
     port: 3000,
-    open: true
+    open: !isElectronDev
   }
-}) 
+})
