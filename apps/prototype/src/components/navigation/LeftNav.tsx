@@ -28,6 +28,7 @@ import {
   Monitor,
   MoreVertical,
   Newspaper,
+  ClipboardCheck,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -181,6 +182,7 @@ function AutomationsIcon({ className, spinOuter = false }: { className?: string;
 }
 
 const navItems = [
+  { icon: ClipboardCheck, label: 'Onboarding', action: 'onboarding' },
   { icon: Plus, label: 'New', action: 'new-project' },
   { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
   { icon: Boxes, label: 'Extensions', action: 'extensions' },

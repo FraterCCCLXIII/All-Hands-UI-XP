@@ -28,6 +28,7 @@ import {
   ChatComponentsScreen,
   StartNewConversationModalScreen,
   LaunchFromPluginModalScreen,
+  OnboardingScreen,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { OrgAdminDashboardScreen } from './screens/OrgAdminDashboardScreen';
@@ -74,6 +75,7 @@ const actionSlugs: Record<string, string> = {
   'chat-start': 'chat-start',
   'new-chat-start': 'new-chat-start',
   'old-chat-start': 'old-chat-start',
+  onboarding: 'onboarding',
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
@@ -263,8 +265,10 @@ function App() {
 
   const isEmbedded = new URLSearchParams(window.location.search).has('embed');
   const showCanvasTip = canvasTipVariant !== 'none';
+  const isOnboardingView = activeNavItem === 'onboarding';
   const isDashboardView = activeNavItem === 'dashboard';
   const isAutomationsView = activeNavItem === 'automations';
+  const automationRouteId = useMemo(() => new URLSearchParams(location.search).get('automation'), [location.search]);
   const isExtensionsView = activeNavItem === 'extensions';
   const isSettingsView = activeNavItem === 'settings';
   const isNewLlmSwitcherView = activeNavItem === 'new-llm-switcher';
@@ -281,6 +285,7 @@ function App() {
   const showMainApp = !showStandaloneFlow && !showFigmaExportView;
   const showChatView =
     !isDashboardView &&
+    !isOnboardingView &&
     !isAutomationsView &&
     !isExtensionsView &&
     !isSettingsView &&
@@ -985,9 +990,11 @@ function App() {
                   open={isStartConversationDialogOpen}
                   onOpenChange={setIsStartConversationDialogOpen}
                 />
+                {isOnboardingView && <OnboardingScreen />}
                 {isDashboardView && <DashboardScreen />}
                 {isAutomationsView && (
                   <AutomationsScreen
+                    initialAutomationId={automationRouteId ?? undefined}
                     onRunNow={handleAutomationRunNow}
                     onOpenConversation={handleOpenAutomationConversation}
                   />

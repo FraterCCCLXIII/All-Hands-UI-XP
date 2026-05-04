@@ -128,7 +128,7 @@ const prototypeMenuEntries = [
   { id: 'loading-screen', label: 'Loading Screen', navAction: 'loading-screen' },
 ];
 
-type HomeColumnId = 'skills' | 'conversations' | 'tasks';
+type HomeColumnId = 'skills' | 'conversations' | 'automations';
 type HomeColumnDemoMode = 'content' | 'loading' | 'empty';
 
 const COLUMN_DEMO_ROWS = 5;
@@ -178,7 +178,7 @@ function ConversationsColumnSkeleton() {
   );
 }
 
-function TasksColumnSkeleton() {
+function AutomationsColumnSkeleton() {
   return (
     <div className="flex flex-col">
       {Array.from({ length: COLUMN_DEMO_ROWS }).map((_, i) => (
@@ -230,7 +230,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   const [homeColumnModes, setHomeColumnModes] = useState<Record<HomeColumnId, HomeColumnDemoMode>>({
     skills: 'content',
     conversations: 'content',
-    tasks: 'content',
+    automations: 'content',
   });
 
   const filteredRecentRepos = useMemo(
@@ -266,38 +266,43 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
     setBranchDropdownOpen(false);
   }, []);
 
-  const suggestedTasks = useMemo(
+  const recommendedAutomations = useMemo(
     () =>
       [
         {
-          id: '#5',
-          title: 'Resolve merge conflicts',
-          description: 'Ai interact 2',
-          repo: 'FraterCCCLXIII/chatrtk',
+          id: 'automation-1',
+          automationId: 'auto-cross-repo-release-readiness',
+          title: 'Daily dependency health check',
+          description: 'Scan package updates and open a conversation when risk is detected.',
+          repo: 'FraterCCCLXIII/pr-navigator',
         },
         {
-          id: '#1',
-          title: 'Resolve merge conflicts',
-          description: 'Fix LM Studio CORS issues with proxy server',
-          repo: 'FraterCCCLXIII/chatrtk',
-        },
-        {
-          id: '#7',
-          title: 'Audit auth edge cases',
-          description: 'Harden the session expiry and refresh flow',
+          id: 'automation-2',
+          automationId: 'auto-security-pass',
+          title: 'Nightly flaky test triage',
+          description: 'Review failing CI runs and summarize the likely root cause.',
           repo: 'acme/web-app',
         },
         {
-          id: '#12',
-          title: 'Polish token usage in nav shell',
-          description: 'Replace hardcoded values with semantic tokens',
+          id: 'automation-3',
+          automationId: 'auto-weekly-release',
+          title: 'Release notes draft',
+          description: 'Generate a changelog from merged PRs every Friday.',
+          repo: 'acme/web-app',
+        },
+        {
+          id: 'automation-4',
+          automationId: 'auto-docs-sync',
+          title: 'Design token drift audit',
+          description: 'Flag hardcoded styles and token mismatches before review.',
           repo: 'acme/design-system',
         },
         {
-          id: '#19',
-          title: 'Stabilize flaky onboarding checks',
-          description: 'Triage test instability in CI before release',
-          repo: 'FraterCCCLXIII/pr-navigator',
+          id: 'automation-5',
+          automationId: 'auto-webhook-ops',
+          title: 'Backlog grooming summary',
+          description: 'Collect stale issues and suggest the next automation candidates.',
+          repo: 'FraterCCCLXIII/chatrtk',
         },
       ] as const,
     []
@@ -1090,6 +1095,139 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           <div className="flex flex-col gap-5 px-6 md:flex-row min-w-full md:max-w-full lg:px-0 lg:max-w-[960px] lg:min-w-[960px]">
             <section className="flex flex-1 min-w-0 flex-col">
               <div className="flex items-center gap-2">
+                <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Recent Conversations</h3>
+              </div>
+              <div className="flex flex-col min-h-0">
+                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
+                  {homeColumnModes.conversations === 'loading' ? (
+                    <ConversationsColumnSkeleton />
+                  ) : homeColumnModes.conversations === 'empty' ? (
+                    <ColumnEmptyState
+                      title="No conversations yet"
+                      description="Start a conversation to see it listed here."
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {recentConversationPreview.map((conversation, index) => {
+                        const showRunningSpinner =
+                          conversation.status === 'running' && index === firstRunningPreviewIndex;
+                        return (
+                          <button
+                            key={conversation.id}
+                            type="button"
+                            onClick={() => {
+                              navigateAppRoute(
+                                buildChatRoute({
+                                  repository: conversation.repo === 'No Repository' ? 'disconnected' : 'connected',
+                                  repo: conversation.repo === 'No Repository' ? null : conversation.repo,
+                                  branch: conversation.branch ?? null,
+                                })
+                              );
+                            }}
+                            className="p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                          >
+                            <div className="flex items-start gap-2 pl-1">
+                              <div
+                                className="relative flex h-6 w-2 shrink-0 items-center justify-center"
+                                aria-hidden
+                              >
+                                {showRunningSpinner ? (
+                                  <>
+                                    <span
+                                      className="pointer-events-none absolute h-3 w-3 animate-spin rounded-full border-2 border-solid border-transparent border-t-muted-foreground border-r-muted-foreground border-b-muted-foreground"
+                                      aria-hidden
+                                    />
+                                    <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+                                  </>
+                                ) : (
+                                  <div
+                                    className={cn(
+                                      'h-1.5 w-1.5 shrink-0 rounded-full',
+                                      conversation.status === 'running' && 'bg-success',
+                                      conversation.status === 'awaiting' && 'bg-warning',
+                                      conversation.status === 'error' && 'bg-destructive',
+                                      !conversation.status && 'bg-muted-foreground',
+                                    )}
+                                  />
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1 flex flex-col gap-1">
+                                <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                                  {conversation.name}
+                                </span>
+                                <div className="flex flex-row items-center gap-2 text-xs leading-4 text-muted-foreground">
+                                  <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+                                    <span className="min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                                      {conversation.repo}
+                                    </span>
+                                    {conversation.branch ? (
+                                      <span className="inline-flex shrink-0 items-center rounded bg-muted/20 px-1.5 py-px leading-none">
+                                        <span className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis text-[11px] leading-none">
+                                          {conversation.branch}
+                                        </span>
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <span className="ml-auto shrink-0 whitespace-nowrap">{conversation.time}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="flex flex-1 min-w-0 flex-col">
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">
+                  Recommended Automations
+                </h3>
+              </div>
+              <div className="flex flex-col min-h-0">
+                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
+                  {homeColumnModes.automations === 'loading' ? (
+                    <AutomationsColumnSkeleton />
+                  ) : homeColumnModes.automations === 'empty' ? (
+                    <ColumnEmptyState
+                      title="No recommended automations"
+                      description="Recommended automations will appear here as your workspace grows."
+                    />
+                  ) : (
+                    <div className="flex flex-col">
+                      {recommendedAutomations.map((automation) => (
+                        <button
+                          key={automation.id}
+                          type="button"
+                          onClick={() => navigateAppRoute(`/automations?automation=${automation.automationId}`)}
+                          className="flex flex-col gap-1 p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
+                        >
+                          <div className="flex items-center gap-2 pl-1">
+                            <AutomationGlyph className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
+                              {automation.title}
+                            </span>
+                          </div>
+                          <div className="flex w-full min-w-0 flex-nowrap items-center gap-1 overflow-hidden pl-5 text-xs leading-4 text-muted-foreground font-normal">
+                            <span className="min-w-0 shrink truncate">{automation.description}</span>
+                            <span className="shrink-0 text-muted-foreground/50" aria-hidden>
+                              ·
+                            </span>
+                            <span className="min-w-0 shrink truncate">{automation.repo}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <section className="flex flex-1 min-w-0 flex-col">
+              <div className="flex items-center gap-2">
                 <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Recent Skills</h3>
               </div>
               <div className="flex flex-col min-h-0">
@@ -1128,142 +1266,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 </div>
               </div>
             </section>
-
-            <section className="flex flex-1 min-w-0 flex-col">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">Recent Conversations</h3>
-              </div>
-              <div className="flex flex-col min-h-0">
-                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
-                  {homeColumnModes.conversations === 'loading' ? (
-                    <ConversationsColumnSkeleton />
-                  ) : homeColumnModes.conversations === 'empty' ? (
-                    <ColumnEmptyState
-                      title="No conversations yet"
-                      description="Start a conversation to see it listed here."
-                    />
-                  ) : (
-                    <div className="flex flex-col">
-                      {recentConversationPreview.map((conversation, index) => {
-                        const showRunningSpinner =
-                          conversation.status === 'running' && index === firstRunningPreviewIndex;
-                        return (
-                        <button
-                          key={conversation.id}
-                          type="button"
-                          onClick={() => {
-                            navigateAppRoute(
-                              buildChatRoute({
-                                repository: conversation.repo === 'No Repository' ? 'disconnected' : 'connected',
-                                repo: conversation.repo === 'No Repository' ? null : conversation.repo,
-                                branch: conversation.branch ?? null,
-                              })
-                            );
-                          }}
-                          className="p-[14px] cursor-pointer w-full rounded-lg hover:bg-muted/60 transition-all duration-300 text-left"
-                        >
-                          <div className="flex items-start gap-2 pl-1">
-                            <div
-                              className="relative flex h-6 w-2 shrink-0 items-center justify-center"
-                              aria-hidden
-                            >
-                              {showRunningSpinner ? (
-                                <>
-                                  <span
-                                    className="pointer-events-none absolute h-3 w-3 animate-spin rounded-full border-2 border-solid border-transparent border-t-muted-foreground border-r-muted-foreground border-b-muted-foreground"
-                                    aria-hidden
-                                  />
-                                  <span className="relative h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
-                                </>
-                              ) : (
-                                <div
-                                  className={cn(
-                                    'h-1.5 w-1.5 shrink-0 rounded-full',
-                                    conversation.status === 'running' && 'bg-success',
-                                    conversation.status === 'awaiting' && 'bg-warning',
-                                    conversation.status === 'error' && 'bg-destructive',
-                                    !conversation.status && 'bg-muted-foreground',
-                                  )}
-                                />
-                              )}
-                            </div>
-                            <div className="min-w-0 flex-1 flex flex-col gap-1">
-                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                                {conversation.name}
-                              </span>
-                              <div className="flex flex-row items-center gap-2 text-xs leading-4 text-muted-foreground">
-                                <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-                                  <span className="min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
-                                    {conversation.repo}
-                                  </span>
-                                  {conversation.branch ? (
-                                    <span className="inline-flex shrink-0 items-center rounded bg-muted/20 px-1.5 py-px leading-none">
-                                      <span className="max-w-24 whitespace-nowrap overflow-hidden text-ellipsis text-[11px] leading-none">
-                                        {conversation.branch}
-                                      </span>
-                                    </span>
-                                  ) : null}
-                                </div>
-                                <span className="ml-auto shrink-0 whitespace-nowrap">{conversation.time}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <section className="flex flex-1 min-w-0 flex-col">
-              <div className="flex items-center gap-2">
-                <h3 className="text-xs leading-4 text-foreground font-bold py-[14px] pl-4">
-                  Suggested Tasks
-                </h3>
-              </div>
-              <div className="flex flex-col min-h-0">
-                <div className={HOMEPAGE_COLUMN_LIST_CLASSNAME}>
-                  {homeColumnModes.tasks === 'loading' ? (
-                    <TasksColumnSkeleton />
-                  ) : homeColumnModes.tasks === 'empty' ? (
-                    <ColumnEmptyState
-                      title="No suggested tasks"
-                      description="When your agent has follow-ups, they will appear here."
-                    />
-                  ) : (
-                    <div className="flex flex-col">
-                      {suggestedTasks.map((task) => (
-                        <button
-                          key={task.id}
-                          type="button"
-                          className="w-full p-[14px] text-left cursor-pointer rounded-lg transition-all duration-300 hover:bg-muted/60"
-                        >
-                          <div className="flex items-baseline gap-1.5 pl-1">
-                            <span className="shrink-0 whitespace-nowrap text-xs tabular-nums text-muted-foreground leading-6 font-normal">
-                              {task.id}
-                            </span>
-                            <div className="min-w-0 flex-1 flex flex-col gap-1">
-                              <span className="min-w-0 whitespace-nowrap text-xs text-foreground leading-6 font-normal truncate">
-                                {task.title}
-                              </span>
-                              <div className="flex w-full min-w-0 flex-nowrap items-center gap-1 overflow-hidden text-xs leading-4 text-muted-foreground font-normal">
-                                <span className="min-w-0 shrink truncate">{task.description}</span>
-                                <span className="shrink-0 text-muted-foreground/50" aria-hidden>
-                                  ·
-                                </span>
-                                <span className="min-w-0 shrink truncate">{task.repo}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
+            {/* Suggested Tasks column intentionally removed from the home layout. */}
           </div>
         </div>
         </main>
@@ -1377,7 +1380,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                 [
                   { id: 'skills' as const, label: 'Recent Skills' },
                   { id: 'conversations' as const, label: 'Recent Conversations' },
-                  { id: 'tasks' as const, label: 'Suggested Tasks' },
+                  { id: 'automations' as const, label: 'Recommended Automations' },
                 ] as const
               ).map(({ id, label }) => (
                 <div key={id} className="space-y-1.5">

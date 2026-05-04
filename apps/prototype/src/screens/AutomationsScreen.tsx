@@ -1550,6 +1550,7 @@ function ActivityLogSection({
 }
 
 interface AutomationsScreenProps {
+  initialAutomationId?: string;
   onRunNow?: (payload: {
     automationTitle: string;
     repository: string;
@@ -1598,7 +1599,7 @@ function AutomationsSidebar({
               )}
               aria-hidden
             />
-            <span className="min-w-0 flex-1 truncate font-normal">Use Cases</span>
+            <span className="min-w-0 flex-1 truncate font-normal">Library</span>
           </button>
           <button
             type="button"
@@ -1613,7 +1614,7 @@ function AutomationsSidebar({
               )}
               aria-hidden
             />
-            <span className="min-w-0 flex-1 truncate font-normal">Active Automations (Current)</span>
+            <span className="min-w-0 flex-1 truncate font-normal">Your Automations</span>
             <span className="shrink-0 rounded bg-background/60 px-1.5 py-0.5 text-xs font-mono text-muted-foreground">
               {activeCount}
             </span>
@@ -1625,6 +1626,7 @@ function AutomationsSidebar({
 }
 
 export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
+  initialAutomationId,
   onRunNow,
   onOpenConversation,
 }) => {
@@ -1668,6 +1670,17 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
       toggleCommitTimeoutsRef.current.clear();
     };
   }, []);
+
+  useEffect(() => {
+    if (!initialAutomationId) {
+      return;
+    }
+
+    if (automations.some((automation) => automation.id === initialAutomationId)) {
+      setSelectedAutomationId(initialAutomationId);
+      setActiveAutomationTab('active-automations');
+    }
+  }, [automations, initialAutomationId]);
 
   const filteredAutomations = useMemo(() => {
     const query = search.trim().toLowerCase();

@@ -437,7 +437,7 @@ export const UseCasesScreen: React.FC = () => {
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold leading-6 text-foreground">Use Cases</h2>
+              <h2 className="text-xl font-semibold leading-6 text-foreground">Library</h2>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               Run common tasks once, package them as reusable skills, or turn them into automations.
