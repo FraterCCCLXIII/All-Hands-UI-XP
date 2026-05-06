@@ -117,6 +117,7 @@ const prototypeMenuEntries = [
   { id: 'chat-components', label: 'All Chat Components', navAction: 'chat-components' },
   { id: 'sign-in-with-ad', label: 'Sign in with ad', navAction: 'sign-in-with-ad' },
   { id: 'new-user-experience', label: 'New User Experience', navAction: 'new-user-experience' },
+  { id: 'new-nux', label: 'New NUX', navAction: 'new-nux' },
   { id: 'saas-credit-card', label: 'SaaS - Require Credit Card for Free Credits', navAction: 'saas-credit-card' },
   {
     id: 'user-journey-cta',

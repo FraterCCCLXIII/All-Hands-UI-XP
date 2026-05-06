@@ -1814,6 +1814,14 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
     }
   };
 
+  const handleAddAutomationFromLibrary = () => {
+    resetCreateForm();
+    setNewAutomationTitle('New library automation');
+    setNewAutomationPrompt('Summarize repository changes and create an actionable automation plan.');
+    setSelectedPlugins(['GitHub']);
+    setIsCreatingAutomation(true);
+  };
+
   const handleCreateAutomation = () => {
     const title = newAutomationTitle.trim();
     const prompt = newAutomationPrompt.trim();
@@ -2597,7 +2605,7 @@ export const AutomationsScreen: React.FC<AutomationsScreenProps> = ({
 
   return renderAutomationsShell(
     activeAutomationTab === 'use-cases' ? (
-        <UseCasesScreen />
+        <UseCasesScreen onAddAutomation={handleAddAutomationFromLibrary} />
       ) : (
       <div className="min-w-0 flex-1 overflow-auto px-8 py-8">
       <div className="mx-auto w-full max-w-4xl">

@@ -4,10 +4,9 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  MoreVertical,
   Package,
   Palette,
-  Play,
+  Plus,
   Search,
   ShieldAlert,
   Wrench,
@@ -15,14 +14,6 @@ import {
 } from 'lucide-react';
 import { SkillIcon } from '../components/icons/SkillIcon';
 import { SearchInput } from '../components/ui/search-input';
-import { PluginToggle } from '../components/ui/plugin-toggle';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
 
 type UseCaseActionState = 'available' | 'create' | 'none';
 
@@ -290,9 +281,6 @@ const useCaseGroups: UseCaseGroup[] = [
 
 function UseCaseGroupSection({ group }: { group: UseCaseGroup }) {
   const [isExpanded, setIsExpanded] = useState(group.tasks.length > group.initiallyVisible);
-  const [enabledTasks, setEnabledTasks] = useState<Set<string>>(
-    () => new Set(group.tasks.map((task) => task.name))
-  );
   const hiddenCount = Math.max(group.tasks.length - group.initiallyVisible, 0);
   const visibleTasks = isExpanded ? group.tasks : group.tasks.slice(0, group.initiallyVisible);
   const Icon = group.icon;
@@ -315,61 +303,7 @@ function UseCaseGroupSection({ group }: { group: UseCaseGroup }) {
             key={task.name}
             className="relative rounded-xl border border-border bg-card transition-colors hover:border-muted-foreground/20 hover:bg-muted/60"
           >
-            <div className="absolute right-5 top-3 z-10 flex flex-row-reverse items-center gap-0.5">
-              <PluginToggle
-                checked={enabledTasks.has(task.name)}
-                onCheckedChange={(checked) =>
-                  setEnabledTasks((previous) => {
-                    const next = new Set(previous);
-                    if (checked) {
-                      next.add(task.name);
-                    } else {
-                      next.delete(task.name);
-                    }
-                    return next;
-                  })
-                }
-                aria-label={`${enabledTasks.has(task.name) ? 'Disable' : 'Enable'} ${task.name}`}
-                size="sm"
-              />
-              <div className="flex h-6 w-7 shrink-0 items-center justify-center">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className="flex h-6 w-7 shrink-0 items-center justify-center rounded-md px-1.5 py-1 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                      aria-label={`${task.name} options`}
-                    >
-                      <MoreVertical className="h-4 w-4 shrink-0" aria-hidden />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
-                    <DropdownMenuItem className="gap-2">
-                      <Play className="h-4 w-4" />
-                      Run
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="gap-2"
-                      onClick={() =>
-                        setEnabledTasks((previous) => {
-                          const next = new Set(previous);
-                          if (next.has(task.name)) {
-                            next.delete(task.name);
-                          } else {
-                            next.add(task.name);
-                          }
-                          return next;
-                        })
-                      }
-                    >
-                      {enabledTasks.has(task.name) ? 'Disable module' : 'Enable module'}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            <div className="w-full rounded-xl p-5 pr-24 text-left">
+            <div className="w-full rounded-xl p-5 text-left">
               <div className="flex items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
                   <Icon className="h-5 w-5 text-muted-foreground" />
@@ -381,16 +315,6 @@ function UseCaseGroupSection({ group }: { group: UseCaseGroup }) {
                       <SkillIcon className="h-3.5 shrink-0 text-muted-foreground" />
                       <span className="truncate">{task.skillName}</span>
                     </span>
-                  </div>
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      className="inline-flex h-8 items-center justify-center gap-2 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/85"
-                      aria-label={`Run ${task.name}`}
-                    >
-                      <Play className="h-3.5 w-3.5 fill-current" aria-hidden />
-                      Run
-                    </button>
                   </div>
                 </div>
               </div>
@@ -417,7 +341,11 @@ function UseCaseGroupSection({ group }: { group: UseCaseGroup }) {
   );
 }
 
-export const UseCasesScreen: React.FC = () => {
+interface UseCasesScreenProps {
+  onAddAutomation?: () => void;
+}
+
+export const UseCasesScreen: React.FC<UseCasesScreenProps> = ({ onAddAutomation }) => {
   const [search, setSearch] = useState('');
   const query = search.trim().toLowerCase();
   const filteredGroups = useCaseGroups
@@ -443,6 +371,14 @@ export const UseCasesScreen: React.FC = () => {
               Run common tasks once, package them as reusable skills, or turn them into automations.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={onAddAutomation}
+            className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/85"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Add
+          </button>
         </div>
 
         <div className="mt-6 max-w-sm">

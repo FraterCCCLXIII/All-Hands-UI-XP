@@ -29,6 +29,7 @@ import {
   StartNewConversationModalScreen,
   LaunchFromPluginModalScreen,
   OnboardingScreen,
+  NewNuxFlow,
 } from './screens';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { OrgAdminDashboardScreen } from './screens/OrgAdminDashboardScreen';
@@ -76,6 +77,7 @@ const actionSlugs: Record<string, string> = {
   'new-chat-start': 'new-chat-start',
   'old-chat-start': 'old-chat-start',
   onboarding: 'onboarding',
+  'new-nux': 'new-nux',
   dashboard: 'dashboard',
   automations: 'automations',
   extensions: 'extensions/all',
@@ -300,6 +302,7 @@ function App() {
     !showFigmaExportView &&
     !isShareView &&
     activeFlowPrototype !== 'new-user-experience' &&
+    activeFlowPrototype !== 'new-nux' &&
     activeFlowPrototype !== 'enterprise-learn-more' &&
     activeFlowPrototype !== 'sign-in-with-ad';
 
@@ -446,6 +449,12 @@ function App() {
         navigateAppRoute('/new-user-experience');
         return;
       }
+      if (action === 'new-nux') {
+        setActiveFlowPrototype('new-nux');
+        setIsConversationDrawerOpen(false);
+        navigateAppRoute('/new-nux');
+        return;
+      }
       if (action === 'saas-credit-card') {
         setActiveFlowPrototype('saas-credit-card');
         setIsConversationDrawerOpen(false);
@@ -542,6 +551,12 @@ function App() {
     setEnterpriseRequestSubmitted(true);
     handleExitFlowPrototype();
   }, [handleExitFlowPrototype]);
+
+  const handleCompleteNewNux = useCallback(() => {
+    setActiveFlowPrototype(null);
+    setIsConversationDrawerOpen(false);
+    navigateAppRoute('/onboarding?welcome=1');
+  }, []);
 
   const handleUxTourAction = useCallback(async (action: Extract<UxTourAction, { type: 'navigate' | 'set-state' }>) => {
     if (action.type === 'navigate') {
@@ -651,6 +666,11 @@ function App() {
     }
     if (hash === 'new-user-experience') {
       setActiveFlowPrototype('new-user-experience');
+      setIsActiveChatView(false);
+      return;
+    }
+    if (hash === 'new-nux') {
+      setActiveFlowPrototype('new-nux');
       setIsActiveChatView(false);
       return;
     }
@@ -895,6 +915,8 @@ function App() {
                     ) : showStandaloneFlow ? (
                       activeFlowPrototype === 'new-user-experience' ? (
                         <LoginScreen onBack={handleExitFlowPrototype} />
+                      ) : activeFlowPrototype === 'new-nux' ? (
+                        <NewNuxFlow onBack={handleExitFlowPrototype} onComplete={handleCompleteNewNux} />
                       ) : activeFlowPrototype === 'enterprise-learn-more' ? (
                         <EnterpriseLearnMoreScreen
                           onBack={handleExitFlowPrototype}
