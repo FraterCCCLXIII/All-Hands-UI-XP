@@ -64,7 +64,6 @@ import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
 import { usePageTransitions } from '../contexts/PageTransitionsContext';
-import { useOnboardingNav } from '../contexts/OnboardingNavContext';
 import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
 import {
   ACCOUNT_NAV,
@@ -912,7 +911,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const prefersReducedMotion = useReducedMotion();
   const { pageTransitionsEnabled, setPageTransitionsEnabled } = usePageTransitions();
-  const { onboardingNavVisible, setOnboardingNavVisible } = useOnboardingNav();
   const settingsContentMotionActive = pageTransitionsEnabled && !prefersReducedMotion;
 
   /** Route-derived state only — avoids a second key flip when `initialTab` catches up after mount (which caused double transitions). */
@@ -1488,30 +1486,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </span>
                       <p className="text-xs leading-relaxed text-muted-foreground max-w-md">
                         Slide animations when switching views. Turn off for instant navigation.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div
-                    className="flex gap-3"
-                    role="group"
-                    aria-labelledby="settings-onboarding-nav-label"
-                  >
-                    <PluginToggle
-                      checked={onboardingNavVisible}
-                      onCheckedChange={setOnboardingNavVisible}
-                      aria-label="Show Onboarding in left navigation"
-                      className="mt-0.5 shrink-0"
-                    />
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <span
-                        id="settings-onboarding-nav-label"
-                        className="text-sm leading-snug text-foreground"
-                      >
-                        Show Onboarding in left navigation
-                      </span>
-                      <p className="text-xs leading-relaxed text-muted-foreground max-w-md">
-                        Display the Onboarding shortcut in the sidebar. Turn off to hide it once you're set up.
                       </p>
                     </div>
                   </div>

@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import type { KeyboardEvent, ReactNode, SyntheticEvent } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import {
   Loader2,
   ArrowUp,
@@ -7,7 +7,6 @@ import {
   MoreHorizontal,
   Plus,
   Pin,
-  PinOff,
   Square,
   Code2,
   Terminal,
@@ -58,6 +57,7 @@ import {
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
 import { navigateAppRoute } from '../lib/captureNavigation';
+import { BLANK_NEW_CHAT_ROUTE } from '../lib/blankNewChatRoute';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { AutomationGlyph } from '../components/icons/AutomationGlyph';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
@@ -97,8 +97,8 @@ interface ActiveChatScreenProps {
   onCanvasTipVariantChange: (variant: 'none' | ProtipVariant) => void;
   showCanvasLoading: boolean;
   onToggleCanvasLoading: () => void;
-  chatContentMode: 'skeleton' | 'conversation' | 'start';
-  onChatContentModeChange: (mode: 'skeleton' | 'conversation' | 'start') => void;
+  chatContentMode: 'skeleton' | 'conversation' | 'start' | 'onboarding';
+  onChatContentModeChange: (mode: 'skeleton' | 'conversation' | 'start' | 'onboarding') => void;
   repositoryStatus: 'connected' | 'disconnected' | 'connect';
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
   repositoryName?: string | null;
@@ -113,6 +113,10 @@ interface ActiveChatScreenProps {
   automationContextTitle: string | null;
   onAutomationContextTitleChange: (title: string | null) => void;
   initialCanvasOpen?: boolean;
+  /** Top-left conversation label; empty when workspace is not set up (`?setup=none`). */
+  conversationHeaderTitle?: string;
+  /** Controls visibility of server status + conversation title row. */
+  initialConversationHeaderVisible?: boolean;
 }
 
 const DEFAULT_LEFT_PANEL_WIDTH = 42.8;
@@ -452,6 +456,8 @@ export function ActiveChatScreen({
   automationContextTitle,
   onAutomationContextTitleChange,
   initialCanvasOpen = true,
+  conversationHeaderTitle = 'Run Code Request',
+  initialConversationHeaderVisible = true,
 }: ActiveChatScreenProps) {
   const [leftPanelWidth, setLeftPanelWidth] = useState(DEFAULT_LEFT_PANEL_WIDTH);
   const splitRowRef = useRef<HTMLDivElement>(null);
@@ -462,6 +468,7 @@ export function ActiveChatScreen({
   const [activeTab, setActiveTab] = useState<TabId>('changes');
   /** When false, the right canvas column is hidden and chat uses full width. */
   const [canvasOpen, setCanvasOpen] = useState(initialCanvasOpen);
+  const [isConversationHeaderVisible, setIsConversationHeaderVisible] = useState(initialConversationHeaderVisible);
   const [pinnedTabs, setPinnedTabs] = useState<Record<TabId, boolean>>(() => ({ ...DEFAULT_PINNED }));
   /** Per-tab prototype: off = empty state, on = filled sample content (gear menu). */
   const [canvasTabFilled, setCanvasTabFilled] = useState<Record<TabId, boolean>>({
@@ -555,6 +562,16 @@ export function ActiveChatScreen({
   useEffect(() => {
     setCanvasOpen(initialCanvasOpen);
   }, [initialCanvasOpen]);
+
+  useEffect(() => {
+    setIsConversationHeaderVisible(initialConversationHeaderVisible);
+  }, [initialConversationHeaderVisible]);
+
+  useEffect(() => {
+    if (!canvasOpen) return;
+    if (pinnedTabs[activeTab]) return;
+    setCanvasOpen(false);
+  }, [activeTab, canvasOpen, pinnedTabs]);
 
   useEffect(() => {
     if (!isCanvasResizeDragging) return;
@@ -709,8 +726,10 @@ export function ActiveChatScreen({
     if (attachmentPreviewsEnabled) return;
     setComposerAttachments([]);
   }, [attachmentPreviewsEnabled]);
-  const conversationTitle = 'Run Code Request';
-  const openConversationCliCommand = `openhands --open-conversation "${conversationTitle}"`;
+  const conversationTitle = conversationHeaderTitle;
+  const conversationTitleForCli = conversationTitle.trim() || 'conversation';
+  const visibleConversationTitle = conversationTitle.trim() || 'New conversation';
+  const openConversationCliCommand = `openhands --open-conversation "${conversationTitleForCli}"`;
   const filteredCommands = useMemo(() => {
     const query = commandQuery.trim().toLowerCase();
     if (!query) return CHAT_COMMANDS;
@@ -916,6 +935,7 @@ export function ActiveChatScreen({
           ) : null}
           {/* Header row: server status + conversation name | Changes/Code/Terminal/App/Browser */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4.5 pt-2 lg:pt-0">
+            {isConversationHeaderVisible ? (
             <div className="flex items-center">
               <div className="group relative">
                 <button
@@ -951,9 +971,17 @@ export function ActiveChatScreen({
                 )}
               </div>
               <div className="flex items-center gap-2 h-[22px] text-base font-normal text-left pl-0 lg:pl-1" data-testid="conversation-name">
-                <div className="text-foreground leading-5 w-fit max-w-fit truncate" data-testid="conversation-name-title" title={conversationTitle}>
-                  {conversationTitle}
-                </div>
+                  {conversationTitle ? null : (
+                    <span className="sr-only">Workspace name not set</span>
+                  )}
+                  <div
+                    className="text-foreground leading-5 w-fit max-w-fit truncate min-h-[1.375rem]"
+                    data-testid="conversation-name-title"
+                    title={visibleConversationTitle}
+                    aria-label={conversationTitle ? undefined : 'Workspace not set up'}
+                  >
+                    {visibleConversationTitle}
+                  </div>
                 <span className="inline-flex h-5 w-5 items-center justify-center rounded text-xs font-semibold shrink-0 cursor-help lowercase bg-muted text-muted-foreground">
                   V1
                 </span>
@@ -1080,6 +1108,7 @@ export function ActiveChatScreen({
                 </DropdownMenu>
               </div>
             </div>
+            ) : null}
             <div className="relative w-full flex flex-row justify-start lg:justify-end items-center gap-1">
               {pinnedTabs.changes && (
                 <CanvasNavTooltip label={CANVAS_TAB_ARIA.changes}>
@@ -1202,46 +1231,35 @@ export function ActiveChatScreen({
                         key={id}
                         data-testid="context-menu-list-item"
                         className="cursor-pointer gap-2"
-                        onSelect={(event) => {
-                          // Radix often sets target to the menu item, not the click origin — use composedPath
-                          const native = (event as unknown as SyntheticEvent).nativeEvent as
-                            | (Event & { composedPath?: () => EventTarget[] })
-                            | undefined;
-                          const path =
-                            typeof native?.composedPath === 'function' ? native.composedPath() : [];
-                          const pinHit =
-                            path.some(
-                              (node) => node instanceof HTMLElement && node.hasAttribute('data-pin-toggle')
-                            ) ||
-                            (event.target as HTMLElement | null)?.closest?.('[data-pin-toggle]');
-                          if (pinHit) {
-                            event.preventDefault();
-                            togglePinned(id);
-                            return;
-                          }
+                        onSelect={() => {
                           handleCanvasTabClick(id);
                         }}
                       >
                         {icon}
                         <span className="flex-1 text-left">{label}</span>
-                        <span
+                        <button
+                          type="button"
                           data-pin-toggle
                           data-pinned={isPinned ? 'true' : 'false'}
                           className={cn(
                             'inline-flex shrink-0 rounded p-0.5 -m-0.5 hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                            isPinned &&
-                              'bg-primary/15 [&_svg]:text-primary group-hover:[&_svg]:!text-primary'
+                            isPinned ? '[&_svg]:text-white' : '[&_svg]:text-muted-foreground'
                           )}
                           aria-label={isPinned ? 'Pinned to toolbar — click to unpin' : 'Not pinned — click to pin to toolbar'}
                           aria-pressed={isPinned}
                           title={isPinned ? 'Pinned to toolbar (click to unpin)' : 'Not pinned (click to pin)'}
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            togglePinned(id);
+                          }}
                         >
-                          {isPinned ? (
-                            <PinOff className="h-4 w-4 shrink-0" aria-hidden />
-                          ) : (
-                            <Pin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                          )}
-                        </span>
+                          <Pin className="h-4 w-4 shrink-0" aria-hidden />
+                        </button>
                       </DropdownMenuItem>
                     );
                   })}
@@ -1581,6 +1599,38 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             </div>
                           </article>
                         </div>
+                        {chatContentMode === 'onboarding' && (
+                          <div
+                            className={cn(
+                              'absolute inset-0 flex flex-col gap-3 overflow-y-auto overflow-x-hidden scrollbar-on-hover transition-opacity duration-300 ease-out p-2',
+                              conversationLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            )}
+                            data-testid="chat-onboarding"
+                            aria-hidden={chatContentMode !== 'onboarding' || !conversationLoaded}
+                          >
+                            <div className="text-sm space-y-2 text-foreground">
+                              <p>
+                                Let&apos;s decide what to build first. I can set up either a reusable skill,
+                                an automation, or both.
+                              </p>
+                              <p className="font-medium">Skill ideas:</p>
+                              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                <li>PR review assistant with checklist + risky-files summary</li>
+                                <li>Release notes drafter grouped by features, fixes, and chores</li>
+                                <li>Design-to-code helper that extracts implementation steps</li>
+                              </ul>
+                              <p className="font-medium">Automation ideas:</p>
+                              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+                                <li>Nightly dependency audit that opens a thread on failures</li>
+                                <li>Weekly test-flake triage with owner suggestions</li>
+                                <li>Post-merge docs sync for README and changelog updates</li>
+                              </ul>
+                              <p>
+                                Pick one path and I will scaffold it end-to-end with defaults you can edit.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                         {chatContentMode === 'start' && <ChatStartScreen />}
                       </div>
                       <div className="flex flex-col gap-0 flex-shrink-0">
@@ -2380,6 +2430,36 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
           align="end"
           className="w-72 max-h-[min(28rem,75vh)] overflow-y-auto p-3 space-y-3"
         >
+          <div className="space-y-2 pb-1">
+            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">New conversation</div>
+            <button
+              type="button"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted/60"
+              onClick={() => navigateAppRoute(BLANK_NEW_CHAT_ROUTE)}
+            >
+              Blank chat — canvases closed, title unset
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Conversation Header</div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isConversationHeaderVisible}
+              onClick={() => setIsConversationHeaderVisible((prev) => !prev)}
+              className={cn(
+                'h-6 w-10 rounded-full border border-border flex items-center px-0.5 transition-colors',
+                isConversationHeaderVisible ? 'bg-foreground/80' : 'bg-muted/60'
+              )}
+            >
+              <span
+                className={cn(
+                  'h-4 w-4 rounded-full bg-background shadow transition-transform',
+                  isConversationHeaderVisible ? 'translate-x-4' : 'translate-x-0'
+                )}
+              />
+            </button>
+          </div>
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-medium text-foreground">Refresh Notification</div>
             <button
@@ -2508,7 +2588,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   aria-label="Chat content"
                 >
                   <span className="capitalize whitespace-nowrap">
-                    {chatContentMode === 'skeleton' ? 'Loading skeleton' : chatContentMode === 'start' ? 'Start screen' : 'Example content'}
+                    {chatContentMode === 'skeleton'
+                      ? 'Loading skeleton'
+                      : chatContentMode === 'start'
+                        ? 'Start screen'
+                        : chatContentMode === 'onboarding'
+                          ? 'Onboarding sample'
+                          : 'Example content'}
                   </span>
                   <ChevronDown className="h-3 w-3 opacity-60" />
                 </button>
@@ -2516,13 +2602,14 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
                 {[
                   { id: 'conversation', label: 'Example content' },
+                  { id: 'onboarding', label: 'Onboarding sample' },
                   { id: 'skeleton', label: 'Loading skeleton' },
                   { id: 'start', label: 'Start screen' },
                 ].map((option) => (
                   <DropdownMenuItem
                     key={option.id}
                     className="cursor-pointer"
-                    onSelect={() => onChatContentModeChange(option.id as 'skeleton' | 'conversation' | 'start')}
+                    onSelect={() => onChatContentModeChange(option.id as 'skeleton' | 'conversation' | 'start' | 'onboarding')}
                   >
                     {option.label}
                   </DropdownMenuItem>

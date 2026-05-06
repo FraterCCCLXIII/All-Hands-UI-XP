@@ -27,7 +27,6 @@ import {
   Monitor,
   MoreVertical,
   Newspaper,
-  ClipboardCheck,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -54,8 +53,6 @@ import { cn } from '../../lib/utils';
 import { getAccountPopoverNavSections } from '../../config/settingsWorkspaceNav';
 import { accountWorkspaceOptions, isOrgAdminOrOwner } from '../../config/accountWorkspaces';
 import { type ConversationSummary } from '../../data/conversations';
-import { useOnboardingNav } from '../../contexts/OnboardingNavContext';
-
 /** True when the browser path is the given Settings tab (including secrets sub-routes). */
 function isSettingsTabPathActive(pathname: string, tabId: string) {
   if (!pathname.startsWith('/settings')) return false;
@@ -172,7 +169,6 @@ function AutomationsIcon({ className, spinOuter = false }: { className?: string;
 }
 
 const navItems = [
-  { icon: ClipboardCheck, label: 'Onboarding', action: 'onboarding' },
   { icon: Plus, label: 'New', action: 'new-project' },
   { icon: AutomationsIcon, label: 'Automations', action: 'automations' },
   { icon: Boxes, label: 'Extensions', action: 'extensions' },
@@ -717,11 +713,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onWidthChange,
 }) => {
   const location = useLocation();
-  const { onboardingNavVisible } = useOnboardingNav();
-  const visibleNavItems = useMemo(
-    () => navItems.filter((item) => onboardingNavVisible || item.action !== 'onboarding'),
-    [onboardingNavVisible],
-  );
+  const isBlankNewChatRoute = useMemo(() => {
+    if (location.pathname !== '/chat') return false;
+    return new URLSearchParams(location.search).get('setup') === 'none';
+  }, [location.pathname, location.search]);
   const selectedWorkspace =
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
   const gitOrganizationWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'org');
@@ -841,6 +836,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
     const isActive =
       item.action === 'new-project'
         ? activeNavItem === 'new-project' ||
+          (activeNavItem === 'code' && isBlankNewChatRoute) ||
           ((activeNavItem === 'code' ||
             activeNavItem === 'chat-start' ||
             activeNavItem === 'new-chat-start' ||
@@ -996,7 +992,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       >
         <div className={cn('flex min-h-0 flex-col', isExpanded ? 'px-3' : 'px-1')}>
           <div className="flex flex-col gap-1">
-          {visibleNavItems.map(renderNavButton)}
+          {navItems.map(renderNavButton)}
           </div>
           <div className={cn('flex flex-col gap-1', !isExpanded && 'mt-1')}>
             {workspaceNavItems.map(renderNavButton)}

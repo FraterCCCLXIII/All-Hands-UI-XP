@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { UxFlowSparkleMenu } from './components/chat/UxFlowSparkleMenu';
 import { ChatArea } from './components/chat/ChatArea';
 import { StartNewConversationDialog } from './components/chat/StartNewConversationDialog';
 import { Canvas } from './components/canvas/Canvas';
@@ -60,6 +61,7 @@ import {
   registerAppNavigate,
   routeToPath,
 } from './lib/captureNavigation';
+import { BLANK_NEW_CHAT_ROUTE, BLANK_NEW_CHAT_SEARCH, freshBlankNewChatRoute } from './lib/blankNewChatRoute';
 import { usePageTransitions } from './contexts/PageTransitionsContext';
 import { tryNormalizeExtensionsPath } from './lib/extensionsRoutes';
 import { themeAppClassMap as themeClasses } from './theme/themeAppClassMap';
@@ -96,7 +98,7 @@ const actionSlugs: Record<string, string> = {
 const slugToAction = Object.fromEntries(Object.entries(actionSlugs).map(([action, slug]) => [slug, action]));
 
 /** Default shell when opening the app or returning from overlays (pathname segment). */
-const DEFAULT_HOME_SLUG = actionSlugs['chat-start'];
+const DEFAULT_HOME_SLUG = actionSlugs.code;
 
 /**
  * Collapse nested in-app routes so the outer shell slide does not re-run when only the
@@ -159,7 +161,7 @@ function App() {
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [canvasTipVariant, setCanvasTipVariant] = useState<CanvasTipVariant>('none');
   const [showCanvasLoading, setShowCanvasLoading] = useState(true);
-  const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start'>('conversation');
+  const [chatContentMode, setChatContentMode] = useState<'skeleton' | 'conversation' | 'start' | 'onboarding'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
   const [activeChatRepositoryName, setActiveChatRepositoryName] = useState<string | null>(null);
   const [activeChatBranchName, setActiveChatBranchName] = useState<string | null>(null);
@@ -171,9 +173,17 @@ function App() {
     () => new URLSearchParams(location.search).get('canvas') !== 'closed',
     [location.search]
   );
-  const [activeNavItem, setActiveNavItem] = useState('chat-start');
+  const activeChatConversationTitle = useMemo(() => {
+    const p = new URLSearchParams(location.search);
+    return p.get('setup') === 'none' ? '' : 'Run Code Request';
+  }, [location.search]);
+  const activeChatConversationHeaderVisible = useMemo(() => {
+    const p = new URLSearchParams(location.search);
+    return p.get('setup') !== 'none';
+  }, [location.search]);
+  const [activeNavItem, setActiveNavItem] = useState('code');
   const [isRunning, setIsRunning] = useState(false);
-  const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(true);
+  const [isWelcomeScreenActive, setIsWelcomeScreenActive] = useState(false);
   const [isLeftNavExpanded, setIsLeftNavExpanded] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.localStorage.getItem(LEFT_NAV_EXPANDED_STORAGE_KEY) === 'true';
@@ -182,7 +192,7 @@ function App() {
   const [isConversationDrawerOpen, setIsConversationDrawerOpen] = useState(false);
   const [isStartConversationDialogOpen, setIsStartConversationDialogOpen] = useState(false);
   const [activeChatWindowTab, setActiveChatWindowTab] = useState<ChatWindowTabId>('preview');
-  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('chat-start');
+  const [lastNonDrawerNavItem, setLastNonDrawerNavItem] = useState('code');
   const [isEnterpriseCtaVisible, setIsEnterpriseCtaVisible] = useState(true);
   // Canvas resizing state
   const [canvasWidth, setCanvasWidth] = useState(50); // Default to 50% width
@@ -484,10 +494,24 @@ function App() {
       if (action === 'new-project') {
         setActiveFlowPrototype(null);
         setIsConversationDrawerOpen(false);
-        setActiveNavItem('chat-start');
-        setLastNonDrawerNavItem('chat-start');
-        setIsWelcomeScreenActive(true);
-        navigateAppRoute(`/${actionSlugs['chat-start']}`);
+        setActiveNavItem('code');
+        setLastNonDrawerNavItem('code');
+        setIsWelcomeScreenActive(false);
+        setIsActiveChatView(true);
+        const nextRoute = freshBlankNewChatRoute();
+        const nextUrl = new URL(nextRoute, window.location.origin);
+        navigate({ pathname: nextUrl.pathname, search: nextUrl.search });
+        return;
+      }
+      if (action === 'blank-new-chat') {
+        setActiveFlowPrototype(null);
+        setIsConversationDrawerOpen(false);
+        setActiveNavItem('code');
+        setLastNonDrawerNavItem('code');
+        setIsWelcomeScreenActive(false);
+        setIsActiveChatView(true);
+        const blankUrl = new URL(BLANK_NEW_CHAT_ROUTE, window.location.origin);
+        navigate({ pathname: blankUrl.pathname, search: blankUrl.search });
         return;
       }
       if (action.startsWith('settings/')) {
@@ -607,7 +631,7 @@ function App() {
       return;
     }
     if (pathname === 'chat-cards' || legacyHash === 'chat-cards') {
-      navigate({ pathname: '/chat-start', search }, { replace: true });
+      navigate({ pathname: '/chat', search: BLANK_NEW_CHAT_SEARCH }, { replace: true });
       return;
     }
     const route = normalizedCaptureRoute ? normalizedCaptureRoute : pathname || legacyHash;
@@ -624,12 +648,12 @@ function App() {
       setFigmaExportRoute(null);
       setActiveFlowPrototype(null);
       setIsActiveChatView(false);
-      setActiveNavItem('chat-start');
-      setLastNonDrawerNavItem('chat-start');
+      setActiveNavItem('code');
+      setLastNonDrawerNavItem('code');
       setIsConversationDrawerOpen(false);
       setSettingsTab(null);
-      setIsWelcomeScreenActive(true);
-      navigate({ pathname: '/chat-start', search }, { replace: true });
+      setIsWelcomeScreenActive(false);
+      navigate({ pathname: '/chat', search: BLANK_NEW_CHAT_SEARCH }, { replace: true });
       return;
     }
     if (hash === 'figma' || hash.startsWith('figma/')) {
@@ -771,7 +795,7 @@ function App() {
       setSettingsTab(null);
       return;
     }
-    const action = slugToAction[hash] ?? 'chat-start';
+    const action = slugToAction[hash] ?? 'code';
     setActiveNavItem(action);
     setLastNonDrawerNavItem(action);
     setIsConversationDrawerOpen(drawerShouldBeOpen);
@@ -866,7 +890,9 @@ function App() {
                 isHomeRoute={
                   location.pathname === '/chat-start' ||
                   location.pathname === '/' ||
-                  location.pathname === '/new-chat-start'
+                  location.pathname === '/new-chat-start' ||
+                  location.pathname === '/chat' ||
+                  location.pathname === '/old-chat-start'
                 }
                 conversations={drawerConversations}
                 activeConversationId={activeConversationId}
@@ -973,8 +999,21 @@ function App() {
                       automationContextTitle={activeChatAutomationTitle}
                       onAutomationContextTitleChange={setActiveChatAutomationTitle}
                       initialCanvasOpen={chatCanvasDefaultOpen}
+                      conversationHeaderTitle={activeChatConversationTitle}
+                      initialConversationHeaderVisible={activeChatConversationHeaderVisible}
                     />
                   </div>
+                )}
+                {showMainApp && isActiveChatView && !isEmbedded && (
+                  <UxFlowSparkleMenu
+                    uxTourLinks={uxTourLinks}
+                    onStartUxTour={uxTourController.startTour}
+                    isUxFlowMenuOpen={isUxFlowMenuOpen}
+                    onUxFlowMenuOpenChange={setIsUxFlowMenuOpen}
+                    onPrototypeNavItemClick={handleNavItemClick}
+                    isInspectorEnabled={isInspectorEnabled}
+                    onInspectorToggle={() => setIsInspectorEnabled((prev) => !prev)}
+                  />
                 )}
                 <AnimatePresence>
                   {!activeFlowPrototype && showClaimCreditsPrompt && (
@@ -1099,6 +1138,7 @@ function App() {
                           location.pathname === '/chat-start' ||
                           location.pathname === '/' ||
                           location.pathname === '/new-chat-start' ||
+                          location.pathname === '/chat' ||
                           location.pathname === '/old-chat-start'
                         }
                       activeChatWindowTab={activeChatWindowTab}
