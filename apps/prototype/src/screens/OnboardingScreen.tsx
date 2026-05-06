@@ -2,12 +2,15 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Bot,
+  CalendarClock,
   Check,
+  ChevronRight,
   Cpu,
   Github,
   MessageSquarePlus,
   Play,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 
 import { cn } from '../lib/utils';
@@ -22,6 +25,15 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 
+type OnboardingPreset = {
+  id: string;
+  title: string;
+  description: string;
+  trigger: 'schedule' | 'event';
+  triggerLabel: string;
+  target?: string;
+};
+
 type OnboardingModule = {
   id: string;
   title: string;
@@ -32,6 +44,8 @@ type OnboardingModule = {
     type: 'route' | 'external' | 'start-conversation';
     target?: string;
   };
+  hidePrimaryAction?: boolean;
+  presets?: OnboardingPreset[];
 };
 
 const onboardingModules: OnboardingModule[] = [
@@ -99,6 +113,33 @@ const onboardingModules: OnboardingModule[] = [
       type: 'route',
       target: '/automations',
     },
+    hidePrimaryAction: true,
+    presets: [
+      {
+        id: 'pr-triage-digest',
+        title: 'PR Triage Digest',
+        description: 'Summarize new pull requests and flag risky changes every weekday morning.',
+        trigger: 'schedule',
+        triggerLabel: 'Weekdays at 9:00 AM',
+        target: '/automations',
+      },
+      {
+        id: 'nightly-security-pass',
+        title: 'Nightly Security Pass',
+        description: 'Run a repository scan and create a remediation summary for critical findings.',
+        trigger: 'schedule',
+        triggerLabel: 'Daily at 1:30 AM UTC',
+        target: '/automations',
+      },
+      {
+        id: 'docs-sync-on-push',
+        title: 'Docs Sync on Push',
+        description: 'Watch the docs repository and prepare a changelog-ready summary when pushes land.',
+        trigger: 'event',
+        triggerLabel: 'On push to main',
+        target: '/automations',
+      },
+    ],
   },
 ];
 
@@ -110,7 +151,7 @@ export function OnboardingScreen({ onStartConversationClick }: OnboardingScreenP
   const location = useLocation();
   const [activeModuleId, setActiveModuleId] = useState(onboardingModules[0]?.id ?? 'welcome');
   const [completedModuleIds, setCompletedModuleIds] = useState(
-    () => new Set(onboardingModules.filter((module) => module.status === 'done').map((module) => module.id))
+    () => new Set(onboardingModules[0] ? [onboardingModules[0].id] : [])
   );
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
 
@@ -144,6 +185,12 @@ export function OnboardingScreen({ onStartConversationClick }: OnboardingScreenP
 
     if (primaryAction.type === 'start-conversation') {
       onStartConversationClick?.();
+    }
+  };
+
+  const handlePresetClick = (preset: OnboardingPreset) => {
+    if (preset.target) {
+      navigateAppRoute(preset.target);
     }
   };
 
@@ -220,14 +267,45 @@ export function OnboardingScreen({ onStartConversationClick }: OnboardingScreenP
                     <div className="min-w-0 flex-1">
                       <h2 className="text-lg font-semibold text-foreground">{module.title}</h2>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{module.description}</p>
+                      {module.presets && module.presets.length > 0 ? (
+                        <ul className="mt-5 flex flex-col gap-2" aria-label={`${module.title} presets`}>
+                          {module.presets.map((preset) => {
+                            const TriggerIcon = preset.trigger === 'schedule' ? CalendarClock : Zap;
+                            return (
+                              <li key={preset.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => handlePresetClick(preset)}
+                                  className="group flex w-full items-start gap-3 rounded-md border border-border bg-muted/30 px-4 py-3 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                                >
+                                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                                    <span className="truncate text-sm font-medium text-foreground">{preset.title}</span>
+                                    <span className="text-xs leading-5 text-muted-foreground">{preset.description}</span>
+                                    <span className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-background/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                      <TriggerIcon className="h-3 w-3 shrink-0" aria-hidden />
+                                      <span className="truncate">{preset.triggerLabel}</span>
+                                    </span>
+                                  </div>
+                                  <ChevronRight
+                                    className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
+                                    aria-hidden
+                                  />
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      ) : null}
                       <div className="mt-5 flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handlePrimaryAction(module)}
-                          className="inline-flex h-9 items-center justify-center rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                        >
-                          {module.primaryAction.label}
-                        </button>
+                        {module.hidePrimaryAction ? null : (
+                          <button
+                            type="button"
+                            onClick={() => handlePrimaryAction(module)}
+                            className="inline-flex h-9 items-center justify-center rounded-md bg-white px-4 text-sm font-medium text-black transition-colors hover:bg-white/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          >
+                            {module.primaryAction.label}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleMarkComplete(module.id)}

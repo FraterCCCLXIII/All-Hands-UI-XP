@@ -113,7 +113,6 @@ export function LogoDropdownContent({ onNavToNewUserExperience, onEnterpriseLear
       {/* Right: Enterprise sidebar */}
       <div className="flex w-80 shrink-0 flex-col">
         <div className="relative flex min-h-[280px] h-full flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-6 shadow-lg backdrop-blur-xl supports-[backdrop-filter]:bg-card/50">
-          <div className="pointer-events-none absolute inset-0 h-full min-h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
           <div className="relative z-10 flex w-full flex-1 flex-col items-start justify-end gap-4 text-left">
             <Server className="w-10 h-10 text-muted-foreground" aria-hidden />
             <h2 className="text-xl font-semibold text-foreground">Enterprise</h2>

@@ -46,6 +46,7 @@ import {
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
+import { ConnectBackendModal } from '../components/common/ConnectBackendModal';
 import { PrototypeControlsFab } from '../components/common/PrototypeControlsFab';
 import { showAppToast } from '../lib/appToast';
 import {
@@ -63,6 +64,7 @@ import { PluginToggle } from '../components/ui/plugin-toggle';
 import { SearchInput } from '../components/ui/search-input';
 import { cn } from '../lib/utils';
 import { usePageTransitions } from '../contexts/PageTransitionsContext';
+import { useOnboardingNav } from '../contexts/OnboardingNavContext';
 import { AddHookModal, AddMcpServerModal, mcpServerTypeLabel } from './extensions/extensionsCatalogAddModals';
 import {
   ACCOUNT_NAV,
@@ -358,6 +360,7 @@ type BackendServerRow = {
   kind: BackendServerKind;
   url: string;
   apiKeyPreview: string;
+  color: string;
 };
 
 const initialOpenHandsApiKeys: OpenHandsApiKeyRow[] = [
@@ -366,9 +369,9 @@ const initialOpenHandsApiKeys: OpenHandsApiKeyRow[] = [
 ];
 
 const initialBackendServers: BackendServerRow[] = [
-  { id: 'local', nickname: 'Local', kind: 'local', url: 'http://localhost:3000', apiKeyPreview: 'Not required' },
-  { id: 'hetzner', nickname: 'Hetzner', kind: 'cloud', url: 'https://hetzner.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
-  { id: 'aws', nickname: 'AWS', kind: 'cloud', url: 'https://aws.openhands.example.com', apiKeyPreview: '••••••••••••••••' },
+  { id: 'local', nickname: 'Local', kind: 'local', url: 'http://localhost:3000', apiKeyPreview: 'Not required', color: '#64748b' },
+  { id: 'hetzner', nickname: 'Hetzner', kind: 'cloud', url: 'https://hetzner.openhands.example.com', apiKeyPreview: '••••••••••••••••', color: '#3b82f6' },
+  { id: 'aws', nickname: 'AWS', kind: 'cloud', url: 'https://aws.openhands.example.com', apiKeyPreview: '••••••••••••••••', color: '#f59e0b' },
 ];
 
 /** Demo-only: generate a one-time display secret for the “API Key Created” modal. */
@@ -450,7 +453,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteInput, setInviteInput] = useState('');
   const [inviteEmails, setInviteEmails] = useState<string[]>([]);
-  const [createOrgModalOpen, setCreateOrgModalOpen] = useState(false);
   const [gitSourceStatus, setGitSourceStatus] = useState<Record<GitSourceId, GitConnectionStatus>>(
     initialGitSourceStatus,
   );
@@ -481,10 +483,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
   const [backendServers, setBackendServers] = useState<BackendServerRow[]>(initialBackendServers);
   const [backendServerDialogOpen, setBackendServerDialogOpen] = useState(false);
   const [backendServerEditingId, setBackendServerEditingId] = useState<string | null>(null);
-  const [backendServerNickname, setBackendServerNickname] = useState('');
-  const [backendServerKind, setBackendServerKind] = useState<BackendServerKind>('cloud');
-  const [backendServerUrl, setBackendServerUrl] = useState('');
-  const [backendServerApiKey, setBackendServerApiKey] = useState('');
   /** Demo: unlocked after adding ≥$10 on Billing, or via prototype FAB (API Keys). */
   const [hasOpenHandsLlmKeyAccess, setHasOpenHandsLlmKeyAccess] = useState(false);
   /** Demo: Organization → Git Conversation Routing shows empty state (prototype FAB). */
@@ -831,59 +829,69 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
     setPluginRepoInput('');
   };
 
-  const resetBackendServerForm = () => {
-    setBackendServerEditingId(null);
-    setBackendServerNickname('');
-    setBackendServerKind('cloud');
-    setBackendServerUrl('');
-    setBackendServerApiKey('');
-  };
+  const editingBackendServer = backendServerEditingId
+    ? backendServers.find((server) => server.id === backendServerEditingId) ?? null
+    : null;
 
   const handleOpenBackendServerDialog = (server?: BackendServerRow) => {
-    if (server) {
-      setBackendServerEditingId(server.id);
-      setBackendServerNickname(server.nickname);
-      setBackendServerKind(server.kind);
-      setBackendServerUrl(server.url);
-      setBackendServerApiKey('');
-    } else {
-      resetBackendServerForm();
-    }
-
+    setBackendServerEditingId(server?.id ?? null);
     setBackendServerDialogOpen(true);
   };
 
-  const handleSaveBackendServer = () => {
-    const nickname = backendServerNickname.trim();
-    const url = backendServerUrl.trim();
+  const handleBackendServerDialogOpenChange = (open: boolean) => {
+    setBackendServerDialogOpen(open);
+    if (!open) {
+      setBackendServerEditingId(null);
+    }
+  };
 
+  const handleSaveBackendServer = ({
+    nickname,
+    url,
+    apiKey,
+    color,
+  }: {
+    nickname: string;
+    url: string;
+    apiKey: string;
+    color: string;
+  }) => {
     if (!nickname || !url) {
       return;
     }
 
-    const existingServer = backendServerEditingId
-      ? backendServers.find((server) => server.id === backendServerEditingId)
-      : null;
-    const nextServer: BackendServerRow = {
-      id: backendServerEditingId ?? `backend-server-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-      nickname,
-      kind: backendServerKind,
-      url,
-      apiKeyPreview:
-        backendServerKind === 'local'
-          ? 'Not required'
-          : backendServerApiKey.trim()
-            ? '••••••••••••••••'
-            : existingServer?.apiKeyPreview ?? '••••••••••••••••',
-    };
+    if (editingBackendServer) {
+      setBackendServers((prev) =>
+        prev.map((server) =>
+          server.id === editingBackendServer.id
+            ? {
+                ...server,
+                nickname,
+                url,
+                color,
+                apiKeyPreview:
+                  server.kind === 'local'
+                    ? 'Not required'
+                    : apiKey
+                      ? '••••••••••••••••'
+                      : server.apiKeyPreview,
+              }
+            : server,
+        ),
+      );
+    } else {
+      const nextServer: BackendServerRow = {
+        id: `backend-server-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        nickname,
+        kind: 'cloud',
+        url,
+        color,
+        apiKeyPreview: '••••••••••••••••',
+      };
+      setBackendServers((prev) => [nextServer, ...prev]);
+    }
 
-    setBackendServers((prev) =>
-      backendServerEditingId
-        ? prev.map((server) => (server.id === backendServerEditingId ? { ...server, ...nextServer } : server))
-        : [nextServer, ...prev]
-    );
-    setBackendServerDialogOpen(false);
-    resetBackendServerForm();
+    setBackendServerEditingId(null);
   };
 
   const chatGPTConnectSection = (
@@ -904,6 +912,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
   const prefersReducedMotion = useReducedMotion();
   const { pageTransitionsEnabled, setPageTransitionsEnabled } = usePageTransitions();
+  const { onboardingNavVisible, setOnboardingNavVisible } = useOnboardingNav();
   const settingsContentMotionActive = pageTransitionsEnabled && !prefersReducedMotion;
 
   /** Route-derived state only — avoids a second key flip when `initialTab` catches up after mount (which caused double transitions). */
@@ -1063,7 +1072,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
               <div className="flex flex-col gap-1">
                 {filterNav(PERSONAL_WORKSPACE_TOP_NAV).map(renderNavButton)}
                 {filterNav(INTEGRATIONS_AND_SKILLS_NAV).map(renderNavButton)}
-                {filterNav(BACKEND_SERVER_NAV).map(renderNavButton)}
               </div>
               <div className="border-t border-border" />
               <div className="flex flex-col gap-1">
@@ -1074,16 +1082,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           {selectedOrg?.type === 'personal' ? (
             <>
               <div className="border-t border-border" />
-              <button
-                type="button"
-                onClick={() => setCreateOrgModalOpen(true)}
-                className="group flex h-9 items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-muted/60"
-              >
-                <Plus className="h-5 w-5 shrink-0 text-muted-foreground group-hover:text-white" aria-hidden />
-                <span className="text-sm font-normal text-muted-foreground group-hover:text-white">
-                  Create New Organization
-                </span>
-              </button>
+              <div className="flex flex-col gap-1">
+                {filterNav(BACKEND_SERVER_NAV).map(renderNavButton)}
+              </div>
             </>
           ) : null}
         </div>
@@ -1487,6 +1488,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                       </span>
                       <p className="text-xs leading-relaxed text-muted-foreground max-w-md">
                         Slide animations when switching views. Turn off for instant navigation.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    className="flex gap-3"
+                    role="group"
+                    aria-labelledby="settings-onboarding-nav-label"
+                  >
+                    <PluginToggle
+                      checked={onboardingNavVisible}
+                      onCheckedChange={setOnboardingNavVisible}
+                      aria-label="Show Onboarding in left navigation"
+                      className="mt-0.5 shrink-0"
+                    />
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <span
+                        id="settings-onboarding-nav-label"
+                        className="text-sm leading-snug text-foreground"
+                      >
+                        Show Onboarding in left navigation
+                      </span>
+                      <p className="text-xs leading-relaxed text-muted-foreground max-w-md">
+                        Display the Onboarding shortcut in the sidebar. Turn off to hide it once you're set up.
                       </p>
                     </div>
                   </div>
@@ -2325,98 +2350,21 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
                   </div>
                 </div>
 
-                <Dialog
+                <ConnectBackendModal
                   open={backendServerDialogOpen}
-                  onOpenChange={(open) => {
-                    setBackendServerDialogOpen(open);
-                    if (!open) resetBackendServerForm();
-                  }}
-                >
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>{backendServerEditingId ? 'Edit backend server' : 'Add backend server'}</DialogTitle>
-                      <DialogDescription>
-                        Add the connection details used by the environment selector.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-1">
-                      <div>
-                        <label htmlFor="backend-server-nickname" className="mb-1.5 block text-sm font-medium text-foreground">
-                          Nickname
-                        </label>
-                        <Input
-                          id="backend-server-nickname"
-                          type="text"
-                          value={backendServerNickname}
-                          onChange={(event) => setBackendServerNickname(event.target.value)}
-                          placeholder="Production"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="backend-server-kind" className="mb-1.5 block text-sm font-medium text-foreground">
-                          Environment
-                        </label>
-                        <select
-                          id="backend-server-kind"
-                          value={backendServerKind}
-                          onChange={(event) => setBackendServerKind(event.target.value as BackendServerKind)}
-                          className="flex h-10 w-full rounded-md border border-border bg-muted/40 px-3 py-2 text-base text-foreground ring-offset-background transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 md:text-sm"
-                        >
-                          <option value="local">Local</option>
-                          <option value="cloud">Cloud</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label htmlFor="backend-server-url" className="mb-1.5 block text-sm font-medium text-foreground">
-                          Backend URL
-                        </label>
-                        <Input
-                          id="backend-server-url"
-                          type="text"
-                          value={backendServerUrl}
-                          onChange={(event) => setBackendServerUrl(event.target.value)}
-                          placeholder="https://your-instance.example.com"
-                          autoComplete="off"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="backend-server-api-key" className="mb-1.5 block text-sm font-medium text-foreground">
-                          API Key
-                        </label>
-                        <Input
-                          id="backend-server-api-key"
-                          type="password"
-                          value={backendServerApiKey}
-                          onChange={(event) => setBackendServerApiKey(event.target.value)}
-                          placeholder={backendServerEditingId ? 'Leave blank to keep existing key' : 'Enter your API key...'}
-                          autoComplete="off"
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setBackendServerDialogOpen(false);
-                          resetBackendServerForm();
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={!backendServerNickname.trim() || !backendServerUrl.trim()}
-                        onClick={handleSaveBackendServer}
-                      >
-                        {backendServerEditingId ? 'Save changes' : 'Add server'}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                  onOpenChange={handleBackendServerDialogOpenChange}
+                  mode={editingBackendServer ? 'edit' : 'create'}
+                  initialValues={
+                    editingBackendServer
+                      ? {
+                          nickname: editingBackendServer.nickname,
+                          url: editingBackendServer.url,
+                          color: editingBackendServer.color,
+                        }
+                      : undefined
+                  }
+                  onSubmit={handleSaveBackendServer}
+                />
               </div>
             </div>
           )}
@@ -3336,86 +3284,6 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           className="h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/85 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           Send Invites
-        </button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-  <Dialog open={createOrgModalOpen} onOpenChange={setCreateOrgModalOpen}>
-    <DialogContent className="sm:max-w-xl border border-border text-foreground">
-      <DialogHeader>
-        <div className="flex justify-start pb-4">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="96"
-            height="96"
-            viewBox="0 0 188 188"
-            fill="none"
-            aria-hidden="true"
-          >
-            <rect width="188" height="188" rx="16" fill="#2b2b2b" />
-            <path d="M94 36.2002L144 65.0595V122.778L94 151.637L44 122.778V65.0595L94 36.2002Z" fill="#2b2b2b" />
-            <path
-              d="M144 65.0595L94 36.2002L44 65.0595M144 65.0595V122.778L94 151.637M144 65.0595L135.195 70.1417M94 151.637L44 122.778V65.0595M94 151.637V139.295M44 65.0595L52.805 70.1417M94 93.9188L83.5605 87.8933M94 93.9188L104.44 87.8933M94 93.9188V104.809M94 47.4535L52.805 70.1417M94 47.4535L135.195 70.1417M94 47.4535V59.0698M52.805 70.1417V116.425M135.195 70.1417V116.425M94 59.0698L62.7722 75.8946M94 59.0698L125.228 75.8946M62.7722 75.8946L73.121 81.8677M62.7722 75.8946V110.254M125.228 75.8946L114.879 81.8677M125.228 75.8946V110.254M94 70.1417L73.121 81.8677M94 70.1417L114.879 81.8677M94 70.1417V82.0302M73.121 81.8677V104.809M114.879 81.8677V104.809M94 82.0302L83.5605 87.8933M94 82.0302L104.44 87.8933M83.5605 87.8933V98.4565M104.44 87.8933V98.4565M94 139.295L135.195 116.425M94 139.295L52.805 116.425M135.195 116.425L125.228 110.254M94 127.497L125.228 110.254M94 127.497V116.425M94 127.497L62.7722 110.254M94 116.425L114.879 104.809M94 116.425L73.121 104.809M114.879 104.809L104.44 98.4565M73.121 104.809L83.5605 98.4565M62.7722 110.254L52.805 116.425M83.5605 98.4565L94 104.809M104.44 98.4565L94 104.809"
-              stroke="#ffffff"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-        <DialogTitle className="text-xl font-semibold leading-6 text-foreground">
-          Enterprise control meets open-source innovation
-        </DialogTitle>
-        <DialogDescription className="text-sm text-muted-foreground mb-12">
-          OpenHands Enterprise gives you the power of autonomous coding agents with the governance,
-          security, and compliance your organization demands.
-        </DialogDescription>
-        <div className="h-3" aria-hidden="true" />
-        <div className="rounded-lg border border-border bg-muted/20 p-4 mb-3">
-          <div className="grid gap-3 text-sm text-muted-foreground">
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <span>Containerized sandbox runtime for safe autonomy</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <span>Secure enterprise platform with fine-grained access control</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <span>Self-host or private-cloud deployment</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <span>
-                Bring your own LLM via Anthropic, OpenAI, Bedrock, or any other model provider
-              </span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <span>Integrations with enterprise ecosystems</span>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="mt-0.5 h-4 w-4 text-muted-foreground" />
-              <span>Dedicated technical and account-level support</span>
-            </div>
-          </div>
-        </div>
-      </DialogHeader>
-      <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-start sm:space-x-2">
-        <a
-          href="https://openhands.dev/contact"
-          target="_blank"
-          rel="noreferrer noopener"
-          className="h-9 inline-flex items-center justify-center px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/85 transition-colors"
-        >
-          Contact Sales
-        </a>
-        <button
-          type="button"
-          onClick={() => setCreateOrgModalOpen(false)}
-          className="h-9 px-4 rounded-md border border-border text-sm font-medium text-foreground hover:bg-muted/60 transition-colors"
-        >
-          Close
         </button>
       </DialogFooter>
     </DialogContent>

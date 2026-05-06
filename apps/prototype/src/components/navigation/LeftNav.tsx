@@ -22,7 +22,6 @@ import {
   Settings,
   GitBranch,
   LayoutDashboard,
-  LogOut,
   Megaphone,
   MessageCircle,
   Monitor,
@@ -37,21 +36,11 @@ import {
   SquareKanban,
   Star,
   Trash2,
-  User,
   UserPlus,
   Users,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+import { ConnectBackendModal } from '../common/ConnectBackendModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,11 +50,11 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Theme, ThemeElement } from '../../types/theme';
-import { EnterpriseCtaCard } from '../common/EnterpriseCtaCard';
 import { cn } from '../../lib/utils';
 import { getAccountPopoverNavSections } from '../../config/settingsWorkspaceNav';
 import { accountWorkspaceOptions, isOrgAdminOrOwner } from '../../config/accountWorkspaces';
 import { type ConversationSummary } from '../../data/conversations';
+import { useOnboardingNav } from '../../contexts/OnboardingNavContext';
 
 /** True when the browser path is the given Settings tab (including secrets sub-routes). */
 function isSettingsTabPathActive(pathname: string, tabId: string) {
@@ -135,12 +124,13 @@ type BackendOption = {
   id: string;
   label: string;
   kind: 'local' | 'cloud';
+  color: string;
 };
 
 const defaultBackendOptions: BackendOption[] = [
-  { id: 'local', label: 'Local', kind: 'local' },
-  { id: 'hetzner', label: 'Hetzner', kind: 'cloud' },
-  { id: 'aws', label: 'AWS', kind: 'cloud' },
+  { id: 'local', label: 'Local', kind: 'local', color: '#64748b' },
+  { id: 'hetzner', label: 'Hetzner', kind: 'cloud', color: '#3b82f6' },
+  { id: 'aws', label: 'AWS', kind: 'cloud', color: '#f59e0b' },
 ];
 
 function AutomationsIcon({ className, spinOuter = false }: { className?: string; spinOuter?: boolean }) {
@@ -714,7 +704,6 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onExpandChange,
   onNavItemClick,
   activeNavItem,
-  onEnterpriseLearnMoreClick,
   onStartConversationClick,
   activeWorkspaceId = 'personal',
   onActiveWorkspaceChange,
@@ -728,9 +717,13 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   onWidthChange,
 }) => {
   const location = useLocation();
+  const { onboardingNavVisible } = useOnboardingNav();
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => onboardingNavVisible || item.action !== 'onboarding'),
+    [onboardingNavVisible],
+  );
   const selectedWorkspace =
     accountWorkspaceOptions.find((o) => o.id === activeWorkspaceId) ?? accountWorkspaceOptions[0];
-  const personalWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'personal');
   const gitOrganizationWorkspaces = accountWorkspaceOptions.filter((o) => o.type === 'org');
 
   const accountNavSections = useMemo(
@@ -750,7 +743,6 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       ? [{ icon: LayoutDashboard, label: 'Admin dashboard', action: 'org-admin-dashboard' }]
       : []),
   ];
-  const orgInitial = selectedWorkspace.name.trim().charAt(0).toUpperCase() || '?';
   const [isLogoPopoverOpen, setIsLogoPopoverOpen] = useState(false);
   const [isCollapsedRailHovered, setIsCollapsedRailHovered] = useState(false);
   const [isMiddleNavScrolled, setIsMiddleNavScrolled] = useState(false);
@@ -758,24 +750,39 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   const [backendOptions, setBackendOptions] = useState<BackendOption[]>(defaultBackendOptions);
   const [selectedBackendId, setSelectedBackendId] = useState(isOrgAccount ? 'hetzner' : 'local');
   const [connectBackendOpen, setConnectBackendOpen] = useState(false);
-  const [newBackendNickname, setNewBackendNickname] = useState('');
-  const [newBackendUrl, setNewBackendUrl] = useState('');
-  const [newBackendApiKey, setNewBackendApiKey] = useState('');
   const logoPopoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navResizePointerIdRef = useRef<number | null>(null);
   const selectedBackend = backendOptions.find((backend) => backend.id === selectedBackendId) ?? backendOptions[0]!;
   const SelectedBackendIcon = selectedBackend.kind === 'cloud' ? Cloud : Monitor;
+  const selectedOrg = selectedWorkspace.type === 'org' ? selectedWorkspace : null;
+  const isOrgEnvironmentSelected = selectedOrg !== null;
+  const EnvironmentIcon = isOrgEnvironmentSelected ? Building2 : SelectedBackendIcon;
+  const selectedEnvironmentLabel = selectedOrg ? selectedOrg.name : selectedBackend.label;
+  const selectedEnvironmentInitial = selectedEnvironmentLabel.trim().charAt(0).toUpperCase() || '?';
+  const selectedEnvironmentColor = selectedBackend.color;
+  const showEnvironmentBadge = isOrgEnvironmentSelected || selectedBackend.id !== 'local';
 
-  const handleConnectBackend = () => {
-    const nickname = newBackendNickname.trim();
-    const url = newBackendUrl.trim();
-
-    if (!nickname || !url) {
-      return;
+  const handleSelectBackend = (backendId: string) => {
+    setSelectedBackendId(backendId);
+    if (selectedWorkspace.type === 'org') {
+      onActiveWorkspaceChange?.('personal');
     }
+  };
 
+  const handleSelectOrg = (orgId: string) => {
+    onActiveWorkspaceChange?.(orgId);
+    if (selectedBackend.kind !== 'cloud') {
+      const preferredCloudBackend =
+        backendOptions.find((backend) => backend.id === 'hetzner') ??
+        backendOptions.find((backend) => backend.kind === 'cloud');
+      if (preferredCloudBackend) {
+        setSelectedBackendId(preferredCloudBackend.id);
+      }
+    }
+  };
+
+  const handleConnectBackend = ({ nickname, url, color }: { nickname: string; url: string; color: string }) => {
     let hostname = 'Custom Cloud';
-
     try {
       hostname = new URL(url).hostname || hostname;
     } catch {
@@ -786,14 +793,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       id: `custom-${Date.now()}`,
       label: nickname || hostname,
       kind: 'cloud',
+      color,
     };
 
     setBackendOptions((prev) => [...prev, nextBackend]);
     setSelectedBackendId(nextBackend.id);
-    setNewBackendNickname('');
-    setNewBackendUrl('');
-    setNewBackendApiKey('');
-    setConnectBackendOpen(false);
   };
 
   const isInteractiveSidebarTarget = (target: EventTarget | null) => {
@@ -992,7 +996,7 @@ export const LeftNav: React.FC<LeftNavProps> = ({
       >
         <div className={cn('flex min-h-0 flex-col', isExpanded ? 'px-3' : 'px-1')}>
           <div className="flex flex-col gap-1">
-          {navItems.map(renderNavButton)}
+          {visibleNavItems.map(renderNavButton)}
           </div>
           <div className={cn('flex flex-col gap-1', !isExpanded && 'mt-1')}>
             {workspaceNavItems.map(renderNavButton)}
@@ -1012,72 +1016,187 @@ export const LeftNav: React.FC<LeftNavProps> = ({
         className={cn(
           'mt-auto space-y-2',
           isExpanded
-            ? '-mx-3 border-t border-sidebar-border px-5 pt-3'
+            ? '-mx-3 border-t border-sidebar-border px-4 pt-3'
             : 'flex flex-col items-center px-0'
         )}
       >
         <Popover>
           {isExpanded ? (
-            <div className="flex h-10 w-full items-center gap-2">
+            <div className="flex h-10 w-full min-w-0 items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="group flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-3 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+                    aria-label={`Select environment, current selection is ${selectedEnvironmentLabel}`}
+                  >
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
+                      <EnvironmentIcon className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
+                      <span className="truncate">{selectedEnvironmentLabel}</span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="z-[100] w-[var(--radix-dropdown-menu-trigger-width)] border-border bg-sidebar text-sidebar-foreground"
+                >
+                  {backendOptions.map((backend) => (
+                    <DropdownMenuItem
+                      key={backend.id}
+                      className="cursor-pointer text-sidebar-foreground"
+                      onClick={() => handleSelectBackend(backend.id)}
+                    >
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
+                        {backend.kind === 'cloud' ? (
+                          <Cloud className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Monitor className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        )}
+                        <span className="truncate">{backend.label}</span>
+                      </span>
+                      {!isOrgEnvironmentSelected && selectedBackend.id === backend.id ? (
+                        <Check className="h-4 w-4 shrink-0" aria-hidden />
+                      ) : null}
+                    </DropdownMenuItem>
+                  ))}
+                  {gitOrganizationWorkspaces.length > 0 ? (
+                    gitOrganizationWorkspaces.map((org) => (
+                      <DropdownMenuItem
+                        key={org.id}
+                        className="cursor-pointer text-sidebar-foreground"
+                        onClick={() => handleSelectOrg(org.id)}
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2">
+                          <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          <span className="truncate">{org.name}</span>
+                        </span>
+                        {isOrgEnvironmentSelected && selectedWorkspace.id === org.id ? (
+                          <Check className="h-4 w-4 shrink-0" aria-hidden />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div
+                      data-testid="left-nav-orgs-empty"
+                      className="mx-1 mb-1 rounded-md border border-border bg-muted/20 px-3 py-2.5 text-center text-sm text-muted-foreground"
+                    >
+                      No git organizations found
+                    </div>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2 text-sidebar-foreground"
+                    onClick={() => setConnectBackendOpen(true)}
+                  >
+                    <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                    Connect New
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2 text-sidebar-foreground"
+                    onClick={() => onNavItemClick('settings/backend-server')}
+                  >
+                    <Settings className="h-4 w-4 shrink-0" aria-hidden />
+                    Configure
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="relative flex h-9 min-w-0 flex-1 shrink-0 items-center gap-3 rounded-lg px-3 text-left text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  aria-label={`Open account menu, ${selectedWorkspace.name}`}
+                  className="inline-flex h-10 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  aria-label="Open account settings"
                 >
-                  <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar-accent text-sidebar-foreground">
-                    {isOrgAccount ? (
-                      <Building2 className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <User className="h-4 w-4" aria-hidden="true" />
-                    )}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{selectedWorkspace.name}</span>
+                  <Settings className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </PopoverTrigger>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-1">
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/60 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  aria-label="Open account settings"
+                >
+                  <Settings className="h-4 w-4" aria-hidden="true" />
                 </button>
               </PopoverTrigger>
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="inline-flex h-8 shrink-0 items-center justify-end rounded-md border border-sidebar-border bg-muted/20 px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/40 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    aria-label={`Select backend, current backend is ${selectedBackend.label}`}
+                    className={cn(
+                      'relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-border bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
+                    )}
+                    style={showEnvironmentBadge ? { borderColor: selectedEnvironmentColor } : undefined}
+                    aria-label={`Select environment, current selection is ${selectedEnvironmentLabel}`}
                   >
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <SelectedBackendIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      <span className="truncate">{selectedBackend.label}</span>
-                    </span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <EnvironmentIcon className="h-4 w-4" aria-hidden="true" />
+                    {showEnvironmentBadge && (
+                      <span
+                        className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full shadow-sm"
+                        style={{ backgroundColor: selectedEnvironmentColor }}
+                        aria-hidden
+                      >
+                        <span className="text-[8px] font-semibold leading-none text-white">
+                          {selectedEnvironmentInitial}
+                        </span>
+                      </span>
+                    )}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  side="right"
-                  align="end"
+                  align="start"
+                  side="top"
                   sideOffset={8}
                   className="z-[100] w-64 border-border bg-sidebar text-sidebar-foreground"
                 >
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">Backend</DropdownMenuLabel>
                   {backendOptions.map((backend) => (
                     <DropdownMenuItem
                       key={backend.id}
                       className="cursor-pointer text-sidebar-foreground"
-                      onClick={() => setSelectedBackendId(backend.id)}
+                      onClick={() => handleSelectBackend(backend.id)}
                     >
-                      <span className="flex min-w-0 flex-1 flex-col">
-                        <span className="inline-flex min-w-0 items-center gap-2">
-                          {backend.kind === 'cloud' ? (
-                            <Cloud className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                          ) : (
-                            <Monitor className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                          )}
-                          <span className="truncate">{backend.label}</span>
-                        </span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
                         {backend.kind === 'cloud' ? (
-                          <span className="ml-6 mt-0.5 text-xs text-muted-foreground">Cloud</span>
-                        ) : null}
+                          <Cloud className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        ) : (
+                          <Monitor className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        )}
+                        <span className="truncate">{backend.label}</span>
                       </span>
-                      {selectedBackend.id === backend.id ? <Check className="h-4 w-4 shrink-0" aria-hidden /> : null}
+                      {!isOrgEnvironmentSelected && selectedBackend.id === backend.id ? (
+                        <Check className="h-4 w-4 shrink-0" aria-hidden />
+                      ) : null}
                     </DropdownMenuItem>
                   ))}
+                  {gitOrganizationWorkspaces.length > 0 ? (
+                    gitOrganizationWorkspaces.map((org) => (
+                      <DropdownMenuItem
+                        key={org.id}
+                        className="cursor-pointer text-sidebar-foreground"
+                        onClick={() => handleSelectOrg(org.id)}
+                      >
+                        <span className="flex min-w-0 flex-1 items-center gap-2">
+                          <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          <span className="truncate">{org.name}</span>
+                        </span>
+                        {isOrgEnvironmentSelected && selectedWorkspace.id === org.id ? (
+                          <Check className="h-4 w-4 shrink-0" aria-hidden />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <div
+                      data-testid="left-nav-orgs-empty-collapsed"
+                      className="mx-1 mb-1 rounded-md border border-border bg-muted/20 px-3 py-2.5 text-center text-sm text-muted-foreground"
+                    >
+                      No git organizations found
+                    </div>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="cursor-pointer gap-2 text-sidebar-foreground"
@@ -1096,35 +1215,14 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-          ) : (
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className={cn(
-                  'relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-sidebar-accent text-sidebar-foreground transition-colors hover:bg-sidebar-accent/80',
-                  isOrgAccount && 'ring-2 ring-white'
-                )}
-                aria-label={`Open account menu, ${selectedWorkspace.name}`}
-              >
-                <User className="h-4 w-4" aria-hidden="true" />
-                {isOrgAccount && (
-                  <span
-                    className="pointer-events-none absolute -left-1.5 -top-1.5 z-10 flex h-[15px] w-[15px] items-center justify-center rounded-full bg-foreground shadow-sm"
-                    aria-hidden
-                  >
-                    <span className="text-[8px] font-semibold leading-none text-black">{orgInitial}</span>
-                  </span>
-                )}
-              </button>
-            </PopoverTrigger>
           )}
           <PopoverContent
-            side="right"
+            side="top"
             align="start"
             sideOffset={8}
             showScrollbar={false}
             hugContent
-            className="max-w-[calc(100vw-2rem)] bg-sidebar p-6 text-sidebar-foreground max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border -translate-y-12"
+            className="max-w-[calc(100vw-2rem)] bg-sidebar p-4 text-sidebar-foreground max-h-[min(90dvh,calc(100dvh-2rem))] overflow-y-auto rounded-xl border border-border"
           >
             <div
               className={cn(
@@ -1136,80 +1234,6 @@ export const LeftNav: React.FC<LeftNavProps> = ({
             >
               {/* Left column: Account menu */}
               <div className="flex w-min min-w-[220px] flex-col">
-                <div className="text-lg font-semibold mb-4">Account</div>
-
-                {/* Workspace selector — same dropdown pattern as Settings org selector */}
-                <div className="mb-3">
-                  <DropdownMenu modal={false}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="group flex h-10 w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/20 px-4 text-left text-sm text-sidebar-foreground transition-colors hover:bg-muted/60"
-                        aria-label="Select workspace"
-                      >
-                        <span className="flex min-w-0 flex-1 items-center gap-2">
-                          {selectedWorkspace.type === 'org' ? (
-                            <Building2 className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                          ) : (
-                            <User className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                          )}
-                          <span className="truncate">{selectedWorkspace.name}</span>
-                          {selectedWorkspace.role ? (
-                            <span className="ml-auto shrink-0 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                              {selectedWorkspace.role}
-                            </span>
-                          ) : null}
-                        </span>
-                        <ChevronDown className="h-4 w-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="start"
-                      className="z-[100] w-[var(--radix-dropdown-menu-trigger-width)] border-border bg-sidebar text-sidebar-foreground"
-                    >
-                      {personalWorkspaces.map((org) => (
-                        <DropdownMenuItem
-                          key={org.id}
-                          className="cursor-pointer text-sidebar-foreground"
-                          onClick={() => onActiveWorkspaceChange?.(org.id)}
-                        >
-                          <span className="flex w-full items-center gap-2">
-                            <User className="h-4 w-4 shrink-0" />
-                            <span>{org.name}</span>
-                          </span>
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                      {gitOrganizationWorkspaces.length > 0 ? (
-                        gitOrganizationWorkspaces.map((org) => (
-                          <DropdownMenuItem
-                            key={org.id}
-                            className="cursor-pointer text-sidebar-foreground"
-                            onClick={() => onActiveWorkspaceChange?.(org.id)}
-                          >
-                            <span className="flex w-full items-center gap-2">
-                              <Building2 className="h-4 w-4 shrink-0" />
-                              <span>{org.name}</span>
-                              {org.role ? (
-                                <span className="ml-auto rounded-full border border-border bg-muted/40 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                  {org.role}
-                                </span>
-                              ) : null}
-                            </span>
-                          </DropdownMenuItem>
-                        ))
-                      ) : (
-                        <div
-                          data-testid="git-organizations-empty"
-                          className="mx-1 mb-1 rounded-md border border-border bg-muted/20 px-3 py-2.5 text-center text-sm text-muted-foreground"
-                        >
-                          No git organizations found
-                        </div>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
                 <div className="flex min-h-0 flex-col">
                   {accountNavSections.map((section, sectionIndex) => (
                     <React.Fragment key={`${section.label ?? 'nav'}-${sectionIndex}`}>
@@ -1268,90 +1292,19 @@ export const LeftNav: React.FC<LeftNavProps> = ({
                       <BookOpen className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
                       Documentation
                     </a>
-                    <button type="button" className="group inline-flex items-center gap-2 text-xs text-sidebar-foreground hover:text-white hover:bg-muted/60 w-full rounded-md px-3 py-1.5 transition-colors">
-                      <LogOut className="w-4 h-4 shrink-0 !text-muted-foreground transition-colors group-hover:!text-white" />
-                      Log Out
-                    </button>
                   </div>
                 </div>
               </div>
 
-              {/* Enterprise CTA — personal workspace only (hidden on org accounts) */}
-              {selectedWorkspace.type === 'personal' ? (
-                <div className="flex h-full min-h-0 w-max max-w-[min(20rem,calc(100vw-3rem))] flex-col">
-                  <EnterpriseCtaCard
-                    showIcon
-                    className="pointer-events-auto h-full min-h-0 rounded-lg"
-                    onLearnMoreClick={onEnterpriseLearnMoreClick}
-                  />
-                </div>
-              ) : null}
             </div>
           </PopoverContent>
         </Popover>
       </div>
-      <Dialog open={connectBackendOpen} onOpenChange={setConnectBackendOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connect a new backend</DialogTitle>
-            <DialogDescription>
-              Add a local or self-hosted OpenHands backend by URL and API key.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="new-backend-nickname" className="text-sm font-medium text-foreground">
-                Nickname
-              </label>
-              <Input
-                id="new-backend-nickname"
-                type="text"
-                value={newBackendNickname}
-                onChange={(event) => setNewBackendNickname(event.target.value)}
-                placeholder="Production"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="new-backend-url" className="text-sm font-medium text-foreground">
-                Backend URL
-              </label>
-              <Input
-                id="new-backend-url"
-                type="text"
-                value={newBackendUrl}
-                onChange={(event) => setNewBackendUrl(event.target.value)}
-                placeholder="https://your-instance.example.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="new-backend-api-key" className="text-sm font-medium text-foreground">
-                API Key
-              </label>
-              <Input
-                id="new-backend-api-key"
-                type="password"
-                value={newBackendApiKey}
-                onChange={(event) => setNewBackendApiKey(event.target.value)}
-                placeholder="Enter your API key..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setConnectBackendOpen(false);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleConnectBackend} disabled={!newBackendNickname.trim() || !newBackendUrl.trim()}>
-              Connect
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConnectBackendModal
+        open={connectBackendOpen}
+        onOpenChange={setConnectBackendOpen}
+        onSubmit={handleConnectBackend}
+      />
       {isExpanded ? (
         <div
           role="separator"

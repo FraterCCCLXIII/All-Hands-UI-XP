@@ -45,9 +45,6 @@ export function EnterpriseCtaCard({
         className
       )}
     >
-      {!staticLayout && (
-        <div className="pointer-events-none absolute inset-0 h-full min-h-full w-full bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_55%)]" />
-      )}
       {onDismiss && (
         <button
           type="button"

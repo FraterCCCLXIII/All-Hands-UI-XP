@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Check, ChevronLeft } from 'lucide-react';
+import { Check, ChevronLeft, Loader2, Settings } from 'lucide-react';
 
 import { Logo } from '../components/common/Logo';
 import { Button } from '../components/ui/button';
@@ -8,7 +8,15 @@ import { cn } from '../lib/utils';
 
 type NewNuxStep = 'agent-provider' | 'llm-key';
 
-type AgentProviderId = 'openhands' | 'claude-code' | 'codex' | 'custom';
+type AgentProviderId = 'openhands' | 'claude-code' | 'codex';
+
+type LocalProviderState = 'connecting' | 'connected' | 'not-found';
+
+const localProviderStateOptions: { id: LocalProviderState; label: string }[] = [
+  { id: 'connecting', label: 'Connecting' },
+  { id: 'connected', label: 'Connected' },
+  { id: 'not-found', label: 'Not found' },
+];
 
 interface NewNuxFlowProps {
   onBack?: () => void;
@@ -39,41 +47,17 @@ const agentProviders: {
     title: 'Codex',
     description: 'Use your Codex setup for agent execution.',
   },
-  {
-    id: 'custom',
-    title: 'Custom LLM',
-    description: 'Use your own LLM provider configuration.',
-  },
 ];
-
-const customLlmProviderOptions = [
-  { id: 'openai', label: 'OpenAI compatible' },
-  { id: 'anthropic', label: 'Anthropic' },
-  { id: 'google', label: 'Google Gemini' },
-  { id: 'azure-openai', label: 'Azure OpenAI' },
-  { id: 'openrouter', label: 'OpenRouter' },
-  { id: 'ollama', label: 'Ollama (local)' },
-  { id: 'lm-studio', label: 'LM Studio (local)' },
-  { id: 'litellm', label: 'LiteLLM proxy' },
-  { id: 'groq', label: 'Groq' },
-  { id: 'mistral', label: 'Mistral' },
-  { id: 'other', label: 'Other' },
-] as const;
 
 export function NewNuxFlow({ onBack, onComplete }: NewNuxFlowProps) {
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [agentProvider, setAgentProvider] = useState<AgentProviderId>('openhands');
   const [llmKey, setLlmKey] = useState('');
-  const [customLlmProvider, setCustomLlmProvider] = useState<(typeof customLlmProviderOptions)[number]['id'] | ''>('');
-  const [customLlmBaseUrl, setCustomLlmBaseUrl] = useState('');
-  const [customLlmApiKey, setCustomLlmApiKey] = useState('');
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
-  const [providerConnected, setProviderConnected] = useState(false);
-  const [showMagicLinkSetupHelp, setShowMagicLinkSetupHelp] = useState(false);
+  const [localProviderState, setLocalProviderState] = useState<LocalProviderState>('connecting');
+  const [showScenarioMenu, setShowScenarioMenu] = useState(false);
   const llmKeyRequired = agentProvider === 'openhands';
-  const customLlmKeyRequired = agentProvider === 'custom';
-  const magicLinkRequired = agentProvider === 'claude-code' || agentProvider === 'codex';
-  const hasSetupStep = llmKeyRequired || customLlmKeyRequired || magicLinkRequired;
+  const localProviderRequired = agentProvider === 'claude-code' || agentProvider === 'codex';
+  const hasSetupStep = llmKeyRequired || localProviderRequired;
   const steps: { id: NewNuxStep; label: string }[] = hasSetupStep
     ? [baseSteps[0], { id: 'llm-key', label: llmKeyRequired ? 'LLM Key' : 'Setup' }]
     : baseSteps;
@@ -83,21 +67,16 @@ export function NewNuxFlow({ onBack, onComplete }: NewNuxFlowProps) {
   const isLastStep = activeStepIndex === steps.length - 1;
   const isStepComplete =
     activeStep !== 'llm-key' ||
-    (llmKeyRequired
-      ? llmKey.trim().length > 0
-      : customLlmKeyRequired
-        ? customLlmProvider.length > 0 && customLlmBaseUrl.trim().length > 0 && customLlmApiKey.trim().length > 0
-        : providerConnected);
-  const magicLinkProviderLabel = agentProvider === 'claude-code' ? 'Claude Code' : 'Codex';
+    (llmKeyRequired ? llmKey.trim().length > 0 : localProviderState === 'connected');
+  const localProviderLabel = agentProvider === 'claude-code' ? 'Claude Code' : 'Codex';
+  const showScenarioToggle = localProviderRequired && activeStep === 'llm-key';
 
   useEffect(() => {
     setActiveStepIndex((current) => Math.min(current, steps.length - 1));
   }, [steps.length]);
 
   useEffect(() => {
-    setMagicLinkSent(false);
-    setProviderConnected(false);
-    setShowMagicLinkSetupHelp(false);
+    setShowScenarioMenu(false);
   }, [agentProvider]);
 
   const handleNext = () => {
@@ -186,18 +165,11 @@ export function NewNuxFlow({ onBack, onComplete }: NewNuxFlowProps) {
                         Paste the API key OpenHands should use for model requests. You can update this later in settings.
                       </p>
                     </>
-                  ) : customLlmKeyRequired ? (
-                    <>
-                      <h2 className="text-xl font-semibold text-foreground">Configure your custom LLM</h2>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Select a provider, then add a base URL and API key. This supports local and remote endpoints.
-                      </p>
-                    </>
                   ) : (
                     <>
-                      <h2 className="text-xl font-semibold text-foreground">Connect {magicLinkProviderLabel}</h2>
+                      <h2 className="text-xl font-semibold text-foreground">Connect {localProviderLabel}</h2>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Confirm access with a magic link, then continue when your account is connected.
+                        OpenHands will detect {localProviderLabel} once it&rsquo;s running on your machine.
                       </p>
                     </>
                   )}
@@ -216,105 +188,31 @@ export function NewNuxFlow({ onBack, onComplete }: NewNuxFlowProps) {
                       autoComplete="off"
                     />
                   </div>
-                ) : customLlmKeyRequired ? (
-                  <div className="grid gap-4">
-                    <div>
-                      <label htmlFor="new-nux-custom-llm-provider" className="mb-1.5 block text-sm font-medium text-foreground">
-                        Provider
-                      </label>
-                      <select
-                        id="new-nux-custom-llm-provider"
-                        className="h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        value={customLlmProvider}
-                        onChange={(event) => setCustomLlmProvider(event.target.value)}
-                      >
-                        <option value="">Select a provider</option>
-                        {customLlmProviderOptions.map((provider) => (
-                          <option key={provider.id} value={provider.id}>
-                            {provider.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="new-nux-custom-llm-base-url" className="mb-1.5 block text-sm font-medium text-foreground">
-                        Base URL
-                      </label>
-                      <Input
-                        id="new-nux-custom-llm-base-url"
-                        value={customLlmBaseUrl}
-                        onChange={(event) => setCustomLlmBaseUrl(event.target.value)}
-                        placeholder="https://api.openai.com/v1 or http://localhost:11434/v1"
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="new-nux-custom-llm-key" className="mb-1.5 block text-sm font-medium text-foreground">
-                        API Key
-                      </label>
-                      <Input
-                        id="new-nux-custom-llm-key"
-                        type="password"
-                        value={customLlmApiKey}
-                        onChange={(event) => setCustomLlmApiKey(event.target.value)}
-                        placeholder="Enter API key"
-                        autoComplete="off"
-                      />
-                    </div>
+                ) : localProviderState === 'connected' ? (
+                  <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-background/40 p-6 text-center">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full border border-white">
+                      <Check className="h-5 w-5 text-white" aria-hidden />
+                    </span>
+                    <p className="text-sm font-medium text-foreground">
+                      {localProviderLabel} is connected and ready to use with OpenHands.
+                    </p>
+                  </div>
+                ) : localProviderState === 'connecting' ? (
+                  <div className="flex flex-col items-center gap-3 rounded-lg border border-border bg-background/40 p-6 text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" aria-hidden />
+                    <p className="text-sm text-muted-foreground">
+                      Detecting {localProviderLabel} on your machine&hellip;
+                    </p>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
-                    <div className="rounded-lg border border-border bg-background/40 p-4">
-                      <p className="text-sm text-foreground">
-                        {providerConnected
-                          ? `${magicLinkProviderLabel} is connected.`
-                          : magicLinkSent
-                            ? 'Magic link sent. Open it to approve this connection, then return here.'
-                            : `Send a magic link to connect your ${magicLinkProviderLabel} account.`}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {!providerConnected ? (
-                          <Button
-                            type="button"
-                            variant={magicLinkSent ? 'outline' : 'default'}
-                            onClick={() => setMagicLinkSent(true)}
-                          >
-                            {magicLinkSent ? 'Resend magic link' : 'Send magic link'}
-                          </Button>
-                        ) : null}
-                        {magicLinkSent && !providerConnected ? (
-                          <Button type="button" variant="outline" onClick={() => setProviderConnected(true)}>
-                            I connected my account
-                          </Button>
-                        ) : null}
-                        {providerConnected ? (
-                          <Button type="button" variant="outline" onClick={() => setProviderConnected(false)}>
-                            Disconnect
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {!providerConnected ? (
-                      <div className="rounded-lg border border-border bg-background/40 p-4">
-                        <button
-                          type="button"
-                          className="text-sm font-medium text-foreground underline-offset-2 hover:underline"
-                          onClick={() => setShowMagicLinkSetupHelp((current) => !current)}
-                        >
-                          {showMagicLinkSetupHelp
-                            ? `Hide ${magicLinkProviderLabel} setup help`
-                            : `${magicLinkProviderLabel} not set up yet?`}
-                        </button>
-                        {showMagicLinkSetupHelp ? (
-                          <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                            <p>1. Install and sign in to {magicLinkProviderLabel}.</p>
-                            <p>2. Return here and send the magic link.</p>
-                            <p>3. Approve the link, then click &ldquo;I connected my account&rdquo;.</p>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : null}
+                  <div className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 p-6 text-center">
+                    <p className="text-sm font-medium text-foreground">
+                      Activate {localProviderLabel} locally to make it available to OpenHands.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Install and sign in to {localProviderLabel} on this machine. OpenHands will detect it
+                      automatically once it&rsquo;s running.
+                    </p>
                   </div>
                 )}
               </div>
@@ -331,6 +229,47 @@ export function NewNuxFlow({ onBack, onComplete }: NewNuxFlowProps) {
           </section>
         </div>
       </div>
+
+      {showScenarioToggle ? (
+        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end">
+          {showScenarioMenu ? (
+            <div
+              role="menu"
+              className="mb-2 flex min-w-[10rem] flex-col gap-0.5 rounded-md border border-border bg-popover p-1 text-popover-foreground shadow-md"
+            >
+              {localProviderStateOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={localProviderState === option.id}
+                  className={cn(
+                    'rounded-sm px-3 py-1.5 text-left text-xs transition-colors',
+                    localProviderState === option.id
+                      ? 'bg-muted text-foreground'
+                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                  )}
+                  onClick={() => {
+                    setLocalProviderState(option.id);
+                    setShowScenarioMenu(false);
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            aria-label="Toggle prototype scenario"
+            aria-expanded={showScenarioMenu}
+            onClick={() => setShowScenarioMenu((current) => !current)}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:bg-muted/60 hover:text-foreground"
+          >
+            <Settings className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
