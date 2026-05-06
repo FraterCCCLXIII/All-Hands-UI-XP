@@ -247,7 +247,7 @@ export function OnboardingScreen({ onStartConversationClick }: OnboardingScreenP
       </main>
 
       <Dialog open={isWelcomeModalOpen} onOpenChange={handleWelcomeModalOpenChange}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>Welcome to OpenHands</DialogTitle>
             <DialogDescription>

@@ -263,6 +263,12 @@ function WorkflowCanvas({
 }: WorkflowCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(workflow.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(workflow.edges);
+  const handleFlowInit = useCallback((instance: { fitView: (options?: { padding?: number; maxZoom?: number }) => void }) => {
+    // Ensure the full graph is visible on first paint.
+    requestAnimationFrame(() => {
+      instance.fitView({ padding: 0.3, maxZoom: 0.6 });
+    });
+  }, []);
 
   useEffect(() => {
     onUpdate(workflow.id, nodes, edges);
@@ -278,6 +284,7 @@ function WorkflowCanvas({
       proOptions={{ hideAttribution: true }}
       nodes={nodes}
       edges={edges}
+      onInit={handleFlowInit}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onNodeClick={onNodeClick}
