@@ -568,12 +568,6 @@ export function ActiveChatScreen({
   }, [initialConversationHeaderVisible]);
 
   useEffect(() => {
-    if (!canvasOpen) return;
-    if (pinnedTabs[activeTab]) return;
-    setCanvasOpen(false);
-  }, [activeTab, canvasOpen, pinnedTabs]);
-
-  useEffect(() => {
     if (!isCanvasResizeDragging) return;
     const prevUserSelect = document.body.style.userSelect;
     document.body.style.userSelect = 'none';
@@ -1110,7 +1104,7 @@ export function ActiveChatScreen({
             </div>
             ) : null}
             <div className="relative w-full flex flex-row justify-start lg:justify-end items-center gap-1">
-              {pinnedTabs.changes && (
+              {(pinnedTabs.changes || (canvasOpen && activeTab === 'changes')) && (
                 <CanvasNavTooltip label={CANVAS_TAB_ARIA.changes}>
                   <span data-aria-label="Changes">
                     <button
@@ -1136,7 +1130,7 @@ export function ActiveChatScreen({
                   </span>
                 </CanvasNavTooltip>
               )}
-              {pinnedTabs.code && (
+              {(pinnedTabs.code || (canvasOpen && activeTab === 'code')) && (
                 <CanvasNavTooltip label={CANVAS_TAB_ARIA.code} externalRepoUrl={CODE_EXTERNAL_REPO_URL}>
                   <TabButton
                     label="Code"
@@ -1147,7 +1141,7 @@ export function ActiveChatScreen({
                   />
                 </CanvasNavTooltip>
               )}
-              {pinnedTabs.terminal && (
+              {(pinnedTabs.terminal || (canvasOpen && activeTab === 'terminal')) && (
                 <span data-aria-label="Terminal (read-only)">
                   <TabButton
                     label="Terminal"
@@ -1159,7 +1153,7 @@ export function ActiveChatScreen({
                   />
                 </span>
               )}
-              {pinnedTabs.app && (
+              {(pinnedTabs.app || (canvasOpen && activeTab === 'app')) && (
                 <TabButton
                   label="App"
                   active={activeTab === 'app' && canvasOpen}
@@ -1169,7 +1163,7 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.app}
                 />
               )}
-              {pinnedTabs.browser && (
+              {(pinnedTabs.browser || (canvasOpen && activeTab === 'browser')) && (
                 <TabButton
                   label="Browser"
                   active={activeTab === 'browser' && canvasOpen}
@@ -1179,7 +1173,7 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.browser}
                 />
               )}
-              {pinnedTabs.planner && (
+              {(pinnedTabs.planner || (canvasOpen && activeTab === 'planner')) && (
                 <TabButton
                   label="Planner"
                   active={activeTab === 'planner' && canvasOpen}
@@ -1189,7 +1183,7 @@ export function ActiveChatScreen({
                   tooltip={CANVAS_TAB_ARIA.planner}
                 />
               )}
-              {pinnedTabs.tasks && (
+              {(pinnedTabs.tasks || (canvasOpen && activeTab === 'tasks')) && (
                 <TabButton
                   label="Tasks"
                   active={activeTab === 'tasks' && canvasOpen}
@@ -1230,7 +1224,7 @@ export function ActiveChatScreen({
                       <DropdownMenuItem
                         key={id}
                         data-testid="context-menu-list-item"
-                        className="cursor-pointer gap-2"
+                        className="cursor-pointer gap-2 data-[highlighted]:[&_[data-pin-toggle][data-pinned='false']_svg]:!text-muted-foreground data-[highlighted]:[&_[data-pin-toggle][data-pinned='false']:hover_svg]:!text-white data-[highlighted]:[&_[data-pin-toggle][data-pinned='false']:focus-visible_svg]:!text-white data-[highlighted]:[&_[data-pin-toggle][data-pinned='true']:hover_svg]:!text-muted-foreground data-[highlighted]:[&_[data-pin-toggle][data-pinned='true']:focus-visible_svg]:!text-muted-foreground"
                         onSelect={() => {
                           handleCanvasTabClick(id);
                         }}
@@ -1243,7 +1237,9 @@ export function ActiveChatScreen({
                           data-pinned={isPinned ? 'true' : 'false'}
                           className={cn(
                             'inline-flex shrink-0 rounded p-0.5 -m-0.5 hover:bg-muted/60 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-                            isPinned ? '[&_svg]:text-white' : '[&_svg]:text-muted-foreground'
+                            isPinned
+                              ? '[&_svg]:!text-white hover:[&_svg]:!text-muted-foreground focus-visible:[&_svg]:!text-muted-foreground'
+                              : '[&_svg]:!text-muted-foreground hover:[&_svg]:!text-white focus-visible:[&_svg]:!text-white'
                           )}
                           aria-label={isPinned ? 'Pinned to toolbar — click to unpin' : 'Not pinned — click to pin to toolbar'}
                           aria-pressed={isPinned}
