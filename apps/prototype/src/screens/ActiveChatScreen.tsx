@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode, SyntheticEvent } from 'react';
 import {
   Loader2,
   ArrowUp,
@@ -522,6 +522,7 @@ export function ActiveChatScreen({
   const [isCopied, setIsCopied] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
+  const pinToggleInteractionRef = useRef(false);
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const showCanvasTip = canvasTipVariant !== 'none';
@@ -1225,7 +1226,23 @@ export function ActiveChatScreen({
                         key={id}
                         data-testid="context-menu-list-item"
                         className="cursor-pointer gap-2 data-[highlighted]:[&_[data-pin-toggle][data-pinned='false']_svg]:!text-muted-foreground data-[highlighted]:[&_[data-pin-toggle][data-pinned='false']:hover_svg]:!text-white data-[highlighted]:[&_[data-pin-toggle][data-pinned='false']:focus-visible_svg]:!text-white data-[highlighted]:[&_[data-pin-toggle][data-pinned='true']:hover_svg]:!text-muted-foreground data-[highlighted]:[&_[data-pin-toggle][data-pinned='true']:focus-visible_svg]:!text-muted-foreground"
-                        onSelect={() => {
+                        onSelect={(event) => {
+                          if (pinToggleInteractionRef.current) {
+                            pinToggleInteractionRef.current = false;
+                            event.preventDefault();
+                            return;
+                          }
+                          const native = (event as unknown as SyntheticEvent).nativeEvent as
+                            | (Event & { composedPath?: () => EventTarget[] })
+                            | undefined;
+                          const path = typeof native?.composedPath === 'function' ? native.composedPath() : [];
+                          const pinHit =
+                            path.some((node) => node instanceof HTMLElement && node.hasAttribute('data-pin-toggle')) ||
+                            (event.target as HTMLElement | null)?.closest?.('[data-pin-toggle]');
+                          if (pinHit) {
+                            event.preventDefault();
+                            return;
+                          }
                           handleCanvasTabClick(id);
                         }}
                       >
@@ -1245,13 +1262,18 @@ export function ActiveChatScreen({
                           aria-pressed={isPinned}
                           title={isPinned ? 'Pinned to toolbar (click to unpin)' : 'Not pinned (click to pin)'}
                           onPointerDown={(event) => {
+                            pinToggleInteractionRef.current = true;
                             event.preventDefault();
                             event.stopPropagation();
                           }}
                           onClick={(event) => {
+                            pinToggleInteractionRef.current = true;
                             event.preventDefault();
                             event.stopPropagation();
                             togglePinned(id);
+                          }}
+                          onKeyDown={() => {
+                            pinToggleInteractionRef.current = true;
                           }}
                         >
                           <Pin className="h-4 w-4 shrink-0" aria-hidden />
@@ -1286,7 +1308,7 @@ export function ActiveChatScreen({
                 }}
               >
                 <div className="flex justify-center w-full h-full min-h-0">
-                  <div className="w-full transition-all duration-300 ease-in-out max-w-4xl h-full flex flex-col min-h-0">
+                  <div className="w-full transition-all duration-300 ease-in-out max-w-3xl h-full flex flex-col min-h-0">
                     <div className="h-full flex flex-col justify-between pr-0 md:pr-4 relative min-h-0">
                       <div className="scrollbar-on-hover flex flex-col grow overflow-y-auto overflow-x-hidden px-4 pt-4 gap-2 min-h-0 relative" style={{ marginLeft: 12 }}>
                         {/* Loading skeleton: visible for 2s then fades out */}
