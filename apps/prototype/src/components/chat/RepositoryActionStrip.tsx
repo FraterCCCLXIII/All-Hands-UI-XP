@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, ExternalLink, GitBranch, GitPullRequest, Github } from 'lucide-react';
+import { ArrowDown, ArrowUp, ExternalLink, FolderOpen, GitBranch, GitPullRequest, Github } from 'lucide-react';
 
 interface RepositoryActionStripProps {
   status: 'connected' | 'connect' | 'disconnected';
@@ -107,23 +107,13 @@ export function RepositoryActionStrip({
           </>
         ) : status === 'connect' ? (
           <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2.5 overflow-hidden">
-            <div className="group flex min-w-0 max-w-[340px] shrink-0 flex-row items-center gap-2 rounded-full border border-transparent bg-transparent py-1 pl-2.5 pr-2.5 relative truncate cursor-not-allowed">
-              <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                <Github className="w-3 h-3 text-muted-foreground" />
-              </div>
-              <div className="font-normal text-muted-foreground text-xs leading-4 truncate flex-1 min-w-0" title="No Repo Connected">
-                No Repo Connected
-              </div>
-            </div>
             <button
               type="button"
-              className="flex h-7 min-w-[76px] shrink-0 flex-row items-center justify-center gap-1 rounded-full border border-transparent bg-muted/50 px-2 py-1 text-xs font-normal leading-4 text-muted-foreground transition-colors hover:border-border hover:bg-muted/60 hover:text-foreground"
+              className="flex h-7 min-w-[140px] shrink-0 flex-row items-center justify-center gap-1 rounded-full border border-transparent bg-muted/50 px-2 py-1 text-xs font-normal leading-4 text-muted-foreground transition-colors hover:border-border hover:bg-muted/60 hover:text-foreground"
               onClick={onConnect}
             >
-              <span className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                <ArrowUp className="w-3 h-3 rotate-90" />
-              </span>
-              Connect
+              <FolderOpen className="w-3 h-3" />
+              Open Repository
             </button>
           </div>
         ) : (

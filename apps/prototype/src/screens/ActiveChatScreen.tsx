@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
+import { Fragment, useState, useRef, useCallback, useEffect, useLayoutEffect, useMemo } from 'react';
 import type { KeyboardEvent, ReactNode, SyntheticEvent } from 'react';
 import {
   Loader2,
@@ -97,8 +97,8 @@ interface ActiveChatScreenProps {
   onCanvasTipVariantChange: (variant: 'none' | ProtipVariant) => void;
   showCanvasLoading: boolean;
   onToggleCanvasLoading: () => void;
-  chatContentMode: 'skeleton' | 'conversation' | 'start' | 'onboarding';
-  onChatContentModeChange: (mode: 'skeleton' | 'conversation' | 'start' | 'onboarding') => void;
+  chatContentMode: 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2';
+  onChatContentModeChange: (mode: 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2') => void;
   repositoryStatus: 'connected' | 'disconnected' | 'connect';
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
   repositoryName?: string | null;
@@ -143,6 +143,7 @@ const STATUS_BADGE_OPTIONS: { value: StatusBadgeState; label: string }[] = [
 ];
 
 type TabId = 'changes' | 'code' | 'terminal' | 'app' | 'browser' | 'planner' | 'tasks';
+type SuggestionsMode = 'none' | 'below-chat-list';
 
 const CANVAS_TAB_ARIA: Record<TabId, string> = {
   changes: 'Changes',
@@ -507,7 +508,7 @@ export function ActiveChatScreen({
   const shouldShowInputStatusBadge = inputStatusBadgeState !== 'off' || !conversationLoaded;
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [selectedRepository, setSelectedRepository] = useState('');
-  const [selectedBranch, setSelectedBranch] = useState('main');
+  const [selectedBranch, setSelectedBranch] = useState('');
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [commandActiveIndex, setCommandActiveIndex] = useState(0);
@@ -520,12 +521,18 @@ export function ActiveChatScreen({
   const [isMetricsModalOpen, setIsMetricsModalOpen] = useState(false);
   const [sharingEnabled, setSharingEnabled] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [suggestionsMode, setSuggestionsMode] = useState<SuggestionsMode>('none');
+  const [isBelowChatSuggestionsDismissed, setIsBelowChatSuggestionsDismissed] = useState(false);
+  const [expandedSuggestionIds, setExpandedSuggestionIds] = useState<Record<string, boolean>>({});
+  const [onboardingIdeaExpanded, setOnboardingIdeaExpanded] = useState<Record<string, boolean>>({});
   const copyTimeoutRef = useRef<number | null>(null);
   const blurTimeoutRef = useRef<number | null>(null);
   const pinToggleInteractionRef = useRef(false);
   const commandListRef = useRef<HTMLDivElement | null>(null);
   const commandItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const showCanvasTip = canvasTipVariant !== 'none';
+  const isBelowChatSuggestionsActive = suggestionsMode === 'below-chat-list';
+  const shouldCenterSuggestionsArea = isBelowChatSuggestionsActive && !isBelowChatSuggestionsDismissed;
   const canvasTipLabel = CANVAS_TIP_OPTIONS.find((option) => option.id === canvasTipVariant)?.label ?? 'None';
   const automationContextLabel =
     AUTOMATION_CONTEXT_OPTIONS.find((o) => o.title === automationContextTitle)?.label ?? 'None';
@@ -770,6 +777,9 @@ export function ActiveChatScreen({
   const handleSendMessage = useCallback(() => {
     const text = chatInputRef.current?.innerText?.trim() ?? chatInput.trim();
     if (text) {
+      if (isBelowChatSuggestionsActive) {
+        setIsBelowChatSuggestionsDismissed(true);
+      }
       setChatInput('');
       setChatInputMaxHeightPx(null);
       if (chatInputRef.current) chatInputRef.current.innerHTML = '';
@@ -778,7 +788,13 @@ export function ActiveChatScreen({
       requestAnimationFrame(() => adjustChatInputHeight());
       // Could wire to parent or local messages state here
     }
-  }, [chatInput, adjustChatInputHeight]);
+  }, [chatInput, adjustChatInputHeight, isBelowChatSuggestionsActive]);
+
+  useEffect(() => {
+    if (suggestionsMode !== 'below-chat-list') {
+      setIsBelowChatSuggestionsDismissed(false);
+    }
+  }, [suggestionsMode]);
 
   const handleChatInputGripMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -1632,26 +1648,213 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                                 an automation, or both.
                               </p>
                               <p className="font-medium">Skill ideas:</p>
-                              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                                <li>PR review assistant with checklist + risky-files summary</li>
-                                <li>Release notes drafter grouped by features, fixes, and chores</li>
-                                <li>Design-to-code helper that extracts implementation steps</li>
-                              </ul>
+                              <div className="space-y-2">
+                                {[
+                                  {
+                                    title: 'PR review assistant with checklist + risky-files summary',
+                                    description:
+                                      'Creates a reusable review flow that flags risky files, summarizes impact, and enforces a consistent merge checklist.',
+                                  },
+                                  {
+                                    title: 'Release notes drafter grouped by features, fixes, and chores',
+                                    description:
+                                      'Generates polished release notes from recent PRs and categorizes updates into feature, fix, and maintenance sections.',
+                                  },
+                                  {
+                                    title: 'Design-to-code helper that extracts implementation steps',
+                                    description:
+                                      'Breaks design requests into concrete coding tasks with component mapping, edge cases, and suggested implementation order.',
+                                  },
+                                ].map((idea, index) => {
+                                  const ideaId = `skill-${index}`;
+                                  const isExpanded = Boolean(onboardingIdeaExpanded[ideaId]);
+                                  return (
+                                    <div key={ideaId} className="overflow-hidden rounded-xl border border-border">
+                                      <button
+                                        type="button"
+                                        className="flex w-full items-center gap-2 bg-muted/20 px-3 py-1.5 text-left text-xs font-semibold text-foreground transition-colors hover:bg-muted/60"
+                                        aria-expanded={isExpanded}
+                                        onClick={() =>
+                                          setOnboardingIdeaExpanded((prev) => ({
+                                            ...prev,
+                                            [ideaId]: !prev[ideaId],
+                                          }))
+                                        }
+                                      >
+                                        {isExpanded ? (
+                                          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                                        )}
+                                        {idea.title}
+                                      </button>
+                                      {isExpanded ? (
+                                        <div className="space-y-2 border-t border-border bg-card p-3">
+                                          <p className="text-xs text-muted-foreground">
+                                            {idea.description}
+                                          </p>
+                                          <button
+                                            type="button"
+                                            className="rounded-md border border-border bg-white px-2.5 py-1 text-xs font-medium text-black transition-colors hover:bg-white/90"
+                                          >
+                                            Build
+                                          </button>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                               <p className="font-medium">Automation ideas:</p>
-                              <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
-                                <li>Nightly dependency audit that opens a thread on failures</li>
-                                <li>Weekly test-flake triage with owner suggestions</li>
-                                <li>Post-merge docs sync for README and changelog updates</li>
-                              </ul>
+                              <div className="space-y-2">
+                                {[
+                                  {
+                                    title: 'Nightly dependency audit that opens a thread on failures',
+                                    description:
+                                      'Runs each night to detect vulnerable or outdated packages, then opens a conversation with prioritized upgrade recommendations.',
+                                  },
+                                  {
+                                    title: 'Weekly test-flake triage with owner suggestions',
+                                    description:
+                                      'Analyzes flaky CI tests, clusters recurring failures, and suggests likely owners and next debugging actions.',
+                                  },
+                                  {
+                                    title: 'Post-merge docs sync for README and changelog updates',
+                                    description:
+                                      'Automatically drafts documentation updates after merges so README and changelog stay aligned with shipped behavior.',
+                                  },
+                                ].map((idea, index) => {
+                                  const ideaId = `automation-${index}`;
+                                  const isExpanded = Boolean(onboardingIdeaExpanded[ideaId]);
+                                  return (
+                                    <div key={ideaId} className="overflow-hidden rounded-xl border border-border">
+                                      <button
+                                        type="button"
+                                        className="flex w-full items-center gap-2 bg-muted/20 px-3 py-1.5 text-left text-xs font-semibold text-foreground transition-colors hover:bg-muted/60"
+                                        aria-expanded={isExpanded}
+                                        onClick={() =>
+                                          setOnboardingIdeaExpanded((prev) => ({
+                                            ...prev,
+                                            [ideaId]: !prev[ideaId],
+                                          }))
+                                        }
+                                      >
+                                        {isExpanded ? (
+                                          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                                        ) : (
+                                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                                        )}
+                                        {idea.title}
+                                      </button>
+                                      {isExpanded ? (
+                                        <div className="space-y-2 border-t border-border bg-card p-3">
+                                          <p className="text-xs text-muted-foreground">
+                                            {idea.description}
+                                          </p>
+                                          <button
+                                            type="button"
+                                            className="rounded-md border border-border bg-white px-2.5 py-1 text-xs font-medium text-black transition-colors hover:bg-white/90"
+                                          >
+                                            Build
+                                          </button>
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                               <p>
                                 Pick one path and I will scaffold it end-to-end with defaults you can edit.
                               </p>
                             </div>
                           </div>
                         )}
+                        {chatContentMode === 'onboarding-2' && (
+                          <div
+                            className={cn(
+                              'absolute inset-0 flex flex-col gap-4 overflow-y-auto overflow-x-hidden scrollbar-on-hover transition-opacity duration-300 ease-out p-2',
+                              conversationLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            )}
+                            data-testid="chat-onboarding-2"
+                            aria-hidden={chatContentMode !== 'onboarding-2' || !conversationLoaded}
+                          >
+                            <div className="text-sm space-y-3 text-foreground">
+                              <p>
+                                Choose a launch path below. Each table shows common starter builds and outcomes.
+                              </p>
+
+                              <div className="rounded-xl border border-border overflow-hidden">
+                                <div className="bg-muted/30 px-3 py-2 text-xs font-semibold">Skills</div>
+                                <table className="w-full text-xs">
+                                  <tbody>
+                                    {[
+                                      ['PR review assistant', 'Standardized risk checks before merge'],
+                                      ['Release notes drafter', 'Auto-categorized release summaries'],
+                                      ['Design-to-code helper', 'Step-by-step implementation plans'],
+                                    ].map(([name, outcome]) => (
+                                      <tr key={name} className="border-t border-border/60">
+                                        <td className="px-3 py-2">{name}</td>
+                                        <td className="px-3 py-2 text-muted-foreground">{outcome}</td>
+                                        <td className="px-3 py-2 text-right">
+                                          <button
+                                            type="button"
+                                            className="rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted/60"
+                                          >
+                                            Start
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                                <div className="border-t border-border/60 px-3 py-2">
+                                  <a href="#" className="text-xs text-info hover:underline">
+                                    View more skill use cases
+                                  </a>
+                                </div>
+                              </div>
+
+                              <div className="rounded-xl border border-border overflow-hidden">
+                                <div className="bg-muted/30 px-3 py-2 text-xs font-semibold">Automations</div>
+                                <table className="w-full text-xs">
+                                  <tbody>
+                                    {[
+                                      ['Nightly dependency audit', 'Proactive upgrade threads on risk'],
+                                      ['Weekly flaky-test triage', 'Grouped failures with owner hints'],
+                                      ['Post-merge docs sync', 'README/changelog drafts after merge'],
+                                    ].map(([name, outcome]) => (
+                                      <tr key={name} className="border-t border-border/60">
+                                        <td className="px-3 py-2">{name}</td>
+                                        <td className="px-3 py-2 text-muted-foreground">{outcome}</td>
+                                        <td className="px-3 py-2 text-right">
+                                          <button
+                                            type="button"
+                                            className="rounded-md border border-border bg-background px-2.5 py-1 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted/60"
+                                          >
+                                            Start
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                                <div className="border-t border-border/60 px-3 py-2">
+                                  <a href="#" className="text-xs text-info hover:underline">
+                                    View more automation use cases
+                                  </a>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {chatContentMode === 'start' && <ChatStartScreen />}
                       </div>
-                      <div className="flex flex-col gap-0 flex-shrink-0">
+                      <div
+                        className={cn(
+                          'flex flex-col gap-0 flex-shrink-0 transition-all duration-500 ease-out',
+                          shouldCenterSuggestionsArea ? 'min-h-full justify-center' : 'justify-start'
+                        )}
+                      >
                         {conversationLoaded && (
                           <div
                             className={cn(
@@ -1781,7 +1984,10 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <div className="z-10 h-0 w-full shrink-0 bg-transparent" aria-hidden />
                         <div
                           data-testid="interactive-chat-box"
-                          className="relative z-10 -mt-[1px]"
+                          className={cn(
+                            'relative z-10 -mt-[1px]',
+                            isBelowChatSuggestionsActive && 'mx-auto w-full max-w-2xl'
+                          )}
                         >
                           {shouldShowInputStatusBadge && (
                             <div className="absolute left-0 z-20 bottom-[calc(100%+6px)] flex items-end gap-1">
@@ -2331,7 +2537,13 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             </div>
                           </div>
                         </div>
-                        <div className="mt-4">
+                        <div
+                          className={cn(
+                            'mt-4',
+                            isBelowChatSuggestionsActive && 'mx-auto w-full max-w-2xl',
+                            isBelowChatSuggestionsActive && !isBelowChatSuggestionsDismissed && 'relative'
+                          )}
+                        >
                           <RepositoryActionStrip
                             status={repositoryStatus}
                             repoName={connectedRepoName}
@@ -2340,6 +2552,114 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             branchUrl={connectedBranchUrl}
                             onConnect={() => setIsConnectModalOpen(true)}
                           />
+                          {isBelowChatSuggestionsActive && !isBelowChatSuggestionsDismissed && (
+                            <div className="mt-3 rounded-xl border border-border bg-card overflow-hidden absolute left-0 right-0 top-full z-10">
+                              <table className="w-full text-xs">
+                                <tbody>
+                                  {[
+                                    {
+                                      group: 'Skills',
+                                      items: [
+                                        {
+                                          id: 'skill-summary',
+                                          type: 'skill' as const,
+                                          label: 'Summarize this repository and suggest first improvements.',
+                                          details: 'Analyze project structure, call out quick wins, and produce a prioritized first-pass plan.',
+                                        },
+                                        {
+                                          id: 'skill-regression',
+                                          type: 'skill' as const,
+                                          label: 'Review recent changes and call out potential regressions.',
+                                          details: 'Inspect diffs for risky paths and summarize likely behavior changes to validate.',
+                                        },
+                                      ],
+                                    },
+                                    {
+                                      group: 'Automations',
+                                      items: [
+                                        {
+                                          id: 'automation-plan',
+                                          type: 'automation' as const,
+                                          label: 'Create a step-by-step plan to add a new feature safely.',
+                                          details: 'Generate implementation phases, rollout checkpoints, and regression guardrails.',
+                                        },
+                                        {
+                                          id: 'automation-tests',
+                                          type: 'automation' as const,
+                                          label: 'Propose tests I should add before opening a PR.',
+                                          details: 'Recommend unit/integration coverage gaps and draft a practical test checklist.',
+                                        },
+                                      ],
+                                    },
+                                  ].map((section, sectionIndex) => (
+                                    <Fragment key={section.group}>
+                                      {section.items.map((suggestion) => {
+                                        const expanded = Boolean(expandedSuggestionIds[suggestion.id]);
+                                        return (
+                                          <Fragment key={suggestion.id}>
+                                            <tr
+                                              className={cn(
+                                                sectionIndex === 0 && suggestion.id === section.items[0]?.id ? '' : 'border-t border-border/60',
+                                                'transition-colors hover:bg-muted/30'
+                                              )}
+                                            >
+                                              <td className="px-3 py-2 leading-5 text-foreground">
+                                                <button
+                                                  type="button"
+                                                  className="flex w-full items-center gap-2 text-left"
+                                                  aria-expanded={expanded}
+                                                  onClick={() =>
+                                                    setExpandedSuggestionIds((prev) => ({
+                                                      ...prev,
+                                                      [suggestion.id]: !prev[suggestion.id],
+                                                    }))
+                                                  }
+                                                >
+                                                  <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center text-muted-foreground">
+                                                    {suggestion.type === 'skill' ? (
+                                                      <SkillIcon className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                      <AutomationGlyph className="h-3.5 w-3.5" />
+                                                    )}
+                                                  </span>
+                                                  <span className="flex-1">{suggestion.label}</span>
+                                                  {expanded ? (
+                                                    <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                  ) : (
+                                                    <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                                  )}
+                                                </button>
+                                              </td>
+                                            </tr>
+                                            {expanded ? (
+                                              <tr>
+                                                <td className="px-3 pb-3 pt-1">
+                                                  <div className="py-1">
+                                                    <p className="text-xs text-muted-foreground mb-2">{suggestion.details}</p>
+                                                    <button
+                                                      type="button"
+                                                      className="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-semibold text-foreground transition-colors hover:bg-muted/60"
+                                                    >
+                                                      Start
+                                                    </button>
+                                                  </div>
+                                                </td>
+                                              </tr>
+                                            ) : null}
+                                          </Fragment>
+                                        );
+                                      })}
+                                    </Fragment>
+                                  ))}
+                                </tbody>
+                              </table>
+                              <div className="border-t border-border/60 px-3 py-2">
+                                <a href="#" className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                                  View more
+                                </a>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2584,11 +2904,18 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   { id: 'connected', label: 'Connected' },
                   { id: 'disconnected', label: 'Disconnected' },
                   { id: 'connect', label: 'Connect' },
+                  { id: 'select-repository', label: 'Select Repository' },
                 ].map((option) => (
                   <DropdownMenuItem
                     key={option.id}
                     className="cursor-pointer"
-                    onSelect={() => onRepositoryStatusChange(option.id as 'connected' | 'disconnected' | 'connect')}
+                    onSelect={() => {
+                      if (option.id === 'select-repository') {
+                        onRepositoryStatusChange('connect');
+                        return;
+                      }
+                      onRepositoryStatusChange(option.id as 'connected' | 'disconnected' | 'connect');
+                    }}
                   >
                     {option.label}
                   </DropdownMenuItem>
@@ -2606,12 +2933,16 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   aria-label="Chat content"
                 >
                   <span className="capitalize whitespace-nowrap">
-                    {chatContentMode === 'skeleton'
+                    {chatContentMode === 'none'
+                      ? 'None'
+                      : chatContentMode === 'skeleton'
                       ? 'Loading skeleton'
                       : chatContentMode === 'start'
                         ? 'Start screen'
                         : chatContentMode === 'onboarding'
-                          ? 'Onboarding sample'
+                          ? 'Onboarding sample 1'
+                          : chatContentMode === 'onboarding-2'
+                            ? 'Onboarding sample 2'
                           : 'Example content'}
                   </span>
                   <ChevronDown className="h-3 w-3 opacity-60" />
@@ -2619,15 +2950,48 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
                 {[
+                  { id: 'none', label: 'None' },
                   { id: 'conversation', label: 'Example content' },
-                  { id: 'onboarding', label: 'Onboarding sample' },
+                  { id: 'onboarding', label: 'Onboarding sample 1' },
+                  { id: 'onboarding-2', label: 'Onboarding sample 2' },
                   { id: 'skeleton', label: 'Loading skeleton' },
                   { id: 'start', label: 'Start screen' },
                 ].map((option) => (
                   <DropdownMenuItem
                     key={option.id}
                     className="cursor-pointer"
-                    onSelect={() => onChatContentModeChange(option.id as 'skeleton' | 'conversation' | 'start' | 'onboarding')}
+                    onSelect={() => onChatContentModeChange(option.id as 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2')}
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm font-medium text-foreground">Suggestions</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-2 py-1 text-xs font-medium text-foreground hover:bg-muted/60 whitespace-nowrap"
+                  aria-label="Suggestions mode"
+                >
+                  <span className="capitalize whitespace-nowrap">
+                    {suggestionsMode === 'none' ? 'None' : 'Below chat list'}
+                  </span>
+                  <ChevronDown className="h-3 w-3 opacity-60" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[180px] rounded-lg py-[6px] px-1">
+                {[
+                  { id: 'none' as const, label: 'None' },
+                  { id: 'below-chat-list' as const, label: 'Below chat list' },
+                ].map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    className="cursor-pointer"
+                    onSelect={() => setSuggestionsMode(option.id)}
                   >
                     {option.label}
                   </DropdownMenuItem>
@@ -2778,13 +3142,16 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
       <Dialog open={isConnectModalOpen} onOpenChange={setIsConnectModalOpen}>
         <DialogContent className="max-w-md text-foreground">
           <DialogHeader>
-            <DialogTitle>Connect your project</DialogTitle>
+            <DialogTitle>Add repository</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Choose a repository and branch for this automation. You can add more than one target.
+            </p>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex flex-col gap-[10px] pb-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground">Select or insert a URL</span>
-              </div>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <label htmlFor="repo-target-select" className="text-sm font-medium text-muted-foreground">
+                Repository
+              </label>
               <div className="relative max-w-auto">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -2793,7 +3160,8 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <Github className="w-4 h-4" aria-hidden />
                       </div>
                       <input
-                        placeholder="Select Repo"
+                        id="repo-target-select"
+                        placeholder="user/repo"
                         className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 pl-10 pr-10 text-sm cursor-pointer"
                         aria-autocomplete="list"
                         role="combobox"
@@ -2881,6 +3249,11 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   </PopoverContent>
                 </Popover>
               </div>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="branch-target-select" className="text-sm font-medium text-muted-foreground">
+                Branch
+              </label>
               <div className="relative max-w-full">
                 <Popover>
                   <PopoverTrigger asChild>
@@ -2895,6 +3268,7 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                         <GitBranch className="w-4 h-4" aria-hidden />
                       </div>
                       <input
+                        id="branch-target-select"
                         placeholder="Select branch..."
                         disabled={!selectedRepository}
                         className="w-full h-10 px-4 border border-border rounded-md shadow-none bg-muted/40 hover:bg-muted/60 transition-colors text-foreground placeholder:text-muted-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:bg-muted/60 disabled:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60 pl-10 pr-10 text-sm cursor-pointer"
@@ -2930,21 +3304,22 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                 </Popover>
               </div>
             </div>
-            <DialogFooter className="sm:flex-row sm:justify-start sm:space-x-2 flex flex-row items-center justify-start">
-              <Button
-                className="h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/85"
-                onClick={() => {
-                  setIsConnectModalOpen(false);
-                  onRepositoryStatusChange('connected');
-                }}
-              >
-                Connect
-              </Button>
+            <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2 sm:gap-0">
               <Button
                 className="h-10 px-4 py-2 rounded-md bg-muted/60 hover:bg-muted border border-border text-foreground"
                 onClick={() => setIsConnectModalOpen(false)}
               >
                 Cancel
+              </Button>
+              <Button
+                className="h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/85"
+                disabled={!selectedRepository || !selectedBranch}
+                onClick={() => {
+                  setIsConnectModalOpen(false);
+                  onRepositoryStatusChange('connected');
+                }}
+              >
+                Add repository
               </Button>
             </DialogFooter>
           </div>
