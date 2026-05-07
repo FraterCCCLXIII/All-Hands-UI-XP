@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, X, Slack, Github, Mail, Facebook, MessageCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { copyTextToClipboard, promptManualCopy } from '../../lib/clipboard';
 
 interface SharePreviewProps {
   shareUrl: string;
@@ -78,9 +79,14 @@ const SharePreview: React.FC<SharePreviewProps> = ({ shareUrl, onClose }) => {
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1200);
+    void (async () => {
+      const ok = await copyTextToClipboard(shareUrl);
+      if (!ok) {
+        promptManualCopy(shareUrl);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    })();
   };
 
   return (

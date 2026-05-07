@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
   Archive,
@@ -164,6 +165,30 @@ function AutomationsIcon({ className, spinOuter = false }: { className?: string;
           <rect width="18" height="18" fill="white" transform="translate(1 1)"/>
         </clipPath>
       </defs>
+    </svg>
+  );
+}
+
+function EnvironmentSwitchIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 74.17 22" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden>
+      <g>
+        <rect x="1" y="1" width="20" height="8" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="1" y="13" width="20" height="8" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <line x1="5" y1="5" x2="5.01" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="5" y1="17" x2="5.01" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+      <g>
+        <rect x="53.17" y="1" width="20" height="8" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <rect x="53.17" y="13" width="20" height="8" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <line x1="57.17" y1="5" x2="57.18" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="57.17" y1="17" x2="57.18" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </g>
+      <g>
+        <path d="M43.09,7l4,4-4,4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M27.09,11h20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M31.09,7l-4,4,4,4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
     </svg>
   );
 }
@@ -745,8 +770,11 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   const [backendOptions, setBackendOptions] = useState<BackendOption[]>(defaultBackendOptions);
   const [selectedBackendId, setSelectedBackendId] = useState(isOrgAccount ? 'hetzner' : 'local');
   const [connectBackendOpen, setConnectBackendOpen] = useState(false);
+  const [environmentSwitchTarget, setEnvironmentSwitchTarget] = useState('');
+  const [showEnvironmentSwitchOverlay, setShowEnvironmentSwitchOverlay] = useState(false);
   const logoPopoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navResizePointerIdRef = useRef<number | null>(null);
+  const environmentSwitchHideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedBackend = backendOptions.find((backend) => backend.id === selectedBackendId) ?? backendOptions[0]!;
   const SelectedBackendIcon = selectedBackend.kind === 'cloud' ? Cloud : Monitor;
   const selectedOrg = selectedWorkspace.type === 'org' ? selectedWorkspace : null;
@@ -757,7 +785,41 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   const selectedEnvironmentColor = selectedBackend.color;
   const showEnvironmentBadge = isOrgEnvironmentSelected || selectedBackend.id !== 'local';
 
+  const triggerEnvironmentSwitchOverlay = (nextEnvironmentLabel: string) => {
+    setEnvironmentSwitchTarget(nextEnvironmentLabel);
+    setShowEnvironmentSwitchOverlay(true);
+
+    if (environmentSwitchHideTimeoutRef.current) clearTimeout(environmentSwitchHideTimeoutRef.current);
+    environmentSwitchHideTimeoutRef.current = setTimeout(() => {
+      setShowEnvironmentSwitchOverlay(false);
+    }, 980);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (environmentSwitchHideTimeoutRef.current) clearTimeout(environmentSwitchHideTimeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (showEnvironmentSwitchOverlay) {
+      document.body.setAttribute('data-environment-switching', 'true');
+      return () => {
+        document.body.removeAttribute('data-environment-switching');
+      };
+    }
+    document.body.removeAttribute('data-environment-switching');
+    return undefined;
+  }, [showEnvironmentSwitchOverlay]);
+
   const handleSelectBackend = (backendId: string) => {
+    const nextBackend = backendOptions.find((backend) => backend.id === backendId);
+    if (!nextBackend) return;
+    const isChangingEnvironment = selectedWorkspace.type === 'org' || selectedBackendId !== backendId;
+    if (isChangingEnvironment) {
+      triggerEnvironmentSwitchOverlay(nextBackend.label);
+    }
     setSelectedBackendId(backendId);
     if (selectedWorkspace.type === 'org') {
       onActiveWorkspaceChange?.('personal');
@@ -765,6 +827,10 @@ export const LeftNav: React.FC<LeftNavProps> = ({
   };
 
   const handleSelectOrg = (orgId: string) => {
+    const nextOrg = accountWorkspaceOptions.find((workspace) => workspace.id === orgId);
+    if (nextOrg && selectedWorkspace.id !== orgId) {
+      triggerEnvironmentSwitchOverlay(nextOrg.name);
+    }
     onActiveWorkspaceChange?.(orgId);
     if (selectedBackend.kind !== 'cloud') {
       const preferredCloudBackend =
@@ -1301,6 +1367,21 @@ export const LeftNav: React.FC<LeftNavProps> = ({
         onOpenChange={setConnectBackendOpen}
         onSubmit={handleConnectBackend}
       />
+      {showEnvironmentSwitchOverlay && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              className="environment-switch-overlay pointer-events-none fixed inset-0 z-[2147483646] flex items-center justify-center"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <div className="pointer-events-none flex min-w-[280px] max-w-[420px] flex-col items-center gap-2 rounded-xl border border-border bg-card px-5 py-4 text-foreground shadow-2xl">
+                <EnvironmentSwitchIcon className="mb-2 h-6 w-20 shrink-0 text-foreground" />
+                <p className="text-center text-sm font-medium">Switching to {environmentSwitchTarget}</p>
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
       {isExpanded ? (
         <div
           role="separator"

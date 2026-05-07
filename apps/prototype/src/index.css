@@ -659,6 +659,28 @@ body[data-figma-fixed-canvas='true'] {
   }
 }
 
+@keyframes environment-switch-content-refresh {
+  0% { opacity: 1; }
+  30% { opacity: 0; }
+  70% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+body[data-environment-switching='true'] #root {
+  animation: environment-switch-content-refresh 980ms ease-in-out forwards;
+}
+
+@keyframes environment-switch-overlay-fade {
+  0% { opacity: 0; transform: scale(0.98); }
+  15% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+
+.environment-switch-overlay > div {
+  animation: environment-switch-overlay-fade 980ms ease-in-out forwards;
+}
+
 /* Workflow page - React Flow theme and controls */
 [data-workflows="true"] .react-flow {
   --xy-edge-stroke: hsl(var(--muted-foreground));
