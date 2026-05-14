@@ -53,6 +53,12 @@ import {
   Share2,
   Clock,
   AlertCircle,
+  Slack,
+  ShieldCheck,
+  Bug,
+  Network,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Theme, ThemeElement } from '../types/theme';
 import { cn } from '../lib/utils';
@@ -97,8 +103,8 @@ interface ActiveChatScreenProps {
   onCanvasTipVariantChange: (variant: 'none' | ProtipVariant) => void;
   showCanvasLoading: boolean;
   onToggleCanvasLoading: () => void;
-  chatContentMode: 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2';
-  onChatContentModeChange: (mode: 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2') => void;
+  chatContentMode: 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2' | 'onboarding-3' | 'onboarding-4';
+  onChatContentModeChange: (mode: 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2' | 'onboarding-3' | 'onboarding-4') => void;
   repositoryStatus: 'connected' | 'disconnected' | 'connect';
   onRepositoryStatusChange: (status: 'connected' | 'disconnected' | 'connect') => void;
   repositoryName?: string | null;
@@ -1847,6 +1853,337 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                             </div>
                           </div>
                         )}
+                        {chatContentMode === 'onboarding-3' && (
+                          <div
+                            className={cn(
+                              'absolute inset-0 flex flex-col gap-6 overflow-y-auto overflow-x-hidden scrollbar-on-hover transition-opacity duration-300 ease-out p-2',
+                              conversationLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            )}
+                            data-testid="chat-onboarding-3"
+                            aria-hidden={chatContentMode !== 'onboarding-3' || !conversationLoaded}
+                          >
+                            <p className="text-sm text-foreground">
+                              Hi, let&apos;s get started, how do you want to begin?
+                            </p>
+
+                            <section className="flex flex-col gap-3">
+                              <h3 className="text-sm font-medium text-foreground">Get started</h3>
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                {[
+                                  {
+                                    title: 'Build a Slack bot',
+                                    description: 'Create and deploy a custom Slack bot',
+                                    icon: Slack,
+                                    iconBg: 'bg-purple-500/15',
+                                    iconColor: 'text-purple-400',
+                                    steps: [
+                                      'Connect your Slack workspace',
+                                      'Describe what your bot should do',
+                                      'Build, test, and deploy',
+                                    ],
+                                  },
+                                  {
+                                    title: 'Schedule Code Quality',
+                                    description: 'Automate code quality checks',
+                                    icon: ShieldCheck,
+                                    iconBg: 'bg-success/15',
+                                    iconColor: 'text-success',
+                                    steps: [
+                                      'Select a repository',
+                                      'Choose a schedule',
+                                      'Select quality checks',
+                                      'Review and enable',
+                                    ],
+                                  },
+                                ].map((card) => {
+                                  const CardIcon = card.icon;
+                                  return (
+                                    <button
+                                      key={card.title}
+                                      type="button"
+                                      className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                      <div className="flex items-start gap-3">
+                                        <span
+                                          className={cn(
+                                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                                            card.iconBg
+                                          )}
+                                          aria-hidden
+                                        >
+                                          <CardIcon className={cn('h-5 w-5', card.iconColor)} />
+                                        </span>
+                                        <div className="flex min-w-0 flex-col">
+                                          <span className="text-sm font-semibold text-foreground">{card.title}</span>
+                                          <span className="text-xs text-muted-foreground">{card.description}</span>
+                                        </div>
+                                      </div>
+                                      <div className="border-t border-border/60" />
+                                      <ol className="flex flex-col gap-1.5 text-xs text-foreground">
+                                        {card.steps.map((step, index) => (
+                                          <li key={step} className="flex items-center gap-2.5">
+                                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-[10px] font-medium text-muted-foreground">
+                                              {index + 1}
+                                            </span>
+                                            <span>{step}</span>
+                                          </li>
+                                        ))}
+                                      </ol>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </section>
+
+                            <section className="flex flex-col gap-3">
+                              <h3 className="text-sm font-medium text-foreground">More options</h3>
+                              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                {[
+                                  {
+                                    title: 'Vulnerability Discovery',
+                                    description: 'Scan for security vulnerabilities',
+                                    icon: Bug,
+                                    iconColor: 'text-info',
+                                  },
+                                  {
+                                    title: 'Architecture Review',
+                                    description: 'Get feedback on design and structure',
+                                    icon: Network,
+                                    iconColor: 'text-purple-400',
+                                  },
+                                  {
+                                    title: 'Pen Testing',
+                                    description: 'Run automated penetration tests',
+                                    icon: Pencil,
+                                    iconColor: 'text-warning',
+                                  },
+                                  {
+                                    title: 'QA Checks',
+                                    description: 'Automate tests and quality assurance',
+                                    icon: CheckCircle2,
+                                    iconColor: 'text-success',
+                                  },
+                                ].map((card) => {
+                                  const CardIcon = card.icon;
+                                  return (
+                                    <button
+                                      key={card.title}
+                                      type="button"
+                                      className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                      <CardIcon className={cn('h-5 w-5', card.iconColor)} aria-hidden />
+                                      <span className="text-xs font-semibold text-foreground">{card.title}</span>
+                                      <span className="text-[11px] leading-snug text-muted-foreground">
+                                        {card.description}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <a
+                                href="#"
+                                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                              >
+                                More use cases
+                              </a>
+                            </section>
+                          </div>
+                        )}
+                        {chatContentMode === 'onboarding-4' && (
+                          <div
+                            className={cn(
+                              'absolute inset-0 overflow-y-auto overflow-x-hidden scrollbar-on-hover transition-opacity duration-300 ease-out p-2',
+                              conversationLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            )}
+                            data-testid="chat-onboarding-4"
+                            aria-hidden={chatContentMode !== 'onboarding-4' || !conversationLoaded}
+                          >
+                            <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+                              <p className="text-sm text-foreground">
+                                Hi, let&apos;s get started, how do you want to begin?
+                              </p>
+
+                              <section className="flex flex-col gap-3">
+                                <h3 className="text-sm font-medium text-foreground">Get started</h3>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                  {[
+                                    {
+                                      title: 'Build a Slack bot',
+                                      description: 'Create and deploy a custom Slack bot',
+                                      icon: Slack,
+                                      iconBg: 'bg-purple-500/15',
+                                      iconColor: 'text-purple-400',
+                                      steps: [
+                                        'Connect your Slack workspace',
+                                        'Describe what your bot should do',
+                                        'Build, test, and deploy',
+                                      ],
+                                    },
+                                    {
+                                      title: 'Schedule Code Quality',
+                                      description: 'Automate code quality checks',
+                                      icon: ShieldCheck,
+                                      iconBg: 'bg-success/15',
+                                      iconColor: 'text-success',
+                                      steps: [
+                                        'Select a repository',
+                                        'Choose a schedule',
+                                        'Select quality checks',
+                                        'Review and enable',
+                                      ],
+                                    },
+                                  ].map((card) => {
+                                    const CardIcon = card.icon;
+                                    return (
+                                      <button
+                                        key={card.title}
+                                        type="button"
+                                        className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                      >
+                                        <div className="flex items-start gap-3">
+                                          <span
+                                            className={cn(
+                                              'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                                              card.iconBg
+                                            )}
+                                            aria-hidden
+                                          >
+                                            <CardIcon className={cn('h-5 w-5', card.iconColor)} />
+                                          </span>
+                                          <div className="flex min-w-0 flex-col">
+                                            <span className="text-sm font-semibold text-foreground">{card.title}</span>
+                                            <span className="text-xs text-muted-foreground">{card.description}</span>
+                                          </div>
+                                        </div>
+                                        <div className="border-t border-border/60" />
+                                        <ol className="flex flex-col gap-1.5 text-xs text-foreground">
+                                          {card.steps.map((step, index) => (
+                                            <li key={step} className="flex items-center gap-2.5">
+                                              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border text-[10px] font-medium text-muted-foreground">
+                                                {index + 1}
+                                              </span>
+                                              <span>{step}</span>
+                                            </li>
+                                          ))}
+                                        </ol>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </section>
+
+                              <section className="flex flex-col gap-3" data-carousel>
+                                <div className="flex items-center justify-between gap-3">
+                                  <h3 className="text-sm font-medium text-foreground">More options</h3>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      aria-label="Scroll more options left"
+                                      onClick={(event) => {
+                                        const track = event.currentTarget
+                                          .closest('[data-carousel]')
+                                          ?.querySelector<HTMLDivElement>('[data-carousel-track]');
+                                        track?.scrollBy({ left: -240, behavior: 'smooth' });
+                                      }}
+                                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                      <ChevronLeft className="h-4 w-4" aria-hidden />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      aria-label="Scroll more options right"
+                                      onClick={(event) => {
+                                        const track = event.currentTarget
+                                          .closest('[data-carousel]')
+                                          ?.querySelector<HTMLDivElement>('[data-carousel-track]');
+                                        track?.scrollBy({ left: 240, behavior: 'smooth' });
+                                      }}
+                                      className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    >
+                                      <ChevronRight className="h-4 w-4" aria-hidden />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div
+                                  data-carousel-track
+                                  className="-mx-2 flex snap-x snap-mandatory gap-3 overflow-x-auto px-2 pb-2 scrollbar-on-hover"
+                                >
+                                  {[
+                                    {
+                                      title: 'Vulnerability Discovery',
+                                      description: 'Scan for security vulnerabilities',
+                                      icon: Bug,
+                                      iconColor: 'text-info',
+                                    },
+                                    {
+                                      title: 'Architecture Review',
+                                      description: 'Get feedback on design and structure',
+                                      icon: Network,
+                                      iconColor: 'text-purple-400',
+                                    },
+                                    {
+                                      title: 'Pen Testing',
+                                      description: 'Run automated penetration tests',
+                                      icon: Pencil,
+                                      iconColor: 'text-warning',
+                                    },
+                                    {
+                                      title: 'QA Checks',
+                                      description: 'Automate tests and quality assurance',
+                                      icon: CheckCircle2,
+                                      iconColor: 'text-success',
+                                    },
+                                    {
+                                      title: 'Performance audit',
+                                      description: 'Profile slow paths and bottlenecks',
+                                      icon: Sparkles,
+                                      iconColor: 'text-info',
+                                    },
+                                    {
+                                      title: 'Doc generation',
+                                      description: 'Draft README and API docs',
+                                      icon: FileText,
+                                      iconColor: 'text-foreground',
+                                    },
+                                    {
+                                      title: 'Test coverage',
+                                      description: 'Generate missing unit tests',
+                                      icon: TestTube,
+                                      iconColor: 'text-success',
+                                    },
+                                    {
+                                      title: 'Refactor helper',
+                                      description: 'Plan safe, incremental refactors',
+                                      icon: Wrench,
+                                      iconColor: 'text-warning',
+                                    },
+                                  ].map((card) => {
+                                    const CardIcon = card.icon;
+                                    return (
+                                      <button
+                                        key={card.title}
+                                        type="button"
+                                        className="flex w-44 shrink-0 snap-start flex-col gap-2 rounded-xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                      >
+                                        <CardIcon className={cn('h-5 w-5', card.iconColor)} aria-hidden />
+                                        <span className="text-xs font-semibold text-foreground">{card.title}</span>
+                                        <span className="text-[11px] leading-snug text-muted-foreground">
+                                          {card.description}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <a
+                                  href="#"
+                                  className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                                >
+                                  More use cases
+                                </a>
+                              </section>
+                            </div>
+                          </div>
+                        )}
                         {chatContentMode === 'start' && <ChatStartScreen />}
                       </div>
                       <div
@@ -2943,6 +3280,10 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                           ? 'Onboarding sample 1'
                           : chatContentMode === 'onboarding-2'
                             ? 'Onboarding sample 2'
+                            : chatContentMode === 'onboarding-3'
+                              ? 'Onboarding sample 3'
+                              : chatContentMode === 'onboarding-4'
+                                ? 'Onboarding sample 4'
                           : 'Example content'}
                   </span>
                   <ChevronDown className="h-3 w-3 opacity-60" />
@@ -2954,13 +3295,15 @@ Error: Cannot find module @rollup/rollup-linux-x64-gnu. npm has a bug related to
                   { id: 'conversation', label: 'Example content' },
                   { id: 'onboarding', label: 'Onboarding sample 1' },
                   { id: 'onboarding-2', label: 'Onboarding sample 2' },
+                  { id: 'onboarding-3', label: 'Onboarding sample 3' },
+                  { id: 'onboarding-4', label: 'Onboarding sample 4' },
                   { id: 'skeleton', label: 'Loading skeleton' },
                   { id: 'start', label: 'Start screen' },
                 ].map((option) => (
                   <DropdownMenuItem
                     key={option.id}
                     className="cursor-pointer"
-                    onSelect={() => onChatContentModeChange(option.id as 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2')}
+                    onSelect={() => onChatContentModeChange(option.id as 'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2' | 'onboarding-3' | 'onboarding-4')}
                   >
                     {option.label}
                   </DropdownMenuItem>

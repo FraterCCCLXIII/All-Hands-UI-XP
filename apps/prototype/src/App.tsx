@@ -161,7 +161,7 @@ function App() {
   const [showErrorNotification, setShowErrorNotification] = useState(false);
   const [canvasTipVariant, setCanvasTipVariant] = useState<CanvasTipVariant>('none');
   const [showCanvasLoading, setShowCanvasLoading] = useState(true);
-  const [chatContentMode, setChatContentMode] = useState<'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2'>('conversation');
+  const [chatContentMode, setChatContentMode] = useState<'none' | 'skeleton' | 'conversation' | 'start' | 'onboarding' | 'onboarding-2' | 'onboarding-3' | 'onboarding-4'>('conversation');
   const [repositoryStatus, setRepositoryStatus] = useState<'connected' | 'disconnected' | 'connect'>('connected');
   const [activeChatRepositoryName, setActiveChatRepositoryName] = useState<string | null>(null);
   const [activeChatBranchName, setActiveChatBranchName] = useState<string | null>(null);

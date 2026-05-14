@@ -14,7 +14,7 @@ export default defineConfig({
   plugins: [tailwindcss(), react()],
   server: {
     host: '127.0.0.1',
-    port: 3000,
-    open: !isElectronDev
-  }
+    port: 5173,
+    open: !isElectronDev,
+  },
 })
